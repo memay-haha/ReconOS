@@ -1,6 +1,6 @@
 # Thiết kế: Giao diện tài khoản và phân quyền, đợt 2b
 
-> Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
 > Liên quan: [roadmap.md](../../roadmap.md), [spec 2a](2026-11-03-batch2a-backend-auth-design.md), [thiết kế thứ tự viết mã](2026-11-02-implementation-roadmap-design.md), [api/architecture.md](../../api/architecture.md), [authorization.md](../../security/authorization.md), [design-system.md](../../design/design-system.md), [tech-debt.md](../../tech-debt.md)
 
 ## 🎯 Mục tiêu
