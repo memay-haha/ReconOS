@@ -15,7 +15,7 @@ import uuid
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Final
+from typing import Final, Literal
 from urllib.parse import urlsplit
 
 import structlog
@@ -109,7 +109,7 @@ class SessionCookie:
     name: str
     secure: bool
     httponly: bool = True
-    samesite: str = "lax"
+    samesite: Literal["lax", "strict", "none"] = "lax"
     path: str = "/"
 
 

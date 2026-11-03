@@ -13,6 +13,7 @@ import pytest_asyncio
 from alembic import command
 from alembic.config import Config
 from fastapi import Request
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -175,6 +176,47 @@ def user_factory(db_session: AsyncSession) -> Callable[..., Awaitable[User]]:
         )
         db_session.add(user)
         await db_session.flush()
+        return user
+
+    return build
+
+
+@pytest_asyncio.fixture
+async def client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
+    """Drive the real app, but inside the transaction of the test."""
+    from app.core.deps import get_db
+    from app.main import app
+
+    async def override_get_db() -> AsyncIterator[AsyncSession]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    # https keeps the Secure session cookie in the client between requests.
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="https://reconos.example.com"
+    ) as http:
+        yield http
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def logged_in(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[User]]
+) -> Callable[..., Awaitable[User]]:
+    """Create an account and log the shared client in as that account."""
+    password = "troutmoonlit7Ladder!quay"  # throwaway test value
+
+    async def build(role: UserRole = UserRole.USER) -> User:
+        user = await user_factory(role=role, password=password)
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"username": user.username, "password": password},
+            headers={
+                "origin": "https://reconos.example.com",
+                "sec-fetch-site": "same-origin",
+            },
+        )
+        assert response.status_code == 204
         return user
 
     return build

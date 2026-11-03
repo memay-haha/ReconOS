@@ -8,6 +8,7 @@ from fastapi import APIRouter, FastAPI, status
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
+from app.user.router import router as user_router
 
 API_PREFIX = "/api/v1"
 
@@ -49,3 +50,4 @@ async def health() -> None:
 
 
 app.include_router(api_router)
+app.include_router(user_router)

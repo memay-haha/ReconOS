@@ -115,6 +115,15 @@ class RateLimitedError(AppError):
     code = "rate_limited"
     title = "Rate limited"
 
+    def __init__(
+        self,
+        detail: str | None = None,
+        errors: list[FieldError] | None = None,
+        retry_after_seconds: int = 900,
+    ) -> None:
+        super().__init__(detail, errors)
+        self.retry_after_seconds = retry_after_seconds
+
 
 class InternalError(AppError):
     status = 500
@@ -123,10 +132,14 @@ class InternalError(AppError):
 
 
 def _problem_response(error: AppError) -> JSONResponse:
+    headers: dict[str, str] | None = None
+    if isinstance(error, RateLimitedError):
+        headers = {"Retry-After": str(error.retry_after_seconds)}
     return JSONResponse(
         status_code=error.status,
         content=error.to_problem(),
         media_type=PROBLEM_CONTENT_TYPE,
+        headers=headers,
     )
 
 
