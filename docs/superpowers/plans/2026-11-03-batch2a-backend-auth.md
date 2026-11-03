@@ -44,6 +44,7 @@
 | `backend/app/core/identity.py` | Model `user`, `user_session`. Mọi tầng đều cần nên đặt ở `core` |
 | `backend/app/core/security.py` | Mật khẩu, session ID, chính sách cookie, kiểm CSRF, dependency xác thực và phân quyền |
 | `backend/app/core/system_setting.py` | Model `system_setting` và hàm đọc ngưỡng kèm cache 60 giây |
+| `backend/app/core/deps.py` | Dependency FastAPI dùng chung: session của request và tài khoản đang gọi |
 | `backend/app/core/pagination.py` | Mã hóa, giải mã cursor keyset và dựng trang kết quả |
 | `backend/app/core/db.py` | Thêm hàm mở session độc lập cho bản ghi phải tồn tại sau rollback |
 | `backend/app/audit_log/models.py` | Model `audit_log` |
@@ -1844,6 +1845,50 @@ Expected: FAIL, 404 vì chưa gắn router.
 
 - [ ] **Step 4: Viết schema**
 
+- [ ] **Step 3B: Viết dependency dùng chung trong `core`**
+
+`audit_log` ở tầng 1 cũng cần biết ai đang đăng nhập, mà nó không gọi lên module `user` ở tầng 2 được. Nên dependency dùng chung nằm ở `core`.
+
+Tạo `backend/app/core/deps.py`:
+
+```python
+"""FastAPI dependencies every module shares: the request session and the caller.
+
+They live in `core` because a module at any tier declares them, and no module
+may call a module above it: docs/architecture/dependency-graph.md.
+"""
+
+from collections.abc import AsyncIterator
+from typing import Annotated
+
+from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import Settings, get_settings
+from app.core.db import get_engine, session_scope
+from app.core.identity import User
+from app.core.security import load_current_user
+
+
+async def get_db() -> AsyncIterator[AsyncSession]:
+    """One transaction per request, on the engine shared by the process."""
+    async with session_scope(get_engine()) as session:
+        yield session
+
+
+SettingsDep = Annotated[Settings, Depends(get_settings)]
+DbDep = Annotated[AsyncSession, Depends(get_db)]
+
+
+async def current_user(request: Request, session: DbDep, settings: SettingsDep) -> User:
+    return await load_current_user(request, session, settings)
+
+
+CurrentUser = Annotated[User, Depends(current_user)]
+```
+
+⚠️ `get_db` must use `get_engine()` from Task 6, not `build_engine()`. Building an engine per request opens a new connection pool on every call.
+
 Tạo `backend/app/user/schemas.py`:
 
 ```python
@@ -2028,31 +2073,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import Settings, get_settings
-from app.core.db import build_engine, session_scope
-from app.core.security import enforce_csrf, load_current_user, session_cookie
+from app.core.deps import CurrentUser, DbDep, SettingsDep
+from app.core.security import enforce_csrf, session_cookie
 from app.core.system_setting import get_int_setting
 from app.user import service
 from app.core.identity import User
 from app.user.schemas import LoginRequest, PasswordChangeRequest, UserResponse
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
-
-
-async def get_db() -> AsyncSession:
-    async with session_scope(build_engine()) as session:
-        yield session
-
-
-SettingsDep = Annotated[Settings, Depends(get_settings)]
-DbDep = Annotated[AsyncSession, Depends(get_db)]
-
-
-async def current_user(request: Request, session: DbDep, settings: SettingsDep) -> User:
-    return await load_current_user(request, session, settings)
-
-
-CurrentUser = Annotated[User, Depends(current_user)]
 
 
 def client_ip(request: Request) -> str:
@@ -2389,8 +2417,9 @@ from app.core.identity import UserRole
 superadmin_only = require_roles(UserRole.SUPERADMIN)
 
 
-async def superadmin(user: CurrentUser, session: DbDep) -> User:
-    return await superadmin_only(user, session)
+async def superadmin(request: Request, user: CurrentUser) -> User:
+    # The guard takes the request so a denial records the method, path and IP.
+    return await superadmin_only(user, request)
 
 
 Superadmin = Annotated[User, Depends(superadmin)]
@@ -2474,6 +2503,45 @@ async def list_user_sessions(
     )
 ```
 
+- [ ] **Step 4A: Thêm hàm giải mã cursor thời gian vào `core/pagination.py`**
+
+`decode_cursor` chỉ bảo đảm hình dạng, không bảo đảm kiểu của giá trị sắp xếp. Đưa thẳng giá trị đó vào `datetime.fromisoformat` thì cursor độc hại thành lỗi 500. Cả Task 10 và Task 11 đều phân trang theo cột thời gian nên hàm này đặt ở `core/pagination.py`, không chép hai nơi.
+
+```python
+def decode_time_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
+    """Decode a cursor whose sort value is an ISO 8601 timestamp.
+
+    decode_cursor guarantees the shape only, so a hostile sort value has to
+    become a 400 here rather than a database error later.
+    """
+    sort_value, row_id = decode_cursor(cursor)
+    if not isinstance(sort_value, str):
+        raise BadRequestError(detail="cursor is not valid")
+    try:
+        return datetime.fromisoformat(sort_value), row_id
+    except ValueError as err:
+        raise BadRequestError(detail="cursor is not valid") from err
+```
+
+Thêm `from datetime import datetime` vào đầu file. Đồng thời thu hẹp kiểu tham số của `encode_cursor` từ `object` thành `str | int | float`, để truyền nhầm một `datetime` bị mypy bắt ngay ở nơi gọi thay vì sinh lỗi 500 lúc chạy.
+
+Test bổ sung trong `backend/tests/test_pagination.py`:
+
+```python
+@pytest.mark.parametrize("sort_value", ["not-a-timestamp", 7, None, {"a": 1}])
+def test_time_cursor_rejects_a_sort_value_that_is_not_a_timestamp(sort_value: object) -> None:
+    with pytest.raises(BadRequestError):
+        decode_time_cursor(encode_cursor_raw(sort_value, uuid.uuid4()))
+
+
+def test_time_cursor_round_trips() -> None:
+    moment = datetime(2026, 11, 3, 8, 0, tzinfo=UTC)
+    row_id = uuid.uuid4()
+    assert decode_time_cursor(encode_cursor(moment.isoformat(), row_id)) == (moment, row_id)
+```
+
+`encode_cursor_raw` là một hàm trợ giúp trong file test dựng cursor từ giá trị tuỳ ý, vì `encode_cursor` đã thu hẹp kiểu.
+
 - [ ] **Step 4B: Viết hai hàm phân trang của module user**
 
 Bổ sung vào `backend/app/user/service.py`:
@@ -2487,10 +2555,8 @@ async def list_users(session: AsyncSession, *, limit: int, cursor: str | None) -
     size = _clamp(limit)
     stmt = select(User).order_by(User.created_at.desc(), User.id.desc())
     if cursor is not None:
-        seen_at, seen_id = decode_cursor(cursor)
-        stmt = stmt.where(
-            tuple_(User.created_at, User.id) < (datetime.fromisoformat(seen_at), seen_id)
-        )
+        seen_at, seen_id = decode_time_cursor(cursor)
+        stmt = stmt.where(tuple_(User.created_at, User.id) < (seen_at, seen_id))
     rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
     total = await session.scalar(select(func.count()).select_from(User)) or 0
     page_rows = rows[:size]
@@ -2517,11 +2583,8 @@ async def list_sessions_for_user(
         .order_by(UserSession.created_at.desc(), UserSession.id.desc())
     )
     if cursor is not None:
-        seen_at, seen_id = decode_cursor(cursor)
-        stmt = stmt.where(
-            tuple_(UserSession.created_at, UserSession.id)
-            < (datetime.fromisoformat(seen_at), seen_id)
-        )
+        seen_at, seen_id = decode_time_cursor(cursor)
+        stmt = stmt.where(tuple_(UserSession.created_at, UserSession.id) < (seen_at, seen_id))
     rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
     total = (
         await session.scalar(
@@ -2544,7 +2607,7 @@ async def list_sessions_for_user(
     )
 ```
 
-Thêm import `tuple_` từ `sqlalchemy`, `Page`, `DEFAULT_LIMIT`, `MAX_LIMIT`, `decode_cursor`, `encode_cursor` từ `app.core.pagination`, và `UserResponse`, `UserSessionResponse` từ `app.user.schemas`.
+Thêm import `tuple_` từ `sqlalchemy`, `Page`, `DEFAULT_LIMIT`, `MAX_LIMIT`, `decode_time_cursor`, `encode_cursor` từ `app.core.pagination`, và `UserResponse`, `UserSessionResponse` từ `app.user.schemas`.
 
 - [ ] **Step 5: Chạy test, xác nhận đạt**
 
@@ -2703,10 +2766,8 @@ async def list_entries(
         .order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
     )
     if cursor is not None:
-        seen_at, seen_id = decode_cursor(cursor)
-        stmt = stmt.where(
-            tuple_(AuditLog.created_at, AuditLog.id) < (datetime.fromisoformat(seen_at), seen_id)
-        )
+        seen_at, seen_id = decode_time_cursor(cursor)
+        stmt = stmt.where(tuple_(AuditLog.created_at, AuditLog.id) < (seen_at, seen_id))
     rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
     total = (
         await session.scalar(select(func.count()).select_from(AuditLog).where(*conditions)) or 0
@@ -2735,16 +2796,25 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.audit_log import service
 from app.audit_log.schemas import AuditLogResponse
+from app.core.deps import CurrentUser, DbDep
+from app.core.identity import User, UserRole
 from app.core.pagination import DEFAULT_LIMIT, Page
-from app.core.security import DbDep, Principal, require_roles
+from app.core.security import require_roles
 
 router = APIRouter(prefix="/api/v1", tags=["audit_log"])
 
-Reader = Annotated[Principal, Depends(require_roles("superadmin", "admin"))]
+audit_reader = require_roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+
+
+async def audit_viewer(request: Request, user: CurrentUser) -> User:
+    return await audit_reader(user, request)
+
+
+Reader = Annotated[User, Depends(audit_viewer)]
 
 
 @router.get("/audit-logs", response_model=Page[AuditLogResponse])
@@ -2771,7 +2841,7 @@ async def list_audit_logs(
 
 Gắn router vào `backend/app/main.py`.
 
-Router này lấy `DbDep`, `Principal` và `require_roles` từ `core`. Mọi module ở mọi tầng đều lấy từ `core`, không module nào gọi lên module khác.
+Router này lấy `CurrentUser`, `DbDep` từ `app.core.deps` và `require_roles` từ `app.core.security`. Mọi module ở mọi tầng đều lấy dependency từ `core`, không module nào gọi lên module khác.
 
 Thêm vào `backend/app/user/service.py`:
 
