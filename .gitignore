@@ -1,6 +1,7 @@
 # Thông tin xác thực
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 

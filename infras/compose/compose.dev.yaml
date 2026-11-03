@@ -1,0 +1,66 @@
+# Core-zone data stores for development. Application processes run on the host
+# with `make`, so only PostgreSQL, Redis and Garage live here.
+# Production layout: docs/ops/deployment.md
+name: reconos-dev
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: postgres
+      RECONOS_DB_PASSWORD: ${RECONOS_DB_PASSWORD:?set RECONOS_DB_PASSWORD in .env}
+      RECONOS_LOG_DB_PASSWORD: ${RECONOS_LOG_DB_PASSWORD:?set RECONOS_LOG_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18 images keep the cluster in a version subdirectory, so the
+      # mount sits one level above: github.com/docker-library/postgres/pull/1259
+      - postgres-data:/var/lib/postgresql
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reconos"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:8
+    # Persistence on: the queue must survive a restart. ACL per account arrives
+    # with the worker in batch 4 of docs/roadmap.md
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    # Pinned by digest. minio/minio is no longer public on any registry, so this
+    # image can only come from a local cache or a saved tar: tech debt 19.
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    pull_policy: never
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${RECONOS_S3_ACCESS_KEY:?set RECONOS_S3_ACCESS_KEY in .env}
+      MINIO_ROOT_PASSWORD: ${RECONOS_S3_SECRET_KEY:?set RECONOS_S3_SECRET_KEY in .env}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

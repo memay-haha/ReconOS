@@ -30,12 +30,14 @@ help: ## List available commands
 
 dev-up: ## Start core-zone containers for development
 	$(COMPOSE_DEV) up -d --wait
+	infras/minio/init.sh infras/compose/compose.dev.yaml
 
 dev-down: ## Stop core-zone containers for development
 	$(COMPOSE_DEV) down
 
-migrate: ## Run alembic upgrade head on the dev database
+migrate: ## Run alembic upgrade head on both dev databases
 	$(ALEMBIC) upgrade head
+	$(ALEMBIC) -n log upgrade head
 
 lint: ## ruff format, ruff check, mypy, ESLint, Prettier, tsc
 	uv run ruff format --check .
@@ -50,6 +52,10 @@ test: ## pytest for backend, workers, contracts and Vitest for frontend (needs d
 	$(PNPM_FE) test
 
 test-coverage: ## 100% branch coverage for scope, authorization, parameter schemas
+	@if [ ! -d backend/app/scope ]; then \
+		echo "skip: module scope chưa có, xem đợt 3 trong docs/roadmap.md"; \
+		exit 0; \
+	fi; \
 	uv run pytest \
 		--cov=backend/app/scope \
 		--cov=backend/app/core/security.py \
@@ -69,7 +75,10 @@ build: ## Build reconos-backend, reconos-frontend, reconos-worker images
 engine-check: ## Check that Osmedeus and Vigolium servers respond over HTTP
 	@fail=0; \
 	for pair in "osmedeus $(OSMEDEUS_URL)" "vigolium $(VIGOLIUM_URL)"; do \
-		set -- $$pair; \
+		set -- $$pair ""; \
+		if [ -z "$$2" ]; then \
+			printf '[SKIP] %-9s chưa đặt URL trong .env\n' "$$1"; continue; \
+		fi; \
 		code=$$(curl -s -o /dev/null -w '%{http_code}' --max-time $(ENGINE_TIMEOUT) "$$2/" || true); \
 		if [ "$$code" = "000" ] || [ -z "$$code" ]; then \
 			printf '[FAIL] %-9s %s no response\n' "$$1" "$$2"; fail=1; \
