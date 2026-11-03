@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.6 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -46,6 +46,7 @@
 
 - Celery, SQLAlchemy, Pydantic, FastAPI, Alembic, asyncpg, aioboto3, argon2-cffi, cryptography chạy đạt trên Python 3.15.2, kiểm chứng ngày 03/11/2026.
 - ⚠️ Celery và aioboto3 không có `py.typed`. Khai báo bỏ qua riêng cho hai module này khi chạy mypy strict: [coding-convention.md](../../.claude/rules/coding-convention.md).
+- ⚠️ zxcvbn không có `py.typed`. Gói `types-zxcvbn` trong nhóm công cụ phát triển cung cấp stub cho mypy, không dùng khai báo bỏ qua.
 - ⚠️ PostgreSQL 19 dự kiến phát hành ngày 19/11/2026. Chọn 18 cho đến khi 19 ra bản chính thức.
 - ⚠️ MinIO dừng phát triển bản mã nguồn mở: không còn image công khai trên registry nào, repo archived từ 24/04/2026. Hệ thống dùng bản `RELEASE.2025-09-07T16-13-09Z` ghim theo digest, nạp từ file tar. Rủi ro và hướng thay thế: nợ 19 trong [tech-debt.md](../tech-debt.md).
 
@@ -94,6 +95,7 @@
 | mypy | Kiểm tra kiểu chế độ strict | backend, workers, contracts |
 | pnpm | Quản lý thư viện phụ thuộc, lock file | frontend |
 | pytest, pytest-asyncio, pytest-cov | Test Python, đo độ phủ | backend, workers, contracts |
+| types-zxcvbn | Stub kiểu để mypy kiểm tra `zxcvbn` | backend |
 | Vitest, Testing Library | Test hook, component | frontend |
 | Playwright | Test E2E (end-to-end) | frontend |
 

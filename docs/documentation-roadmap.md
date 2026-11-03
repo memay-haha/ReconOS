@@ -1,11 +1,11 @@
 # 🗺️ ReconOS: Bảng theo dõi tài liệu
 
-> Cập nhật: 2026-11-03
+> Cập nhật: 2026-11-04
 > Quy tắc viết và quy trình: [.claude/rules/documentation.md](../.claude/rules/documentation.md)
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 33/40 · 🔵 7 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 31/40 · 🔵 9 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -14,7 +14,7 @@
 | 3  | `docs/decisions/adr-own-database.md`       | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ theo vietnamese-writing |
 | 4  | `docs/decisions/adr-tech-stack.md`         | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ, lý do loại Vue và Svelte, JSONB không còn dùng cho trường tùy biến |
 | 5  | `docs/decisions/adr-repo-structure.md`     | 24      | 4                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: Monorepo, cây thư mục đầy đủ nằm trong ADR |
-| 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🟢 Xong   | 2026-11-03 | v1.6: thêm zxcvbn chấm điểm độ mạnh mật khẩu |
+| 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🔵 Chờ duyệt | 2026-11-04 | v1.7: ghi stub `types-zxcvbn` trong công cụ phát triển, thay khai báo bỏ qua |
 | 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🟢 Xong        | 2026-11-03 | v1.3: thêm `backend/migrations_log/` |
 | 8  | `docs/architecture/system.md`              | 4       | 1, 6                 | 🟢 Xong       | 2026-11-01 | v1.2: số lần thử lại của task `parse` chuyển từ error-handling |
 | 9  | `docs/architecture/modules.md`             | 5       | 7, 8                 | 🔵 Chờ duyệt | 2026-11-03 | v1.4: `core` giữ bảng danh tính, module `user` giữ nghiệp vụ tài khoản |
@@ -38,10 +38,10 @@
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt  | 2026-11-03 | Nhánh riêng cho mọi việc của một đợt, kể cả sửa tài liệu. Thêm lệnh `make bootstrap` |
-| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong        | 2026-11-03 | v1.9: đóng nợ 14; thêm nợ 18 CI, nợ 19 image MinIO |
+| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v2.0: thêm nợ 20 bộ đếm dùng chung, nợ 21 IP sau reverse proxy, nợ 22 cảnh báo test |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong   | 2026-11-03 | v2.3: đợt 2 thêm bảng ngưỡng vận hành |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
-| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-03 | Thêm `identity.py`, `pagination.py`, `system_setting.py` vào mã dùng chung, lệnh bootstrap |
+| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | Thêm `identity.py`, `pagination.py`, `system_setting.py`, `deps.py` vào mã dùng chung, lệnh bootstrap |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🟢 Xong       | 2026-11-03 | Design token sinh từ `docs/design/design-system.md`, vị trí test |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-03 | v1.3: thêm `login_attempt`, 34 bảng, `audit_log.user_id` bỏ khóa ngoại, bảng danh tính sang `core` |

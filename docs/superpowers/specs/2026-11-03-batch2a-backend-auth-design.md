@@ -88,7 +88,7 @@ Ba điểm bắt buộc khi cài:
 
 - Hàm ghi nhận `action`, `user_id`, `resource_type`, `resource_id`, `detail`, `ip_address`.
 - `GET /audit-logs` cho Superadmin và Admin, phân trang cursor, lọc theo `user_id`, `action`, `created_at_from`, `created_at_to`.
-- Tên `action` viết snake_case: `login_succeeded`, `login_failed`, `logout`, `password_changed`, `user_created`, `user_updated`, `user_role_changed`, `user_locked`, `user_unlocked`, `session_revoked`, `permission_denied`.
+- Tên `action` viết snake_case: `login_succeeded`, `login_failed`, `logout`, `password_changed`, `password_change_failed`, `user_created`, `user_updated`, `user_role_changed`, `user_locked`, `user_unlocked`, `session_revoked`, `permission_denied`.
 - ❌ Không ghi mật khẩu, session ID, token vào `detail`: [logging.md](../../../.claude/rules/logging.md).
 
 ## 🔄 Phân trang cursor
