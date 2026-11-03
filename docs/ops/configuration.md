@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -67,6 +67,14 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 
 - Backend API giữ thêm 2 kết nối cố định ngoài `RECONOS_DB_POOL_SIZE`, dành riêng cho transaction độc lập ghi lần đăng nhập sai và yêu cầu bị từ chối. Số này không cấu hình được. Khi cả 2 kết nối đang bận, request chờ tối đa 2 giây rồi bỏ, để một đợt đăng nhập sai dồn dập không làm request treo.
 - Hai biến `RECONOS_BOOTSTRAP_ADMIN_*` chỉ có tác dụng khi bảng `user` chưa có dòng nào. Đổi giá trị sau đó không sửa tài khoản đã tạo: [authentication.md](../security/authentication.md).
+
+### Biến môi trường của frontend
+
+| Biến | Thông tin xác thực | Ý nghĩa |
+|---|---|---|
+| `RECONOS_API_URL` | | URL Backend API. Server Next.js chuyển tiếp `/api/*` tới địa chỉ này |
+
+- Trình duyệt chỉ gọi origin của Next.js, không gọi thẳng Backend API. Nhờ vậy `Origin` luôn khớp `RECONOS_PUBLIC_ORIGIN` và cookie `SameSite=Lax` gửi kèm. Production định tuyến `/api/` ở Nginx: [deployment.md](deployment.md).
 
 ### Biến môi trường của worker
 

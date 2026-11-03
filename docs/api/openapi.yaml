@@ -109,6 +109,17 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
+  /user-sessions:
+    get:
+      tags: [user]
+      summary: "Phiên đang hoạt động của mọi tài khoản, không gồm phiên đã hết hạn"
+      x-roles: [superadmin]
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
   /user-sessions/{user_session_id}:
     parameters:
       - {name: user_session_id, in: path, required: true, schema: {type: string, format: uuid}}

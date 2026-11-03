@@ -16,7 +16,8 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 
 - Dựng màn hình theo thiết kế trong [docs/design/screens/](../docs/design/screens/), danh sách trong `index.json`.
 - Đặt route trong `src/app/` theo màn hình.
-- Sinh khối `@theme` của `src/styles/globals.css` từ [design-system.md](../docs/design/design-system.md). ❌ Không sửa tay khối này: sửa design system rồi sinh lại.
+- Sinh khối `@theme` của `src/styles/globals.css` từ bảng token trong [design-system.md](../docs/design/design-system.md) bằng script sinh token. ❌ Không sửa tay khối này: sửa bảng token rồi chạy lại script. Test chạy lại script và so với file đã commit.
+- Một bộ tên token cho cả hai theme: `@theme` giữ giá trị theme sáng, khối `[data-theme="dark"]` ghi đè. ❌ Không rẽ nhánh theo theme trong component.
 - Đặt test unit cạnh file mã, test E2E trong `frontend/e2e/`: [testing.md](../.claude/rules/testing.md).
 - Hỗ trợ hai theme tối, sáng.
 - Hiển thị đúng từ chiều rộng 390 px.
