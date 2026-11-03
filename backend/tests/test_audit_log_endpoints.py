@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pytest
 from httpx import AsyncClient
@@ -25,8 +26,11 @@ async def _seed(
     at: datetime,
     user_id: uuid.UUID | None = None,
     ip_address: str | None = None,
+    detail: dict[str, Any] | None = None,
 ) -> AuditLog:
-    row = AuditLog(action=action, created_at=at, user_id=user_id, ip_address=ip_address)
+    row = AuditLog(
+        action=action, created_at=at, user_id=user_id, ip_address=ip_address, detail=detail
+    )
     db_session.add(row)
     await db_session.flush()
     return row
@@ -65,7 +69,8 @@ async def test_audit_list_locked_account_is_refused(
     user = await logged_in(role=UserRole.ADMIN)
     user.is_locked = True
     await db_session.flush()
-    assert (await client.get("/api/v1/audit-logs")).status_code in (401, 403)
+    # load_current_user rejects a locked account like every other cause: 401.
+    assert (await client.get("/api/v1/audit-logs")).status_code == 401
 
 
 async def test_audit_list_contains_the_login(client: AsyncClient, logged_in: LoggedIn) -> None:
@@ -75,16 +80,22 @@ async def test_audit_list_contains_the_login(client: AsyncClient, logged_in: Log
     assert body["total"] >= 1
 
 
-async def test_audit_list_carries_no_secret_and_text_address(
+async def test_audit_list_returns_detail_verbatim_and_address_as_text(
     client: AsyncClient, logged_in: LoggedIn, db_session: AsyncSession
 ) -> None:
     await logged_in(role=UserRole.ADMIN)
-    await _seed(db_session, action="probe", at=BASE, ip_address="203.0.113.9")
-    body = (await client.get("/api/v1/audit-logs?action=probe")).json()
-    assert body["items"][0]["ip_address"] == "203.0.113.9"
-    text = str(body)
-    assert "session_hash" not in text
-    assert "password_hash" not in text
+    # The endpoint does not filter `detail`. The guarantee that no credential
+    # ever lands in it lives at the write side (every audit writer), not here.
+    await _seed(
+        db_session,
+        action="probe",
+        at=BASE,
+        ip_address="203.0.113.9",
+        detail={"session_hash": "x"},
+    )
+    item = (await client.get("/api/v1/audit-logs?action=probe")).json()["items"][0]
+    assert item["ip_address"] == "203.0.113.9"
+    assert item["detail"] == {"session_hash": "x"}
 
 
 async def test_bad_cursor_is_rejected(client: AsyncClient, logged_in: LoggedIn) -> None:
@@ -207,3 +218,27 @@ async def test_revoke_session_requires_csrf(
         select(func.count()).select_from(UserSession).where(UserSession.id == victim_session.id)
     )
     assert count == 1
+
+
+async def test_session_revoked_row_holds_no_session_secret(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    victim_session = await _victim_session(db_session, user_factory)
+    await client.delete(f"/api/v1/user-sessions/{victim_session.id}", headers=HEADERS)
+    row = (
+        await db_session.execute(select(AuditLog).where(AuditLog.action == "session_revoked"))
+    ).scalar_one()
+    serialised = str(row.detail)
+    assert victim_session.session_hash not in serialised
+    assert str(victim_session.id) not in serialised
+    assert "session_hash" not in serialised
+
+
+@pytest.mark.parametrize("bound", ["created_at_from", "created_at_to"])
+async def test_naive_time_bound_is_rejected(
+    client: AsyncClient, logged_in: LoggedIn, bound: str
+) -> None:
+    await logged_in(role=UserRole.ADMIN)
+    response = await client.get("/api/v1/audit-logs", params={bound: "2026-01-01T00:00:00"})
+    assert response.status_code == 400

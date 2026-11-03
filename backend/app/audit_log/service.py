@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit_log.models import AuditLog
 from app.audit_log.schemas import AuditLogResponse
 from app.core.db import independent_session
+from app.core.errors import BadRequestError
 from app.core.pagination import MAX_LIMIT, Page, decode_time_cursor, encode_cursor
 
 
@@ -72,6 +73,11 @@ async def list_entries(
     created_at_to: datetime | None = None,
 ) -> Page[AuditLogResponse]:
     size = max(1, min(limit, MAX_LIMIT))
+    # A naive datetime against a timestamptz column is a driver error (500) or a
+    # silent timezone mismatch, so refuse it as the cursor path does.
+    for bound in (created_at_from, created_at_to):
+        if bound is not None and bound.tzinfo is None:
+            raise BadRequestError(detail="created_at bounds must carry a timezone")
     conditions: list[ColumnElement[bool]] = []
     if user_id is not None:
         conditions.append(AuditLog.user_id == user_id)
