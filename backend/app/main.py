@@ -1,8 +1,25 @@
 """Backend API entrypoint. Module routers are mounted on the versioned router."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import APIRouter, FastAPI, status
 
+from app.core.config import get_settings
+from app.core.errors import install_error_handlers
+from app.core.logging import configure_logging
+
 API_PREFIX = "/api/v1"
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # Settings are read once here, so a missing variable stops the process at
+    # startup rather than on the first request: docs/ops/configuration.md
+    settings = get_settings()
+    configure_logging(settings.log_level)
+    yield
+
 
 # Only POST /auth/login and GET /health may be reached without a session, so the
 # interactive docs and the schema route stay off: docs/api/architecture.md.
@@ -12,7 +29,10 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
+    lifespan=lifespan,
 )
+
+install_error_handlers(app)
 
 api_router = APIRouter(prefix=API_PREFIX)
 

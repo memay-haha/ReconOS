@@ -62,7 +62,7 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 # Tests assert and spin up fixtures that would trip security and typing rules.
-"**/tests/**" = ["ANN201", "S101", "S105", "S106"]
+"**/tests/**" = ["ANN201", "S101", "S105", "S106", "TRY003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app", "contracts", "worker"]
@@ -72,7 +72,9 @@ python_version = "3.15"
 strict = true
 plugins = ["pydantic.mypy"]
 files = ["backend", "contracts", "workers"]
-exclude = "^backend/migrations/versions/"
+# Alembic runs env.py as a script, never imports it, and both trees name it the
+# same, which mypy reads as a duplicate module.
+exclude = "^backend/migrations_log/env\\.py$"
 
 # Neither library ships py.typed: docs/architecture/tech-stack.md
 [[tool.mypy.overrides]]
@@ -81,6 +83,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["backend/tests", "contracts/tests", "workers/tests"]
 addopts = "--strict-markers --strict-config"
 
