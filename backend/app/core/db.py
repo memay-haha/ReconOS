@@ -84,6 +84,10 @@ def get_engine() -> AsyncEngine:
 # A failed login and a permission denial are one INSERT and a COMMIT, so two
 # connections absorb the concurrency of a whole process.
 INDEPENDENT_POOL_SIZE = 2
+# Wait briefly for a free connection, then fail. SQLAlchemy's 30 s default
+# would turn a burst of failed logins into a stalled request answered 500,
+# where the caller should have seen 401 or 429.
+INDEPENDENT_POOL_TIMEOUT_SECONDS = 2.0
 
 
 @lru_cache
@@ -102,6 +106,7 @@ def get_independent_engine() -> AsyncEngine:
         _url_with_password(settings.database_url, settings.db_password.get_secret_value()),
         pool_size=INDEPENDENT_POOL_SIZE,
         max_overflow=0,
+        pool_timeout=INDEPENDENT_POOL_TIMEOUT_SECONDS,
         pool_pre_ping=True,
     )
 

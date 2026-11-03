@@ -83,6 +83,10 @@ def settings_factory() -> Callable[..., Settings]:
             "s3_secret_key": "x",
             "encryption_keys": "k1:" + "0" * 44,
             "public_origin": "https://reconos.example.com",
+            # Pinned so a developer's own .env cannot decide whether a test
+            # sees the bootstrap variables as set.
+            "bootstrap_admin_username": None,
+            "bootstrap_admin_password": None,
         }
         values.update(overrides)
         return Settings(**values)  # type: ignore[arg-type]  # dict built from known field names
