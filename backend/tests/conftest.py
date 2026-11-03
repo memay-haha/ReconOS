@@ -4,9 +4,12 @@ Running against the development stores is forbidden: .claude/rules/testing.md
 """
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+
+from app.core.config import Settings
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -37,3 +40,25 @@ def pytest_configure(config: pytest.Config) -> None:
     bucket = os.environ.get("RECONOS_S3_BUCKET")
     if bucket and not bucket.endswith("-test"):
         os.environ["RECONOS_S3_BUCKET"] = f"{bucket}-test"
+
+
+@pytest.fixture
+def settings_factory() -> Callable[..., Settings]:
+    def build(**overrides: object) -> Settings:
+        values: dict[str, object] = {
+            "database_url": "postgresql+asyncpg://reconos@localhost/reconos_test",
+            "db_password": "x",
+            "log_database_url": "postgresql+asyncpg://reconos@localhost/reconos_log_test",
+            "log_db_password": "x",
+            "redis_url": "redis://localhost:6379/0",
+            "s3_endpoint": "http://localhost:9000",
+            "s3_bucket": "reconos-test",
+            "s3_access_key": "x",
+            "s3_secret_key": "x",
+            "encryption_keys": "k1:" + "0" * 44,
+            "public_origin": "https://reconos.example.com",
+        }
+        values.update(overrides)
+        return Settings(**values)  # type: ignore[arg-type]  # dict built from known field names
+
+    return build
