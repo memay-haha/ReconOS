@@ -72,7 +72,7 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [user]
-      summary: "Sửa tài khoản, đổi vai trò"
+      summary: "Sửa tài khoản, đổi vai trò. Không đổi vai trò của chính mình"
       x-roles: [superadmin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -82,7 +82,7 @@ paths:
       - {name: user_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [user]
-      summary: "Khóa tài khoản, hủy mọi phiên"
+      summary: "Khóa tài khoản, hủy mọi phiên. Không khóa chính mình"
       x-roles: [superadmin]
       responses:
         '204': {description: Thành công}

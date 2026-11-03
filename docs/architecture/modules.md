@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.2 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -44,7 +44,7 @@
 | `finding` | Finding, severity, triage (G6) | S20 |
 | `report` | Báo cáo từ finding, truy vết về output thô (G6) | |
 | `dashboard` | Số liệu tổng hợp | S02 |
-| `user` | Tài khoản, vai trò, phiên đăng nhập, token worker | S12 |
+| `user` | Tài khoản, vai trò, phiên đăng nhập, chặn đăng nhập sai nhiều lần, token worker | S12 |
 | `audit_log` | Nhật ký thao tác (G7) | S12 |
 | `alert` | Cảnh báo theo program, trạng thái đã đọc theo tài khoản | Chuông trên header |
 

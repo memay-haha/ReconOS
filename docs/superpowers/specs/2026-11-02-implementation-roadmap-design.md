@@ -37,12 +37,15 @@
 
 **Lát cắt:** đăng nhập trên S01, Superadmin tạo tài khoản trên S12, mọi thao tác ghi nhật ký.
 
-- Bảng: `user`, `user_session`, `audit_log`.
+- Bảng: `user`, `user_session`, `login_attempt`, `audit_log`, `system_setting`.
 - Module: `user`, `audit_log`. Mã dùng chung: `core/security.py`.
-- Mật khẩu Argon2id. Phiên phía server, cookie giữ session ID gốc, CSDL giữ giá trị băm SHA-256. Chống CSRF theo `api/architecture.md`.
-- Dependency phân quyền cho 3 vai trò và hàm lọc theo program được gán, dùng lại từ đợt 3.
+- Mật khẩu Argon2id, từ chối mật khẩu có điểm zxcvbn dưới 3. Phiên phía server, cookie giữ session ID gốc, CSDL giữ giá trị băm SHA-256. Thuộc tính cookie chọn theo scheme của `RECONOS_PUBLIC_ORIGIN`. Chống CSRF theo `api/architecture.md`.
+- Chặn đăng nhập sai bằng bảng `login_attempt`, đếm theo tài khoản và theo IP trong cửa sổ đếm.
+- Ngưỡng vận hành đọc từ `system_setting`, thiếu tên thiết lập thì dùng giá trị mặc định trong `configuration.md`. Màn hình sửa ngưỡng vẫn ở đợt 10.
+- Tài khoản Superadmin đầu tiên tạo bằng lệnh `bootstrap` đọc biến môi trường, chỉ chạy khi bảng `user` chưa có dòng nào.
+- Dependency phân quyền cho 3 vai trò. Hàm lọc theo program viết sẵn khung ở đợt 2, nối vào bảng `program_user` ở đợt 3.
 - Màn hình S01, S12. Sửa trước khi dựng: nợ 4 bỏ MFA Enforced, FIDO2, WebAuthn, SSO SAML, Active Directory, mTLS, API Tokens và 3 vai trò ngoài glossary. Nợ 11 phân trang cursor với nút Trước, Sau.
-- Test: mỗi endpoint với từng vai trò. Tài khoản User gọi tài nguyên program chưa gán trả `404`. Độ phủ 100% nhánh cho `core/security.py`.
+- Test: mỗi endpoint với từng vai trò. Độ phủ 100% nhánh cho `core/security.py`.
 - E2E (end-to-end): luồng đăng nhập.
 
 ## 🔄 Đợt 3: Program và scope
@@ -54,13 +57,13 @@
 - Tạm dừng, lưu trữ, xóa cứng program. Gán User vào program. Proxy của program lưu cột `url_encrypted`.
 - So khớp 4 dạng scope rule: `domain`, `wildcard`, `cidr`, `url`, cho cả In-Scope và Out-of-Scope.
 - Màn hình S08, S09, S11. Sửa trước khi dựng: nợ 1 bỏ phần BBRF, nợ 6 bỏ chú thích tự sinh job và runner chặn scope, nợ 11 phân trang.
-- Test: bảng ca so khớp theo trường hợp biên trong `business-flow.md`, độ phủ 100% nhánh, chạy trong CI (G5).
+- Test: bảng ca so khớp theo trường hợp biên trong `business-flow.md`, độ phủ 100% nhánh, chạy trong CI (G5). Tài khoản User gọi tài nguyên program chưa gán trả `404`.
 
 ## 🔄 Đợt 4: Xương sống job và output thô
 
 **Lát cắt:** tạo job `nuclei` trên mục tiêu trong scope, worker chạy, output thô tải về được, S10 cập nhật realtime.
 
-- Bảng: `tool_module`, `job`, `raw_output`, `worker`, `worker_token`, `system_setting`.
+- Bảng: `tool_module`, `job`, `raw_output`, `worker`, `worker_token`.
 - `contracts/`: `tasks.py`, `raw_output.py`, `job_status.py`.
 - Module: `tool_module`, `job`, `raw_output`, `dispatcher`. Hoàn thiện `core/realtime.py`.
 - Tạo job: kiểm tra scope và kiểm tra tham số theo schema tool module. Chuyển trạng thái bằng `UPDATE` có điều kiện trạng thái hiện tại. Gửi `NOTIFY` trong cùng transaction.

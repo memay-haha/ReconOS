@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.5 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.6 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -64,6 +64,7 @@
 | Celery | 5 | Thực thi task trên worker: thử lại, timeout. Celery Beat tạo job quét định kỳ |
 | asyncpg | Bản mới nhất | Driver PostgreSQL của SQLAlchemy chế độ async và của migration Alembic |
 | argon2-cffi | Bản mới nhất | Băm mật khẩu Argon2id: [authentication.md](../security/authentication.md) |
+| zxcvbn | Bản mới nhất | Chấm điểm độ mạnh mật khẩu, chặn mật khẩu phổ biến: [authentication.md](../security/authentication.md) |
 | httpx | Bản mới nhất | Client HTTP của worker gọi Backend API và REST API của engine, đặt timeout cho mọi lời gọi |
 | uvicorn | Bản mới nhất | ASGI (Asynchronous Server Gateway Interface) server chạy Backend API |
 

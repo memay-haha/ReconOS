@@ -19,7 +19,9 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 - Khi có quyết định mới hoặc quyết định thay đổi, kể cả thuật ngữ: sửa tài liệu theo [.claude/rules/doc-sync.md](.claude/rules/doc-sync.md) trong cùng lượt.
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
 - Viết và cập nhật tài liệu, ADR: theo [.claude/rules/documentation.md](.claude/rules/documentation.md).
-- Mỗi đợt trong [roadmap.md](docs/roadmap.md) code trên một nhánh riêng, đặt tên `dot-<số>-<chủ đề>`, tách từ `dev`.
+- Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, đặt tên `dot-<số>-<chủ đề>`, tách từ `dev`.
+- Tạo nhánh trước khi bắt đầu bất cứ việc gì của một đợt, kể cả thảo luận, viết spec, sửa tài liệu. ❌ Không sửa file khi đang đứng ở `dev`.
+- Commit mọi thay đổi của đợt trên nhánh của đợt đó.
 - Xong một đợt: merge nhánh đó vào `dev`, push `dev`, rồi lưu memory theo [agentmemory.md](.claude/rules/agentmemory.md).
 - ❌ Không merge vào `main`. Chỉ người dùng merge `dev` vào `main`.
 
@@ -52,6 +54,7 @@ Chạy từ gốc repo. Khi viết `Makefile` lúc bắt đầu viết mã, gi�
 |---|---|
 | `make dev-up`, `make dev-down` | Bật, tắt các container vùng lõi cho phát triển: `infras/compose/compose.dev.yaml` |
 | `make migrate` | `alembic upgrade head` cho CSDL `reconos` và CSDL log `reconos_log` của môi trường phát triển |
+| `make bootstrap` | Tạo tài khoản Superadmin đầu tiên từ biến môi trường, chỉ có tác dụng khi CSDL chưa có tài khoản |
 | `make lint` | ruff format, ruff check, mypy, ESLint, Prettier, `tsc`: [coding-convention.md](.claude/rules/coding-convention.md) |
 | `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make dev-up` trước |
 | `make test-coverage` | Độ phủ 100% nhánh cho scope, phân quyền, schema tham số: [testing.md](.claude/rules/testing.md) |

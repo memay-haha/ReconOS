@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -55,6 +55,7 @@
 | `background` | `reconos-backend` | `celery -A app.background.celery_app worker -Q parse,schedule` | 1 trở lên |
 | `beat` | `reconos-backend` | `celery -A app.background.celery_app beat` | Đúng 1 |
 | `migrate` | `reconos-backend` | `alembic upgrade head`, chạy xong thì thoát | Chỉ khi triển khai |
+| `bootstrap` | `reconos-backend` | `python -m app.bootstrap`, chạy xong thì thoát | Chỉ lần triển khai đầu |
 | `postgres` | PostgreSQL 18 chính thức | Chứa `reconos` và `reconos_log` | 1 |
 | `redis` | Redis 8 chính thức | Bật lưu xuống đĩa, bật ACL (Access Control List) | 1 |
 | `minio` | `minio/minio` ghim theo digest, nạp từ file tar | | 1 |
@@ -104,6 +105,7 @@ MinIO không còn phát hành image công khai và repo đã archived: nợ 19 t
 5. Kiểm tra healthcheck và trang S15.
 6. Triển khai lại máy worker với image mới.
 
+- Lần triển khai đầu tiên: chạy `bootstrap` sau `migrate` để tạo tài khoản Superadmin đầu tiên: [authentication.md](../security/authentication.md).
 - Contract worker thay đổi tương thích ngược trong một phiên bản: backend mới phải phục vụ được worker cũ trong lúc triển khai lần lượt.
 - Migration tương thích ngược với mã của phiên bản trước: thêm cột cho phép `NULL` trước, xóa cột cũ ở phiên bản sau.
 

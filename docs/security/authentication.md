@@ -1,6 +1,6 @@
 # Xác thực
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 7: Xác thực
 > Liên quan: [system.md](../architecture/system.md), [authorization.md](authorization.md), [modules.md](../architecture/modules.md)
 
@@ -41,6 +41,7 @@
 - Mỗi tài khoản có đúng một vai trò: [glossary](../appendix/glossary.md).
 - Mật khẩu băm bằng Argon2id. ❌ Không lưu, không log mật khẩu ở dạng bản rõ.
 - Superadmin khóa được tài khoản. Khóa tài khoản thì mọi phiên của tài khoản đó bị hủy ngay.
+- Tài khoản Superadmin đầu tiên tạo bằng lệnh `bootstrap`, đọc tên đăng nhập và mật khẩu từ biến môi trường: [configuration.md](../ops/configuration.md). Lệnh chỉ tạo khi bảng `user` chưa có dòng nào. Chạy lại không sửa tài khoản đã có trong CSDL.
 
 ### Chính sách mật khẩu
 
@@ -49,7 +50,7 @@
 | Độ dài tối thiểu | 12 ký tự |
 | Độ dài tối đa cho phép | Không thấp hơn 64 ký tự |
 | Bắt buộc loại ký tự: chữ hoa, ký tự đặc biệt | ❌ Không áp dụng |
-| Mật khẩu phổ biến | Từ chối, đối chiếu danh sách lưu cục bộ trong hệ thống |
+| Mật khẩu yếu, mật khẩu phổ biến | Từ chối khi điểm zxcvbn dưới 3. Thư viện chấm điểm chạy cục bộ, không gọi dịch vụ ngoài |
 | Đổi mật khẩu định kỳ | ❌ Không bắt buộc |
 | Dán mật khẩu, trình quản lý mật khẩu | ✅ Cho phép |
 
@@ -65,6 +66,7 @@
 5. Backend ghi nhật ký thao tác cho mọi lần đăng nhập thành công và thất bại.
 
 - Ngưỡng giới hạn đăng nhập sai: [configuration.md](../ops/configuration.md).
+- Mỗi lần đăng nhập sai ghi một dòng vào bảng `login_attempt`, đếm theo tài khoản và theo IP trong cửa sổ đếm. Đăng nhập đúng thì xóa dòng của tài khoản đó: [schema.md](../data/schema.md).
 
 ### Phiên
 
@@ -72,10 +74,11 @@
 |---|---|
 | Nơi lưu | PostgreSQL. Cookie chỉ chứa session ID |
 | Session ID | Ngẫu nhiên từ CSPRNG (Cryptographically Secure Pseudo-Random Number Generator), tối thiểu 128 bit. CSDL lưu giá trị băm |
-| Cookie | `HttpOnly`, `Secure`, `SameSite=Lax`, tiền tố `__Host-` |
+| Cookie | `HttpOnly`, `SameSite=Lax`. Scheme của `RECONOS_PUBLIC_ORIGIN` là https thì thêm `Secure` và tiền tố `__Host-`, là http thì bỏ cả hai vì trình duyệt không nhận cookie `__Host-` trên http |
 | Hết hạn | Theo thời gian không hoạt động và theo thời hạn tối đa tính từ lúc đăng nhập. Giá trị: [configuration.md](../ops/configuration.md) |
 
 - Đăng nhập luôn tạo session ID mới.
+- Production luôn chạy sau reverse proxy có TLS nên cookie luôn mang `Secure` và tiền tố `__Host-`: [deployment.md](../ops/deployment.md).
 - Đăng xuất xóa phiên ở CSDL và xóa cookie.
 - Superadmin xem và thu hồi phiên của mọi tài khoản trên S12.
 - Frontend và Backend API cùng domain qua reverse proxy, nên trình duyệt gửi cookie tới cả hai.

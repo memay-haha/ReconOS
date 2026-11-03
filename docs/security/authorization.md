@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -43,7 +43,7 @@
 
 | Thao tác | Superadmin | Admin | User |
 |---|---|---|---|
-| Quản lý tài khoản, đổi vai trò, khóa tài khoản | ✅ | ❌ | ❌ |
+| Quản lý tài khoản, đổi vai trò, khóa tài khoản | ✅ trừ vai trò và trạng thái khóa của chính mình | ❌ | ❌ |
 | Xem, thu hồi phiên của tài khoản khác | ✅ | ❌ | ❌ |
 | Cấu hình tool module, engine trên S16, S17, S18 | ✅ | ❌ | ❌ |
 | Tạo, thu hồi token worker | ✅ | ❌ | ❌ |
@@ -74,8 +74,9 @@
 3. Tài nguyên thuộc program: backend kiểm tra User được gán vào program của tài nguyên đó. Truy vấn danh sách luôn lọc theo program được gán.
 4. Với tài nguyên ngoài phạm vi của User, backend trả lỗi giống khi tài nguyên không tồn tại, để không lộ tài nguyên đó có tồn tại.
 5. Duyệt job: backend so người duyệt với người tạo job. Trùng thì từ chối, kể cả Superadmin.
-6. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem.
-7. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
+6. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình và không khóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
+7. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem.
+8. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
 
 - Mã lỗi khi bị từ chối: [api/architecture.md](../api/architecture.md).
 

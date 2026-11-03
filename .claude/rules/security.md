@@ -8,7 +8,7 @@ paths:
 ---
 # Quy tắc viết mã an toàn
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 17: Bảo mật
 
 ## ✅ Bắt buộc
@@ -34,6 +34,7 @@ Mỗi quy tắc gắn với một mối đe dọa trong [threat-model.md](../../
 - Nạp khóa từ `RECONOS_ENCRYPTION_KEYS`: [configuration.md](../../docs/ops/configuration.md).
 - Sinh nonce ngẫu nhiên 96 bit cho mỗi lần mã hóa.
 - Băm mật khẩu bằng Argon2id.
+- Từ chối mật khẩu có điểm zxcvbn dưới 3: [authentication.md](../../docs/security/authentication.md).
 - Băm session ID, token worker bằng SHA-256 trước khi lưu.
 - So sánh giá trị băm, token bằng `hmac.compare_digest`.
 - Sinh token, session ID bằng `secrets`.

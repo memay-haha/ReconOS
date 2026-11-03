@@ -1,12 +1,12 @@
 # Schema CSDL
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md)
 
 ## 📌 Đây là gì
 
-- Mô tả 33 bảng của CSDL PostgreSQL: bảng lưu gì, module nào sở hữu, cột cần giải thích.
+- Mô tả 34 bảng của CSDL PostgreSQL: bảng lưu gì, module nào sở hữu, cột cần giải thích.
 - Liệt kê giá trị liệt kê và ràng buộc duy nhất. Cột và quan hệ đầy đủ: ERD (Entity Relationship Diagram) trong [erd.mermaid](erd.mermaid).
 
 ## 🎯 Dùng để làm gì
@@ -28,14 +28,14 @@
 ### ERD
 
 - Một sơ đồ `erDiagram` duy nhất trong [erd.mermaid](erd.mermaid): đủ bảng, cột, khóa chính, khóa ngoại, quan hệ.
-- Không vẽ quan hệ từ cột người thực hiện tới `user`: `created_by`, `updated_by`, `approved_by`, `triaged_by`, `assigned_by`.
+- Không vẽ quan hệ từ cột người thực hiện tới `user`: `created_by`, `updated_by`, `approved_by`, `triaged_by`, `assigned_by`, `audit_log.user_id`.
 - Đổi schema: sửa [erd.mermaid](erd.mermaid) và file này cùng migration.
 
 ### Bảng theo khu vực
 
 | Khu vực | Module: bảng |
 |---|---|
-| Tài khoản và vận hành | `user`: `user`, `user_session`, `worker`, `worker_token`. `audit_log`: `audit_log`. `core`: `system_setting` |
+| Tài khoản và vận hành | `user`: `user`, `user_session`, `login_attempt`, `worker`, `worker_token`. `audit_log`: `audit_log`. `core`: `system_setting` |
 | Program và scope | `program`: `program`, `program_user`, `proxy`. `scope`: `scope_rule`. `job`: `schedule` |
 | Tool module và job | `tool_module`: `tool_module`. `engine`: `engine`, `engine_variable`. `job`: `job`. `raw_output`: `raw_output` |
 | Tài sản | `asset`: `domain`, `ip`, `domain_ip`, `service`, `url`, `technology`, `url_technology`, `asset_event`. `screenshot`: `screenshot` |
@@ -47,9 +47,10 @@
 |---|---|---|
 | `user` | Tài khoản, vai trò, trạng thái khóa | `password_hash`: Argon2id |
 | `user_session` | Phiên đăng nhập phía server | `session_hash`: giá trị băm session ID, cookie giữ bản gốc |
+| `login_attempt` | Lần đăng nhập sai, dùng để chặn dò mật khẩu | Ghi cả khi tên đăng nhập không tồn tại nên `username` là chuỗi tự do, không có khóa ngoại. Đăng nhập đúng thì xóa dòng của tài khoản đó |
 | `worker` | Máy worker đã đăng ký | `last_heartbeat_at`: lần cuối worker báo còn hoạt động. `tool_modules`: tool module đã cài, worker báo qua heartbeat |
 | `worker_token` | Token của worker, nhiều token để xoay vòng | `token_hash`: giá trị băm. `revoked_at` có giá trị: đã thu hồi |
-| `audit_log` | Nhật ký thao tác (G7) | Tối đa một trong `user_id`, `worker_id` có giá trị. Cả hai là `NULL`: thao tác của hệ thống |
+| `audit_log` | Nhật ký thao tác (G7) | Tối đa một trong `user_id`, `worker_id` có giá trị. Cả hai là `NULL`: thao tác của hệ thống. Cột `user_id` không có khóa ngoại: nhật ký chỉ thêm dòng, phải ghi được cả từ transaction khác |
 | `system_setting` | Ngưỡng vận hành Superadmin sửa trên UI | `key`: tên thiết lập. Danh sách tên thiết lập và giá trị mặc định: [configuration.md](../ops/configuration.md) |
 
 ### Program và scope

@@ -1,7 +1,6 @@
 erDiagram
     user ||--o{ user_session : "có"
     worker ||--o{ worker_token : "có"
-    user ||--o{ audit_log : "thực hiện"
     worker ||--o{ audit_log : "thực hiện"
     program ||--o{ program_user : "gán"
     user ||--o{ program_user : "được gán"
@@ -85,6 +84,12 @@ erDiagram
         timestamptz last_seen_at
         timestamptz expires_at
     }
+    login_attempt {
+        uuid id PK
+        text username
+        inet ip_address
+        timestamptz attempted_at
+    }
     worker {
         uuid id PK
         text name UK
@@ -109,7 +114,7 @@ erDiagram
     }
     audit_log {
         uuid id PK
-        uuid user_id FK
+        uuid user_id
         uuid worker_id FK
         uuid program_id FK
         text action
