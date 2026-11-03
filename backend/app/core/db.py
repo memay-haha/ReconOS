@@ -81,6 +81,31 @@ def get_engine() -> AsyncEngine:
     return build_engine()
 
 
+# A failed login and a permission denial are one INSERT and a COMMIT, so two
+# connections absorb the concurrency of a whole process.
+INDEPENDENT_POOL_SIZE = 2
+
+
+@lru_cache
+def get_independent_engine() -> AsyncEngine:
+    """One engine per process for the independent session, with its own pool.
+
+    The caller already holds a connection from the request pool. Borrowing the
+    second one from that same pool is the classic self-deadlock shape once the
+    pool saturates, and a denied request is the fastest way to saturate it, so
+    this engine never shares connections with the request flow. No overflow:
+    the write is short, and queueing here is better than growing a pool nothing
+    bounds.
+    """
+    settings = get_settings()
+    return create_async_engine(
+        _url_with_password(settings.database_url, settings.db_password.get_secret_value()),
+        pool_size=INDEPENDENT_POOL_SIZE,
+        max_overflow=0,
+        pool_pre_ping=True,
+    )
+
+
 @asynccontextmanager
 async def independent_session() -> AsyncIterator[AsyncSession]:
     """A transaction of its own, so the row survives a rolled back request.
@@ -90,5 +115,5 @@ async def independent_session() -> AsyncIterator[AsyncSession]:
     table carries no foreign key, so this write never waits on another
     transaction: docs/data/schema.md.
     """
-    async with session_scope(get_engine()) as session:
+    async with session_scope(get_independent_engine()) as session:
         yield session

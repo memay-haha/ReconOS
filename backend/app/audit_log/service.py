@@ -1,65 +1,20 @@
-"""Writing and reading the operator action log (G7).
+"""Reading the operator action log (G7).
 
-Every module records through this service. audit_log sits below the business
-modules so even `user` can call it: docs/architecture/dependency-graph.md.
+The table and the two write functions live in `app/core/audit.py`, so tier 0
+can record a denial without calling a module above it:
+docs/architecture/dependency-graph.md. This module keeps the read side only.
 """
 
 import uuid
 from datetime import datetime
-from typing import Any
 
 from sqlalchemy import ColumnElement, func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.audit_log.models import AuditLog
 from app.audit_log.schemas import AuditLogResponse
-from app.core.db import independent_session
+from app.core.audit import AuditLog
 from app.core.errors import BadRequestError
 from app.core.pagination import MAX_LIMIT, Page, decode_time_cursor, encode_cursor
-
-
-async def record(
-    session: AsyncSession,
-    *,
-    action: str,
-    user_id: uuid.UUID | None = None,
-    resource_type: str | None = None,
-    resource_id: uuid.UUID | None = None,
-    detail: dict[str, Any] | None = None,
-    ip_address: str | None = None,
-) -> None:
-    session.add(
-        AuditLog(
-            action=action,
-            user_id=user_id,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            detail=detail,
-            ip_address=ip_address,
-        )
-    )
-
-
-async def record_detached(
-    *,
-    action: str,
-    user_id: uuid.UUID | None = None,
-    resource_type: str | None = None,
-    resource_id: uuid.UUID | None = None,
-    detail: dict[str, Any] | None = None,
-    ip_address: str | None = None,
-) -> None:
-    """Record through a session of its own, for requests that end in an error."""
-    async with independent_session() as session:
-        await record(
-            session,
-            action=action,
-            user_id=user_id,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            detail=detail,
-            ip_address=ip_address,
-        )
 
 
 async def list_entries(

@@ -75,3 +75,12 @@ def test_policy_message_never_echoes_the_password() -> None:
         check_password_policy("password1234")
 
     assert "password1234" not in str(caught.value.detail)
+
+
+def test_policy_names_the_field_the_caller_gives() -> None:
+    # POST /auth/password sends new_password, so the form can put the error on
+    # the input the caller typed into.
+    with pytest.raises(ValidationFailedError) as caught:
+        check_password_policy("password1234", field="new_password")
+
+    assert caught.value.errors == [{"field": "new_password", "code": "password_too_weak"}]

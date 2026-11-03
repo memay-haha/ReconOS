@@ -26,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from zxcvbn import zxcvbn
 
-from app.audit_log import service as audit_service
+from app.core import audit
 from app.core.config import Settings
 from app.core.errors import ForbiddenError, UnauthenticatedError, ValidationFailedError
 from app.core.identity import User, UserRole, UserSession
@@ -66,22 +66,28 @@ def burn_password_comparison() -> None:
     verify_password(_BURN_DIGEST, "reconos wrong value")
 
 
-def check_password_policy(password: str, *, user_inputs: Sequence[str] = ()) -> None:
-    """Raise when the password breaks the policy. The message never echoes it."""
+def check_password_policy(
+    password: str, *, user_inputs: Sequence[str] = (), field: str = "password"
+) -> None:
+    """Raise when the password breaks the policy. The message never echoes it.
+
+    `field` names the request body field the password came from, so a form can
+    put the error on the input the caller typed into.
+    """
     if len(password) < MIN_PASSWORD_LENGTH:
         raise ValidationFailedError(
             detail="password is shorter than the minimum length",
-            errors=[{"field": "password", "code": "password_too_short"}],
+            errors=[{"field": field, "code": "password_too_short"}],
         )
     if len(password) > MAX_PASSWORD_LENGTH:
         raise ValidationFailedError(
             detail="password is longer than the maximum length",
-            errors=[{"field": "password", "code": "password_too_long"}],
+            errors=[{"field": field, "code": "password_too_long"}],
         )
     if int(zxcvbn(password, user_inputs=list(user_inputs))["score"]) < MIN_PASSWORD_SCORE:
         raise ValidationFailedError(
             detail="password is too easy to guess",
-            errors=[{"field": "password", "code": "password_too_weak"}],
+            errors=[{"field": field, "code": "password_too_weak"}],
         )
 
 
@@ -193,26 +199,31 @@ async def load_current_user(request: Request, session: AsyncSession, settings: S
 def require_roles(*roles: UserRole) -> Callable[[User, Request], Awaitable[User]]:
     """Build a guard that admits only the listed roles.
 
-    Called with no roles, the guard denies everyone, Superadmin included.
-    Endpoints that declare no guard at all are not covered here: that needs a
-    router-level default dependency, which does not exist yet.
+    Called with no roles, the guard denies everyone, Superadmin included. An
+    endpoint that declares no guard at all is covered by the route test in
+    backend/tests/test_app_surface.py, which refuses a route that depends on
+    neither the current account nor the named public allowlist.
     """
     allowed = {role.value for role in roles}
 
     async def guard(user: User, request: Request) -> User:
         if user.role not in allowed:
-            # Detached: raising below rolls the request transaction back, and a
-            # plain record() would be rolled back with it.
-            await audit_service.record_detached(
-                action="permission_denied",
-                user_id=user.id,
-                ip_address=request.client.host if request.client else None,
-                detail={
-                    "required": sorted(allowed),
-                    "method": request.method,
-                    "path": request.url.path,
-                },
-            )
+            # Only a state-changing request is recorded. A denied read changed
+            # nothing, and any account could otherwise flood an append-only
+            # table with no retention policy by looping a forbidden GET.
+            if request.method in UNSAFE_METHODS:
+                # Detached: raising below rolls the request transaction back,
+                # and a plain record() would be rolled back with it.
+                await audit.record_detached(
+                    action="permission_denied",
+                    user_id=user.id,
+                    ip_address=request.client.host if request.client else None,
+                    detail={
+                        "required": sorted(allowed),
+                        "method": request.method,
+                        "path": request.url.path,
+                    },
+                )
             raise ForbiddenError(detail="role is not allowed to perform this action")
         return user
 

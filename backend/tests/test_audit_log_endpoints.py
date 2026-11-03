@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.audit_log.models import AuditLog
+from app.core.audit import AuditLog
 from app.core.identity import User, UserRole, UserSession
 from app.core.pagination import encode_cursor
 from app.core.security import hash_session_id, new_session_id

@@ -5,11 +5,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
-from sqlalchemy import delete, func, select, tuple_
+from sqlalchemy import delete, func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from app.audit_log import service as audit_service
+from app.core import audit
 from app.core.db import independent_session
 from app.core.errors import (
     ConflictError,
@@ -58,7 +58,9 @@ async def _seconds_until_below(
         select(LoginAttempt.attempted_at)
         .where(column == value, LoginAttempt.attempted_at >= since)
         .order_by(LoginAttempt.attempted_at)
-        .offset((drop or 0) - limit)
+        # A concurrent success can clear rows between the two statements, and
+        # asyncpg rejects a negative offset.
+        .offset(max(0, (drop or 0) - limit))
         .limit(1)
     )
     if pivot is None:
@@ -66,7 +68,23 @@ async def _seconds_until_below(
     return max(1, math.ceil((pivot + window - datetime.now(UTC)).total_seconds()))
 
 
+# Namespace of the advisory lock below, so the key space cannot collide with a
+# lock another part of the system takes later.
+LOGIN_THROTTLE_LOCK = 1
+
+
 async def check_login_allowed(session: AsyncSession, username: str, ip_address: str) -> None:
+    # Counting the window and writing the attempt row are separate statements,
+    # so without a lock N concurrent requests all read the same count and all
+    # pass: a cap of 5 becomes 5 plus the attacker's concurrency. The lock is
+    # transaction scoped, released when the request ends, and it also caps the
+    # Argon2id hashes one account can hold at once, which is what makes this
+    # endpoint cheap to answer under a flood.
+    await session.execute(
+        text("SELECT pg_advisory_xact_lock(:namespace, hashtext(:username))").bindparams(
+            namespace=LOGIN_THROTTLE_LOCK, username=username
+        )
+    )
     minutes = await get_int_setting(session, "login_failure_window_minutes")
     max_account = await get_int_setting(session, "login_max_failures_per_account")
     max_ip = await get_int_setting(session, "login_max_failures_per_ip")
@@ -126,7 +144,7 @@ async def record_failed_login(
     """
     async with independent_session() as session:
         session.add(LoginAttempt(username=username, ip_address=ip_address))
-        await audit_service.record(
+        await audit.record(
             session,
             action=action,
             user_id=user_id,
@@ -162,9 +180,7 @@ async def login(
         )
     )
     user.last_login_at = now
-    await audit_service.record(
-        session, action="login_succeeded", user_id=user.id, ip_address=ip_address
-    )
+    await audit.record(session, action="login_succeeded", user_id=user.id, ip_address=ip_address)
     return LoginResult(session_id, hours * 3600)
 
 
@@ -172,7 +188,7 @@ async def logout(session: AsyncSession, *, user: User, session_id: str) -> None:
     await session.execute(
         delete(UserSession).where(UserSession.session_hash == hash_session_id(session_id))
     )
-    await audit_service.record(session, action="logout", user_id=user.id)
+    await audit.record(session, action="logout", user_id=user.id)
 
 
 async def revoke_sessions_for_user(
@@ -205,10 +221,15 @@ async def change_password(
             user.username, ip_address, action="password_change_failed", user_id=user.id
         )
         raise UnauthenticatedError(detail="current password does not match")
-    check_password_policy(new_password, user_inputs=[user.username, user.display_name])
+    check_password_policy(
+        new_password, user_inputs=[user.username, user.display_name], field="new_password"
+    )
     user.password_hash = hash_password(new_password)
+    # Clear the shared counter as login does, so mistyping the current password
+    # a few times before succeeding does not lock the account out of login.
+    await session.execute(delete(LoginAttempt).where(LoginAttempt.username == user.username))
     await revoke_sessions_for_user(session, user.id, keep_session_hash=hash_session_id(session_id))
-    await audit_service.record(session, action="password_changed", user_id=user.id)
+    await audit.record(session, action="password_changed", user_id=user.id)
 
 
 async def get_user(session: AsyncSession, user_id: uuid.UUID) -> User:
@@ -239,7 +260,7 @@ async def create_user(
     )
     session.add(user)
     await session.flush()
-    await audit_service.record(
+    await audit.record(
         session, action="user_created", user_id=actor.id, resource_type="user", resource_id=user.id
     )
     return user
@@ -262,7 +283,7 @@ async def update_user(
         user.display_name = display_name
     if role is not None:
         user.role = role.value
-        await audit_service.record(
+        await audit.record(
             session,
             action="user_role_changed",
             user_id=actor.id,
@@ -270,7 +291,7 @@ async def update_user(
             resource_id=user.id,
             detail={"from": previous_role, "to": role.value},
         )
-    await audit_service.record(
+    await audit.record(
         session, action="user_updated", user_id=actor.id, resource_type="user", resource_id=user.id
     )
     return user
@@ -285,7 +306,7 @@ async def set_locked(
     user.is_locked = locked
     if locked:
         await revoke_sessions_for_user(session, user.id)
-    await audit_service.record(
+    await audit.record(
         session,
         action="user_locked" if locked else "user_unlocked",
         user_id=actor.id,
@@ -359,7 +380,7 @@ async def revoke_session(session: AsyncSession, *, actor: User, user_session_id:
     if found is None:
         raise NotFoundError(detail="session does not exist")
     await session.delete(found)
-    await audit_service.record(
+    await audit.record(
         session,
         action="session_revoked",
         user_id=actor.id,

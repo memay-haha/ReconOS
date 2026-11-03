@@ -147,7 +147,7 @@ async def test_denial_is_audited_and_survives_rollback(
 ) -> None:
     user = await user_factory(role=UserRole.USER)
     with pytest.raises(ForbiddenError):
-        await require_roles(UserRole.SUPERADMIN)(user, request_factory())
+        await require_roles(UserRole.SUPERADMIN)(user, request_factory(method="POST"))
     # A separate connection cannot see db_session's uncommitted work, so finding
     # the row proves it was committed on its own and survives the rollback.
     async with db_engine.connect() as connection:
@@ -157,6 +157,23 @@ async def test_denial_is_audited_and_survives_rollback(
             )
         ).scalar_one()
     assert count == 1
+
+
+async def test_a_denied_read_is_refused_without_an_audit_row(
+    db_engine: AsyncEngine, request_factory: RequestFactory, user_factory: UserFactory
+) -> None:
+    # A denied read changed nothing, and recording one would let any account
+    # fill an append-only table by looping a forbidden GET.
+    user = await user_factory(role=UserRole.USER)
+    with pytest.raises(ForbiddenError):
+        await require_roles(UserRole.SUPERADMIN)(user, request_factory(method="GET"))
+    async with db_engine.connect() as connection:
+        count = (
+            await connection.execute(
+                text("SELECT count(*) FROM audit_log WHERE action = 'permission_denied'")
+            )
+        ).scalar_one()
+    assert count == 0
 
 
 async def test_denial_records_where_it_came_from(

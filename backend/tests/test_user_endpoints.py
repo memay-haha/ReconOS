@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.audit_log.models import AuditLog
+from app.core.audit import AuditLog
 from app.core.identity import User, UserRole, UserSession
 from app.core.pagination import encode_cursor
 
@@ -306,3 +306,29 @@ async def test_lock_and_unlock_are_recorded(
         assert row.user_id == actor.id
         assert row.resource_id == target.id
         _assert_clean_detail(row)
+
+
+async def test_changing_an_account_moves_updated_at(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    # The column is maintained by the ORM, not by the caller, so every write
+    # path moves it: app/core/identity.py.
+    await logged_in(role=UserRole.SUPERADMIN)
+    target = await user_factory(role=UserRole.USER)
+    created_at = target.updated_at
+
+    patched = await client.patch(
+        f"/api/v1/users/{target.id}", json={"display_name": "Renamed"}, headers=HEADERS
+    )
+    assert patched.status_code == 200
+    # The test overrides the request transaction, so nothing has committed yet.
+    await db_session.flush()
+    await db_session.refresh(target)
+    after_patch = target.updated_at
+    assert after_patch > created_at
+
+    locked = await client.post(f"/api/v1/users/{target.id}/lock", headers=HEADERS)
+    assert locked.status_code == 204
+    await db_session.flush()
+    await db_session.refresh(target)
+    assert target.updated_at > after_patch

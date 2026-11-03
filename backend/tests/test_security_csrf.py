@@ -51,3 +51,11 @@ def test_both_headers_missing_without_cookie_passes(
     settings_factory: Callable[..., Settings],
 ) -> None:
     enforce_csrf(build_request("POST", {}), settings_factory(public_origin=ORIGIN))
+
+
+def test_a_trailing_slash_in_the_variable_blocks_nothing(
+    settings_factory: Callable[..., Settings],
+) -> None:
+    # The variable is reduced to scheme and host at load: app/core/config.py.
+    request = build_request("POST", {"origin": ORIGIN, "sec-fetch-site": "same-origin"})
+    enforce_csrf(request, settings_factory(public_origin=f"{ORIGIN}/"))

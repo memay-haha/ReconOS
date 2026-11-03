@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
-from app.core.db import build_engine, get_engine
+from app.core.db import build_engine, get_engine, get_independent_engine
 from app.core.identity import User, UserRole
 from app.core.security import HOST_COOKIE_NAME, hash_password
 from app.core.system_setting import clear_setting_cache
@@ -94,10 +94,16 @@ def settings_factory() -> Callable[..., Settings]:
 def _migrated_test_database() -> None:
     """Build the test schema with Alembic, as production does.
 
+    Rebuilt from base every session: a migration edited before it ever ran in
+    production would otherwise leave the test database on the version Alembic
+    had already stamped, and the tests would pass against a schema no fresh
+    deployment produces.
+
     Absolute paths keep this independent of the directory pytest runs from.
     """
     config = Config(str(REPO_ROOT / "backend" / "alembic.ini"))
     config.set_main_option("script_location", str(REPO_ROOT / "backend" / "migrations"))
+    command.downgrade(config, "base")
     command.upgrade(config, "head")
 
 
@@ -110,14 +116,15 @@ async def db_engine(_migrated_test_database: None) -> AsyncIterator[AsyncEngine]
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
 async def _dispose_process_engine() -> AsyncIterator[None]:
-    """Close the cached process engine, which nothing else disposes.
+    """Close the cached process engines, which nothing else disposes.
 
     Left open, asyncpg warns about unclosed connections at interpreter exit.
     """
     yield
-    if get_engine.cache_info().currsize:
-        await get_engine().dispose()
-        get_engine.cache_clear()
+    for cached in (get_engine, get_independent_engine):
+        if cached.cache_info().currsize:
+            await cached().dispose()
+            cached.cache_clear()
 
 
 @pytest_asyncio.fixture(autouse=True)

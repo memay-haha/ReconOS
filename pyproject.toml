@@ -28,7 +28,9 @@ dev = [
     "pytest>=9",
     "pytest-asyncio>=1",
     "pytest-cov>=7",
+    "pyyaml", # reads docs/api/openapi.yaml in the route surface test
     "ruff>=0.17",
+    "types-pyyaml",
     "types-zxcvbn", # zxcvbn ships no py.typed: .claude/rules/coding-convention.md
 ]
 

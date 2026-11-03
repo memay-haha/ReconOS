@@ -1,7 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.audit_log.models import AuditLog
+from app.core.audit import AuditLog
 from app.core.identity import User, UserRole, UserSession
 from app.core.system_setting import SystemSetting
 from app.user.models import LoginAttempt
@@ -58,3 +58,25 @@ async def test_migration_creates_every_table(db_session: AsyncSession) -> None:
         )
     )
     assert len(rows.scalars().all()) == 5
+
+
+async def test_migration_creates_the_documented_indexes(db_session: AsyncSession) -> None:
+    # Both throttle counters and the log list filter on two columns together,
+    # so each needs the composite index: docs/data/database.md.
+    rows = await db_session.execute(
+        text("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")
+    )
+    present = set(rows.scalars().all())
+    assert {
+        "ix_login_attempt_username_attempted_at",
+        "ix_login_attempt_ip_address_attempted_at",
+        "ix_audit_log_user_id_created_at",
+        "ix_audit_log_created_at_id",
+    } <= present
+    # The single-column indexes the composites replace are gone.
+    assert not present & {
+        "ix_login_attempt_username",
+        "ix_login_attempt_ip_address",
+        "ix_login_attempt_attempted_at",
+        "ix_audit_log_user_id",
+    }

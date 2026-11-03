@@ -1,11 +1,16 @@
+import asyncio
 from collections.abc import Awaitable, Callable
 
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.audit_log.models import AuditLog
+from app.core.audit import AuditLog
+from app.core.db import session_scope
+from app.core.errors import RateLimitedError
 from app.core.identity import User, UserRole, UserSession
+from app.core.system_setting import DEFAULT_SETTINGS
+from app.user import service
 from app.user.models import LoginAttempt
 
 PASSWORD = "troutmoonlit7Ladder!quay"
@@ -391,3 +396,71 @@ async def test_password_change_is_throttled_and_audited_like_login(
     )
     assert blocked.status_code == 429
     assert blocked.headers["retry-after"]
+
+
+async def test_concurrent_attempts_cannot_exceed_the_cap(db_engine: AsyncEngine) -> None:
+    """The cap holds under concurrency, not just one request at a time.
+
+    Counting the window and writing the attempt row are separate statements, so
+    without the advisory lock in check_login_allowed every one of these would
+    read the same count of zero and pass.
+    """
+    username = "concurrent-probe"
+    address = "203.0.113.11"
+    cap = DEFAULT_SETTINGS["login_max_failures_per_account"]
+
+    async def attempt() -> bool:
+        """True when the throttle let this attempt reach the password check."""
+        async with session_scope(db_engine) as session:
+            try:
+                await service.check_login_allowed(session, username, address)
+            except RateLimitedError:
+                return False
+            # Where login() records it: inside the request transaction, so the
+            # row is committed before the lock on the window is released.
+            await service.record_failed_login(username, address)
+            return True
+
+    allowed = await asyncio.gather(*(attempt() for _ in range(cap + 3)))
+
+    assert sum(allowed) == cap
+
+
+async def test_password_change_clears_the_shared_counter(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    logged_in: Callable[..., Awaitable[User]],
+) -> None:
+    # Login clears the counter on success, so password change must too:
+    # mistyping the current password a few times would otherwise lock the
+    # account owner out of login for the rest of the window.
+    user = await logged_in()
+    for _ in range(2):
+        await client.post(
+            "/api/v1/auth/password",
+            json={"current_password": "wrong one here", "new_password": "bramble7Quartz!tide"},
+            headers=HEADERS,
+        )
+    changed = await client.post(
+        "/api/v1/auth/password",
+        json={"current_password": PASSWORD, "new_password": "bramble7Quartz!tide"},
+        headers=HEADERS,
+    )
+    assert changed.status_code == 204
+    remaining = await db_session.scalar(
+        select(func.count()).select_from(LoginAttempt).where(LoginAttempt.username == user.username)
+    )
+    assert remaining == 0
+
+
+async def test_a_weak_new_password_names_the_field_the_form_sent(
+    client: AsyncClient, logged_in: Callable[..., Awaitable[User]]
+) -> None:
+    await logged_in()
+    response = await client.post(
+        "/api/v1/auth/password",
+        json={"current_password": PASSWORD, "new_password": "password1234"},
+        headers=HEADERS,
+    )
+    assert response.status_code == 422
+    assert response.json()["errors"][0]["field"] == "new_password"

@@ -12,9 +12,10 @@ import structlog
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.audit_log import service as audit_service
+from app.core import audit
 from app.core.config import Settings, get_settings
 from app.core.db import build_engine, session_scope
+from app.core.errors import ValidationFailedError
 from app.core.identity import User, UserRole
 from app.core.security import check_password_policy, hash_password
 
@@ -51,9 +52,7 @@ async def run_bootstrap(session: AsyncSession, settings: Settings) -> bool:
     session.add(user)
     await session.flush()
     # A system action: no account performed it.
-    await audit_service.record(
-        session, action="user_created", resource_type="user", resource_id=user.id
-    )
+    await audit.record(session, action="user_created", resource_type="user", resource_id=user.id)
     log.info("bootstrap_created", username=username)
     return True
 
@@ -65,8 +64,10 @@ async def _run() -> int:
     try:
         async with session_scope(engine) as session:
             await run_bootstrap(session, settings)
-    except BootstrapConfigError:
-        log.critical("bootstrap_missing_configuration")
+    except (BootstrapConfigError, ValidationFailedError) as err:
+        # The reason names the variable or the policy rule that failed. It
+        # carries no password: check_password_policy never echoes one.
+        log.critical("bootstrap_configuration_rejected", reason=str(err))
         return 1
     finally:
         await engine.dispose()

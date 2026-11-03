@@ -3,10 +3,11 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, status
+from fastapi import APIRouter, Depends, FastAPI, status
 
 from app.audit_log.router import router as audit_log_router
 from app.core.config import get_settings
+from app.core.deps import csrf_guard
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.user.router import router as user_router
@@ -24,7 +25,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 # Only POST /auth/login and GET /health may be reached without a session, so the
-# interactive docs and the schema route stay off: docs/api/architecture.md.
+# interactive docs and the schema route stay off: docs/api/architecture.md. The
+# CSRF check is declared here, not per handler, so every route inherits it.
 app = FastAPI(
     title="ReconOS API",
     version="1.0.0",
@@ -32,6 +34,7 @@ app = FastAPI(
     redoc_url=None,
     openapi_url=None,
     lifespan=lifespan,
+    dependencies=[Depends(csrf_guard)],
 )
 
 install_error_handlers(app)

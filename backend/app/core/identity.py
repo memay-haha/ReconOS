@@ -37,8 +37,13 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
+    # clock_timestamp(), not now(): now() is the transaction start time, so a
+    # row created and then changed inside one transaction would keep claiming
+    # it has never changed.
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=text("now()")
+        DateTime(timezone=True),
+        server_default=text("now()"),
+        onupdate=text("clock_timestamp()"),
     )
 
 

@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog.testing import capture_logs
 
 from app import bootstrap
-from app.audit_log.models import AuditLog
 from app.bootstrap import BootstrapConfigError, run_bootstrap
+from app.core.audit import AuditLog
 from app.core.config import Settings, get_settings
 from app.core.errors import ValidationFailedError
 from app.core.identity import User, UserRole
@@ -136,5 +136,19 @@ def test_main_exits_nonzero_without_variables(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.delenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", raising=False)
     with capture_logs() as logs:
         assert bootstrap.main() == 1
-    assert logs[-1]["event"] == "bootstrap_missing_configuration"
+    assert logs[-1]["event"] == "bootstrap_configuration_rejected"
     assert logs[-1]["log_level"] == "critical"
+    # The operator is told which variable is missing, not only that one is.
+    assert "RECONOS_BOOTSTRAP_ADMIN_USERNAME" in logs[-1]["reason"]
+
+
+@pytest.mark.usefixtures("empty_user_table")
+def test_main_exits_nonzero_on_a_weak_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    weak = "password1234"
+    monkeypatch.setenv("RECONOS_BOOTSTRAP_ADMIN_USERNAME", USERNAME)
+    monkeypatch.setenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", weak)
+    with capture_logs() as logs:
+        assert bootstrap.main() == 1
+    assert logs[-1]["event"] == "bootstrap_configuration_rejected"
+    assert logs[-1]["log_level"] == "critical"
+    assert weak not in repr(logs)

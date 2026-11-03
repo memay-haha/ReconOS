@@ -1,4 +1,8 @@
-"""HTTP surface of the user module. No query and no business rule lives here."""
+"""HTTP surface of the user module. No query and no business rule lives here.
+
+The CSRF check is not written out per handler: the application declares it once
+as a dependency, so a handler added here inherits it: app/core/deps.py.
+"""
 
 import uuid
 from typing import Annotated
@@ -8,7 +12,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from app.core.deps import CurrentUser, DbDep, SettingsDep
 from app.core.identity import User, UserRole
 from app.core.pagination import DEFAULT_LIMIT, Page
-from app.core.security import enforce_csrf, require_roles, session_cookie
+from app.core.security import require_roles, session_cookie
 from app.user import service
 from app.user.schemas import (
     LoginRequest,
@@ -30,7 +34,6 @@ def client_ip(request: Request) -> str:
 async def login(
     request: Request, body: LoginRequest, session: DbDep, settings: SettingsDep, response: Response
 ) -> None:
-    enforce_csrf(request, settings)
     result = await service.login(
         session,
         username=body.username,
@@ -58,7 +61,6 @@ async def logout(
     settings: SettingsDep,
     response: Response,
 ) -> None:
-    enforce_csrf(request, settings)
     cookie = session_cookie(settings)
     await service.logout(session, user=user, session_id=request.cookies[cookie.name])
     response.delete_cookie(
@@ -83,7 +85,6 @@ async def change_password(
     session: DbDep,
     settings: SettingsDep,
 ) -> None:
-    enforce_csrf(request, settings)
     await service.change_password(
         session,
         user=user,
@@ -106,14 +107,7 @@ Superadmin = Annotated[User, Depends(superadmin)]
 
 
 @router.post("/users", response_model=UserResponse, tags=["user"])
-async def create_user(
-    request: Request,
-    body: UserCreateRequest,
-    actor: Superadmin,
-    session: DbDep,
-    settings: SettingsDep,
-) -> User:
-    enforce_csrf(request, settings)
+async def create_user(body: UserCreateRequest, actor: Superadmin, session: DbDep) -> User:
     return await service.create_user(
         session,
         actor=actor,
@@ -138,32 +132,20 @@ async def read_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> Us
 
 @router.patch("/users/{user_id}", response_model=UserResponse, tags=["user"])
 async def patch_user(
-    request: Request,
-    user_id: uuid.UUID,
-    body: UserUpdateRequest,
-    actor: Superadmin,
-    session: DbDep,
-    settings: SettingsDep,
+    user_id: uuid.UUID, body: UserUpdateRequest, actor: Superadmin, session: DbDep
 ) -> User:
-    enforce_csrf(request, settings)
     return await service.update_user(
         session, actor=actor, user_id=user_id, display_name=body.display_name, role=body.role
     )
 
 
 @router.post("/users/{user_id}/lock", status_code=204, tags=["user"])
-async def lock_user(
-    request: Request, user_id: uuid.UUID, actor: Superadmin, session: DbDep, settings: SettingsDep
-) -> None:
-    enforce_csrf(request, settings)
+async def lock_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> None:
     await service.set_locked(session, actor=actor, user_id=user_id, locked=True)
 
 
 @router.post("/users/{user_id}/unlock", status_code=204, tags=["user"])
-async def unlock_user(
-    request: Request, user_id: uuid.UUID, actor: Superadmin, session: DbDep, settings: SettingsDep
-) -> None:
-    enforce_csrf(request, settings)
+async def unlock_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> None:
     await service.set_locked(session, actor=actor, user_id=user_id, locked=False)
 
 
@@ -181,12 +163,5 @@ async def list_user_sessions(
 
 
 @router.delete("/user-sessions/{user_session_id}", status_code=204, tags=["user"])
-async def revoke_session(
-    request: Request,
-    user_session_id: uuid.UUID,
-    actor: Superadmin,
-    session: DbDep,
-    settings: SettingsDep,
-) -> None:
-    enforce_csrf(request, settings)
+async def revoke_session(user_session_id: uuid.UUID, actor: Superadmin, session: DbDep) -> None:
     await service.revoke_session(session, actor=actor, user_session_id=user_session_id)
