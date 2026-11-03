@@ -95,3 +95,11 @@ def test_time_cursor_round_trips() -> None:
     moment = datetime(2026, 11, 3, 8, 0, tzinfo=UTC)
     row_id = uuid.uuid4()
     assert decode_time_cursor(encode_cursor(moment.isoformat(), row_id)) == (moment, row_id)
+
+
+@pytest.mark.parametrize(
+    "timestamp", ["2026-01-01T00:00:00", "0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59-14:00"]
+)
+def test_time_cursor_rejects_naive_and_out_of_range_timestamps(timestamp: str) -> None:
+    with pytest.raises(BadRequestError):
+        decode_time_cursor(encode_cursor(timestamp, uuid.uuid4()))

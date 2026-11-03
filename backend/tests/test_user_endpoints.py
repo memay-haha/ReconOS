@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit_log.models import AuditLog
 from app.core.identity import User, UserRole, UserSession
 from app.core.pagination import encode_cursor
 
@@ -205,7 +206,16 @@ async def test_list_limit_is_clamped(client: AsyncClient, logged_in: LoggedIn) -
     assert (await client.get("/api/v1/users", params={"limit": 9999})).status_code == 200
 
 
-@pytest.mark.parametrize("cursor", ["!!!", encode_cursor("not-a-timestamp", uuid.uuid4())])
+@pytest.mark.parametrize(
+    "cursor",
+    [
+        "!!!",
+        encode_cursor("not-a-timestamp", uuid.uuid4()),
+        encode_cursor("2026-01-01T00:00:00", uuid.uuid4()),
+        encode_cursor("0001-01-01T00:00:00+14:00", uuid.uuid4()),
+        encode_cursor("9999-12-31T23:59:59-14:00", uuid.uuid4()),
+    ],
+)
 async def test_malformed_cursor_is_a_bad_request(
     client: AsyncClient, logged_in: LoggedIn, cursor: str
 ) -> None:
@@ -229,3 +239,70 @@ async def test_sessions_of_unknown_user_is_not_found(
 ) -> None:
     await logged_in(role=UserRole.SUPERADMIN)
     assert (await client.get(f"/api/v1/users/{uuid.uuid4()}/sessions")).status_code == 404
+
+
+async def _audit_rows(db_session: AsyncSession, action: str) -> list[AuditLog]:
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == action))
+    return list(result.scalars().all())
+
+
+def _assert_clean_detail(row: AuditLog, *secrets: str) -> None:
+    text = str(row.detail)
+    for secret in ("password", "session", *secrets):
+        assert secret not in text
+
+
+async def test_create_records_user_created(
+    client: AsyncClient, logged_in: LoggedIn, db_session: AsyncSession
+) -> None:
+    actor = await logged_in(role=UserRole.SUPERADMIN)
+    created_id = (await client.post("/api/v1/users", json=NEW, headers=HEADERS)).json()["id"]
+    (row,) = await _audit_rows(db_session, "user_created")
+    assert row.user_id == actor.id
+    assert str(row.resource_id) == created_id
+    assert row.resource_type == "user"
+    _assert_clean_detail(row, NEW["password"])
+
+
+async def test_update_records_user_updated_even_when_empty(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    actor = await logged_in(role=UserRole.SUPERADMIN)
+    target = await user_factory(role=UserRole.USER)
+    response = await client.patch(f"/api/v1/users/{target.id}", json={}, headers=HEADERS)
+    assert response.status_code == 200
+    (row,) = await _audit_rows(db_session, "user_updated")
+    assert row.user_id == actor.id
+    assert row.resource_id == target.id
+    assert await _audit_rows(db_session, "user_role_changed") == []
+    _assert_clean_detail(row)
+
+
+async def test_role_change_records_old_and_new_role(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    actor = await logged_in(role=UserRole.SUPERADMIN)
+    target = await user_factory(role=UserRole.USER)
+    await client.patch(f"/api/v1/users/{target.id}", json={"role": "admin"}, headers=HEADERS)
+    (changed,) = await _audit_rows(db_session, "user_role_changed")
+    assert changed.user_id == actor.id
+    assert changed.resource_id == target.id
+    assert changed.detail == {"from": "user", "to": "admin"}
+    _assert_clean_detail(changed)
+    # The brief keeps the second row, so a role change writes both.
+    (updated,) = await _audit_rows(db_session, "user_updated")
+    assert updated.resource_id == target.id
+
+
+async def test_lock_and_unlock_are_recorded(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    actor = await logged_in(role=UserRole.SUPERADMIN)
+    target = await user_factory(role=UserRole.USER)
+    await client.post(f"/api/v1/users/{target.id}/lock", headers=HEADERS)
+    await client.post(f"/api/v1/users/{target.id}/unlock", headers=HEADERS)
+    for action in ("user_locked", "user_unlocked"):
+        (row,) = await _audit_rows(db_session, action)
+        assert row.user_id == actor.id
+        assert row.resource_id == target.id
+        _assert_clean_detail(row)

@@ -254,6 +254,7 @@ async def update_user(
     role: UserRole | None,
 ) -> User:
     user = await get_user(session, user_id)
+    previous_role = user.role
     if role is not None and user.id == actor.id:
         # Keeping at least one Superadmin: docs/security/authorization.md
         raise ForbiddenError(detail="an account cannot change its own role")
@@ -267,7 +268,7 @@ async def update_user(
             user_id=actor.id,
             resource_type="user",
             resource_id=user.id,
-            detail={"role": role.value},
+            detail={"from": previous_role, "to": role.value},
         )
     await audit_service.record(
         session, action="user_updated", user_id=actor.id, resource_type="user", resource_id=user.id

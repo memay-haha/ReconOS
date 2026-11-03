@@ -8,7 +8,7 @@ import base64
 import binascii
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -69,6 +69,13 @@ def decode_time_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
     if not isinstance(sort_value, str):
         raise BadRequestError(detail="cursor is not valid")
     try:
-        return datetime.fromisoformat(sort_value), row_id
-    except ValueError as err:
+        moment = datetime.fromisoformat(sort_value)
+        # An out-of-range value overflows when converted to UTC, which is what
+        # the database driver does with it, so probe that here as a 400.
+        moment.astimezone(UTC)
+    except (ValueError, OverflowError) as err:
         raise BadRequestError(detail="cursor is not valid") from err
+    # A naive value compared against a timestamptz column is a driver error (500).
+    if moment.tzinfo is None:
+        raise BadRequestError(detail="cursor is not valid")
+    return moment, row_id
