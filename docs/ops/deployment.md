@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -40,7 +40,8 @@
 | `infras/compose/compose.core.yaml` | Vùng lõi production |
 | `infras/compose/compose.worker.yaml` | Một máy worker production |
 | `infras/nginx/` | Cấu hình Nginx |
-| `infras/postgres/` | Script tạo CSDL `reconos`, `reconos_log` và tài khoản riêng cho từng CSDL |
+| `infras/postgres/` | Script tạo CSDL `reconos`, `reconos_log`, hai CSDL test và tài khoản `reconos_app`, `reconos_log_app` |
+| `infras/minio/` | Script tạo bucket output thô và bucket test |
 | `infras/redis/` | File ACL tài khoản Redis của lõi và của worker |
 
 ### Container vùng lõi
@@ -56,7 +57,7 @@
 | `migrate` | `reconos-backend` | `alembic upgrade head`, chạy xong thì thoát | Chỉ khi triển khai |
 | `postgres` | PostgreSQL 18 chính thức | Chứa `reconos` và `reconos_log` | 1 |
 | `redis` | Redis 8 chính thức | Bật lưu xuống đĩa, bật ACL (Access Control List) | 1 |
-| `minio` | MinIO chính thức | | 1 |
+| `minio` | `minio/minio` ghim theo digest, nạp từ file tar | | 1 |
 
 - Mỗi container Uvicorn chạy một tiến trình. Thêm bản bằng `docker compose up --scale api=N`: [scalability.md](scalability.md).
 - `api` có healthcheck `GET /api/v1/health`, không cần đăng nhập, chỉ trả trạng thái tiến trình còn chạy.
@@ -70,6 +71,14 @@
 | REST API engine | Máy worker | Chỉ mở trong vùng worker, bật API key |
 
 - PostgreSQL, MinIO, cổng của `api`, `frontend` chỉ nằm trong mạng nội bộ của Compose. ❌ Không mở ra ngoài.
+
+#### Image MinIO
+
+MinIO không còn phát hành image công khai và repo đã archived: nợ 19 trong [tech-debt.md](../tech-debt.md).
+
+- Dùng bản `RELEASE.2025-09-07T16-13-09Z`, ghim trong compose bằng digest, đặt `pull_policy: never` để không gọi registry.
+- Mang image sang máy khác bằng file tar: `docker save -o minio-<release>.tar minio/minio:latest` rồi `docker load -i` trên máy đích.
+- Lưu file tar cùng nơi với bản sao lưu, kiểm tra `sha256sum` trước khi nạp.
 
 #### Nginx
 
@@ -112,6 +121,7 @@
 | CSDL chính `reconos` | `pg_dump` hằng ngày, lưu ngoài máy vùng lõi | 14 bản gần nhất |
 | CSDL log `reconos_log` | ❌ Không sao lưu | Theo `log_retention_days` |
 | Output thô trong MinIO | `mc mirror` sang nơi lưu khác | Như bản gốc, vĩnh viễn |
+| Image MinIO | File tar từ `docker save`, giữ cùng bản sao lưu | Cho tới khi đổi object storage |
 | Khóa mã hóa `RECONOS_ENCRYPTION_KEYS` | Lưu riêng, tách khỏi bản sao lưu CSDL | Mọi khóa còn trong danh sách |
 
 - Khôi phục: tạo lại CSDL từ bản `pg_dump`, đồng bộ output thô từ nơi sao lưu về MinIO, nạp đúng khóa mã hóa.

@@ -14,8 +14,8 @@
 | 3  | `docs/decisions/adr-own-database.md`       | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ theo vietnamese-writing |
 | 4  | `docs/decisions/adr-tech-stack.md`         | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ, lý do loại Vue và Svelte, JSONB không còn dùng cho trường tùy biến |
 | 5  | `docs/decisions/adr-repo-structure.md`     | 24      | 4                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: Monorepo, cây thư mục đầy đủ nằm trong ADR |
-| 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🟢 Xong       | 2026-11-03 | v1.4: Python 3.15 sau khi kiểm chứng thư viện, ghi chú `py.typed` của celery và aioboto3 |
-| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🟢 Xong        | 2026-11-03 | v1.3: thêm `.gitignore`; test frontend đặt cạnh file mã, thêm `frontend/e2e/` |
+| 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🟢 Xong        | 2026-11-03 | v1.5: MinIO dừng phát triển, ghim digest và nạp từ file tar |
+| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🟢 Xong        | 2026-11-03 | v1.3: thêm `backend/migrations_log/` |
 | 8  | `docs/architecture/system.md`              | 4       | 1, 6                 | 🟢 Xong       | 2026-11-01 | v1.2: số lần thử lại của task `parse` chuyển từ error-handling |
 | 9  | `docs/architecture/modules.md`             | 5       | 7, 8                 | 🟢 Xong        | 2026-11-01 | v1.2: thêm module `alert`, bổ sung trách nhiệm theo schema |
 | 10 | `docs/architecture/dependency-graph.md`    | 12      | 9                    | 🟢 Xong        | 2026-11-01 | v1.1: `alert` ở tầng 1, worker gọi REST API của engine server |
@@ -34,14 +34,14 @@
 | 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: bỏ bảng công cụ trùng tech-stack |
 | 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong       | 2026-11-01 | v1.0: Trích từ threat-model. AES-256-GCM, rule `S` của ruff |
 | 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🟢 Xong       | 2026-11-01 | v1.0: Biến môi trường `RECONOS_*`, hậu tố `_FILE`, `system_setting`, khóa mã hóa |
-| 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong       | 2026-11-01 | v1.0: Docker Compose, Nginx, Uvicorn, chạy migration riêng, pg_dump và mc mirror |
+| 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong        | 2026-11-03 | v1.1: cách mang image MinIO sang máy khác, thư mục `infras/minio/` |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
-| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🟢 Xong       | 2026-11-02 | Thêm lệnh `make engine-check` |
-| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong       | 2026-11-03 | v1.5: nợ 13 đóng; nợ 17 design system thiếu bảng màu chế độ sáng |
-| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong       | 2026-11-03 | v2.0 duyệt 2026-11-03: 13 đợt viết mã của phiên bản đầu. Bước chi tiết ở `docs/superpowers/specs/2026-11-02-implementation-roadmap-design.md` |
+| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🟢 Xong        | 2026-11-03 | `make migrate` chạy cả CSDL chính và CSDL log |
+| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong        | 2026-11-03 | v1.9: đóng nợ 14; thêm nợ 18 CI, nợ 19 image MinIO |
+| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong        | 2026-11-03 | v2.1: bỏ CI khỏi đợt 1, chuyển thành nợ 18 |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
-| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🟢 Xong       | 2026-11-01 | Module, tiến trình nền, parser, lệnh |
+| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🟢 Xong        | 2026-11-03 | Thêm cây migration `migrations_log/`, lệnh migration CSDL log |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🟢 Xong       | 2026-11-03 | Design token sinh từ `docs/design/design-system.md`, vị trí test |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🟢 Xong        | 2026-11-01 | v1.0: Mô tả bảng, giá trị liệt kê, ràng buộc duy nhất. ERD đầy đủ ở `docs/data/erd.mermaid`. Thêm cột cho contract worker ↔ backend |

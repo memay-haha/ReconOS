@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.4 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.5 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -47,7 +47,7 @@
 - Celery, SQLAlchemy, Pydantic, FastAPI, Alembic, asyncpg, aioboto3, argon2-cffi, cryptography chạy đạt trên Python 3.15.2, kiểm chứng ngày 03/11/2026.
 - ⚠️ Celery và aioboto3 không có `py.typed`. Khai báo bỏ qua riêng cho hai module này khi chạy mypy strict: [coding-convention.md](../../.claude/rules/coding-convention.md).
 - ⚠️ PostgreSQL 19 dự kiến phát hành ngày 19/11/2026. Chọn 18 cho đến khi 19 ra bản chính thức.
-- ⚠️ Từ năm 2025, MinIO bản community bỏ phần quản trị trên web console, ngừng phát hành binary và Docker image dựng sẵn. Cách cài đặt và giấy phép: xem mục Hệ quả trong [ADR chọn tech stack](../decisions/adr-tech-stack.md).
+- ⚠️ MinIO dừng phát triển bản mã nguồn mở: không còn image công khai trên registry nào, repo archived từ 24/04/2026. Hệ thống dùng bản `RELEASE.2025-09-07T16-13-09Z` ghim theo digest, nạp từ file tar. Rủi ro và hướng thay thế: nợ 19 trong [tech-debt.md](../tech-debt.md).
 
 ### Backend và worker
 

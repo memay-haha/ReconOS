@@ -52,7 +52,8 @@
 | `app/dispatcher/` | Mã của tiến trình dispatcher, chạy bằng `python -m app.dispatcher` |
 | `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py`, lịch trong `beat.py`, task trong `tasks.py` gọi service của module |
 | `app/parser/` | Parser, một file một công cụ, đăng ký trong `registry.py` |
-| `migrations/` | Migration Alembic |
+| `migrations/` | Migration Alembic của CSDL chính |
+| `migrations_log/` | Migration Alembic của CSDL log `reconos_log` |
 | `tests/` | Test của backend |
 
 - Mỗi module tự chứa: `router.py` là endpoint, `service.py` là nghiệp vụ, `models.py` là model SQLAlchemy, `schemas.py` là schema Pydantic.

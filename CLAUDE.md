@@ -48,7 +48,7 @@ Chạy từ gốc repo. Khi viết `Makefile` lúc bắt đầu viết mã, gi�
 | Lệnh | Việc |
 |---|---|
 | `make dev-up`, `make dev-down` | Bật, tắt các container vùng lõi cho phát triển: `infras/compose/compose.dev.yaml` |
-| `make migrate` | `alembic upgrade head` cho CSDL phát triển |
+| `make migrate` | `alembic upgrade head` cho CSDL `reconos` và CSDL log `reconos_log` của môi trường phát triển |
 | `make lint` | ruff format, ruff check, mypy, ESLint, Prettier, `tsc`: [coding-convention.md](.claude/rules/coding-convention.md) |
 | `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make dev-up` trước |
 | `make test-coverage` | Độ phủ 100% nhánh cho scope, phân quyền, schema tham số: [testing.md](.claude/rules/testing.md) |

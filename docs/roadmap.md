@@ -1,6 +1,6 @@
 # 🗺️ Lộ trình sản phẩm
 
-> Phiên bản: 2.0 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 2.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 26: Đề xuất cải tiến
 > Liên quan: [overview.md](architecture/overview.md), [tech-debt.md](tech-debt.md), [thiết kế thứ tự viết mã](superpowers/specs/2026-11-02-implementation-roadmap-design.md)
 
@@ -8,8 +8,8 @@ Phiên bản đầu chia thành 13 đợt. Mỗi đợt là một lát cắt ch�
 
 | Giai đoạn | Tính năng | Phụ thuộc | Trạng thái |
 |---|---|---|---|
-| Đợt 1. Nền tảng dự án | uv workspace, frontend Next.js, Docker Compose phát triển, `Makefile`, CI lint và test | [tech-stack.md](architecture/tech-stack.md), [directory-structure.md](architecture/directory-structure.md) | 🔴 Chưa làm |
-| Đợt 1. Nền tảng dự án | `core`: cấu hình, kết nối CSDL, ghi log, lớp lỗi, khởi tạo Alembic | [configuration.md](ops/configuration.md), [logging.md](../.claude/rules/logging.md), [error-handling.md](../.claude/rules/error-handling.md) | 🔴 Chưa làm |
+| Đợt 1. Nền tảng dự án | uv workspace, frontend Next.js, Docker Compose phát triển, `Makefile` | [tech-stack.md](architecture/tech-stack.md), [directory-structure.md](architecture/directory-structure.md) | 🟢 Xong |
+| Đợt 1. Nền tảng dự án | `core`: cấu hình, kết nối CSDL, ghi log, lớp lỗi, khởi tạo Alembic | [configuration.md](ops/configuration.md), [logging.md](../.claude/rules/logging.md), [error-handling.md](../.claude/rules/error-handling.md) | 🟢 Xong |
 | Đợt 2. Tài khoản và phân quyền | Đăng nhập, phiên phía server, 3 vai trò, nhật ký thao tác (G7). Màn hình S01, S12 | Đợt 1, [authentication.md](security/authentication.md), [authorization.md](security/authorization.md) | 🔴 Chưa làm |
 | Đợt 3. Program và scope | Program, gán User, proxy, mã hóa thông tin xác thực. Màn hình S08, S09, S11 | Đợt 2, [schema.md](data/schema.md) | 🔴 Chưa làm |
 | Đợt 3. Program và scope | So khớp scope rule 4 dạng, từ chối mục tiêu ngoài scope khi tạo job (G5) | Đợt 2, [business-flow.md](architecture/business-flow.md) | 🔴 Chưa làm |
