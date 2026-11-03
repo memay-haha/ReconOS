@@ -15,7 +15,7 @@
 | 4  | `docs/decisions/adr-tech-stack.md`         | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ, lý do loại Vue và Svelte, JSONB không còn dùng cho trường tùy biến |
 | 5  | `docs/decisions/adr-repo-structure.md`     | 24      | 4                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: Monorepo, cây thư mục đầy đủ nằm trong ADR |
 | 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm pydantic-settings, structlog, cryptography, công cụ test |
-| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🟢 Xong       | 2026-11-01 | v1.1: thêm `app/background/` |
+| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🔵 Chờ duyệt  | 2026-11-03 | v1.2: thêm `.gitignore` và danh sách thư mục không quản lý phiên bản |
 | 8  | `docs/architecture/system.md`              | 4       | 1, 6                 | 🟢 Xong       | 2026-11-01 | v1.2: số lần thử lại của task `parse` chuyển từ error-handling |
 | 9  | `docs/architecture/modules.md`             | 5       | 7, 8                 | 🟢 Xong        | 2026-11-01 | v1.2: thêm module `alert`, bổ sung trách nhiệm theo schema |
 | 10 | `docs/architecture/dependency-graph.md`    | 12      | 9                    | 🟢 Xong        | 2026-11-01 | v1.1: `alert` ở tầng 1, worker gọi REST API của engine server |

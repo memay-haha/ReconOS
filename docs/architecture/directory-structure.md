@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -39,7 +39,8 @@
 | `.claude/` | Rules, skills, settings của Claude Code | |
 | `_reference/` | Mã tham khảo | ❌ Chỉ đọc. Không import, không sửa |
 
-- File ở gốc: `pyproject.toml` và `uv.lock` của uv workspace, `Makefile` chứa lệnh build, test, chạy cho toàn repo, `CLAUDE.md`, `README.md`.
+- File ở gốc: `pyproject.toml` và `uv.lock` của uv workspace, `Makefile` chứa lệnh build, test, chạy cho toàn repo, `CLAUDE.md`, `README.md`, `.gitignore`.
+- Không đưa vào quản lý phiên bản: `_reference/`, `data/`, `.codegraph/`, `.ua/`, `.claude/settings.local.json` và mọi file `.env`. Danh sách đầy đủ nằm trong `.gitignore` ở gốc repo.
 
 ### `backend/`
 
