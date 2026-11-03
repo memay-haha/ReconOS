@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -95,8 +95,9 @@
 | `src/styles/` | CSS toàn cục |
 | `src/types/` | Kiểu TypeScript |
 | `public/` | Icon, ảnh, font |
-| `tests/` | Test của frontend |
+| `e2e/` | Test E2E (end-to-end) bằng Playwright |
 
+- Đặt test unit cạnh file mã: `JobTable.test.tsx`, `useJobs.test.ts`. Quy tắc: [testing.md](../../.claude/rules/testing.md).
 - ❌ Không có `src/app/api/`. Không kết nối CSDL.
 
 ### Đặt mã mới

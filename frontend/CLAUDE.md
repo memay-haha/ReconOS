@@ -16,7 +16,8 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 
 - Dựng màn hình theo thiết kế trong [docs/design/screens/](../docs/design/screens/), danh sách trong `index.json`.
 - Đặt route trong `src/app/` theo màn hình.
-- Giữ design token từ mockup trong cấu hình Tailwind.
+- Sinh khối `@theme` của `src/styles/globals.css` từ [design-system.md](../docs/design/design-system.md). ❌ Không sửa tay khối này: sửa design system rồi sinh lại.
+- Đặt test unit cạnh file mã, test E2E trong `frontend/e2e/`: [testing.md](../.claude/rules/testing.md).
 - Hỗ trợ hai theme tối, sáng.
 - Hiển thị đúng từ chiều rộng 390 px.
 - Đạt WCAG 2.1 AA.

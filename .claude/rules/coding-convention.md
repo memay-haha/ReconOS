@@ -7,7 +7,7 @@ paths:
 ---
 # Quy ước viết mã
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 22: Quy ước viết mã
 
 ## ✅ Bắt buộc
@@ -27,6 +27,7 @@ paths:
 - Đặt cấu hình ruff trong `pyproject.toml` ở gốc repo.
 - Ghi type hint cho mọi tham số và giá trị trả về.
 - Chạy mypy chế độ strict, bật plugin Pydantic.
+- Khai báo bỏ qua kiểu cho thư viện không có `py.typed` bằng mục `[[tool.mypy.overrides]]` trong `pyproject.toml`, không rải `# type: ignore` trong mã. Danh sách thư viện: [tech-stack.md](../../docs/architecture/tech-stack.md).
 - Đặt tên: `snake_case` cho hàm, biến, module. `PascalCase` cho class. `UPPER_SNAKE_CASE` cho hằng số.
 - Dùng `async` cho I/O trong backend: CSDL, Redis, MinIO, HTTP.
 - Gọi module khác chỉ qua `service.py` của module đó.

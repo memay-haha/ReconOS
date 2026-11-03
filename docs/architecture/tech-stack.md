@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.3 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -38,13 +38,14 @@
 
 | Công nghệ | Phiên bản | Vai trò | Dùng ở |
 |---|---|---|---|
-| Python | 3.14 | Ngôn ngữ backend, dispatcher, worker, parser | backend, workers |
+| Python | 3.15 | Ngôn ngữ backend, dispatcher, worker, parser | backend, workers |
 | PostgreSQL | 18 | CSDL chính: program, scope, tài sản, job, finding, metadata output thô | backend |
 | Redis | 8 | Broker của Celery, pub/sub cho sự kiện realtime | backend, workers |
 | MinIO | Bản community mới nhất | Object storage tương thích S3 (Amazon Simple Storage Service), lưu output thô (G8) | backend |
 | Node.js | 26 LTS (Long-Term Support) | Runtime build và chạy server Next.js | frontend |
 
-- ⚠️ Python 3.15 phát hành ngày 09/10/2026. Chưa xác minh Celery, SQLAlchemy, Pydantic có hỗ trợ 3.15 hay không. Kiểm tra lại khi khởi tạo mã.
+- Celery, SQLAlchemy, Pydantic, FastAPI, Alembic, asyncpg, aioboto3, argon2-cffi, cryptography chạy đạt trên Python 3.15.2, kiểm chứng ngày 03/11/2026.
+- ⚠️ Celery và aioboto3 không có `py.typed`. Khai báo bỏ qua riêng cho hai module này khi chạy mypy strict: [coding-convention.md](../../.claude/rules/coding-convention.md).
 - ⚠️ PostgreSQL 19 dự kiến phát hành ngày 19/11/2026. Chọn 18 cho đến khi 19 ra bản chính thức.
 - ⚠️ Từ năm 2025, MinIO bản community bỏ phần quản trị trên web console, ngừng phát hành binary và Docker image dựng sẵn. Cách cài đặt và giấy phép: xem mục Hệ quả trong [ADR chọn tech stack](../decisions/adr-tech-stack.md).
 
@@ -61,6 +62,10 @@
 | structlog | Bản mới nhất | Log JSON có ngữ cảnh: [logging.md](../../.claude/rules/logging.md) |
 | cryptography | Bản mới nhất | AES-256-GCM cho cột thông tin xác thực |
 | Celery | 5 | Thực thi task trên worker: thử lại, timeout. Celery Beat tạo job quét định kỳ |
+| asyncpg | Bản mới nhất | Driver PostgreSQL của SQLAlchemy chế độ async và của migration Alembic |
+| argon2-cffi | Bản mới nhất | Băm mật khẩu Argon2id: [authentication.md](../security/authentication.md) |
+| httpx | Bản mới nhất | Client HTTP của worker gọi Backend API và REST API của engine, đặt timeout cho mọi lời gọi |
+| uvicorn | Bản mới nhất | ASGI (Asynchronous Server Gateway Interface) server chạy Backend API |
 
 - Dispatcher là tiến trình riêng của ReconOS, gửi task qua Celery. Cơ chế: [system.md](system.md).
 - Worker là Celery worker, gọi công cụ qua tiến trình con.
@@ -85,6 +90,7 @@
 |---|---|---|
 | uv | Quản lý phiên bản Python, thư viện phụ thuộc, lock file | backend, workers |
 | ruff | Lint và định dạng mã Python | backend, workers |
+| mypy | Kiểm tra kiểu chế độ strict | backend, workers, contracts |
 | pnpm | Quản lý thư viện phụ thuộc, lock file | frontend |
 | pytest, pytest-asyncio, pytest-cov | Test Python, đo độ phủ | backend, workers, contracts |
 | Vitest, Testing Library | Test hook, component | frontend |
