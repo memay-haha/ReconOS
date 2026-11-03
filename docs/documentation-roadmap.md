@@ -33,7 +33,7 @@
 | 22 | `.claude/rules/logging.md`                 | 15      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: nơi ghi log chuyển sang database.md |
 | 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-03 | v1.2: lệnh đo độ phủ dùng tên module, dạng đường dẫn không gom được dữ liệu |
 | 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong  | 2026-11-03 | v1.1: từ chối mật khẩu có điểm zxcvbn dưới 3 |
-| 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🔵 Chờ duyệt | 2026-11-04 | v1.2: chuẩn hóa `RECONOS_PUBLIC_ORIGIN`, 2 kết nối riêng cho transaction độc lập |
+| 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🔵 Chờ duyệt | 2026-11-04 | v1.3: pool riêng cho transaction độc lập, chờ tối đa 2 giây rồi bỏ |
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong   | 2026-11-03 | v1.2: service `bootstrap` chạy lần triển khai đầu |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
