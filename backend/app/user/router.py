@@ -178,3 +178,15 @@ async def list_user_sessions(
     return await service.list_sessions_for_user(
         session, user_id=user_id, limit=limit, cursor=cursor
     )
+
+
+@router.delete("/user-sessions/{user_session_id}", status_code=204, tags=["user"])
+async def revoke_session(
+    request: Request,
+    user_session_id: uuid.UUID,
+    actor: Superadmin,
+    session: DbDep,
+    settings: SettingsDep,
+) -> None:
+    enforce_csrf(request, settings)
+    await service.revoke_session(session, actor=actor, user_session_id=user_session_id)

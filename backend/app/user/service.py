@@ -352,3 +352,17 @@ async def list_sessions_for_user(
         next_cursor=next_cursor,
         total=total,
     )
+
+
+async def revoke_session(session: AsyncSession, *, actor: User, user_session_id: uuid.UUID) -> None:
+    found = await session.get(UserSession, user_session_id)
+    if found is None:
+        raise NotFoundError(detail="session does not exist")
+    await session.delete(found)
+    await audit_service.record(
+        session,
+        action="session_revoked",
+        user_id=actor.id,
+        resource_type="user_session",
+        resource_id=user_session_id,
+    )

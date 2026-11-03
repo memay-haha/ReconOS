@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, status
 
+from app.audit_log.router import router as audit_log_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -51,3 +52,4 @@ async def health() -> None:
 
 app.include_router(api_router)
 app.include_router(user_router)
+app.include_router(audit_log_router)
