@@ -4,12 +4,18 @@ Running against the development stores is forbidden: .claude/rules/testing.md
 """
 
 import os
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
+from app.core.db import build_engine
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -37,6 +43,8 @@ def pytest_configure(config: pytest.Config) -> None:
         url = os.environ.get(key)
         if url and not url.endswith(suffix):
             os.environ[key] = url + suffix
+    # Pinned so the cookie policy and the CSRF origin check are deterministic.
+    os.environ["RECONOS_PUBLIC_ORIGIN"] = "https://reconos.example.com"
     bucket = os.environ.get("RECONOS_S3_BUCKET")
     if bucket and not bucket.endswith("-test"):
         os.environ["RECONOS_S3_BUCKET"] = f"{bucket}-test"
@@ -62,3 +70,48 @@ def settings_factory() -> Callable[..., Settings]:
         return Settings(**values)  # type: ignore[arg-type]  # dict built from known field names
 
     return build
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _migrated_test_database() -> None:
+    """Build the test schema with Alembic, as production does.
+
+    Absolute paths keep this independent of the directory pytest runs from.
+    """
+    config = Config(str(REPO_ROOT / "backend" / "alembic.ini"))
+    config.set_main_option("script_location", str(REPO_ROOT / "backend" / "migrations"))
+    command.upgrade(config, "head")
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
+async def db_engine(_migrated_test_database: None) -> AsyncIterator[AsyncEngine]:
+    engine = build_engine()
+    yield engine
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _clean_detached_rows(db_engine: AsyncEngine) -> None:
+    """Clear rows an earlier test committed outside its own transaction.
+
+    record_detached and record_failed_login write on their own connection, so
+    the per-test rollback does not remove them. Cleaning at the start, not at
+    teardown, keeps a test that fails midway from poisoning the next one.
+    """
+    async with db_engine.begin() as connection:
+        await connection.execute(text("DELETE FROM login_attempt"))
+        await connection.execute(text("DELETE FROM audit_log"))
+
+
+@pytest_asyncio.fixture
+async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
+    """One transaction per test, rolled back at the end: .claude/rules/testing.md"""
+    connection = await db_engine.connect()
+    transaction = await connection.begin()
+    session = AsyncSession(bind=connection, expire_on_commit=False)
+    try:
+        yield session
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()
