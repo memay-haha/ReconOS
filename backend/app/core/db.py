@@ -6,6 +6,7 @@ One transaction per request, no commit inside a service: .claude/rules/design-pa
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import lru_cache
 
 from sqlalchemy import MetaData
 from sqlalchemy.engine import URL, make_url
@@ -72,3 +73,22 @@ async def session_scope(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
             await session.rollback()
             raise
         await session.commit()
+
+
+@lru_cache
+def get_engine() -> AsyncEngine:
+    """One engine per process. Building an engine per call opens a new pool."""
+    return build_engine()
+
+
+@asynccontextmanager
+async def independent_session() -> AsyncIterator[AsyncSession]:
+    """A transaction of its own, so the row survives a rolled back request.
+
+    Failed logins and permission denials must stay on record even though the
+    request itself returns an error: docs/security/authorization.md. The audit
+    table carries no foreign key, so this write never waits on another
+    transaction: docs/data/schema.md.
+    """
+    async with session_scope(get_engine()) as session:
+        yield session

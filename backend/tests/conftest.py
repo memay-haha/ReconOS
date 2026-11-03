@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
-from app.core.db import build_engine
+from app.core.db import build_engine, get_engine
 from app.core.system_setting import clear_setting_cache
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -101,6 +101,18 @@ async def db_engine(_migrated_test_database: None) -> AsyncIterator[AsyncEngine]
     engine = build_engine()
     yield engine
     await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
+async def _dispose_process_engine() -> AsyncIterator[None]:
+    """Close the cached process engine, which nothing else disposes.
+
+    Left open, asyncpg warns about unclosed connections at interpreter exit.
+    """
+    yield
+    if get_engine.cache_info().currsize:
+        await get_engine().dispose()
+        get_engine.cache_clear()
 
 
 @pytest_asyncio.fixture(autouse=True)
