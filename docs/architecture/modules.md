@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -44,11 +44,12 @@
 | `finding` | Finding, severity, triage (G6) | S20 |
 | `report` | Báo cáo từ finding, truy vết về output thô (G6) | |
 | `dashboard` | Số liệu tổng hợp | S02 |
-| `user` | Tài khoản, vai trò, phiên đăng nhập, chặn đăng nhập sai nhiều lần, token worker | S12 |
+| `user` | Nghiệp vụ tài khoản: đăng nhập, vai trò, khóa tài khoản, thu hồi phiên, chặn đăng nhập sai nhiều lần, token worker | S12 |
 | `audit_log` | Nhật ký thao tác (G7) | S12 |
 | `alert` | Cảnh báo theo program, trạng thái đã đọc theo tài khoản | Chuông trên header |
 
 - `core/` không phải module nghiệp vụ: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime.
+- `core` giữ bảng danh tính `user`, `user_session` và phần kiểm tra đăng nhập, vai trò. Lý do: [dependency-graph.md](dependency-graph.md).
 - Module chỉ gọi module khác qua `service.py`. Chiều phụ thuộc cho phép: [dependency-graph.md](dependency-graph.md).
 - Cơ chế xác thực của `user`: [authentication.md](../security/authentication.md). Quyền: [authorization.md](../security/authorization.md).
 

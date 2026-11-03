@@ -1,6 +1,6 @@
 # Đồ thị phụ thuộc
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 12: Đồ thị phụ thuộc
 > Liên quan: [modules.md](modules.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -57,6 +57,7 @@ Module ở tầng trên được phép gọi `service.py` của module ở tần
 - `audit_log` nằm dưới mọi module nghiệp vụ nên module nào cũng ghi được nhật ký thao tác, kể cả `user`.
 - `audit_log` không gọi `user`. Phần đọc lấy tên tài khoản qua khóa ngoại `user_id` khai báo bằng tên bảng: [schema.md](../data/schema.md).
 - Mọi module ghi nhật ký thao tác qua `audit_log`, kiểm tra quyền qua `core`.
+- `core` giữ bảng `user`, `user_session` và dependency xác thực, phân quyền, vì module ở mọi tầng đều cần. Nhờ vậy bảng tầng không có ngoại lệ nào.
 - `job`, `parser`, `dispatcher` tạo cảnh báo qua `alert`. `alert` không gọi module nghiệp vụ. Khóa ngoại của `alert` tới `finding`, `job` khai báo bằng tên bảng.
 
 ```mermaid

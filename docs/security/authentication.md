@@ -1,6 +1,6 @@
 # Xác thực
 
-> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 7: Xác thực
 > Liên quan: [system.md](../architecture/system.md), [authorization.md](authorization.md), [modules.md](../architecture/modules.md)
 
@@ -21,7 +21,7 @@
 
 ## 📍 Ở đâu
 
-- Mã: `backend/app/core/security.py`, module `user`. Phía worker: `workers/worker/client.py`.
+- Mã: `backend/app/core/identity.py` bảng danh tính, `backend/app/core/security.py` kiểm tra đăng nhập, module `user` nghiệp vụ tài khoản. Phía worker: `workers/worker/client.py`.
 - Màn hình: S01 đăng nhập, S12 tài khoản và phiên.
 
 ## ⚙️ Làm như thế nào

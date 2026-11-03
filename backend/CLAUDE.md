@@ -19,7 +19,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 - Tạo đủ file cho mỗi module trong `app/<module>/`: `router.py`, `service.py`, `models.py`, `schemas.py`. Danh sách module: [modules.md](../docs/architecture/modules.md).
 - Import model mới vào `app/core/models.py` để Alembic phát hiện.
-- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `storage.py`, `realtime.py`.
+- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `identity.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `pagination.py`, `storage.py`, `system_setting.py`, `realtime.py`.
 - Viết migration CSDL chính trong `migrations/`, migration CSDL log trong `migrations_log/`. Bảng `app_log` phân vùng theo ngày nên migration viết tay, không autogenerate.
 
 **Tiến trình nền:**

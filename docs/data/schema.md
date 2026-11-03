@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md)
 
@@ -35,7 +35,7 @@
 
 | Khu vực | Module: bảng |
 |---|---|
-| Tài khoản và vận hành | `user`: `user`, `user_session`, `login_attempt`, `worker`, `worker_token`. `audit_log`: `audit_log`. `core`: `system_setting` |
+| Tài khoản và vận hành | `core`: `user`, `user_session`, `system_setting`. `user`: `login_attempt`, `worker`, `worker_token`. `audit_log`: `audit_log` |
 | Program và scope | `program`: `program`, `program_user`, `proxy`. `scope`: `scope_rule`. `job`: `schedule` |
 | Tool module và job | `tool_module`: `tool_module`. `engine`: `engine`, `engine_variable`. `job`: `job`. `raw_output`: `raw_output` |
 | Tài sản | `asset`: `domain`, `ip`, `domain_ip`, `service`, `url`, `technology`, `url_technology`, `asset_event`. `screenshot`: `screenshot` |
@@ -52,6 +52,8 @@
 | `worker_token` | Token của worker, nhiều token để xoay vòng | `token_hash`: giá trị băm. `revoked_at` có giá trị: đã thu hồi |
 | `audit_log` | Nhật ký thao tác (G7) | Tối đa một trong `user_id`, `worker_id` có giá trị. Cả hai là `NULL`: thao tác của hệ thống. Cột `user_id` không có khóa ngoại: nhật ký chỉ thêm dòng, phải ghi được cả từ transaction khác |
 | `system_setting` | Ngưỡng vận hành Superadmin sửa trên UI | `key`: tên thiết lập. Danh sách tên thiết lập và giá trị mặc định: [configuration.md](../ops/configuration.md) |
+
+- `core` giữ `user`, `user_session` vì mọi module ở mọi tầng đều cần biết ai đang đăng nhập: [dependency-graph.md](../architecture/dependency-graph.md). Nghiệp vụ tài khoản vẫn thuộc module `user`.
 
 ### Program và scope
 

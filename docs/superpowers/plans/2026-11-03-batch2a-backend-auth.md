@@ -41,6 +41,7 @@
 
 | File | Trách nhiệm |
 |---|---|
+| `backend/app/core/identity.py` | Model `user`, `user_session`. Mọi tầng đều cần nên đặt ở `core` |
 | `backend/app/core/security.py` | Mật khẩu, session ID, chính sách cookie, kiểm CSRF, dependency xác thực và phân quyền |
 | `backend/app/core/system_setting.py` | Model `system_setting` và hàm đọc ngưỡng kèm cache 60 giây |
 | `backend/app/core/pagination.py` | Mã hóa, giải mã cursor keyset và dựng trang kết quả |
@@ -48,7 +49,7 @@
 | `backend/app/audit_log/models.py` | Model `audit_log` |
 | `backend/app/audit_log/service.py` | Ghi và đọc nhật ký thao tác |
 | `backend/app/audit_log/router.py` | `GET /audit-logs` |
-| `backend/app/user/models.py` | Model `user`, `user_session`, `login_attempt` |
+| `backend/app/user/models.py` | Model `login_attempt` |
 | `backend/app/user/service.py` | Đăng nhập, phiên, quản lý tài khoản |
 | `backend/app/user/router.py` | `/auth/*`, `/users/*`, `/user-sessions/*` |
 | `backend/app/bootstrap.py` | Lệnh tạo Superadmin đầu tiên |
@@ -571,6 +572,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ### Task 4: Năm bảng CSDL và migration
 
 **Files:**
+- Create: `backend/app/core/identity.py`
 - Create: `backend/app/user/__init__.py`, `backend/app/user/models.py`
 - Create: `backend/app/audit_log/__init__.py`, `backend/app/audit_log/models.py`
 - Create: `backend/app/core/system_setting.py`
@@ -580,7 +582,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: `Base` trong `app.core.db`.
-- Produces: `User`, `UserSession`, `LoginAttempt` trong `app.user.models`; `AuditLog` trong `app.audit_log.models`; `SystemSetting` trong `app.core.system_setting`. `UserRole` là `StrEnum` với giá trị `superadmin`, `admin`, `user`.
+- Produces: `User`, `UserSession`, `UserRole` trong `app.core.identity`; `LoginAttempt` trong `app.user.models`; `AuditLog` trong `app.audit_log.models`; `SystemSetting` trong `app.core.system_setting`. `UserRole` là `StrEnum` với giá trị `superadmin`, `admin`, `user`.
 
 Cột theo [erd.mermaid](../../data/erd.mermaid). `user` là từ khóa của PostgreSQL, SQLAlchemy tự đặt dấu nháy nên giữ nguyên tên bảng.
 
@@ -591,7 +593,8 @@ Tạo `backend/tests/test_models_schema.py`:
 ```python
 from app.audit_log.models import AuditLog
 from app.core.system_setting import SystemSetting
-from app.user.models import LoginAttempt, User, UserRole, UserSession
+from app.core.identity import User, UserRole, UserSession
+from app.user.models import LoginAttempt
 
 
 def test_tables_are_named_after_the_schema_document() -> None:
@@ -639,14 +642,19 @@ def test_roles_match_the_glossary() -> None:
 - [ ] **Step 2: Chạy test, xác nhận hỏng**
 
 Run: `uv run pytest backend/tests/test_models_schema.py -v`
-Expected: FAIL, `ModuleNotFoundError: app.user.models`.
+Expected: FAIL, `ModuleNotFoundError: app.core.identity`.
 
-- [ ] **Step 3: Viết model của module user**
+- [ ] **Step 3: Viết model danh tính và model của module user**
 
-Tạo `backend/app/user/__init__.py` rỗng và `backend/app/user/models.py`:
+Tạo `backend/app/core/identity.py`:
 
 ```python
-"""Accounts, sessions and failed login records: docs/data/schema.md."""
+"""Identity tables. They live in core because every tier needs to know who is
+calling: docs/architecture/dependency-graph.md.
+
+Account behaviour stays in the `user` module. This file holds the tables and
+nothing else.
+"""
 
 import uuid
 from datetime import datetime
@@ -704,6 +712,21 @@ class UserSession(Base):
         DateTime(timezone=True), server_default=text("now()")
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+```
+
+Tạo `backend/app/user/__init__.py` rỗng và `backend/app/user/models.py`:
+
+```python
+"""Tables owned by the user module: docs/data/schema.md."""
+
+import uuid
+from datetime import datetime
+
+from sqlalchemy import DateTime, Text, text
+from sqlalchemy.dialects.postgresql import INET, UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.db import Base
 
 
 class LoginAttempt(Base):
@@ -805,7 +828,8 @@ the full schema: docs/data/database.md.
 from app.audit_log.models import AuditLog
 from app.core.db import Base
 from app.core.system_setting import SystemSetting
-from app.user.models import LoginAttempt, User, UserSession
+from app.core.identity import User, UserSession
+from app.user.models import LoginAttempt
 
 __all__ = ["AuditLog", "Base", "LoginAttempt", "SystemSetting", "User", "UserSession"]
 ```
@@ -1238,7 +1262,7 @@ from app.core.security import (
     new_session_id,
     require_roles,
 )
-from app.user.models import User, UserRole, UserSession
+from app.core.identity import User, UserRole, UserSession
 
 
 async def make_session(
@@ -1397,7 +1421,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit_log import service as audit_service
 from app.core.errors import UnauthenticatedError
 from app.core.system_setting import get_int_setting
-from app.user.models import User, UserRole, UserSession
+from app.core.identity import User, UserRole, UserSession
 
 
 class AllPrograms:
@@ -1618,7 +1642,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit_log.models import AuditLog
-from app.user.models import LoginAttempt, UserRole
+from app.core.identity import UserRole
+from app.user.models import LoginAttempt
 
 PASSWORD = "troutmoonlit7Ladder!quay"
 HEADERS = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
@@ -1829,7 +1854,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.user.models import UserRole
+from app.core.identity import UserRole
 
 
 class LoginRequest(BaseModel):
@@ -1899,7 +1924,8 @@ from app.core.security import (
     verify_password,
 )
 from app.core.system_setting import get_int_setting
-from app.user.models import LoginAttempt, User, UserRole, UserSession
+from app.core.identity import User, UserRole, UserSession
+from app.user.models import LoginAttempt
 
 
 async def _window_start(session: AsyncSession) -> tuple[datetime, int]:
@@ -2007,7 +2033,7 @@ from app.core.db import build_engine, session_scope
 from app.core.security import enforce_csrf, load_current_user, session_cookie
 from app.core.system_setting import get_int_setting
 from app.user import service
-from app.user.models import User
+from app.core.identity import User
 from app.user.schemas import LoginRequest, PasswordChangeRequest, UserResponse
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
@@ -2155,7 +2181,7 @@ Tạo `backend/tests/test_user_endpoints.py`:
 import pytest
 from httpx import AsyncClient
 
-from app.user.models import UserRole
+from app.core.identity import UserRole
 
 HEADERS = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
 NEW = {
@@ -2242,7 +2268,7 @@ async def test_lock_revokes_every_session_of_that_account(
     assert (await client.post(f"/api/v1/users/{victim.id}/lock", headers=HEADERS)).status_code == 204
     from sqlalchemy import func, select
 
-    from app.user.models import UserSession
+    from app.core.identity import UserSession
 
     remaining = await db_session.scalar(
         select(func.count()).select_from(UserSession).where(UserSession.user_id == victim.id)
@@ -2358,7 +2384,7 @@ Bổ sung vào `backend/app/user/router.py`. Mẫu cho một endpoint, lặp l�
 
 ```python
 from app.core.security import require_roles
-from app.user.models import UserRole
+from app.core.identity import UserRole
 
 superadmin_only = require_roles(UserRole.SUPERADMIN)
 
@@ -2556,7 +2582,7 @@ Tạo `backend/tests/test_audit_log_endpoints.py`:
 import pytest
 from httpx import AsyncClient
 
-from app.user.models import UserRole
+from app.core.identity import UserRole
 
 HEADERS = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
 
@@ -2603,7 +2629,7 @@ async def test_revoke_session_by_role(
     from datetime import UTC, datetime, timedelta
 
     from app.core.security import hash_session_id, new_session_id
-    from app.user.models import UserSession
+    from app.core.identity import UserSession
 
     raw = new_session_id()
     victim_session = UserSession(
@@ -2745,7 +2771,7 @@ async def list_audit_logs(
 
 Gắn router vào `backend/app/main.py`.
 
-⚠️ Router này lấy `DbDep`, `Principal` và `require_roles` từ `core`, không lấy từ module `user`, vì `audit_log` ở tầng 1 còn `user` ở tầng 2. Xem mục Việc còn mở ở cuối kế hoạch trước khi viết.
+Router này lấy `DbDep`, `Principal` và `require_roles` từ `core`. Mọi module ở mọi tầng đều lấy từ `core`, không module nào gọi lên module khác.
 
 Thêm vào `backend/app/user/service.py`:
 
@@ -2806,7 +2832,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bootstrap import BootstrapConfigError, run_bootstrap
-from app.user.models import User, UserRole
+from app.core.identity import User, UserRole
 
 PASSWORD = "troutmoonlit7Ladder!quay"
 
@@ -2881,7 +2907,7 @@ from app.audit_log import service as audit_service
 from app.core.config import Settings, get_settings
 from app.core.db import build_engine, session_scope
 from app.core.security import check_password_policy, hash_password
-from app.user.models import User, UserRole
+from app.core.identity import User, UserRole
 
 log = structlog.get_logger()
 
@@ -3041,18 +3067,6 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 **Phủ spec:** 5 bảng ở Task 4. `core/security.py` ở Task 1, 2, 3, 7. Ghi nhật ký khi request thất bại ở Task 6. 12 endpoint của module `user` ở Task 9, 10, 11. Module `audit_log` ở Task 6 và 11. Phân trang cursor ở Task 8. Ngưỡng vận hành ở Task 5. Lệnh `bootstrap` ở Task 12. Test bắt buộc trải từ Task 1 đến Task 12. Tiêu chí hoàn thành ở Task 13.
 
 **Tên hàm dùng xuyên suốt:** `hash_password`, `verify_password`, `password_needs_rehash`, `burn_password_comparison`, `check_password_policy`, `new_session_id`, `hash_session_id`, `session_id_matches`, `session_cookie`, `enforce_csrf`, `load_current_user`, `require_roles`, `allowed_program_ids`, `get_int_setting`, `clear_setting_cache`, `independent_session`, `record`, `record_detached`, `encode_cursor`, `decode_cursor`, `run_bootstrap`.
-
-## ⚠️ Việc còn mở, phải chốt trước khi làm Task 7
-
-`core/security.py` ở tầng 0, chỉ được gọi thư viện bên ngoài. Nhưng dependency xác thực phải đọc bảng `user` và `user_session` của module `user` ở tầng 2, và `require_roles` phải biết vai trò của tài khoản. Mã trong Task 7 hiện `import` model từ `app.user.models`, tức tầng 0 phụ thuộc tầng 2.
-
-Đây là hệ quả của việc hạ `audit_log` xuống dưới `user`: nếu đặt dependency xác thực trong module `user` thì `audit_log/router.py` ở tầng 1 lại không gọi được nó.
-
-Ba cách gỡ, chưa chốt:
-
-1. `core/security.py` tham chiếu hai bảng bằng tên bảng dạng chuỗi qua `sqlalchemy.table()`, trả về một `Principal` khai báo trong `core`. Không import model, đúng cơ chế tài liệu đã cho phép dùng cho khóa ngoại chéo tầng. Mã dài hơn, mất tiện lợi của ORM.
-2. Ghi một ngoại lệ hẹp vào `dependency-graph.md`: `core/security.py` được phép import model của `user` để xác thực phiên. Mã gọn nhất, nhưng tầng 0 phụ thuộc tầng 2.
-3. Chuyển hai bảng `user`, `user_session` sang `core`. Trái phần phân chia bảng theo module trong `schema.md` và `modules.md`.
 
 **Điểm dễ sai:**
 - `user` là từ khóa của PostgreSQL. Giữ tên bảng, để SQLAlchemy tự đặt dấu nháy.
