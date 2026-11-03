@@ -11,17 +11,25 @@ docs/security/authorization.md. It must keep 100% branch coverage.
 import hashlib
 import hmac
 import secrets
-from collections.abc import Sequence
+import uuid
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Final
 from urllib.parse import urlsplit
 
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error, InvalidHashError
 from fastapi import Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from zxcvbn import zxcvbn
 
+from app.audit_log import service as audit_service
 from app.core.config import Settings
-from app.core.errors import ForbiddenError, ValidationFailedError
+from app.core.errors import ForbiddenError, UnauthenticatedError, ValidationFailedError
+from app.core.identity import User, UserRole, UserSession
+from app.core.system_setting import get_int_setting
 
 MIN_PASSWORD_LENGTH = 12
 MAX_PASSWORD_LENGTH = 128
@@ -127,3 +135,71 @@ def enforce_csrf(request: Request, settings: Settings) -> None:
         raise ForbiddenError(detail="cross-site request is not allowed")
     if origin is None and fetch_site is None and session_cookie(settings).name in request.cookies:
         raise ForbiddenError(detail="request carries a session cookie without origin headers")
+
+
+class AllPrograms:
+    """Marker for an account that sees every program."""
+
+
+ALL_PROGRAMS: Final = AllPrograms()
+
+
+async def load_current_user(request: Request, session: AsyncSession, settings: Settings) -> User:
+    """Resolve the session cookie to an account, or raise UnauthenticatedError.
+
+    Every rejection raises the same error type with a generic title, so a
+    caller cannot tell an unknown cookie from an expired session or a locked
+    account. The detail text is for the server log only.
+    """
+    session_id = request.cookies.get(session_cookie(settings).name)
+    if session_id is None:
+        raise UnauthenticatedError(detail="no session cookie")
+    row = (
+        await session.execute(
+            select(UserSession, User)
+            .join(User, User.id == UserSession.user_id)
+            .where(UserSession.session_hash == hash_session_id(session_id))
+        )
+    ).first()
+    if row is None:
+        raise UnauthenticatedError(detail="session not found")
+    user_session, user = row
+    now = datetime.now(UTC)
+    # Absolute lifetime is fixed at login and never extended, unlike the idle window.
+    if user_session.expires_at <= now:
+        raise UnauthenticatedError(detail="session reached its maximum lifetime")
+    idle_minutes = await get_int_setting(session, "session_idle_timeout_minutes")
+    if user_session.last_seen_at + timedelta(minutes=idle_minutes) <= now:
+        raise UnauthenticatedError(detail="session expired after inactivity")
+    if user.is_locked:
+        raise UnauthenticatedError(detail="account is locked")
+    user_session.last_seen_at = now
+    return user
+
+
+def require_roles(*roles: UserRole) -> Callable[[User, AsyncSession], Awaitable[User]]:
+    """Deny by default: an endpoint without a guard is callable by nobody."""
+    allowed = {role.value for role in roles}
+
+    async def guard(user: User, session: AsyncSession) -> User:
+        if user.role not in allowed:
+            # Detached: raising below rolls the request transaction back, and a
+            # plain record() would be rolled back with it.
+            await audit_service.record_detached(
+                action="permission_denied", user_id=user.id, detail={"required": sorted(allowed)}
+            )
+            raise ForbiddenError(detail="role is not allowed to perform this action")
+        return user
+
+    return guard
+
+
+async def allowed_program_ids(user: User) -> frozenset[uuid.UUID] | AllPrograms:
+    """Programs the account may read.
+
+    Superadmin and Admin see everything. The assignment table `program_user`
+    arrives in batch 3, which is where the User branch starts querying it.
+    """
+    if user.role in {UserRole.SUPERADMIN.value, UserRole.ADMIN.value}:
+        return ALL_PROGRAMS
+    return frozenset()

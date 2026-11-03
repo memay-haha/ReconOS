@@ -3,19 +3,23 @@
 Running against the development stores is forbidden: .claude/rules/testing.md
 """
 
+import itertools
 import os
-from collections.abc import AsyncIterator, Callable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from pathlib import Path
 
 import pytest
 import pytest_asyncio
 from alembic import command
 from alembic.config import Config
+from fastapi import Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
 from app.core.db import build_engine, get_engine
+from app.core.identity import User, UserRole
+from app.core.security import HOST_COOKIE_NAME, hash_password
 from app.core.system_setting import clear_setting_cache
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -140,3 +144,37 @@ async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
         await session.close()
         await transaction.rollback()
         await connection.close()
+
+
+@pytest.fixture
+def request_factory() -> Callable[..., Request]:
+    def build(session_id: str | None = None, method: str = "GET") -> Request:
+        headers: list[tuple[bytes, bytes]] = []
+        if session_id is not None:
+            headers.append((b"cookie", f"{HOST_COOKIE_NAME}={session_id}".encode()))
+        return Request({"type": "http", "method": method, "headers": headers, "path": "/"})
+
+    return build
+
+
+@pytest.fixture
+def user_factory(db_session: AsyncSession) -> Callable[..., Awaitable[User]]:
+    counter = itertools.count()
+
+    async def build(
+        role: UserRole = UserRole.USER,
+        is_locked: bool = False,
+        password: str = "troutmoonlit7Ladder!quay",  # noqa: S107  # throwaway test value
+    ) -> User:
+        user = User(
+            username=f"account{next(counter)}",
+            display_name="Test Account",
+            password_hash=hash_password(password),
+            role=role.value,
+            is_locked=is_locked,
+        )
+        db_session.add(user)
+        await db_session.flush()
+        return user
+
+    return build
