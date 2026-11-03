@@ -49,7 +49,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -107,7 +106,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -952,7 +950,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: user_id, in: query, schema: {type: string, format: uuid}}
+        - {name: action, in: query, schema: {type: string}}
+        - {name: created_at_from, in: query, schema: {type: string, format: date-time}}
+        - {name: created_at_to, in: query, schema: {type: string, format: date-time}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}

@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -59,12 +59,13 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 | `RECONOS_S3_BUCKET` | | Bucket output thô |
 | `RECONOS_S3_ACCESS_KEY`, `RECONOS_S3_SECRET_KEY` | ✅ | Khóa truy cập MinIO |
 | `RECONOS_ENCRYPTION_KEYS` | ✅ | Khóa mã hóa cột `_encrypted` |
-| `RECONOS_PUBLIC_ORIGIN` | | Origin của ReconOS, dùng kiểm tra CSRF (Cross-Site Request Forgery), WebSocket và chọn thuộc tính cookie phiên theo scheme |
+| `RECONOS_PUBLIC_ORIGIN` | | Origin của ReconOS, dùng kiểm tra CSRF (Cross-Site Request Forgery), WebSocket và chọn thuộc tính cookie phiên theo scheme. Chỉ nhận dạng `scheme://host[:port]`, phần còn lại bị bỏ khi nạp. Giá trị sai dạng làm tiến trình dừng ngay khi khởi động |
 | `RECONOS_BOOTSTRAP_ADMIN_USERNAME` | | Tên đăng nhập của Superadmin đầu tiên, chỉ lệnh `bootstrap` đọc |
 | `RECONOS_BOOTSTRAP_ADMIN_PASSWORD` | ✅ | Mật khẩu của Superadmin đầu tiên, chỉ lệnh `bootstrap` đọc |
 | `RECONOS_LOG_LEVEL` | | Cấp log ra stdout, mặc định `info` |
-| `RECONOS_DB_POOL_SIZE` | | Số kết nối CSDL mỗi tiến trình, mặc định 10 |
+| `RECONOS_DB_POOL_SIZE` | | Số kết nối CSDL cho luồng request mỗi tiến trình, mặc định 10 |
 
+- Backend API giữ thêm 2 kết nối cố định ngoài `RECONOS_DB_POOL_SIZE`, dành riêng cho transaction độc lập ghi lần đăng nhập sai và yêu cầu bị từ chối. Số này không cấu hình được.
 - Hai biến `RECONOS_BOOTSTRAP_ADMIN_*` chỉ có tác dụng khi bảng `user` chưa có dòng nào. Đổi giá trị sau đó không sửa tài khoản đã tạo: [authentication.md](../security/authentication.md).
 
 ### Biến môi trường của worker

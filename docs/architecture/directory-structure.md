@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.3 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -57,6 +57,7 @@
 | `tests/` | Test của backend |
 
 - Mỗi module tự chứa: `router.py` là endpoint, `service.py` là nghiệp vụ, `models.py` là model SQLAlchemy, `schemas.py` là schema Pydantic.
+- Module không sở hữu bảng nào thì không có `models.py`. Bảng mà mọi tầng đều cần nằm trong `app/core/`: [dependency-graph.md](dependency-graph.md).
 - Module chỉ gọi module khác qua `service.py`.
 - `app/core/models.py` import model của mọi module để Alembic tạo migration.
 - Danh sách module và trách nhiệm: [modules.md](modules.md).

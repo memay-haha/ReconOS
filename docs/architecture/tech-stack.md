@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -96,6 +96,7 @@
 | pnpm | Quản lý thư viện phụ thuộc, lock file | frontend |
 | pytest, pytest-asyncio, pytest-cov | Test Python, đo độ phủ | backend, workers, contracts |
 | types-zxcvbn | Stub kiểu để mypy kiểm tra `zxcvbn` | backend |
+| PyYAML, types-PyYAML | Đọc `docs/api/openapi.yaml` trong test đối chiếu endpoint | backend |
 | Vitest, Testing Library | Test hook, component | frontend |
 | Playwright | Test E2E (end-to-end) | frontend |
 

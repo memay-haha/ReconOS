@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.2 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -61,7 +61,8 @@
   - Header `Sec-Fetch-Site` là `cross-site`.
 - Thiếu cả hai header: từ chối với request dùng cookie phiên.
 - Cookie phiên `SameSite=Lax` là lớp bảo vệ thứ hai.
-- Endpoint của worker không dùng cookie, không áp dụng kiểm tra này.
+- Kiểm tra khai báo một lần ở tầng ứng dụng nên endpoint thêm sau tự có, không phải tự gọi.
+- Endpoint của worker không dùng cookie phiên nên luôn qua được kiểm tra này.
 
 ### Phân trang
 
