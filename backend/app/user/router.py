@@ -50,7 +50,13 @@ async def logout(
     enforce_csrf(request, settings)
     cookie = session_cookie(settings)
     await service.logout(session, user=user, session_id=request.cookies[cookie.name])
-    response.delete_cookie(cookie.name, path=cookie.path)
+    response.delete_cookie(
+        cookie.name,
+        path=cookie.path,
+        secure=cookie.secure,
+        httponly=cookie.httponly,
+        samesite=cookie.samesite,
+    )
 
 
 @router.get("/auth/me", response_model=UserResponse)
@@ -73,4 +79,5 @@ async def change_password(
         current_password=body.current_password,
         new_password=body.new_password,
         session_id=request.cookies[session_cookie(settings).name],
+        ip_address=client_ip(request),
     )

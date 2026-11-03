@@ -2,7 +2,7 @@ from collections.abc import Awaitable, Callable
 
 from httpx import AsyncClient
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.audit_log.models import AuditLog
 from app.core.identity import User, UserRole, UserSession
@@ -58,7 +58,9 @@ async def test_locked_account_cannot_log_in(
 
 
 async def test_failed_login_is_recorded_even_though_the_request_fails(
-    client: AsyncClient, db_session: AsyncSession, user_factory: Callable[..., Awaitable[User]]
+    client: AsyncClient,
+    db_engine: AsyncEngine,
+    user_factory: Callable[..., Awaitable[User]],
 ) -> None:
     user = await user_factory(password=PASSWORD)
     await client.post(
@@ -66,9 +68,14 @@ async def test_failed_login_is_recorded_even_though_the_request_fails(
         json={"username": user.username, "password": "definitely wrong here"},
         headers=HEADERS,
     )
-    total = await db_session.scalar(
-        select(func.count()).select_from(LoginAttempt).where(LoginAttempt.username == user.username)
-    )
+    # A second connection sees only committed rows, so this fails if the row
+    # were added to the request session that the failed request rolls back.
+    async with db_engine.connect() as other:
+        total = await other.scalar(
+            select(func.count())
+            .select_from(LoginAttempt)
+            .where(LoginAttempt.username == user.username)
+        )
     assert total == 1
 
 
@@ -331,3 +338,50 @@ async def test_password_change_revokes_other_sessions_and_keeps_current(
     assert (await client.get("/api/v1/auth/me")).status_code == 200
     actions = (await db_session.execute(select(AuditLog.action))).scalars().all()
     assert "password_changed" in actions
+
+
+async def test_logout_cookie_deletion_carries_the_attributes_browsers_require(
+    client: AsyncClient, logged_in: Callable[..., Awaitable[User]]
+) -> None:
+    # A __Host- cookie without Secure is ignored by browsers, so the stale
+    # cookie would stay. The httpx jar has no prefix rules: check the header.
+    await logged_in()
+    response = await client.post("/api/v1/auth/logout", headers=HEADERS)
+    header = response.headers["set-cookie"]
+    assert header.startswith("__Host-reconos_session=")
+    assert "Secure" in header
+    assert "Max-Age=0" in header
+
+
+async def test_password_change_is_throttled_and_audited_like_login(
+    client: AsyncClient,
+    db_engine: AsyncEngine,
+    logged_in: Callable[..., Awaitable[User]],
+) -> None:
+    user = await logged_in()
+    for _ in range(5):
+        wrong = await client.post(
+            "/api/v1/auth/password",
+            json={"current_password": "wrong one here", "new_password": "bramble7Quartz!tide"},
+            headers=HEADERS,
+        )
+        assert wrong.status_code == 401
+    async with db_engine.connect() as other:
+        attempts = await other.scalar(
+            select(func.count())
+            .select_from(LoginAttempt)
+            .where(LoginAttempt.username == user.username)
+        )
+        audited = await other.scalar(
+            select(func.count()).select_from(AuditLog).where(AuditLog.action == "login_failed")
+        )
+    assert attempts == 5
+    assert audited == 5
+    # Even the correct password is refused once the account is throttled.
+    blocked = await client.post(
+        "/api/v1/auth/password",
+        json={"current_password": PASSWORD, "new_password": "bramble7Quartz!tide"},
+        headers=HEADERS,
+    )
+    assert blocked.status_code == 429
+    assert blocked.headers["retry-after"]

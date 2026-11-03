@@ -1,6 +1,7 @@
 """Accounts, sessions and the login flow: docs/security/authentication.md."""
 
 import math
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
@@ -152,17 +153,35 @@ async def logout(session: AsyncSession, *, user: User, session_id: str) -> None:
     await audit_service.record(session, action="logout", user_id=user.id)
 
 
-async def change_password(
-    session: AsyncSession, *, user: User, current_password: str, new_password: str, session_id: str
+async def revoke_sessions_for_user(
+    session: AsyncSession, user_id: uuid.UUID, *, keep_session_hash: str | None = None
 ) -> None:
+    """Delete the sessions of an account, optionally sparing one.
+
+    A kept hash that matches no row spares nothing, so the call fails closed.
+    """
+    statement = delete(UserSession).where(UserSession.user_id == user_id)
+    if keep_session_hash is not None:
+        statement = statement.where(UserSession.session_hash != keep_session_hash)
+    await session.execute(statement)
+
+
+async def change_password(
+    session: AsyncSession,
+    *,
+    user: User,
+    current_password: str,
+    new_password: str,
+    session_id: str,
+    ip_address: str,
+) -> None:
+    # A stolen session cookie must not turn this endpoint into a password oracle,
+    # so it shares the login throttle and the failed-login trail.
+    await check_login_allowed(session, user.username, ip_address)
     if not verify_password(user.password_hash, current_password):
+        await record_failed_login(user.username, ip_address)
         raise UnauthenticatedError(detail="current password does not match")
     check_password_policy(new_password, user_inputs=[user.username, user.display_name])
     user.password_hash = hash_password(new_password)
-    await session.execute(
-        delete(UserSession).where(
-            UserSession.user_id == user.id,
-            UserSession.session_hash != hash_session_id(session_id),
-        )
-    )
+    await revoke_sessions_for_user(session, user.id, keep_session_hash=hash_session_id(session_id))
     await audit_service.record(session, action="password_changed", user_id=user.id)
