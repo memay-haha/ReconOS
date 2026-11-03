@@ -1,0 +1,35 @@
+# Thông tin xác thực
+.env
+.env.*
+*.pem
+*.key
+
+# Mã tham khảo bên thứ ba, chỉ đọc tại máy
+/_reference/
+
+# Dữ liệu sinh lúc chạy
+/data/
+
+# Dữ liệu công cụ phân tích
+/.codegraph/
+/.ua/
+
+# Cấu hình Claude Code riêng từng máy
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Hệ điều hành, trình soạn thảo
+.DS_Store
+*.swp

@@ -1,0 +1,424 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bản đồ tài liệu TÊN_DỰ_ÁN</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: group board on the left, sticky detail panel on the right; the panel becomes a bottom sheet on narrow screens. */
+:root {
+  --bg: #f3f5f8;
+  --card: #ffffff;
+  --ink: #142033;
+  --muted: #64718a;
+  --border: #dfe4ec;
+  --soft: #eef1f6;
+  --dep: #2457d6;
+  --dep-bg: #e8eefc;
+  --used: #0d8a5a;
+  --used-bg: #e3f5ed;
+  --sync: #d0510f;
+  --sync-bg: #fdeee4;
+  --shadow: 0 1px 2px rgba(20, 32, 51, .06), 0 4px 14px rgba(20, 32, 51, .06);
+  --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+    --dep: #7ea2ff; --dep-bg: #1c2a4a; --used: #4cc893; --used-bg: #15352a; --sync: #ff9a5c; --sync-bg: #3a2418;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+  --dep: #7ea2ff; --dep-bg: #1c2a4a; --used: #4cc893; --used-bg: #15352a; --sync: #ff9a5c; --sync-bg: #3a2418;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+/* Class rules set display:grid on the views, so hidden must win explicitly. */
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1420px; margin: 0 auto; display: grid; gap: 20px; }
+
+/* Header */
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 32px; }
+h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 2px solid; }
+.sw-dep { border-color: var(--dep); background: var(--dep-bg); }
+.sw-used { border-color: var(--used); background: var(--used-bg); }
+.sw-sync { border-color: var(--sync); background: var(--sync-bg); border-style: dashed; }
+
+/* Main layout */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+.board-wrap { position: relative; min-width: 0; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start; }
+#links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 4; }
+
+/* Group card */
+.group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.group-head { display: flex; gap: 10px; align-items: baseline; }
+.group-num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.group-name { font-weight: 600; font-size: 15px; }
+.group-count { margin-left: auto; font-size: 12px; color: var(--muted); }
+.docs { display: grid; gap: 8px; }
+
+/* Document chip */
+.doc {
+  position: relative; z-index: 3; text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%;
+  background: var(--soft); border: 1.5px solid transparent; border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px;
+  transition: opacity .15s, border-color .15s, background .15s, transform .15s;
+}
+.doc:hover { border-color: var(--border); transform: translateY(-1px); }
+.doc:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+.doc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.doc-name { font-family: var(--mono); font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-purpose { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.tag { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; padding: 0 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); flex: none; }
+.bars { margin-left: auto; display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; flex: none; }
+.bars i { width: 3px; border-radius: 1px; background: var(--border); }
+.bars i:nth-child(1) { height: 5px; } .bars i:nth-child(2) { height: 8px; } .bars i:nth-child(3) { height: 11px; }
+.bars i.on { background: var(--muted); }
+
+.board.has-sel .doc { opacity: .35; }
+.board.has-sel .doc.rel, .board.has-sel .doc.sel { opacity: 1; }
+.doc.sel { background: var(--card); border-color: var(--ink); box-shadow: var(--shadow); }
+.doc.r-dep { background: var(--dep-bg); border-color: var(--dep); }
+.doc.r-used { background: var(--used-bg); border-color: var(--used); }
+.doc.r-sync { background: var(--sync-bg); border-color: var(--sync); border-style: dashed; }
+
+#links path { fill: none; stroke-width: 1.8; }
+#links .l-dep { stroke: var(--dep); }
+#links .l-used { stroke: var(--used); }
+#links .l-sync { stroke: var(--sync); stroke-dasharray: 6 4; }
+
+/* Detail panel */
+.panel { position: sticky; top: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 18px; display: grid; gap: 14px; }
+.panel-close { display: none; }
+.p-name { font-family: var(--mono); font-size: 15px; font-weight: 500; margin: 0; word-break: break-all; }
+.p-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); }
+.p-meta span { background: var(--soft); padding: 2px 8px; border-radius: 999px; }
+.p-purpose { margin: 0; font-size: 14px; }
+.p-sec { display: grid; gap: 6px; }
+.p-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.p-title .swatch { width: 10px; height: 10px; }
+.p-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.p-chip { font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--soft); color: var(--ink); cursor: pointer; }
+.p-chip:hover { border-color: var(--muted); }
+.p-chip:focus-visible, .panel-close:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+.p-none { font-size: 12.5px; color: var(--muted); }
+.p-empty { color: var(--muted); margin: 0; }
+.p-path { font-size: 12px; color: var(--muted); font-family: var(--mono); word-break: break-all; margin: 0; }
+
+/* Tabs */
+.tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; justify-self: start; }
+.tab { font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); background: none; border: 0; border-radius: 7px; padding: 6px 16px; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.tab:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+
+/* Purpose view */
+.purpose { display: grid; gap: 16px; }
+.p-group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.p-group h2 { margin: 0; padding: 12px 18px; font-size: 15px; font-weight: 600; display: flex; gap: 10px; align-items: baseline; border-bottom: 1px solid var(--border); }
+.p-row { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) auto; gap: 6px 24px; align-items: start; padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.p-row:last-child { border-bottom: 0; }
+.p-row:hover { background: var(--soft); }
+.p-row:focus-visible { outline: 2px solid var(--dep); outline-offset: -2px; }
+.p-file { display: grid; gap: 2px; min-width: 0; }
+.p-file b { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.p-file span { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; }
+.p-about { font-size: 14px; min-width: 0; }
+.p-side { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .p-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 1260px) { .board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1060px) {
+  .layout { grid-template-columns: 1fr; }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel {
+    position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; top: auto; max-height: 52vh; overflow: auto;
+    border-radius: 14px 14px 0 0; padding-top: 14px; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .panel.idle { display: none; }
+  .panel-close { display: block; justify-self: end; font: inherit; font-size: 13px; background: var(--soft); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  body.sheet-open { padding-bottom: 52vh; }
+}
+@media (max-width: 620px) { .board { grid-template-columns: 1fr; } h1 { font-size: 22px; } }
+@media (prefers-reduced-motion: reduce) { .doc { transition: none; } .doc:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1 id="page-title"></h1>
+      <p class="sub" id="page-sub"></p>
+    </div>
+    <div class="legend" id="legend" aria-label="Chú thích">
+      <span><i class="swatch sw-dep"></i>Tiền đề</span>
+      <span><i class="swatch sw-used"></i>Kế thừa</span>
+      <span><i class="swatch sw-sync"></i>Phạm vi ảnh hưởng</span>
+      <span><b class="tag">ADR</b><b class="tag">RULE</b><b class="tag">DATA</b>Loại file</span>
+      <span><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Mức thay đổi</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Chế độ xem">
+    <button type="button" class="tab" role="tab" id="tab-ban-do" aria-controls="view-ban-do" data-view="ban-do">Bản đồ</button>
+    <button type="button" class="tab" role="tab" id="tab-muc-dich" aria-controls="view-muc-dich" data-view="muc-dich">Mục đích</button>
+  </div>
+
+  <div class="layout" id="view-ban-do" role="tabpanel" aria-labelledby="tab-ban-do">
+    <div class="board-wrap" id="board-wrap">
+      <svg id="links" aria-hidden="true"></svg>
+      <div class="board" id="board"></div>
+    </div>
+    <aside class="panel idle" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <div class="purpose" id="view-muc-dich" role="tabpanel" aria-labelledby="tab-muc-dich" hidden></div>
+</div>
+
+<script>
+// Everything runs inside one function so no name collides with globals of the host page.
+(() => {
+// Data block. Edit CONFIG, GROUPS and DOCS only; the drawing code below stays fixed.
+// kind: doc | adr | rule | data. change: 3 high, 2 medium, 1 low.
+// deps: prerequisites (tiền đề). sync: impact scope (phạm vi ảnh hưởng). Both list DOCS ids.
+// purpose: at most 8 words, shown on the map. about: one or two sentences, shown on the purpose tab.
+const CONFIG = { title: "Bản đồ tài liệu TÊN_DỰ_ÁN" };
+const GROUPS = [
+  { id: "nen", name: "Nền tảng" },
+  { id: "kt", name: "Kiến trúc" },
+];
+const DOCS = [
+  { id: "overview", path: "docs/overview.md", label: "overview", group: "nen", kind: "doc", change: 1, deps: [], sync: [], status: "Xong",
+    purpose: "Mục tiêu, phạm vi", about: "Mục tiêu và phạm vi của dự án. Ví dụ mẫu, thay bằng dữ liệu thật." },
+  { id: "system", path: "docs/system.md", label: "system", group: "kt", kind: "doc", change: 2, deps: ["overview"], sync: [], status: "Xong",
+    purpose: "Thành phần, kênh giao tiếp", about: "Các thành phần của hệ thống và kênh giao tiếp giữa chúng. Ví dụ mẫu." },
+];
+
+// ---- Drawing code: fixed encoding, see SKILL.md of drawing-documentation-map ----
+const byId = Object.fromEntries(DOCS.map(d => [d.id, d]));
+
+// Validate data before drawing; problems are listed at the top of the page.
+(function validate() {
+  const errors = [];
+  const groupIds = new Set(GROUPS.map(g => g.id));
+  const seen = new Set();
+  DOCS.forEach(d => {
+    if (seen.has(d.id)) errors.push(`Trùng id: ${d.id}`);
+    seen.add(d.id);
+    if (!groupIds.has(d.group)) errors.push(`${d.id}: nhóm "${d.group}" không có trong GROUPS`);
+    [...d.deps, ...d.sync].forEach(x => { if (!byId[x]) errors.push(`${d.id}: id "${x}" không có trong DOCS`); });
+    if (![1, 2, 3].includes(d.change)) errors.push(`${d.id}: change phải là 1, 2 hoặc 3`);
+    if (!d.purpose || !d.about) errors.push(`${d.id}: thiếu purpose hoặc about`);
+  });
+  const state = {};
+  const visit = (id, path) => {
+    if (state[id] === 2 || !byId[id]) return;
+    if (state[id] === 1) { errors.push(`Vòng phụ thuộc: ${[...path, id].join(" → ")}`); return; }
+    state[id] = 1;
+    byId[id].deps.forEach(x => visit(x, [...path, id]));
+    state[id] = 2;
+  };
+  DOCS.forEach(d => visit(d.id, []));
+  if (errors.length) {
+    const box = document.createElement("pre");
+    box.style.cssText = "background:var(--sync-bg);color:var(--ink);border:1.5px solid var(--sync);border-radius:8px;padding:12px;white-space:pre-wrap;margin:0";
+    box.textContent = "Dữ liệu sai:\n" + errors.join("\n");
+    document.querySelector(".wrap").prepend(box);
+    throw new Error(errors.join("; "));
+  }
+})();
+document.getElementById("page-title").textContent = CONFIG.title;
+document.getElementById("page-sub").textContent = `${DOCS.length} file, ${GROUPS.length} nhóm theo thứ tự đọc. Chọn một file để xem tài liệu liên quan.`;
+const LEVEL = { 3: "Thay đổi nhiều", 2: "Thay đổi vừa", 1: "Ít thay đổi" };
+const TAG = { adr: "ADR", rule: "RULE", data: "DATA" };
+
+// Order inside a group: dependency tier, so files read earlier come first.
+const tier = {};
+const tierOf = id => tier[id] ?? (tier[id] = byId[id].deps.length ? 1 + Math.max(...byId[id].deps.map(tierOf)) : 0);
+DOCS.forEach(d => tierOf(d.id));
+
+const board = document.getElementById("board");
+const wrap = document.getElementById("board-wrap");
+const links = document.getElementById("links");
+const panel = document.getElementById("panel");
+const chipEl = {};
+
+GROUPS.forEach((g, i) => {
+  const docs = DOCS.filter(d => d.group === g.id).sort((a, b) => tier[a.id] - tier[b.id]);
+  const card = document.createElement("section");
+  card.className = "group";
+  card.innerHTML = `<div class="group-head"><span class="group-num">${String(i + 1).padStart(2, "0")}</span><span class="group-name">${g.name}</span><span class="group-count">${docs.length} file</span></div><div class="docs"></div>`;
+  const list = card.querySelector(".docs");
+  docs.forEach(d => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "doc";
+    b.title = d.path;
+    b.innerHTML = `<span class="doc-top"><span class="doc-name">${d.label}</span>${TAG[d.kind] ? `<b class="tag">${TAG[d.kind]}</b>` : ""}<span class="bars" aria-label="${LEVEL[d.change]}">${[1, 2, 3].map(n => `<i class="${n <= d.change ? "on" : ""}"></i>`).join("")}</span></span><span class="doc-purpose">${d.purpose}</span>`;
+    b.addEventListener("click", () => select(d.id));
+    list.appendChild(b);
+    chipEl[d.id] = b;
+  });
+  board.appendChild(card);
+});
+
+function relations(id) {
+  const d = byId[id];
+  return {
+    dep: d.deps,
+    used: DOCS.filter(x => x.deps.includes(id)).map(x => x.id),
+    sync: d.sync,
+    syncedBy: DOCS.filter(x => x.sync.includes(id)).map(x => x.id),
+  };
+}
+
+let current = null;
+function select(id) {
+  current = current === id ? null : id;
+  render();
+}
+
+// A file with several roles takes one color: sync first, then dep, then used.
+function render() {
+  const r = current ? relations(current) : null;
+  board.classList.toggle("has-sel", !!current);
+  document.body.classList.toggle("sheet-open", !!current);
+  Object.entries(chipEl).forEach(([id, el]) => {
+    el.classList.remove("sel", "rel", "r-dep", "r-used", "r-sync");
+    if (!r) return;
+    if (id === current) el.classList.add("sel");
+    else if (r.sync.includes(id)) el.classList.add("rel", "r-sync");
+    else if (r.dep.includes(id)) el.classList.add("rel", "r-dep");
+    else if (r.used.includes(id)) el.classList.add("rel", "r-used");
+  });
+  drawLinks(r);
+  renderPanel(r);
+}
+
+function drawLinks(r) {
+  const box = wrap.getBoundingClientRect();
+  links.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+  links.innerHTML = `<defs>${["dep", "used", "sync"].map(k => `<marker id="m-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" style="fill:var(--${k})"/></marker>`).join("")}</defs>`;
+  if (!r) return;
+  const rect = id => {
+    const b = chipEl[id].getBoundingClientRect();
+    return { l: b.left - box.left, r: b.right - box.left, cx: (b.left + b.right) / 2 - box.left, cy: (b.top + b.bottom) / 2 - box.top };
+  };
+  // Arrow direction follows the relation: prerequisites point into the selected file, inheritors and impact point out of it.
+  const line = (from, to, kind) => {
+    const a = rect(from), b = rect(to);
+    let x1, x2, c1, c2;
+    if (b.cx > a.r) {
+      x1 = a.r; x2 = b.l - 2;
+      const dx = Math.max(40, (x2 - x1) * 0.45); c1 = x1 + dx; c2 = x2 - dx;
+    } else if (b.cx < a.l) {
+      x1 = a.l; x2 = b.r + 2;
+      const dx = Math.max(40, (x1 - x2) * 0.45); c1 = x1 - dx; c2 = x2 + dx;
+    } else {
+      // Same column: loop out to the right side.
+      x1 = a.r; x2 = b.r + 2; c1 = x1 + 46; c2 = x2 + 46;
+    }
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", `M${x1},${a.cy} C${c1},${a.cy} ${c2},${b.cy} ${x2},${b.cy}`);
+    p.setAttribute("class", "l-" + kind);
+    p.setAttribute("marker-end", `url(#m-${kind})`);
+    links.appendChild(p);
+  };
+  r.dep.filter(id => !r.sync.includes(id)).forEach(id => line(id, current, "dep"));
+  r.used.filter(id => !r.sync.includes(id)).forEach(id => line(current, id, "used"));
+  r.sync.forEach(id => line(current, id, "sync"));
+}
+
+function chips(ids) {
+  return ids.length ? `<div class="p-list">${ids.map(i => `<button type="button" class="p-chip" data-id="${i}">${byId[i].label}</button>`).join("")}</div>` : `<span class="p-none">Không có</span>`;
+}
+function renderPanel(r) {
+  panel.classList.toggle("idle", !current);
+  if (!current) {
+    panel.innerHTML = `<p class="p-empty">Chọn một file để xem tiền đề, tài liệu kế thừa và phạm vi ảnh hưởng.</p>`;
+    return;
+  }
+  const d = byId[current];
+  const sec = (title, cls, ids) => `<div class="p-sec"><div class="p-title">${cls ? `<i class="swatch ${cls}"></i>` : ""}${title} · ${ids.length}</div>${chips(ids)}</div>`;
+  panel.innerHTML = `
+    <button type="button" class="panel-close" id="panel-close">Đóng</button>
+    <div style="display:grid;gap:6px">
+      <h2 class="p-name">${d.label}</h2>
+      <p class="p-path">${d.path}</p>
+      <div class="p-meta"><span>${GROUPS.find(g => g.id === d.group).name}</span><span>${LEVEL[d.change]}</span><span>${d.status}</span></div>
+    </div>
+    <p class="p-purpose">${d.purpose}.</p>
+    ${sec("Tiền đề", "sw-dep", r.dep)}
+    ${sec("Kế thừa", "sw-used", r.used)}
+    ${sec("Phạm vi ảnh hưởng", "sw-sync", r.sync)}
+    ${sec("Nguồn ảnh hưởng", "", r.syncedBy)}`;
+  panel.querySelectorAll(".p-chip").forEach(c => c.addEventListener("click", () => select(c.dataset.id)));
+  panel.querySelector("#panel-close").addEventListener("click", () => select(current));
+}
+
+// ---- Purpose view ----
+const purposeView = document.getElementById("view-muc-dich");
+GROUPS.forEach((g, i) => {
+  const docs = DOCS.filter(d => d.group === g.id).sort((a, b) => tier[a.id] - tier[b.id]);
+  const sec = document.createElement("section");
+  sec.className = "p-group";
+  sec.innerHTML = `<h2><span class="group-num">${String(i + 1).padStart(2, "0")}</span>${g.name}<span class="group-count">${docs.length} file</span></h2>`;
+  docs.forEach(d => {
+    const row = document.createElement("div");
+    row.className = "p-row";
+    row.tabIndex = 0;
+    row.title = "Xem trên bản đồ";
+    row.innerHTML = `<div class="p-file"><b>${d.label}</b><span>${d.path}</span></div><div class="p-about">${d.about}</div><div class="p-side">${TAG[d.kind] ? `<b class="tag">${TAG[d.kind]}</b>` : ""}<span class="bars" aria-label="${LEVEL[d.change]}">${[1, 2, 3].map(n => `<i class="${n <= d.change ? "on" : ""}"></i>`).join("")}</span>${d.status}</div>`;
+    const go = () => { current = d.id; showView("ban-do"); render(); chipEl[d.id].scrollIntoView({ block: "center", behavior: "smooth" }); };
+    row.addEventListener("click", go);
+    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    sec.appendChild(row);
+  });
+  purposeView.appendChild(sec);
+});
+
+// ---- Tabs, synced with the URL hash ----
+const VIEWS = ["ban-do", "muc-dich"];
+function showView(view) {
+  if (!VIEWS.includes(view)) view = "ban-do";
+  VIEWS.forEach(v => {
+    document.getElementById("view-" + v).hidden = v !== view;
+    document.getElementById("tab-" + v).setAttribute("aria-selected", String(v === view));
+    document.getElementById("tab-" + v).tabIndex = v === view ? 0 : -1;
+  });
+  document.getElementById("legend").style.visibility = view === "ban-do" ? "visible" : "hidden";
+  document.body.classList.toggle("sheet-open", view === "ban-do" && !!current);
+  if (location.hash.slice(1) !== view) { try { history.replaceState(null, "", "#" + view); } catch (e) { /* blocked inside some frames */ } }
+}
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => showView(t.dataset.view));
+  t.addEventListener("keydown", e => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const next = VIEWS[(VIEWS.indexOf(t.dataset.view) + 1) % VIEWS.length];
+    showView(next);
+    document.getElementById("tab-" + next).focus();
+  });
+});
+window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
+showView(location.hash.slice(1));
+
+new ResizeObserver(() => drawLinks(current ? relations(current) : null)).observe(wrap);
+if (document.fonts) document.fonts.ready.then(() => drawLinks(current ? relations(current) : null));
+render();
+})();
+</script>

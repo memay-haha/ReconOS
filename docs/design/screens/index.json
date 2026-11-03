@@ -1,0 +1,138 @@
+[
+  {
+    "label": "S01. Login",
+    "stitch_title": "S01 - Login (Operator Sign In)",
+    "screen_id": "b4294b585728434fbacb3b19e24509a2",
+    "files": [
+      "s01-login.html"
+    ]
+  },
+  {
+    "label": "S02. Dashboard",
+    "stitch_title": "Recon Overview",
+    "screen_id": "d666c505e5e749899db5bceb31c9fd1b",
+    "files": [
+      "s02-dashboard.html"
+    ]
+  },
+  {
+    "label": "S03. Asset Monitor",
+    "stitch_title": "Asset Monitor (Full Width & Height)",
+    "screen_id": "4601e24ae2e84e8aaf8df50f5ecf777e",
+    "files": [
+      "s03-asset-monitor.html"
+    ]
+  },
+  {
+    "label": "S04. Domains",
+    "stitch_title": "Domains",
+    "screen_id": "b0ae04dbf91c453c8f40bbc6ad388aa0",
+    "files": [
+      "s04-domains.html"
+    ]
+  },
+  {
+    "label": "S05. Domain Detail",
+    "stitch_title": "auth.example.com - Domain Detail (Balanced)",
+    "screen_id": "e0b391e55c874baea335e8c8899f77b9",
+    "files": [
+      "s05-domain-detail.html"
+    ]
+  },
+  {
+    "label": "S06. Screenshot Gallery",
+    "stitch_title": "Screenshot Gallery (Full Width & Height)",
+    "screen_id": "cb5cfc00f7904c159e37e9d810694e19",
+    "files": [
+      "s06-screenshot-gallery.html"
+    ]
+  },
+  {
+    "label": "S07. Capture Detail",
+    "stitch_title": "Capture Detail - auth.example.com (4 Rows)",
+    "screen_id": "d2849340280346c783621388a4d2fe22",
+    "files": [
+      "s07-capture-detail.html"
+    ]
+  },
+  {
+    "label": "S08. Programs",
+    "stitch_title": "Programs",
+    "screen_id": "9a908446ea024c6c81e3e0568dc10939",
+    "files": [
+      "s08-programs.html"
+    ]
+  },
+  {
+    "label": "S09. Program Detail",
+    "stitch_title": "shopify-vdp - Program Detail",
+    "screen_id": "2d45da30c62443118456e0cbc4fd1c42",
+    "files": [
+      "s09-program-detail.html"
+    ]
+  },
+  {
+    "label": "S10. Staging Queue",
+    "stitch_title": "Staging Queue",
+    "screen_id": "860388a59154466495d6581b6b0f9b6e",
+    "files": [
+      "s10-staging-queue.html"
+    ]
+  },
+  {
+    "label": "S11. Program Management",
+    "stitch_title": "S11 - Program Management",
+    "screen_id": "871beace1def448289852cba9fd9fbf1",
+    "files": [
+      "s11-program-management.html"
+    ]
+  },
+  {
+    "label": "S12. Users & Access Control",
+    "stitch_title": "S12 - Users & Access Control",
+    "screen_id": "9845e0f202124446b25661410f3b6131",
+    "files": [
+      "s12-users-access-control.html"
+    ]
+  },
+  {
+    "label": "S15. System Health & Tools",
+    "stitch_title": "S15 - System Health & Tools",
+    "screen_id": "b5342c495e6c453487d37e76985feb83",
+    "files": [
+      "s15-system-health-tools.html"
+    ]
+  },
+  {
+    "label": "S16. Osmedeus Settings",
+    "stitch_title": "S16 - Osmedeus Settings",
+    "screen_id": "c13831dd131348db9a0982e7ae1e15fe",
+    "files": [
+      "s16-osmedeus-settings.html"
+    ]
+  },
+  {
+    "label": "S17. Vigolium Settings",
+    "stitch_title": "S17 - Vigolium Settings",
+    "screen_id": "83ceba484874447eba8bded00b676a0d",
+    "files": [
+      "s17-vigolium-settings.html"
+    ]
+  },
+  {
+    "label": "S18. Modules Recon Capabilities",
+    "stitch_title": "S18 - Modules (Recon Capabilities)",
+    "screen_id": "73f486b6dc0f4fe6babd36d42879aba1",
+    "files": [
+      "s18-modules-recon-capabilities.html"
+    ]
+  },
+  {
+    "label": "S20. Global Findings Explorer",
+    "stitch_title": "Global Findings Explorer",
+    "screen_id": "5f1002910de3417e80b9863ea6797626",
+    "files": [
+      "s20-global-findings-explorer.html"
+    ]
+  }
+]

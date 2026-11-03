@@ -1,0 +1,771 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "tertiary-fixed": "#7ef9c0", "warn": "#fbbf24", "secondary": "#c4c6d1", "on-surface": "#d9e3f2", "good-bd": "#1f4f33", "accent-hover": "#5ee0f2", "fg-muted": "#9aa4b2", "secondary-container": "#444750", "primary-container": "#22d3ee", "surface-container-lowest": "#050f19", "error": "#ffb4ab", "info-bd": "#1f3a63", "surface-container": "#17202b", "accent-soft": "#0c2b33", "outline-variant": "#3c494c", "surface": "#14161c", "bg": "#0a0c10", "asset-ip": "#d97706", "on-secondary-fixed-variant": "#444750", "asset-domain": "#0ea371", "fg": "#e7ebf0", "border": "#282d38", "ring": "#22d3ee66", "on-primary": "#00363e", "asset-url": "#3b82f6", "on-secondary-container": "#b3b5bf", "error-container": "#93000a", "warn-bd": "#5a4414", "surface-3": "#232733", "on-background": "#d9e3f2", "outline": "#859397", "on-primary-fixed": "#001f25", "warn-soft": "#2c2109", "on-secondary-fixed": "#181b23", "neutral-bd": "#333a46", "secondary-fixed-dim": "#c4c6d1", "border-strong": "#3a4150", "on-secondary": "#2d3039", "info-soft": "#101c33", "info": "#60a5fa", "surface-bright": "#303a46", "on-tertiary-fixed": "#002113", "accent-soft-bd": "#1b4e5a", "primary-fixed-dim": "#2fd9f4", "on-tertiary": "#003824", "good": "#4ade80", "surface-variant": "#2c3641", "primary": "#8aebff", "on-primary-fixed-variant": "#004e5a", "good-soft": "#102a1a", "on-tertiary-fixed-variant": "#005236", "surface-container-high": "#212b36", "tertiary-container": "#5ad7a0", "accent-ink": "#06222b", "crit-bd": "#5c2330", "surface-dim": "#0a141e", "inverse-on-surface": "#28313d", "surface-2": "#1b1e26", "tertiary-fixed-dim": "#60dda6", "asset-service": "#db2777", "inverse-surface": "#d9e3f2", "primary-fixed": "#a2eeff", "neutral-soft": "#1c2028", "tertiary": "#78f4bb", "secondary-fixed": "#e0e2ed", "on-primary-container": "#005763", "on-error": "#690005", "on-error-container": "#ffdad6", "surface-container-low": "#131c27", "surface-tint": "#2fd9f4", "surface-container-highest": "#2c3641", "fg-faint": "#6a7483", "inverse-primary": "#006877", "crit": "#fb7185", "on-surface-variant": "#bbc9cd", "background": "#0a141e", "on-tertiary-container": "#005b3d", "crit-soft": "#2c1118" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "1.5rem", "space-lg": "1.125rem", "gutter": "1rem", "margin": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin-mobile": "1rem", "space-md": "0.75rem", "gutter-dense": "0.75rem" }, "fontFamily": { "label-caps": ["IBM Plex Sans"], "headline-lg": ["IBM Plex Sans"], "body-code-bold": ["IBM Plex Mono"], "body-code": ["IBM Plex Mono"], "stat-lg": ["IBM Plex Mono"], "caption": ["IBM Plex Sans"], "body-default": ["IBM Plex Sans"], "panel-title": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"] }, "fontSize": { "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" }], "headline-lg": ["21px", { "lineHeight": "28px", "fontWeight": "700" }], "body-code-bold": ["12.5px", { "lineHeight": "18px", "fontWeight": "600" }], "body-code": ["12.5px", { "lineHeight": "18px", "fontWeight": "400" }], "stat-lg": ["27px", { "lineHeight": "32px", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }], "body-default": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "panel-title": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "headline-lg-mobile": ["18px", { "lineHeight": "24px", "fontWeight": "700" }] } } } };</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased selection:bg-primary-container selection:text-accent-ink"><aside class="w-[244px] h-screen bg-[#0c0e14] border-r border-[#1e2430] flex flex-col justify-between p-3 select-none fixed left-0 top-0 z-30">
+  <!-- Top scrollable navigation block -->
+  <div class="flex flex-col flex-1 overflow-y-auto space-y-4 pr-1">
+    <!-- Brand Header -->
+    <div class="flex items-center gap-2.5 pb-2 px-1 border-b border-[#1e2430]">
+      <div class="w-7 h-7 rounded bg-[#22d3ee] flex items-center justify-center font-bold text-[#06222b] text-base shrink-0 select-none">
+        R
+      </div>
+      <div class="flex items-center text-[15px] font-bold font-['IBM_Plex_Sans'] tracking-tight select-none">
+        <span class="text-white">Recon</span><span class="text-[#22d3ee]">OS</span>
+      </div>
+      <span class="ml-auto font-mono text-[10px] text-[#64748b] bg-[#161d2b] px-1.5 py-0.5 rounded border border-[#1e2738]">v2.4</span>
+    </div>
+
+    <!-- Nav Group: RECON -->
+    <div class="space-y-1">
+      <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#475569] font-['IBM_Plex_Sans']">Recon</div>
+      <a href="#" data-path="dashboard" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">grid_view</span>
+        <span class="">Dashboard</span>
+      </a>
+      <a href="#" data-path="monitor" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">monitoring</span>
+        <span class="">Monitor</span>
+      </a>
+      <a href="#" data-path="domains" class="flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-[17px] text-[#64748b]">language</span>
+          <span class="">Domains</span>
+        </div>
+        <span class="font-mono text-[11px] bg-[#161d2b] text-[#94a3b8] px-1.5 py-0.5 rounded border border-[#1e2738]">64</span>
+      </a>
+      <a href="#" data-path="screenshots" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">photo_camera</span>
+        <span class="">Screenshots</span>
+      </a>
+      <a href="#" data-path="programs" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">folder</span>
+        <span class="">Programs</span>
+      </a>
+      <a href="#" data-path="findings" class="flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-[17px] text-[#64748b]">shield</span>
+          <span class="">Findings</span>
+        </div>
+        <span class="font-mono text-[11px] font-semibold bg-[#450a0a] text-[#f87171] border border-[#991b1b]/40 px-1.5 py-0.5 rounded">29</span>
+      </a>
+    </div>
+
+    <!-- Nav Group: OPERATIONS -->
+    <div class="space-y-1">
+      <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#475569] font-['IBM_Plex_Sans']">Operations</div>
+      <a href="#" data-path="staging-queue" class="flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-[17px] text-[#64748b]">dns</span>
+          <span class="">Staging Queue</span>
+        </div>
+        <span class="font-mono text-[11px] font-semibold bg-[#451a03] text-[#fbbf24] border border-[#78350f]/40 px-1.5 py-0.5 rounded">12</span>
+      </a>
+      <a href="#" data-path="manage" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">tune</span>
+        <span class="">Manage</span>
+      </a>
+    </div>
+
+    <!-- Nav Group: ADMIN -->
+    <div class="space-y-1">
+      <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#475569] font-['IBM_Plex_Sans']">Admin</div>
+      <a href="#" data-path="users" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">group</span>
+        <span class="">Users</span>
+      </a>
+      <a href="#" data-path="component-library" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">grid_view</span>
+        <span class="">Component Library</span>
+      </a>
+    </div>
+
+    <!-- Nav Group: SYSTEM -->
+    <div class="space-y-1">
+      <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#475569] font-['IBM_Plex_Sans'] flex items-center justify-between">
+        <span class="">System</span>
+        <span class="text-[9px] font-bold font-mono px-1 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/50">ROOT</span>
+      </div>
+      <a href="#" data-path="health-and-tools" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">bolt</span>
+        <span class="">Health &amp; Tools</span>
+      </a>
+      <!-- Osmedeus Active Item -->
+      <a href="#" data-path="osmedeus" class="flex items-center gap-2.5 px-2.5 h-9 rounded-md bg-[#22d3ee]/10 border border-[#22d3ee]/40 text-[#22d3ee] text-[13px] font-medium">
+        <span class="material-symbols-outlined text-[17px] text-[#22d3ee]">track_changes</span>
+        <span class="">Osmedeus</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] ml-auto shadow-[0_0_6px_#22d3ee]"></span>
+      </a>
+      <a href="#" data-path="vigolium" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">verified_user</span>
+        <span class="">Vigolium</span>
+      </a>
+      <a href="#" data-path="modules" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-['IBM_Plex_Sans'] text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors">
+        <span class="material-symbols-outlined text-[17px] text-[#64748b]">extension</span>
+        <span class="">Modules</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Bottom: Operator Session Profile Card -->
+  <div class="pt-2 border-t border-[#1e2430]">
+    <div class="bg-[#121620] border border-[#1e2738] rounded-lg p-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="relative w-7 h-7 rounded bg-[#1a2333] border border-[#26354d] flex items-center justify-center text-[#22d3ee]">
+          <span class="material-symbols-outlined text-[15px]">terminal</span>
+          <div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4ade80] border-2 border-[#121620]"></div>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-mono text-xs font-semibold text-white leading-none">operator_01</span>
+          <span class="text-[10px] text-[#64748b] leading-tight mt-1">Lead SecOps</span>
+        </div>
+      </div>
+      <button type="button" class="text-[#64748b] hover:text-[#f87171] p-1 rounded hover:bg-[#1a2333] transition-colors" title="Logout">
+        <span class="material-symbols-outlined text-[17px]">logout</span>
+      </button>
+    </div>
+  </div>
+</aside><div class="pl-60 min-h-screen flex flex-col bg-bg"><header class="fixed top-0 left-60 right-0 h-14 bg-surface border-b border-border z-30 flex items-center justify-between px-gutter"><div class="flex items-center gap-gutter"><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><nav class="hidden sm:flex items-center gap-2 text-caption font-caption text-fg-faint"><span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span><span class="text-[10px]">&gt;</span><span class="hover:text-fg cursor-pointer transition-colors">Console</span></nav></div><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center gap-2 bg-surface-2 border border-border rounded px-space-sm py-1 w-72 text-fg-faint hover:border-border-strong focus-within:border-primary focus-within:ring-1 focus-within:ring-ring transition-all cursor-text"><span class="material-symbols-outlined text-[17px] text-fg-muted">search</span><span class="font-body-code text-body-code flex-1">Search system, tools...</span><span class="px-1.5 py-0.2 rounded bg-surface text-[10px] font-body-code text-fg-muted border border-border">⌘K</span></div><a class="flex items-center gap-1.5 px-2 py-1 rounded bg-good-soft border border-good-bd text-good hover:bg-good-bd/30 transition-colors" data-path="health-and-tools" href="#"><span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span><span class="font-body-code text-[11px] font-semibold">Dispatcher online</span></a><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors relative" title="Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span></button><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle theme" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-gutter py-gutter-dense bg-bg flex-1"><div class="flex flex-col w-full">
+<!-- Command Toolbar / Header -->
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-lg mb-space-xl">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-caption font-caption text-fg-faint">
+<span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span>
+<span class="text-[9px] opacity-40">/</span>
+<span class="hover:text-fg cursor-pointer transition-colors">System</span>
+<span class="text-[9px] opacity-40">/</span>
+<span class="text-primary font-body-code">Osmedeus Engine</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-fg tracking-tight flex items-center gap-space-sm">
+        Osmedeus Settings
+        <span class="font-body-code text-[11px] px-2 py-0.5 rounded bg-surface-2 text-fg-muted font-normal">v4.5.1-core</span>
+</h1>
+<p class="text-body-default font-body-default text-fg-muted max-w-3xl">
+        Scan engine configuration, REST API gateway connection, distributed worker settings, and workflow index.
+      </p>
+</div>
+<!-- Actions Strip -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<button class="h-9 px-3 rounded bg-surface hover:bg-surface-2 text-fg font-body-default flex items-center gap-2 shadow-sm transition-colors text-[12.5px]" id="btn-test-conn">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-good opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-good"></span>
+</span>
+<span class="">Test Connection</span>
+</button>
+<button class="h-9 px-3 rounded bg-surface hover:bg-surface-2 text-fg font-body-default flex items-center gap-1.5 shadow-sm transition-colors text-[12.5px]" id="btn-refresh-idx">
+<span class="material-symbols-outlined text-[17px] text-fg-muted">sync</span>
+<span class="">Refresh Index</span>
+</button>
+<button class="h-9 px-4 rounded bg-primary-container hover:bg-accent-hover text-accent-ink font-body-code-bold text-body-code-bold flex items-center gap-1.5 shadow-md transition-all active:scale-[0.98]" id="btn-save-cfg">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="">Save Changes</span>
+</button>
+</div>
+</div>
+<!-- Telemetry / Status Strip -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm mb-space-xl">
+<div class="bg-surface rounded p-space-md shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Engine Status</span>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="w-2 h-2 rounded-full bg-good"></span>
+<span class="font-body-code-bold text-body-code-bold text-good">Connected (v4.5.1)</span>
+</div>
+</div>
+<div class="w-8 h-8 rounded bg-good-soft flex items-center justify-center">
+<span class="material-symbols-outlined text-good text-[18px]">dns</span>
+</div>
+</div>
+<div class="bg-surface rounded p-space-md shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Gateway Endpoint</span>
+<span class="font-body-code text-body-code text-primary mt-1 truncate max-w-[170px]" title="http://192.0.2.10:8002">http://192.0.2.10:8002</span>
+</div>
+<div class="w-8 h-8 rounded bg-accent-soft flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[18px]">lan</span>
+</div>
+</div>
+<div class="bg-surface rounded p-space-md shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Daemon Uptime</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-0.5 tracking-tight">18d 04h</span>
+</div>
+<div class="w-8 h-8 rounded bg-surface-2 flex items-center justify-center">
+<span class="material-symbols-outlined text-fg-muted text-[18px]">schedule</span>
+</div>
+</div>
+<div class="bg-surface rounded p-space-md shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Auth Signature</span>
+<div class="flex items-center gap-1 mt-1">
+<span class="font-body-code text-[11px] px-1.5 py-0.5 rounded bg-good-soft text-good">Bearer Valid</span>
+<span class="font-body-code text-[11px] text-fg-faint">TTL 48h</span>
+</div>
+</div>
+<div class="w-8 h-8 rounded bg-surface-2 flex items-center justify-center">
+<span class="material-symbols-outlined text-good text-[18px]">key</span>
+</div>
+</div>
+</div>
+<!-- Segmented Navigation Rail (Tabs) -->
+<div class="flex items-center gap-1 overflow-x-auto bg-surface-container-lowest p-1 rounded mb-space-lg">
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps bg-surface-3 text-primary flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">settings_ethernet</span>
+      Connection
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">data_object</span>
+      Global Variables
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">speed</span>
+      Scan Tactics
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">layers</span>
+      Environments
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">database</span>
+      Database &amp; Redis
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">neurology</span>
+      Cloud &amp; LLM
+    </button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">schema</span>
+      Workflows <span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] ml-0.5">28</span>
+</button>
+<button class="px-3 py-1.5 rounded font-label-caps text-label-caps text-fg-muted hover:text-fg hover:bg-surface-2 flex items-center gap-1.5 shrink-0 transition-colors">
+<span class="material-symbols-outlined text-[15px]">event_repeat</span>
+      Schedules <span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] ml-0.5">4</span>
+</button>
+</div>
+<!-- Primary Operator Matrix -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg mb-space-xl">
+<!-- Pane 1: Engine Connection & Authentication (Left 5 Cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<div class="bg-surface rounded p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 bg-primary rounded-full"></span>
+<h2 class="font-panel-title text-panel-title text-fg">Engine Connection</h2>
+</div>
+<div class="flex items-center gap-2 bg-good-soft px-2 py-0.5 rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="font-body-code text-[11px] text-good">Healthy · 28ms</span>
+</div>
+</div>
+<p class="font-caption text-caption text-fg-muted">
+          Designate the Osmedeus master daemon interface. All scan pipelines and asynchronous execution threads synchronize via this socket.
+        </p>
+<!-- REST API Gateway Input -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-caps text-label-caps text-fg-muted uppercase flex items-center justify-between">
+<span class="">REST API Endpoint</span>
+<span class="text-[10px] text-fg-faint">TCP/SOCKET</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[17px] text-fg-faint">router</span>
+<input class="w-full h-9 bg-surface-2 text-fg font-body-code text-body-code rounded pl-9 pr-3 outline-none focus:bg-surface-3 transition-colors placeholder:text-fg-faint" type="text" value="http://192.0.2.10:8002">
+</div>
+</div>
+<!-- Bearer Token SecretField -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-fg-muted uppercase">Bearer Token</label>
+<span class="font-body-code text-[10px] text-fg-faint">HS256 Sig</span>
+</div>
+<div class="flex items-center bg-surface-2 rounded px-2.5 h-9 gap-2">
+<span class="material-symbols-outlined text-[17px] text-fg-faint">shield_lock</span>
+<input class="flex-1 bg-transparent font-body-code text-body-code text-fg outline-none select-all" id="bearer-input" readonly="" type="password" value="sk-osm-9a7f34c890124b89efbc9910243f8a">
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-surface-3 text-fg-faint hover:text-fg transition-colors" id="toggle-bearer-btn" title="Reveal / Conceal">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-3 text-fg-faint hover:text-fg transition-colors" id="copy-bearer-btn" title="Copy to Clipboard">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<button class="p-1 rounded hover:bg-crit-soft text-fg-faint hover:text-crit transition-colors" id="rotate-bearer-btn" title="Rotate Secret Token">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+</button>
+</div>
+</div>
+<span class="font-caption text-caption text-fg-faint text-[10px]">Rotated 3 days ago. Requires cluster worker sync when invalidated.</span>
+</div>
+<!-- Realtime WebSocket & Concurrency -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-xs">
+<div class="p-2.5 rounded bg-surface-2 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Heartbeat Interval</span>
+<span class="font-body-code-bold text-body-code-bold text-fg">5,000 ms</span>
+</div>
+<div class="p-2.5 rounded bg-surface-2 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Worker Pool Max</span>
+<span class="font-body-code-bold text-body-code-bold text-primary">16 Threads</span>
+</div>
+</div>
+<!-- Status Micro-Log -->
+<div class="p-2.5 rounded bg-surface-container-lowest font-body-code text-[11px] text-fg-muted flex flex-col gap-1">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">DAEMON EVENT STREAM</span>
+<span class="text-good font-semibold">ONLINE</span>
+</div>
+<div class="text-fg-faint">[14:22:01] GET /api/v1/health -&gt; 200 OK (28ms)</div>
+<div class="text-fg-faint">[14:23:45] POST /api/v1/sync -&gt; 28 workflows synced</div>
+</div>
+</div>
+<!-- Quick Tactic Snapshot / Resource Limits -->
+<div class="bg-surface rounded p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 bg-tertiary rounded-full"></span>
+<h3 class="font-panel-title text-panel-title text-fg">Cluster Resource Overhead</h3>
+</div>
+<span class="font-body-code text-caption text-tertiary">Optimal</span>
+</div>
+<div class="flex flex-col gap-3">
+<div>
+<div class="flex justify-between font-caption text-caption mb-1">
+<span class="text-fg-muted">Daemon Memory Allocation (1.4 GB / 8.0 GB)</span>
+<span class="font-body-code text-fg">17.5%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 17.5%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-caption text-caption mb-1">
+<span class="text-fg-muted">Queue Saturation (4 / 32 Slots)</span>
+<span class="font-body-code text-fg">12.5%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 12.5%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pane 2 & 3: Global Variables & Scan Tactics (Right 7 Cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg">
+<!-- Global Variables Section -->
+<div class="bg-surface rounded p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 bg-asset-ip rounded-full"></span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg">Global Variables &amp; Tokens</h2>
+<p class="font-caption text-caption text-fg-faint">Injected into step execution environments for Recon workflows.</p>
+</div>
+</div>
+<button class="h-8 px-2.5 rounded bg-surface-2 hover:bg-surface-3 text-fg font-body-default text-[12px] flex items-center gap-1 transition-colors" id="add-var-btn">
+<span class="material-symbols-outlined text-[16px] text-primary">add</span>
+<span class="">Add Variable</span>
+</button>
+</div>
+<!-- DataTable Container -->
+<div class="overflow-x-auto rounded bg-surface-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-3 text-fg-muted font-label-caps text-label-caps h-8 uppercase">
+<th class="px-3">Key Name</th>
+<th class="px-3">Value</th>
+<th class="px-3">Source</th>
+<th class="px-3">Last Updated</th>
+<th class="px-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-none text-body-default font-body-default">
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg">GITHUB_API_KEY</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-faint">ghp_••••••••••••••••••••09xk</td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-accent-soft text-primary font-body-code text-[10px]">ENV_INJECT</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-muted">2025-02-14 09:12</td>
+<td class="px-3 py-2.5 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+<button class="p-1 hover:text-crit text-fg-faint transition-colors" title="Revoke"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg">SHODAN_API_KEY</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-faint">shd_••••••••••••••••••••7a1c</td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[10px]">CONFIG_FILE</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-muted">2025-01-20 18:40</td>
+<td class="px-3 py-2.5 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+<button class="p-1 hover:text-crit text-fg-faint transition-colors" title="Revoke"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg">CENSYS_SECRET</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-faint">cns_••••••••••••••••••••3d88</td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[10px]">VAULT_KV</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-muted">2025-02-01 11:05</td>
+<td class="px-3 py-2.5 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+<button class="p-1 hover:text-crit text-fg-faint transition-colors" title="Revoke"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg">CHAOS_KEY</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-faint">chs_••••••••••••••••••••ff90</td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-accent-soft text-primary font-body-code text-[10px]">ENV_INJECT</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-muted">2025-02-10 14:22</td>
+<td class="px-3 py-2.5 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+<button class="p-1 hover:text-crit text-fg-faint transition-colors" title="Revoke"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg">PASSIVETOTAL_KEY</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-faint">pst_••••••••••••••••••••5502</td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[10px]">MANUAL</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-[11px] text-fg-muted">2024-12-18 22:15</td>
+<td class="px-3 py-2.5 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+<button class="p-1 hover:text-crit text-fg-faint transition-colors" title="Revoke"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Scan Tactics (Intensity Profiles) -->
+<div class="bg-surface rounded p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 bg-primary-container rounded-full"></span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg">Scan Tactics &amp; Intensity Presets</h2>
+<p class="font-caption text-caption text-fg-faint">Default concurrency, timeout triggers, and DNS resolution rates applied to new runs.</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-fg-muted uppercase">Active: Balanced</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Quick Preset -->
+<div class="bg-surface-2 rounded p-space-md hover:bg-surface-3 transition-colors cursor-pointer flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-code-bold text-body-code-bold text-good">Quick</span>
+<span class="material-symbols-outlined text-good text-[18px]">bolt</span>
+</div>
+<p class="font-caption text-caption text-fg-muted mb-3">Fast discovery with minimal footprint and zero intrusive payloads.</p>
+<div class="space-y-1.5 font-body-code text-[11.5px]">
+<div class="flex justify-between">
+<span class="text-fg-faint">Threads:</span>
+<span class="text-fg font-semibold">50</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Timeout:</span>
+<span class="text-fg font-semibold">30m</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Recursive:</span>
+<span class="text-fg-faint">Off</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Port Scope:</span>
+<span class="text-fg">Top 100</span>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full h-7 rounded bg-surface text-fg-muted hover:text-fg font-label-caps text-label-caps uppercase transition-colors">
+              Select
+            </button>
+</div>
+<!-- Balanced Preset (Selected) -->
+<div class="bg-surface-3 rounded p-space-md shadow-sm relative flex flex-col justify-between">
+<div class="absolute -top-2 right-3 px-1.5 py-0.2 rounded bg-primary-container text-accent-ink font-body-code-bold text-[10px]">
+              DEFAULT
+            </div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-code-bold text-body-code-bold text-primary">Balanced</span>
+<span class="material-symbols-outlined text-primary text-[18px]">tune</span>
+</div>
+<p class="font-caption text-caption text-fg-muted mb-3">Standard production reconnaissance combining passive feeds and active enumeration.</p>
+<div class="space-y-1.5 font-body-code text-[11.5px]">
+<div class="flex justify-between">
+<span class="text-fg-faint">Threads:</span>
+<span class="text-fg font-semibold">100</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Timeout:</span>
+<span class="text-fg font-semibold">2h</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Recursive:</span>
+<span class="text-primary font-semibold">Level 1</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Port Scope:</span>
+<span class="text-fg">Top 1000</span>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full h-7 rounded bg-primary-container text-accent-ink font-label-caps text-label-caps uppercase font-bold">
+              Active Profile
+            </button>
+</div>
+<!-- Deep Preset -->
+<div class="bg-surface-2 rounded p-space-md hover:bg-surface-3 transition-colors cursor-pointer flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-code-bold text-body-code-bold text-warn">Deep</span>
+<span class="material-symbols-outlined text-warn text-[18px]">radar</span>
+</div>
+<p class="font-caption text-caption text-fg-muted mb-3">Exhaustive attack-surface discovery including full port spans and bruteforcing.</p>
+<div class="space-y-1.5 font-body-code text-[11.5px]">
+<div class="flex justify-between">
+<span class="text-fg-faint">Threads:</span>
+<span class="text-fg font-semibold">200</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Timeout:</span>
+<span class="text-fg font-semibold">8h</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Recursive:</span>
+<span class="text-good font-semibold">On (L3)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-fg-faint">Port Scope:</span>
+<span class="text-fg">All (65k)</span>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full h-7 rounded bg-surface text-fg-muted hover:text-fg font-label-caps text-label-caps uppercase transition-colors">
+              Select
+            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pane 4: Workflows Index Preview -->
+<div class="bg-surface rounded p-space-lg shadow-sm flex flex-col gap-space-md mb-space-xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 bg-accent-hover rounded-full"></span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg">Installed Workflows Index (28 Total)</h2>
+<p class="font-caption text-caption text-fg-faint">Compiled DAG modules registered with the Osmedeus execution coordinator.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center bg-surface-2 rounded px-2.5 h-8 text-fg-faint text-[12px] w-48">
+<span class="material-symbols-outlined text-[15px] mr-1 text-fg-muted">filter_list</span>
+<input class="bg-transparent outline-none w-full text-fg font-body-code" placeholder="Filter workflows..." type="text">
+</div>
+<button class="h-8 px-2.5 rounded bg-surface-2 hover:bg-surface-3 text-fg font-body-default text-[12px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">folder_open</span>
+<span class="">Open Folder</span>
+</button>
+</div>
+</div>
+<!-- Workflows Table -->
+<div class="overflow-x-auto rounded bg-surface-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-3 text-fg-muted font-label-caps text-label-caps h-8 uppercase">
+<th class="px-3">Workflow Name</th>
+<th class="px-3">Type</th>
+<th class="px-3">Steps</th>
+<th class="px-3">Description</th>
+<th class="px-3">Tags</th>
+<th class="px-3 text-right">Inspect</th>
+</tr>
+</thead>
+<tbody class="divide-none text-body-default font-body-default">
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">account_tree</span>
+              general
+            </td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg font-body-code text-[10px]">FLOW</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-fg">14 steps</td>
+<td class="px-3 py-2.5 text-fg-muted text-[12px]">Complete multi-stage pipeline executing domain enum, ports, vuln, and web screenshotting.</td>
+<td class="px-3 py-2.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">recon</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">active</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">default</span>
+</div>
+</td>
+<td class="px-3 py-2.5 text-right">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="View Graph"><span class="material-symbols-outlined text-[16px]">visibility</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-domain">hub</span>
+              subdomain
+            </td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-good-soft text-good font-body-code text-[10px]">MODULE</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-fg">8 steps</td>
+<td class="px-3 py-2.5 text-fg-muted text-[12px]">Passive intelligence ingestion and recursive wordlist DNS brute forcing.</td>
+<td class="px-3 py-2.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">dns</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">amass</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">subfinder</span>
+</div>
+</td>
+<td class="px-3 py-2.5 text-right">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="View Graph"><span class="material-symbols-outlined text-[16px]">visibility</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-ip">router</span>
+              portscan
+            </td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-good-soft text-good font-body-code text-[10px]">MODULE</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-fg">4 steps</td>
+<td class="px-3 py-2.5 text-fg-muted text-[12px]">Masscan-driven initial syn probe followed by service and version detection via Nmap.</td>
+<td class="px-3 py-2.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">infra</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">nmap</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">services</span>
+</div>
+</td>
+<td class="px-3 py-2.5 text-right">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="View Graph"><span class="material-symbols-outlined text-[16px]">visibility</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-3/50 transition-colors">
+<td class="px-3 py-2.5 font-body-code-bold text-body-code-bold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-crit">bug_report</span>
+              vuln
+            </td>
+<td class="px-3 py-2.5">
+<span class="px-1.5 py-0.5 rounded bg-good-soft text-good font-body-code text-[10px]">MODULE</span>
+</td>
+<td class="px-3 py-2.5 font-body-code text-fg">6 steps</td>
+<td class="px-3 py-2.5 text-fg-muted text-[12px]">Nuclei signature orchestration targeted at live HTTP banners and exposed endpoints.</td>
+<td class="px-3 py-2.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">nuclei</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">cve</span>
+<span class="px-1.5 py-0.2 rounded bg-surface text-fg-faint text-[10px] font-body-code">critical</span>
+</div>
+</td>
+<td class="px-3 py-2.5 text-right">
+<button class="p-1 hover:text-primary text-fg-faint transition-colors" title="View Graph"><span class="material-symbols-outlined text-[16px]">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination Notice -->
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint pt-space-xs">
+<span class="">Displaying 4 priority workflows out of 28 loaded from <span class="font-body-code text-fg">/root/osmedeus-base/workflows/</span></span>
+<button class="text-primary hover:text-accent-hover transition-colors font-body-code text-[11px] flex items-center gap-1">
+<span class="">Load All 28 Workflows</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  (function initOsmedeusSettings() {
+    // SecretField interaction: Toggle Token visibility
+    const bearerInput = document.getElementById('bearer-input');
+    const toggleBtn = document.getElementById('toggle-bearer-btn');
+    const copyBtn = document.getElementById('copy-bearer-btn');
+    const rotateBtn = document.getElementById('rotate-bearer-btn');
+    const testConnBtn = document.getElementById('btn-test-conn');
+    const saveBtn = document.getElementById('btn-save-cfg');
+
+    if (toggleBtn && bearerInput) {
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = bearerInput.getAttribute('type') === 'password';
+        bearerInput.setAttribute('type', isPassword ? 'text' : 'password');
+        toggleBtn.innerHTML = isPassword 
+          ? '<span class="material-symbols-outlined text-[16px]">visibility_off</span>' 
+          : '<span class="material-symbols-outlined text-[16px]">visibility</span>';
+      });
+    }
+
+    if (copyBtn && bearerInput) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(bearerInput.value);
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] text-good">check</span>';
+        setTimeout(() => { copyBtn.innerHTML = originalHtml; }, 1500);
+      });
+    }
+
+    if (rotateBtn && bearerInput) {
+      rotateBtn.addEventListener('click', () => {
+        if (confirm('Rotate Osmedeus bearer authorization token? Connected worker nodes must re-authenticate.')) {
+          const rand = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          bearerInput.value = 'sk-osm-' + rand;
+        }
+      });
+    }
+
+    if (testConnBtn) {
+      testConnBtn.addEventListener('click', () => {
+        const prevText = testConnBtn.querySelector('span:last-child').textContent;
+        testConnBtn.querySelector('span:last-child').textContent = 'Pinging Socket...';
+        setTimeout(() => {
+          testConnBtn.querySelector('span:last-child').textContent = 'Latency: 24ms (OK)';
+          setTimeout(() => {
+            testConnBtn.querySelector('span:last-child').textContent = prevText;
+          }, 2000);
+        }, 600);
+      });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        saveBtn.classList.add('opacity-80');
+        const icon = saveBtn.querySelector('.material-symbols-outlined');
+        const label = saveBtn.querySelector('span:last-child');
+        icon.textContent = 'progress_activity';
+        icon.classList.add('animate-spin');
+        label.textContent = 'Persisting...';
+
+        setTimeout(() => {
+          icon.classList.remove('animate-spin');
+          icon.textContent = 'done_all';
+          label.textContent = 'Synced';
+          setTimeout(() => {
+            icon.textContent = 'verified';
+            label.textContent = 'Save Changes';
+            saveBtn.classList.remove('opacity-80');
+          }, 1500);
+        }, 700);
+      });
+    }
+  })();
+</script></main></div>
+
+</body></html>

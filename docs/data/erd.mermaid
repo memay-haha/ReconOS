@@ -1,0 +1,421 @@
+erDiagram
+    user ||--o{ user_session : "có"
+    worker ||--o{ worker_token : "có"
+    user ||--o{ audit_log : "thực hiện"
+    worker ||--o{ audit_log : "thực hiện"
+    program ||--o{ program_user : "gán"
+    user ||--o{ program_user : "được gán"
+    program ||--o{ scope_rule : "có"
+    program ||--o{ proxy : "có"
+    program ||--o{ schedule : "có"
+    tool_module ||--o{ schedule : "được lập lịch"
+    tool_module ||--o{ job : "được chạy"
+    program ||--o{ job : "có"
+    engine ||--o{ engine_variable : "có"
+    job ||--o{ raw_output : "tạo"
+    job |o--o{ job : "thử lại"
+    proxy |o--o{ job : "dùng"
+    schedule |o--o{ job : "sinh"
+    worker |o--o{ job : "chạy"
+    program ||--o{ domain : "có"
+    program ||--o{ ip : "có"
+    domain ||--o{ domain_ip : "phân giải"
+    ip ||--o{ domain_ip : "được trỏ tới"
+    ip ||--o{ service : "mở"
+    domain |o--o{ url : "là host"
+    ip |o--o{ url : "là host"
+    url ||--o{ url_technology : "dùng"
+    technology ||--o{ url_technology : "xuất hiện"
+    url ||--o{ screenshot : "được chụp"
+    raw_output ||--o| screenshot : "chứa ảnh"
+    raw_output ||--o{ asset_event : "là nguồn"
+    job ||--o{ finding : "phát hiện"
+    raw_output ||--o{ finding : "là bằng chứng"
+    finding |o--o{ finding : "trùng với"
+    tag ||--o{ asset_tag : "gắn"
+    tag ||--o{ finding_tag : "gắn"
+    finding ||--o{ finding_tag : "có"
+    program ||--o{ report : "có"
+    report ||--o{ report_finding : "gồm"
+    finding ||--o{ report_finding : "nằm trong"
+    program ||--o{ alert : "có"
+    alert ||--o{ alert_read : "được đọc"
+    user ||--o{ alert_read : "đọc"
+    program ||--o{ url : "có"
+    program ||--o{ service : "có"
+    program ||--o{ screenshot : "có"
+    program ||--o{ asset_event : "có"
+    program ||--o{ finding : "có"
+    program |o--o{ audit_log : "liên quan"
+    domain |o--o{ asset_event : "có"
+    ip |o--o{ asset_event : "có"
+    url |o--o{ asset_event : "có"
+    service |o--o{ asset_event : "có"
+    job ||--o{ asset_event : "sinh"
+    job ||--o{ screenshot : "chụp"
+    domain |o--o{ finding : "có"
+    ip |o--o{ finding : "có"
+    url |o--o{ finding : "có"
+    service |o--o{ finding : "có"
+    domain |o--o{ asset_tag : "được gắn"
+    ip |o--o{ asset_tag : "được gắn"
+    url |o--o{ asset_tag : "được gắn"
+    service |o--o{ asset_tag : "được gắn"
+    finding |o--o{ alert : "sinh"
+    job |o--o{ alert : "sinh"
+
+    user {
+        uuid id PK
+        text username UK
+        text display_name
+        text password_hash
+        text role
+        bool is_locked
+        timestamptz last_login_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    user_session {
+        uuid id PK
+        uuid user_id FK
+        text session_hash UK
+        inet ip_address
+        text user_agent
+        timestamptz created_at
+        timestamptz last_seen_at
+        timestamptz expires_at
+    }
+    worker {
+        uuid id PK
+        text name UK
+        text[] tool_modules
+        timestamptz last_heartbeat_at
+        timestamptz created_at
+    }
+    worker_token {
+        uuid id PK
+        uuid worker_id FK
+        text token_hash UK
+        uuid created_by FK
+        timestamptz created_at
+        timestamptz last_used_at
+        timestamptz revoked_at
+    }
+    system_setting {
+        text key PK
+        jsonb value
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    audit_log {
+        uuid id PK
+        uuid user_id FK
+        uuid worker_id FK
+        uuid program_id FK
+        text action
+        text resource_type
+        uuid resource_id
+        jsonb detail
+        inet ip_address
+        timestamptz created_at
+    }
+    program {
+        uuid id PK
+        text name UK
+        text platform
+        text platform_url
+        text bounty_type
+        text description
+        text status
+        uuid created_by FK
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz archived_at
+    }
+    program_user {
+        uuid program_id PK, FK
+        uuid user_id PK, FK
+        uuid assigned_by FK
+        timestamptz assigned_at
+    }
+    scope_rule {
+        uuid id PK
+        uuid program_id FK
+        text scope_type
+        text rule_type
+        text value
+        text reason
+        uuid created_by FK
+        timestamptz created_at
+    }
+    proxy {
+        uuid id PK
+        uuid program_id FK
+        text name
+        bytea url_encrypted
+        bool is_enabled
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    schedule {
+        uuid id PK
+        uuid program_id FK
+        uuid tool_module_id FK
+        text[] target
+        jsonb params
+        int interval_minutes
+        bool is_enabled
+        uuid created_by FK
+        timestamptz last_run_at
+        timestamptz next_run_at
+        timestamptz created_at
+    }
+    tool_module {
+        uuid id PK
+        text name UK
+        bool is_enabled
+        jsonb default_params
+        int max_concurrency
+        int rate_limit_per_minute
+        int timeout_minutes
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    engine {
+        uuid id PK
+        text name UK
+        text base_url
+        bytea api_key_encrypted
+        bool is_enabled
+        jsonb settings
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    engine_variable {
+        uuid id PK
+        uuid engine_id FK
+        text key
+        bytea value_encrypted
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    job {
+        uuid id PK
+        uuid program_id FK
+        uuid tool_module_id FK
+        text status
+        int priority
+        text[] target
+        jsonb params
+        uuid proxy_id FK
+        uuid schedule_id FK
+        uuid retry_of_job_id FK
+        uuid worker_id FK
+        uuid created_by FK
+        uuid approved_by FK
+        text status_reason
+        timestamptz created_at
+        timestamptz approved_at
+        timestamptz dispatched_at
+        timestamptz started_at
+        timestamptz last_heartbeat_at
+        timestamptz finished_at
+    }
+    raw_output {
+        uuid id PK
+        uuid job_id FK
+        text filename
+        text object_key UK
+        text content_type
+        bigint size_bytes
+        text sha256
+        text parse_status
+        text parse_error
+        timestamptz created_at
+        timestamptz parsed_at
+    }
+    domain {
+        uuid id PK
+        uuid program_id FK
+        text name
+        text apex
+        bool is_wildcard
+        text cname
+        text dns_status
+        bool in_scope
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    ip {
+        uuid id PK
+        uuid program_id FK
+        inet address
+        int asn
+        text asn_org
+        text country
+        bool is_private
+        text cdn_name
+        text ptr
+        bool in_scope
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    domain_ip {
+        uuid domain_id PK, FK
+        uuid ip_id PK, FK
+        text record_type PK
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    service {
+        uuid id PK
+        uuid program_id FK
+        uuid ip_id FK
+        int port
+        text transport
+        text name
+        text product
+        text version
+        text banner
+        bool in_scope
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    url {
+        uuid id PK
+        uuid program_id FK
+        uuid domain_id FK
+        uuid ip_id FK
+        text url
+        bytea url_hash
+        text scheme
+        text host
+        int port
+        text path
+        int status_code
+        text title
+        bigint content_length
+        text content_type
+        text webserver
+        text favicon_hash
+        bool in_scope
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    technology {
+        uuid id PK
+        text name UK
+        text category
+    }
+    url_technology {
+        uuid url_id PK, FK
+        uuid technology_id PK, FK
+        text version
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    screenshot {
+        uuid id PK
+        uuid program_id FK
+        uuid url_id FK
+        uuid job_id FK
+        uuid raw_output_id FK
+        text final_url
+        int status_code
+        text title
+        text perception_hash
+        jsonb http_headers
+        bool is_failed
+        text error_message
+        timestamptz captured_at
+    }
+    asset_event {
+        uuid id PK
+        uuid program_id FK
+        uuid domain_id FK
+        uuid ip_id FK
+        uuid url_id FK
+        uuid service_id FK
+        text event_type
+        uuid job_id FK
+        uuid raw_output_id FK
+        jsonb diff
+        timestamptz created_at
+    }
+    finding {
+        uuid id PK
+        uuid program_id FK
+        uuid job_id FK
+        uuid raw_output_id FK
+        uuid domain_id FK
+        uuid ip_id FK
+        uuid url_id FK
+        uuid service_id FK
+        text dedup_key
+        text name
+        text template_id
+        text severity
+        text matched_at
+        text evidence
+        text[] cve
+        jsonb detail
+        text triage_status
+        uuid duplicate_of_id FK
+        uuid triaged_by FK
+        timestamptz triaged_at
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+    }
+    tag {
+        uuid id PK
+        text key
+        text value
+        uuid created_by FK
+        timestamptz created_at
+    }
+    asset_tag {
+        uuid id PK
+        uuid tag_id FK
+        uuid domain_id FK
+        uuid ip_id FK
+        uuid url_id FK
+        uuid service_id FK
+        uuid created_by FK
+        timestamptz created_at
+    }
+    finding_tag {
+        uuid finding_id PK, FK
+        uuid tag_id PK, FK
+        uuid created_by FK
+        timestamptz created_at
+    }
+    report {
+        uuid id PK
+        uuid program_id FK
+        text title
+        text body
+        text status
+        text platform_report_ref
+        uuid created_by FK
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz submitted_at
+    }
+    report_finding {
+        uuid report_id PK, FK
+        uuid finding_id PK, FK
+    }
+    alert {
+        uuid id PK
+        uuid program_id FK
+        text alert_type
+        text message
+        uuid finding_id FK
+        uuid job_id FK
+        timestamptz created_at
+    }
+    alert_read {
+        uuid alert_id PK, FK
+        uuid user_id PK, FK
+        timestamptz read_at
+    }

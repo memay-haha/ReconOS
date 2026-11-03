@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0a141e","outline":"#859397","secondary-container":"#444750","on-tertiary-fixed-variant":"#005236","primary":"#8aebff","warn-bd":"#5a4414","error":"#ffb4ab","surface-container-low":"#131c27","on-primary-fixed":"#001f25","surface-dim":"#0a141e","outline-variant":"#3c494c","surface-tint":"#2fd9f4","on-primary-container":"#005763","fg-faint":"#6a7483","info-bd":"#1f3a63","on-tertiary-fixed":"#002113","surface-container-highest":"#2c3641","inverse-on-surface":"#28313d","accent-soft":"#0c2b33","border":"#282d38","inverse-primary":"#006877","on-error-container":"#ffdad6","on-background":"#d9e3f2","primary-fixed":"#a2eeff","surface-container-lowest":"#050f19","info-soft":"#101c33","accent-ink":"#06222b","good-bd":"#1f4f33","asset-domain":"#0ea371","on-primary":"#00363e","asset-service":"#db2777","warn-soft":"#2c2109","fg-muted":"#9aa4b2","secondary":"#c4c6d1","neutral-bd":"#333a46","on-surface":"#d9e3f2","on-tertiary":"#003824","error-container":"#93000a","on-secondary-fixed":"#181b23","good":"#4ade80","bg":"#0a0c10","surface-variant":"#2c3641","asset-ip":"#d97706","fg":"#e7ebf0","crit-soft":"#2c1118","secondary-fixed":"#e0e2ed","ring":"#22d3ee66","crit-bd":"#5c2330","on-secondary":"#2d3039","on-surface-variant":"#bbc9cd","accent-soft-bd":"#1b4e5a","surface-3":"#232733","good-soft":"#102a1a","surface":"#14161c","on-primary-fixed-variant":"#004e5a","tertiary-fixed-dim":"#60dda6","warn":"#fbbf24","surface-container":"#17202b","tertiary-container":"#5ad7a0","inverse-surface":"#d9e3f2","on-tertiary-container":"#005b3d","tertiary-fixed":"#7ef9c0","tertiary":"#78f4bb","surface-container-high":"#212b36","on-error":"#690005","accent-hover":"#5ee0f2","neutral-soft":"#1c2028","crit":"#fb7185","info":"#60a5fa","primary-fixed-dim":"#2fd9f4","primary-container":"#22d3ee","on-secondary-fixed-variant":"#444750","surface-bright":"#303a46","secondary-fixed-dim":"#c4c6d1","border-strong":"#3a4150","surface-2":"#1b1e26","on-secondary-container":"#b3b5bf","asset-url":"#3b82f6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.125rem","margin":"1.5rem","gutter-dense":"0.75rem","space-xs":"0.25rem","gutter":"1rem","space-md":"0.75rem","space-sm":"0.5rem","margin-mobile":"1rem","space-xl":"1.5rem"},"fontFamily":{"caption":["IBM Plex Sans"],"stat-lg":["IBM Plex Mono"],"label-caps":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"body-code-bold":["IBM Plex Mono"],"headline-lg-mobile":["IBM Plex Sans"],"body-code":["IBM Plex Mono"],"body-default":["IBM Plex Sans"],"panel-title":["IBM Plex Sans"]},"fontSize":{"caption":["11px",{"lineHeight":"14px","fontWeight":"400"}],"stat-lg":["27px",{"lineHeight":"32px","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-lg":["21px",{"lineHeight":"28px","fontWeight":"700"}],"body-code-bold":["12.5px",{"lineHeight":"18px","fontWeight":"600"}],"headline-lg-mobile":["18px",{"lineHeight":"24px","fontWeight":"700"}],"body-code":["12.5px",{"lineHeight":"18px","fontWeight":"400"}],"body-default":["13px",{"lineHeight":"18px","fontWeight":"400"}],"panel-title":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}}</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased select-none"><aside class="fixed left-0 top-0 h-screen w-[244px] bg-[#0c0e14] border-r border-[#1e2430] z-50 flex flex-col justify-between p-3 select-none overflow-hidden"><div class="flex flex-col flex-1 min-h-0"><div class="pb-3 border-b border-[#1e2430] flex items-center gap-2 shrink-0"><div class="w-7 h-7 rounded bg-[#22d3ee] text-[#06222b] font-black text-sm flex items-center justify-center shrink-0 shadow-sm">R</div><div class="flex items-center tracking-tight leading-none"><span class="text-white font-bold text-[15px]">Recon</span><span class="text-[#22d3ee] font-bold text-[15px] ml-0.5">OS</span></div><span class="ml-auto text-[10px] font-mono text-[#64748b] bg-[#161d2b] px-1.5 py-0.5 rounded border border-[#1e2738]">v2.4</span></div><nav class="flex-1 py-2 space-y-3 overflow-y-auto"><div class="space-y-0.5"><div class="px-2 py-1 text-[10px] font-semibold text-[#475569] uppercase tracking-wider font-label-caps">RECON</div><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">grid_view</span><span class="">Dashboard</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">troubleshoot</span><span class="">Monitor</span></div></a><a aria-current="page" class="flex items-center justify-between px-2 py-1.5 rounded bg-[#22d3ee]/10 border border-[#22d3ee]/40 text-[#22d3ee] font-medium text-[13px] transition-colors" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">language</span><span class="">Domains</span></div><div class="flex items-center gap-1.5"><span class="text-[11px] font-mono px-1.5 py-0.2 rounded bg-[#161d2b] text-[#22d3ee] font-medium border border-[#22d3ee]/30">64</span><span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee]"></span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">photo_camera</span><span class="">Screenshots</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">folder</span><span class="">Programs</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">shield</span><span class="">Findings</span></div><span class="text-[11px] font-mono px-1.5 py-0.2 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/40 font-medium">29</span></a></div><div class="space-y-0.5 pt-1"><div class="px-2 py-1 text-[10px] font-semibold text-[#475569] uppercase tracking-wider font-label-caps">OPERATIONS</div><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">dns</span><span class="">Staging Queue</span></div><span class="text-[11px] font-mono px-1.5 py-0.2 rounded bg-[#451a03] text-[#fbbf24] border border-[#78350f]/40 font-medium">12</span></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">tune</span><span class="">Manage</span></div></a></div><div class="space-y-0.5 pt-1"><div class="px-2 py-1 text-[10px] font-semibold text-[#475569] uppercase tracking-wider font-label-caps">ADMIN</div><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">group</span><span class="">Users</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">widgets</span><span class="">Component Library</span></div></a></div><div class="space-y-0.5 pt-1"><div class="flex items-center justify-between px-2 py-1"><span class="text-[10px] font-semibold text-[#475569] uppercase tracking-wider font-label-caps">SYSTEM</span><span class="text-[9px] font-bold font-mono px-1 py-0.2 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/50 tracking-wider">ROOT</span></div><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">vital_signs</span><span class="">Health &amp; Tools</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">radar</span><span class="">Osmedeus</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">security</span><span class="">Vigolium</span></div></a><a class="flex items-center justify-between px-2 py-1.5 rounded text-[#94a3b8] hover:bg-[#161d2b] hover:text-white transition-colors text-[13px]" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[17px]">extension</span><span class="">Modules</span></div></a></div></nav></div><div class="pt-2 border-t border-[#1e2430] shrink-0"><div class="bg-[#121620] border border-[#1e2738] rounded-lg p-2.5 flex items-center justify-between"><div class="flex items-center gap-2 overflow-hidden"><div class="relative shrink-0"><div class="w-7 h-7 rounded bg-[#1a2333] border border-[#26354d] text-[#22d3ee] flex items-center justify-center font-bold text-xs"><span class="material-symbols-outlined text-[16px]">terminal</span></div><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4ade80] border-2 border-[#121620]"></span></div><div class="flex flex-col min-w-0"><span class="text-xs font-mono font-medium text-white truncate">operator_01</span><span class="text-[10px] text-[#64748b] truncate">Lead SecOps</span></div></div><button class="p-1 text-[#64748b] hover:text-white transition-colors rounded hover:bg-[#1a2333] ml-1 shrink-0" title="Log out" type="button"><span class="material-symbols-outlined text-[16px]">logout</span></button></div></div></aside><div class="pl-[244px]"><header class="fixed top-0 left-[244px] right-0 h-14 bg-surface border-b border-border z-40 flex items-center justify-between px-margin"><div class="flex items-center gap-space-md"><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 border border-border transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[18px]">menu</span></button><div class="flex items-center gap-1.5 text-fg-faint font-caption text-caption"><span class="hover:text-fg transition-colors">ReconOS</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="hover:text-fg transition-colors">Recon</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="text-fg font-medium">Operations Console</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center w-72"><span class="material-symbols-outlined absolute left-2.5 text-fg-faint text-[16px] pointer-events-none">search</span><input class="w-full h-8 pl-8 pr-12 bg-surface-2 border border-border rounded text-fg placeholder:text-fg-faint font-body-default text-body-default focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search programs, domains… (⌘K)" readonly="" type="text"/><kbd class="absolute right-2 font-body-code text-caption text-fg-faint border border-border px-1 py-0.2 rounded bg-surface">⌘K</kbd></div><div class="flex items-center gap-2 px-2.5 py-1 rounded bg-good-soft border border-good-bd"><span class="w-2 h-2 rounded-full bg-good animate-ping duration-1000"></span><span class="font-body-code text-caption text-good uppercase tracking-wider font-medium">Dispatcher online</span></div><div class="h-4 w-px bg-border"></div><div class="flex items-center gap-1"><button class="relative p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Telemetry Notifications" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-crit rounded-full ring-2 ring-surface"></span></button><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Toggle Console Mode" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button></div><div class="h-4 w-px bg-border"></div><div class="flex items-center pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-border-strong" src="https://lh3.googleusercontent.com/aida/AEtjO1WBtVNn6knYSxuDZPa6oZP042_eh6hILVgSroShcMRViYAT5IHbnHqrQGSUHcK0CI_laPdY6VttZz9YUq7ZpwNMRmeemcnKYkJtwAKB0M-TOvcwmraDb_uN8UVNiPMpBPM42LEYyNQBR91RWUAvXfbMdb-Lq6T5hsXMjiY-XWpe5uMdIkn_0b5Zxh9LiqdCt5_9tXqWztERvWD1gN8iQr_1HXzRrMadMIPS-xehG5Wg-A"/></div></div></header><main class="relative pt-14 bg-bg min-h-screen"><div class="flex flex-col w-full">
+<!-- Sub-header Breadcrumb & Operational Record Navigation -->
+<div class="w-full bg-surface-container-low px-margin py-space-sm flex flex-wrap items-center justify-between gap-space-sm shadow-sm">
+<div class="flex items-center gap-space-md">
+<a class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface hover:bg-surface-2 text-fg-muted hover:text-fg font-body-default text-caption transition-colors" href="#">
+<span class="material-symbols-outlined text-[15px]">arrow_back</span>
+<span class="">Domains</span>
+</a>
+<span class="text-fg-faint font-caption text-caption">/</span>
+<span class="font-body-code text-caption text-primary">auth.example.com</span>
+</div>
+<!-- Record Navigator Pagination -->
+<div class="flex items-center gap-space-xs">
+<button class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface hover:bg-surface-2 text-fg-muted hover:text-fg font-body-code text-caption transition-colors" title="Previous Domain" type="button">
+<span class="material-symbols-outlined text-[14px]">chevron_left</span>
+<span class="">Previous</span>
+</button>
+<div class="px-2.5 py-1 rounded bg-surface-2 text-fg font-body-code text-caption tracking-wider">
+<span class="text-fg font-body-code-bold">3</span>
+<span class="text-fg-faint">/</span>
+<span class="text-fg-muted">64</span>
+</div>
+<button class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface hover:bg-surface-2 text-fg-muted hover:text-fg font-body-code text-caption transition-colors" title="Next Domain" type="button">
+<span class="">Next</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="p-margin space-y-space-lg">
+<!-- Header Block -->
+<div class="bg-surface rounded-lg p-space-lg shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<div class="space-y-space-xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg font-bold text-fg tracking-tight font-body-code-bold flex items-center gap-space-xs">
+            auth.example.com
+            <button class="text-fg-faint hover:text-primary transition-colors p-0.5 rounded" onclick="navigator.clipboard?.writeText('auth.example.com')" title="Copy domain" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</h1>
+<!-- DNS Status Badge -->
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-caption font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span>
+            resolved
+          </span>
+<!-- Program Tag -->
+<a class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-primary-container font-body-code text-caption transition-colors" href="#">
+<span class="material-symbols-outlined text-[13px]">adjust</span>
+            shopify-vdp
+          </a>
+<!-- Source Tag -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-2 text-fg-muted font-body-code text-caption">
+<span class="material-symbols-outlined text-[13px]">terminal</span>
+            subfinder
+          </span>
+</div>
+<p class="font-caption text-caption text-fg-muted flex flex-wrap items-center gap-1.5">
+<span class="">Discovered 12 Oct 2026 via <span class="font-body-code text-fg">subfinder</span></span>
+<span class="text-fg-faint">·</span>
+<span class="">Last scan <span class="text-fg">2h ago</span></span>
+<span class="text-fg-faint">·</span>
+<span class="">Resolves to</span>
+<span class="font-body-code text-primary bg-surface-2 px-1.5 py-0.2 rounded">198.51.100.24</span>
+<span class="font-body-code text-primary bg-surface-2 px-1.5 py-0.2 rounded">198.51.100.25</span>
+</p>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center flex-wrap gap-space-xs shrink-0">
+<button class="inline-flex items-center gap-1.5 h-9 px-space-md rounded bg-surface-2 hover:bg-surface-3 text-fg font-body-default text-body-default transition-all shadow-sm" onclick="navigator.clipboard?.writeText('auth.example.com')" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span class="">Copy Name</span>
+</button>
+<button class="inline-flex items-center gap-1.5 h-9 px-space-md rounded bg-crit-soft hover:bg-crit/20 text-crit font-body-default text-body-default transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span class="">Delete</span>
+</button>
+<button class="inline-flex items-center gap-1.5 h-9 px-space-lg rounded bg-primary-container hover:bg-accent-hover text-accent-ink font-body-default font-bold text-body-default transition-all shadow-md" id="triggerScanModalBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">radar</span>
+<span class="">Run Scan</span>
+</button>
+</div>
+</div>
+<!-- Stat Tiles Matrix (5 Columns) -->
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-space-md">
+<!-- Tile 1: IPs -->
+<div class="bg-surface rounded-lg p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between text-fg-muted mb-space-xs">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Assigned IPs</span>
+<span class="material-symbols-outlined text-[16px] text-asset-ip">router</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight font-body-code-bold">2</div>
+<div class="mt-space-xs text-caption font-caption text-fg-muted flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="">Both responding</span>
+</div>
+</div>
+<!-- Tile 2: URLs -->
+<div class="bg-surface rounded-lg p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between text-fg-muted mb-space-xs">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Discovered URLs</span>
+<span class="material-symbols-outlined text-[16px] text-asset-url">link</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight font-body-code-bold">14</div>
+<div class="mt-space-xs text-caption font-caption text-fg-muted truncate">
+<span class="">9 unique endpoints · 2 API</span>
+</div>
+</div>
+<!-- Tile 3: Open Ports -->
+<div class="bg-surface rounded-lg p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between text-fg-muted mb-space-xs">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Open Ports</span>
+<span class="material-symbols-outlined text-[16px] text-primary">lan</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight font-body-code-bold">4</div>
+<div class="mt-space-xs text-caption font-body-code text-fg-muted truncate">
+          80, 443, 8080, 8443
+        </div>
+</div>
+<!-- Tile 4: Screenshots -->
+<div class="bg-surface rounded-lg p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between text-fg-muted mb-space-xs">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Screenshots</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">photo_camera</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight font-body-code-bold">3</div>
+<div class="mt-space-xs text-caption font-caption text-fg-muted">
+<span class="">Latest HTTP 200 OK</span>
+</div>
+</div>
+<!-- Tile 5: Findings (Critical flag) -->
+<div class="bg-surface rounded-lg p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between col-span-2 md:col-span-1">
+<div class="flex items-center justify-between text-fg-muted mb-space-xs">
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Vulnerabilities</span>
+<span class="material-symbols-outlined text-[16px] text-crit">warning</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-crit tracking-tight font-body-code-bold">4</div>
+<div class="mt-space-xs text-caption font-body-code text-crit font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-crit animate-ping"></span>
+<span class="">highest: critical</span>
+</div>
+</div>
+</div>
+<!-- Main Card with Tabbed Navigation -->
+<div class="bg-surface rounded-lg shadow-sm flex flex-col overflow-hidden">
+<!-- Tabs Bar -->
+<div class="px-space-md bg-surface-2 overflow-x-auto flex items-center gap-space-xs">
+<button class="px-space-md py-3 font-body-default text-body-default font-medium text-primary-container relative shrink-0" type="button">
+          Overview
+          <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-container"></span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          DNS &amp; IPs <span class="font-body-code text-caption text-fg-faint ml-1">(2)</span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          URLs <span class="font-body-code text-caption text-fg-faint ml-1">(14)</span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          Services <span class="font-body-code text-caption text-fg-faint ml-1">(4)</span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          Screenshots <span class="font-body-code text-caption text-fg-faint ml-1">(3)</span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          Findings <span class="font-body-code text-caption text-crit font-medium ml-1">(4)</span>
+</button>
+<button class="px-space-md py-3 font-body-default text-body-default text-fg-muted hover:text-fg transition-colors shrink-0" type="button">
+          Scan History <span class="font-body-code text-caption text-fg-faint ml-1">(12)</span>
+</button>
+</div>
+<!-- Tab Content Area: Two Column Layout -->
+<div class="p-space-lg grid grid-cols-1 lg:grid-cols-12 gap-space-lg"><!-- Left Column: Target Characteristics -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<div class="bg-surface-2 rounded-lg p-space-lg shadow-sm flex flex-col justify-between border border-[#1e2738] h-full">
+<div class="space-y-space-md">
+<div class="flex items-center justify-between pb-space-xs border-b border-[#1e2430]">
+<span class="font-panel-title text-panel-title text-fg flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-primary">feed</span>
+          Target Characteristics
+        </span>
+<span class="font-body-code text-caption text-fg-faint bg-surface px-2 py-0.5 rounded border border-[#1e2738]">ID #DOM-8842</span>
+</div>
+<!-- Key-Value Registry Table -->
+<div class="space-y-2 text-body-default">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Domain</span>
+<span class="font-body-code-bold text-fg text-sm tracking-tight">auth.example.com</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Program</span>
+<a class="font-body-code text-primary-container hover:underline flex items-center gap-1 text-xs font-semibold" href="#">
+            shopify-vdp
+            <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+</a>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Discovery Source</span>
+<span class="font-body-code text-fg bg-surface-2 px-2 py-0.5 rounded text-xs border border-[#1e2738]">subfinder (v2.6.4)</span>
+</div>
+<div class="flex flex-col py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Resolves To (2)</span>
+<span class="font-body-code text-[10px] text-fg-faint uppercase tracking-wider bg-surface-2 px-1.5 py-0.2 rounded">A Record</span>
+</div>
+<div class="grid grid-cols-1 gap-1.5">
+<div class="flex items-center justify-between bg-surface-2 px-2.5 py-1.5 rounded border border-[#1e2738]">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="font-body-code text-primary text-xs">198.51.100.24</span>
+</div>
+<button class="text-fg-faint hover:text-fg transition-colors p-0.5 rounded" onclick="navigator.clipboard?.writeText('198.51.100.24')" title="Copy IP" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<div class="flex items-center justify-between bg-surface-2 px-2.5 py-1.5 rounded border border-[#1e2738]">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="font-body-code text-primary text-xs">198.51.100.25</span>
+</div>
+<button class="text-fg-faint hover:text-fg transition-colors p-0.5 rounded" onclick="navigator.clipboard?.writeText('198.51.100.25')" title="Copy IP" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Discovered At</span>
+<span class="font-body-code text-fg text-xs">2026-10-12 14:22:01 UTC</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Last Scanned</span>
+<span class="font-body-code text-fg text-xs">2026-10-25 09:15:30 UTC</span>
+</div>
+<div class="flex flex-col py-2 px-space-md bg-surface rounded border border-[#1e2430] gap-1.5">
+<span class="font-label-caps text-label-caps uppercase text-fg-muted">Taxonomy Tags</span>
+<div class="flex flex-wrap gap-1.5 pt-0.5">
+<span class="px-2 py-0.5 rounded bg-surface-3 text-secondary font-body-code text-caption border border-[#1e2738]">env: prod</span>
+<span class="px-2 py-0.5 rounded bg-surface-3 text-primary font-body-code text-caption border border-[#1e2738]">tier: auth</span>
+<span class="px-2 py-0.5 rounded bg-surface-3 text-tertiary font-body-code text-caption border border-[#1e2738]">cloud: cloudflare</span>
+<span class="px-2 py-0.5 rounded bg-accent-soft text-primary-container font-body-code text-caption border border-[#22d3ee]/30">bbrf: synced</span>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-space-md mt-space-sm border-t border-[#1e2430] flex items-center justify-between text-caption font-body-code text-fg-faint">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>Auto-reconciled</span>
+<span>Confidence: 99.8%</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Findings by Severity & Latest Capture Preview -->
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<!-- Block 1: Findings by Severity -->
+<div class="bg-surface-2 rounded-lg p-space-lg shadow-sm space-y-space-md border border-[#1e2738]">
+<div class="flex items-center justify-between pb-space-xs border-b border-[#1e2430]">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-crit text-[18px]">security</span>
+<span class="font-panel-title text-panel-title text-fg">Findings by Severity</span>
+</div>
+<span class="font-body-code text-caption text-crit font-medium bg-crit-soft px-2 py-0.5 rounded border border-[#991b1b]/40">4 Total Vulnerabilities</span>
+</div>
+<!-- Severity Distribution Bar -->
+<div class="w-full h-2.5 rounded-full bg-surface overflow-hidden flex shadow-inner border border-[#1e2430]">
+<div class="h-full bg-crit transition-all" style="width: 25%" title="1 Critical (25%)"></div>
+<div class="h-full bg-asset-ip transition-all" style="width: 25%" title="1 High (25%)"></div>
+<div class="h-full bg-warn transition-all" style="width: 50%" title="2 Medium (50%)"></div>
+</div>
+<!-- Severity breakdown pills -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+<div class="bg-surface p-space-sm rounded border border-[#1e2430] flex flex-col items-center justify-center">
+<span class="font-label-caps text-label-caps uppercase text-crit mb-0.5">Critical</span>
+<span class="font-stat-lg text-stat-lg text-crit font-body-code-bold leading-none">1</span>
+</div>
+<div class="bg-surface p-space-sm rounded border border-[#1e2430] flex flex-col items-center justify-center">
+<span class="font-label-caps text-label-caps uppercase text-asset-ip mb-0.5">High</span>
+<span class="font-stat-lg text-stat-lg text-asset-ip font-body-code-bold leading-none">1</span>
+</div>
+<div class="bg-surface p-space-sm rounded border border-[#1e2430] flex flex-col items-center justify-center">
+<span class="font-label-caps text-label-caps uppercase text-warn mb-0.5">Medium</span>
+<span class="font-stat-lg text-stat-lg text-warn font-body-code-bold leading-none">2</span>
+</div>
+<div class="bg-surface p-space-sm rounded border border-[#1e2430] flex flex-col items-center justify-center">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint mb-0.5">Low / Info</span>
+<span class="font-stat-lg text-stat-lg text-fg-muted font-body-code-bold leading-none">0</span>
+</div>
+</div>
+<!-- Primary critical preview notice -->
+<div class="p-space-sm rounded bg-crit-soft border border-[#991b1b]/40 flex flex-wrap items-center justify-between gap-2 text-caption">
+<div class="flex items-center gap-space-sm flex-1 min-w-0">
+<span class="material-symbols-outlined text-crit text-[18px] shrink-0">bug_report</span>
+<span class="font-body-code-bold text-crit shrink-0">CVE-2023-3824</span>
+<span class="text-fg-muted truncate font-body-default">OAuth Authorization Code Leakage</span>
+</div>
+<a class="font-body-code text-caption text-primary hover:underline flex items-center gap-1 shrink-0 font-medium" href="#">
+<span>View in Findings</span>
+<span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Block 2: Latest Capture -->
+<div class="bg-surface-2 rounded-lg p-space-lg shadow-sm space-y-space-md border border-[#1e2738]">
+<div class="flex items-center justify-between pb-space-xs border-b border-[#1e2430]">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-[18px]">screenshot_monitor</span>
+<span class="font-panel-title text-panel-title text-fg">Latest Capture Preview</span>
+</div>
+<span class="font-body-code text-caption text-fg-faint">Probed 2h ago via Gowitness</span>
+</div>
+<div class="group relative rounded-lg overflow-hidden bg-surface shadow-sm cursor-pointer transition-all hover:ring-2 hover:ring-primary-container border border-[#1e2430]">
+<div class="relative w-full h-44 bg-surface-3 overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300" data-alt="Technical dashboard screenshot of an enterprise authentication SSO portal for Shopify, displaying sleek dark login fields, OAuth sign-in buttons, high precision modern web typography, dark background with cyan accents matching security UI palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPySUms-N-PgKBdpjsbQXzA1B9Vs6210B8JK8w5sJ93Fe02X6Cpo17pI1V2ApClHtotp5_HF0_SZeCgD5qSdKIjWXbe7AijWpb6uLY9S8OGkqIRSgn424JIkYzjzz1lvhBqaVP_exTZ4EOfqvgaO04J-JHb6rINWsgEp3X-gKCAvpz1qgF6BCEKVQ0lXo2mZkoLevE7s6RS6pTBGQQMs2nkgVr7Wgq9CIORcfIW_7b"/>
+<div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent"></div>
+<span class="absolute top-space-sm left-space-sm px-2 py-0.5 rounded bg-good-soft text-good font-body-code text-caption font-bold shadow-md border border-good-bd">
+          HTTP 200 OK
+        </span>
+<span class="absolute top-space-sm right-space-sm px-2 py-0.5 rounded bg-surface/80 text-fg font-body-code text-caption backdrop-blur-sm border border-[#1e2738]">
+          1920×1080
+        </span>
+<div class="absolute bottom-space-sm left-space-sm right-space-sm flex items-end justify-between">
+<div class="min-w-0 pr-2">
+<p class="font-body-default font-medium text-fg truncate text-sm">Shopify Identity &amp; OAuth Portal</p>
+<p class="font-body-code text-caption text-fg-muted truncate">https://auth.example.com/oauth/authorize</p>
+</div>
+<span class="inline-flex items-center gap-1 text-primary text-caption font-body-code shrink-0 px-2 py-1 rounded bg-surface/80 border border-[#22d3ee]/30">
+<span>Inspect</span>
+<span class="material-symbols-outlined text-[14px]">open_in_full</span>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Full-Width Expansive Recent Telemetry Activity Section -->
+<div class="lg:col-span-12">
+<div class="bg-surface-2 rounded-lg p-space-lg shadow-sm space-y-space-md border border-[#1e2738]">
+<div class="flex items-center justify-between pb-space-xs border-b border-[#1e2430]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[19px]">history</span>
+<span class="font-panel-title text-panel-title text-fg font-semibold">Recent Telemetry Activity</span>
+<span class="text-[11px] font-mono px-2 py-0.2 rounded bg-surface text-fg-muted border border-[#1e2738]">6 Events</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-good animate-pulse"></span>
+<span class="font-label-caps text-label-caps uppercase text-fg-faint">Live Telemetry Sync</span>
+</div>
+</div>
+<!-- Structured Telemetry Rows (Grid/Flex Layout with explicit metadata tags to avoid any overlap) -->
+<div class="space-y-2">
+<!-- Event 1: Finding Reported -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-crit-soft border border-[#991b1b]/40 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-crit">error</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-crit-soft text-crit font-body-code text-[11px] font-semibold border border-[#991b1b]/40 uppercase">Finding Reported</span>
+<span class="font-body-code-bold text-fg text-sm">OAuth Open Redirect</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-2 text-fg-faint font-body-code text-[11px] border border-[#1e2738]">CVE-2023-3824</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">Exploitable callback redirect parameter detected via automated vulnerability template run.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">Nuclei</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">2h ago</span>
+</div>
+</div>
+<!-- Event 2: Port Detected -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-accent-soft border border-[#22d3ee]/30 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-asset-service">door_open</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-asset-service font-body-code text-[11px] font-semibold border border-[#1e2738] uppercase">Port Detected</span>
+<span class="font-body-code-bold text-fg text-sm">Port 8443 (HTTPS / Apache 2.4.52)</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-2 text-good font-body-code text-[11px] border border-good-bd">TLS Valid</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">TLS certificate validated (CommonName: *.example.com, Issuer: Let's Encrypt, Valid until 2027).</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">Naabu</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">4h ago</span>
+</div>
+</div>
+<!-- Event 3: DNS Mutation -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-surface-2 border border-[#1e2738] flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-asset-ip">dns</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-asset-ip font-body-code text-[11px] font-semibold border border-[#1e2738] uppercase">DNS Changed</span>
+<span class="font-body-code-bold text-fg text-sm">A-Record 198.51.100.25 Added</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">Secondary round-robin IP discovered during automated massdns sweep across Cloudflare edge.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">Massdns</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">1d ago</span>
+</div>
+</div>
+<!-- Event 4: URL Discovered -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-surface-2 border border-[#1e2738] flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-asset-url">add_link</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-asset-url font-body-code text-[11px] font-semibold border border-[#1e2738] uppercase">URL Discovered</span>
+<span class="font-body-code-bold text-fg text-sm">/login/callback</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">Endpoint extracted from client-side JavaScript bundle <span class="font-body-code text-primary bg-surface-2 px-1 py-0.2 rounded">app-auth.min.js</span>.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">Katana</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">3d ago</span>
+</div>
+</div>
+<!-- Event 5: Visual Screenshot Capture -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-surface-2 border border-[#1e2738] flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-tertiary">photo_camera</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-tertiary font-body-code text-[11px] font-semibold border border-[#1e2738] uppercase">Capture Rendered</span>
+<span class="font-body-code-bold text-fg text-sm">Full 1080p Screen Render</span>
+<span class="px-1.5 py-0.2 rounded bg-good-soft text-good font-body-code text-[11px] border border-good-bd">HTTP 200</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">DOM snapshot stored with 0 console errors, asset load complete in 420ms.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">Gowitness</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">5d ago</span>
+</div>
+</div>
+<!-- Event 6: Asset Ingestion -->
+<div class="p-space-md rounded bg-surface border border-[#1e2430] hover:bg-surface-3 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-start gap-3 flex-1 min-w-0">
+<div class="w-8 h-8 rounded bg-good-soft border border-good-bd flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px] text-good">inventory_2</span>
+</div>
+<div class="space-y-1 min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-good font-body-code text-[11px] font-semibold border border-[#1e2738] uppercase">Asset Ingestion</span>
+<span class="font-body-code-bold text-fg text-sm">Domain registered in BBRF</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-2 text-fg-muted font-body-code text-[11px] border border-[#1e2738]">shopify-vdp</span>
+</div>
+<p class="text-fg-muted font-body-default text-caption leading-relaxed">Ingested via autonomous subfinder recon hook for authorized program scope.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+<span class="px-2 py-0.5 rounded bg-surface-2 text-primary font-body-code text-caption border border-[#1e2738]">BBRF Hook</span>
+<span class="font-body-code text-caption text-fg-faint whitespace-nowrap">13d ago</span>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<!-- Run Scan Interactive Docked Modal Overlay -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-margin bg-bg/80 backdrop-blur-sm" id="scanModal">
+<div class="w-full max-w-lg bg-surface rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="px-space-lg py-space-md bg-surface-2 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-container text-[20px]">radar</span>
+<span class="font-headline-lg text-headline-lg-mobile text-fg">Execute Autonomous Scan</span>
+</div>
+<button class="text-fg-faint hover:text-fg p-1 rounded hover:bg-surface transition-colors" id="closeScanModalBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Modal Body Form -->
+<div class="p-space-lg space-y-space-lg">
+<div>
+<label class="block font-label-caps text-label-caps uppercase text-fg-muted mb-space-xs">Target Scope</label>
+<div class="flex items-center justify-between bg-surface-2 px-space-md py-2 rounded">
+<span class="font-body-code text-primary font-medium">auth.example.com</span>
+<span class="font-body-code text-caption text-fg-faint">2 Active IPs</span>
+</div>
+</div>
+<div class="space-y-space-sm">
+<label class="block font-label-caps text-label-caps uppercase text-fg-muted">Select Modules to Dispatch</label>
+<div class="space-y-space-xs">
+<!-- Scan Type: Nuclei -->
+<label class="flex items-start gap-space-sm p-space-sm rounded bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-0 w-4 h-4 accent-cyan-400 bg-surface" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg">Nuclei Vulnerability Scan</span>
+<span class="font-body-code text-caption text-crit font-medium">CVEs &amp; Misconfigs</span>
+</div>
+<p class="font-caption text-caption text-fg-muted">Runs high &amp; critical severity templates against exposed service paths.</p>
+</div>
+</label>
+<!-- Scan Type: Portscan -->
+<label class="flex items-start gap-space-sm p-space-sm rounded bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-0 w-4 h-4 accent-cyan-400 bg-surface" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg">Naabu / Portscan</span>
+<span class="font-body-code text-caption text-asset-ip font-medium">Full 65535</span>
+</div>
+<p class="font-caption text-caption text-fg-muted">Probes fast TCP syn-packets across standard &amp; alt web service ports.</p>
+</div>
+</label>
+<!-- Scan Type: Httpx -->
+<label class="flex items-start gap-space-sm p-space-sm rounded bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-0 w-4 h-4 accent-cyan-400 bg-surface" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg">HTTPX Prober</span>
+<span class="font-body-code text-caption text-good font-medium">Headers &amp; Title</span>
+</div>
+<p class="font-caption text-caption text-fg-muted">Enumerates TLS certificates, response hashes, and tech stack signatures.</p>
+</div>
+</label>
+<!-- Scan Type: Gowitness -->
+<label class="flex items-start gap-space-sm p-space-sm rounded bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 rounded text-primary focus:ring-0 w-4 h-4 accent-cyan-400 bg-surface" type="checkbox"/>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg">Gowitness Snapshot</span>
+<span class="font-body-code text-caption text-tertiary font-medium">Headless Chrome</span>
+</div>
+<p class="font-caption text-caption text-fg-muted">Captures full-page rendering at 1080p for visual reconnaissance.</p>
+</div>
+</label>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-caption text-fg-faint font-body-code">
+<span class="">Priority: High (Dispatcher 01)</span>
+<span class="">Estimated: ~3 mins</span>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-space-lg py-space-md bg-surface-2 flex items-center justify-end gap-space-sm">
+<button class="px-space-md py-1.5 rounded bg-surface hover:bg-surface-3 text-fg-muted hover:text-fg font-body-default text-body-default transition-colors" id="cancelScanModalBtn" type="button">
+          Cancel
+        </button>
+<button class="inline-flex items-center gap-1.5 px-space-lg py-1.5 rounded bg-primary-container hover:bg-accent-hover text-accent-ink font-body-default font-bold text-body-default transition-all shadow-md" id="confirmDispatchBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+<span class="">Dispatch Job</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro-Interactions Client Logic -->
+<script>
+    (function initDomainDetailLogic() {
+      const modal = document.getElementById('scanModal');
+      const triggerBtn = document.getElementById('triggerScanModalBtn');
+      const closeBtn = document.getElementById('closeScanModalBtn');
+      const cancelBtn = document.getElementById('cancelScanModalBtn');
+      const confirmDispatchBtn = document.getElementById('confirmDispatchBtn');
+
+      function openModal() {
+        if (modal) modal.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        if (modal) modal.classList.add('hidden');
+      }
+
+      if (triggerBtn) triggerBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+      if (confirmDispatchBtn) {
+        confirmDispatchBtn.addEventListener('click', function() {
+          const originalText = confirmDispatchBtn.innerHTML;
+          confirmDispatchBtn.disabled = true;
+          confirmDispatchBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span><span>Dispatching...</span>';
+          setTimeout(() => {
+            closeModal();
+            confirmDispatchBtn.disabled = false;
+            confirmDispatchBtn.innerHTML = originalText;
+          }, 600);
+        });
+      }
+
+      // Close on background scrim click
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) closeModal();
+        });
+      }
+    })();
+  </script>
+</div></main></div>
+</body></html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head></head><body class="bg-bg text-fg font-body-default text-body-default antialiased select-none"><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0a141e","outline":"#859397","secondary-container":"#444750","on-tertiary-fixed-variant":"#005236","primary":"#8aebff","warn-bd":"#5a4414","error":"#ffb4ab","surface-container-low":"#131c27","on-primary-fixed":"#001f25","surface-dim":"#0a141e","outline-variant":"#3c494c","surface-tint":"#2fd9f4","on-primary-container":"#005763","fg-faint":"#6a7483","info-bd":"#1f3a63","on-tertiary-fixed":"#002113","surface-container-highest":"#2c3641","inverse-on-surface":"#28313d","accent-soft":"#0c2b33","border":"#282d38","inverse-primary":"#006877","on-error-container":"#ffdad6","on-background":"#d9e3f2","primary-fixed":"#a2eeff","surface-container-lowest":"#050f19","info-soft":"#101c33","accent-ink":"#06222b","good-bd":"#1f4f33","asset-domain":"#0ea371","on-primary":"#00363e","asset-service":"#db2777","warn-soft":"#2c2109","fg-muted":"#9aa4b2","secondary":"#c4c6d1","neutral-bd":"#333a46","on-surface":"#d9e3f2","on-tertiary":"#003824","error-container":"#93000a","on-secondary-fixed":"#181b23","good":"#4ade80","bg":"#0a0c10","surface-variant":"#2c3641","asset-ip":"#d97706","fg":"#e7ebf0","crit-soft":"#2c1118","secondary-fixed":"#e0e2ed","ring":"#22d3ee66","crit-bd":"#5c2330","on-secondary":"#2d3039","on-surface-variant":"#bbc9cd","accent-soft-bd":"#1b4e5a","surface-3":"#232733","good-soft":"#102a1a","surface":"#14161c","on-primary-fixed-variant":"#004e5a","tertiary-fixed-dim":"#60dda6","warn":"#fbbf24","surface-container":"#17202b","tertiary-container":"#5ad7a0","inverse-surface":"#d9e3f2","on-tertiary-container":"#005b3d","tertiary-fixed":"#7ef9c0","tertiary":"#78f4bb","surface-container-high":"#212b36","on-error":"#690005","accent-hover":"#5ee0f2","neutral-soft":"#1c2028","crit":"#fb7185","info":"#60a5fa","primary-fixed-dim":"#2fd9f4","primary-container":"#22d3ee","on-secondary-fixed-variant":"#444750","surface-bright":"#303a46","secondary-fixed-dim":"#c4c6d1","border-strong":"#3a4150","surface-2":"#1b1e26","on-secondary-container":"#b3b5bf","asset-url":"#3b82f6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.125rem","margin":"1.5rem","gutter-dense":"0.75rem","space-xs":"0.25rem","gutter":"1rem","space-md":"0.75rem","space-sm":"0.5rem","margin-mobile":"1rem","space-xl":"1.5rem"},"fontFamily":{"caption":["IBM Plex Sans"],"stat-lg":["IBM Plex Mono"],"label-caps":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"body-code-bold":["IBM Plex Mono"],"headline-lg-mobile":["IBM Plex Sans"],"body-code":["IBM Plex Mono"],"body-default":["IBM Plex Sans"],"panel-title":["IBM Plex Sans"]},"fontSize":{"caption":["11px",{"lineHeight":"14px","fontWeight":"400"}],"stat-lg":["27px",{"lineHeight":"32px","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-lg":["21px",{"lineHeight":"28px","fontWeight":"700"}],"body-code-bold":["12.5px",{"lineHeight":"18px","fontWeight":"600"}],"headline-lg-mobile":["18px",{"lineHeight":"24px","fontWeight":"700"}],"body-code":["12.5px",{"lineHeight":"18px","fontWeight":"400"}],"body-default":["13px",{"lineHeight":"18px","fontWeight":"400"}],"panel-title":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}}</script><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0a141e","outline":"#859397","secondary-container":"#444750","on-tertiary-fixed-variant":"#005236","primary":"#8aebff","warn-bd":"#5a4414","error":"#ffb4ab","surface-container-low":"#131c27","on-primary-fixed":"#001f25","surface-dim":"#0a141e","outline-variant":"#3c494c","surface-tint":"#2fd9f4","on-primary-container":"#005763","fg-faint":"#6a7483","info-bd":"#1f3a63","on-tertiary-fixed":"#002113","surface-container-highest":"#2c3641","inverse-on-surface":"#28313d","accent-soft":"#0c2b33","border":"#282d38","inverse-primary":"#006877","on-error-container":"#ffdad6","on-background":"#d9e3f2","primary-fixed":"#a2eeff","surface-container-lowest":"#050f19","info-soft":"#101c33","accent-ink":"#06222b","good-bd":"#1f4f33","asset-domain":"#0ea371","on-primary":"#00363e","asset-service":"#db2777","warn-soft":"#2c2109","fg-muted":"#9aa4b2","secondary":"#c4c6d1","neutral-bd":"#333a46","on-surface":"#d9e3f2","on-tertiary":"#003824","error-container":"#93000a","on-secondary-fixed":"#181b23","good":"#4ade80","bg":"#0a0c10","surface-variant":"#2c3641","asset-ip":"#d97706","fg":"#e7ebf0","crit-soft":"#2c1118","secondary-fixed":"#e0e2ed","ring":"#22d3ee66","crit-bd":"#5c2330","on-secondary":"#2d3039","on-surface-variant":"#bbc9cd","accent-soft-bd":"#1b4e5a","surface-3":"#232733","good-soft":"#102a1a","surface":"#14161c","on-primary-fixed-variant":"#004e5a","tertiary-fixed-dim":"#60dda6","warn":"#fbbf24","surface-container":"#17202b","tertiary-container":"#5ad7a0","inverse-surface":"#d9e3f2","on-tertiary-container":"#005b3d","tertiary-fixed":"#7ef9c0","tertiary":"#78f4bb","surface-container-high":"#212b36","on-error":"#690005","accent-hover":"#5ee0f2","neutral-soft":"#1c2028","crit":"#fb7185","info":"#60a5fa","primary-fixed-dim":"#2fd9f4","primary-container":"#22d3ee","on-secondary-fixed-variant":"#444750","surface-bright":"#303a46","secondary-fixed-dim":"#c4c6d1","border-strong":"#3a4150","surface-2":"#1b1e26","on-secondary-container":"#b3b5bf","asset-url":"#3b82f6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.125rem","margin":"1.5rem","gutter-dense":"0.75rem","space-xs":"0.25rem","gutter":"1rem","space-md":"0.75rem","space-sm":"0.5rem","margin-mobile":"1rem","space-xl":"1.5rem"},"fontFamily":{"caption":["IBM Plex Sans"],"stat-lg":["IBM Plex Mono"],"label-caps":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"body-code-bold":["IBM Plex Mono"],"headline-lg-mobile":["IBM Plex Sans"],"body-code":["IBM Plex Mono"],"body-default":["IBM Plex Sans"],"panel-title":["IBM Plex Sans"]},"fontSize":{"caption":["11px",{"lineHeight":"14px","fontWeight":"400"}],"stat-lg":["27px",{"lineHeight":"32px","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-lg":["21px",{"lineHeight":"28px","fontWeight":"700"}],"body-code-bold":["12.5px",{"lineHeight":"18px","fontWeight":"600"}],"headline-lg-mobile":["18px",{"lineHeight":"24px","fontWeight":"700"}],"body-code":["12.5px",{"lineHeight":"18px","fontWeight":"400"}],"body-default":["13px",{"lineHeight":"18px","fontWeight":"400"}],"panel-title":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}}</script><aside class="fixed left-0 top-0 h-screen w-[244px] bg-[#0c0e14] border-r border-[#1e2430] p-3 flex flex-col justify-between select-none z-30 overflow-hidden"><div class="flex flex-col flex-1 min-h-0"><div class="flex items-center gap-2.5 pb-3 border-b border-[#1a2130]/60 shrink-0"><div class="w-7 h-7 rounded bg-[#22d3ee] flex items-center justify-center text-[#06222b] font-black text-sm shrink-0">R</div><span class="font-headline-lg font-bold text-[15px] text-fg tracking-tight">Recon<span class="text-[#22d3ee]">OS</span></span><span class="ml-auto text-[10px] font-mono text-[#64748b] bg-[#161d2b] px-1.5 py-0.5 rounded border border-border/40">v2.4</span></div><nav class="flex-1 pt-3 pb-2 space-y-3.5 overflow-y-auto"><div class="space-y-0.5"><a aria-current="page" class="flex items-center justify-between px-2.5 py-1.5 rounded border border-[#22d3ee]/40 bg-[#22d3ee]/10 text-[#22d3ee] text-[13px] font-medium transition-colors" data-path="dashboard" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-[#22d3ee]">grid_view</span><span class="font-body-default text-[13px] text-[#22d3ee] font-medium">Dashboard</span></div><span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] ml-auto"></span></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="monitor" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">show_chart</span><span class="font-body-default text-[13px]">Monitor</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="domains" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">language</span><span class="font-body-default text-[13px]">Domains</span></div><span class="ml-auto text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#161d2b] text-[#94a3b8]">64</span></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="screenshots" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">photo_camera</span><span class="font-body-default text-[13px]">Screenshots</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="programs" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">folder</span><span class="font-body-default text-[13px]">Programs</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="findings" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">bug_report</span><span class="font-body-default text-[13px]">Findings</span></div><span class="ml-auto text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/40">29</span></a></div><div class="space-y-0.5 pt-1"><div class="px-2.5 py-1 font-label-caps text-[10px] font-semibold text-fg-faint uppercase tracking-wider">OPERATIONS</div><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="staging-queue" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">dns</span><span class="font-body-default text-[13px]">Staging Queue</span></div><span class="ml-auto text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#451a03] text-[#fbbf24] border border-[#d97706]/40">12</span></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="manage" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-body-default text-[13px]">Manage</span></div></a></div><div class="space-y-0.5 pt-1"><div class="px-2.5 py-1 font-label-caps text-[10px] font-semibold text-fg-faint uppercase tracking-wider">ADMIN</div><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="users" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-body-default text-[13px]">Users</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="component-library" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">widgets</span><span class="font-body-default text-[13px]">Component Library</span></div></a></div><div class="space-y-0.5 pt-1"><div class="flex items-center justify-between px-2.5 py-1"><span class="text-[10px] font-semibold text-[#475569] uppercase tracking-wider">System</span><span class="text-[9px] font-bold font-mono px-1 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/50">ROOT</span></div><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="health-tools" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">vital_signs</span><span class="font-body-default text-[13px]">Health &amp; Tools</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="osmedeus" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">radar</span><span class="font-body-default text-[13px]">Osmedeus</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="vigolium" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">security</span><span class="font-body-default text-[13px]">Vigolium</span></div></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg text-[13px] transition-colors duration-150" data-path="modules" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">extension</span><span class="font-body-default text-[13px]">Modules</span></div></a></div></nav></div><div class="pt-2 shrink-0"><div class="bg-[#121620] border border-[#1e2738] rounded-lg p-2.5 flex items-center justify-between"><div class="flex items-center gap-2 overflow-hidden"><div class="relative shrink-0"><div class="w-7 h-7 rounded bg-[#1a2333] border border-[#26354d] flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[16px] text-primary-container">terminal</span></div><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4ade80] ring-2 ring-[#121620]"></span></div><div class="flex flex-col min-w-0 pl-0.5"><span class="font-mono text-xs text-white truncate">operator_01</span><span class="text-[10px] text-[#64748b] truncate">Lead SecOps</span></div></div><button class="p-1 text-fg-faint hover:text-fg transition-colors rounded hover:bg-surface-3" title="Log out" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></div></aside><div class="pl-[244px]"><header class="fixed top-0 left-[244px] right-0 h-14 bg-surface border-b border-border z-40 flex items-center justify-between px-margin"><div class="flex items-center gap-space-md"><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 border border-border transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[18px]">menu</span></button><div class="flex items-center gap-1.5 text-fg-faint font-caption text-caption"><span class="hover:text-fg transition-colors">ReconOS</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="hover:text-fg transition-colors">Recon</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="text-fg font-medium">Operations Console</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center w-72"><span class="material-symbols-outlined absolute left-2.5 text-fg-faint text-[16px] pointer-events-none">search</span><input class="w-full h-8 pl-8 pr-12 bg-surface-2 border border-border rounded text-fg placeholder:text-fg-faint font-body-default text-body-default focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search programs, domains… (⌘K)" readonly="" type="text"><kbd class="absolute right-2 font-body-code text-caption text-fg-faint border border-border px-1 py-0.2 rounded bg-surface">⌘K</kbd></div><div class="flex items-center gap-2 px-2.5 py-1 rounded bg-good-soft border border-good-bd"><span class="w-2 h-2 rounded-full bg-good animate-ping duration-1000"></span><span class="font-body-code text-caption text-good uppercase tracking-wider font-medium">Dispatcher online</span></div><div class="h-4 w-px bg-border"></div><div class="flex items-center gap-1"><button class="relative p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Telemetry Notifications" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-crit rounded-full ring-2 ring-surface"></span></button><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Toggle Console Mode" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button></div><div class="h-4 w-px bg-border"></div><div class="flex items-center pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-border-strong" src="https://lh3.googleusercontent.com/aida/AEtjO1WBtVNn6knYSxuDZPa6oZP042_eh6hILVgSroShcMRViYAT5IHbnHqrQGSUHcK0CI_laPdY6VttZz9YUq7ZpwNMRmeemcnKYkJtwAKB0M-TOvcwmraDb_uN8UVNiPMpBPM42LEYyNQBR91RWUAvXfbMdb-Lq6T5hsXMjiY-XWpe5uMdIkn_0b5Zxh9LiqdCt5_9tXqWztERvWD1gN8iQr_1HXzRrMadMIPS-xehG5Wg-A"></div></div></header><main class="relative pt-14 bg-bg min-h-screen"><div class="flex flex-col w-full">
+<!-- Dashboard Main Workspace -->
+<div class="px-margin py-margin space-y-gutter">
+<!-- Top Action / Control Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="space-y-0.5">
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-fg tracking-tight">Recon Overview</h1>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-2 text-fg-faint font-caption text-caption">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span>
+            SYNCED
+          </span>
+</div>
+<p class="font-body-default text-body-default text-fg-muted">
+          Assets discovered across 24 programs. Auto-refreshes every 30s.
+        </p>
+</div>
+<!-- Controls Matrix -->
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<!-- Segmented Window Selector -->
+<div class="flex items-center p-0.5 rounded bg-surface-2">
+<button class="px-3 py-1 text-caption font-label-caps uppercase rounded bg-surface-3 text-fg shadow-sm transition-colors" type="button">24h</button>
+<button class="px-3 py-1 text-caption font-label-caps uppercase text-fg-faint hover:text-fg rounded transition-colors" type="button">7d</button>
+<button class="px-3 py-1 text-caption font-label-caps uppercase text-fg-faint hover:text-fg rounded transition-colors" type="button">30d</button>
+</div>
+<div class="h-5 w-px bg-surface-3 hidden sm:block"></div>
+<!-- Refresh Button -->
+<button class="flex items-center gap-1.5 h-[34px] px-3 rounded bg-surface-2 hover:bg-surface-3 text-fg font-body-default text-body-default transition-all shadow-sm active:scale-95" id="refreshBtn" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary transition-transform duration-500" id="refreshIcon">sync</span>
+<span class="">Refresh</span>
+</button>
+</div>
+</div>
+<!-- Stat Tiles Matrix (Row of 5) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-gutter"><!-- Programs Stat -->
+<div class="relative rounded bg-surface p-space-lg shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-primary-container"></div>
+<div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">Programs</span>
+<span class="material-symbols-outlined text-[18px] text-fg-faint">adjust</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">24</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-1.5 text-caption font-caption text-good">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span class="">+2 this week</span>
+</div>
+</div>
+<!-- Domains Stat -->
+<div class="relative rounded bg-surface p-space-lg shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-asset-domain"></div>
+<div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">Domains</span>
+<span class="material-symbols-outlined text-[18px] text-asset-domain">public</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">14,892</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-1.5 text-caption font-caption text-good">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span class="">+1,204 today</span>
+</div>
+</div>
+<!-- URLs Stat -->
+<div class="relative rounded bg-surface p-space-lg shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-asset-url"></div>
+<div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">URLs</span>
+<span class="material-symbols-outlined text-[18px] text-asset-url">link</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">86,410</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-1.5 text-caption font-caption text-good">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span class="">+5,320 today</span>
+</div>
+</div>
+<!-- IPs Stat -->
+<div class="relative rounded bg-surface p-space-lg shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-asset-ip"></div>
+<div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">IPs</span>
+<span class="material-symbols-outlined text-[18px] text-asset-ip">dns</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">4,105</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-1.5 text-caption font-caption text-good">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span class="">+88 today</span>
+</div>
+</div>
+<!-- Services Stat -->
+<div class="relative rounded bg-surface p-space-lg shadow-sm overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-asset-service"></div>
+<div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">Services</span>
+<span class="material-symbols-outlined text-[18px] text-asset-service">hub</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">9,842</span>
+</div>
+</div>
+<div class="mt-4 flex items-center gap-1.5 text-caption font-caption text-warn">
+<span class="material-symbols-outlined text-[14px]">remove</span>
+<span class="">-74 closed</span>
+</div>
+</div></div>
+<!-- New Assets Discovered (14 Days) Small-Multiples Area Chart -->
+<div class="rounded bg-surface p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="font-panel-title text-panel-title text-fg">New Assets Discovered (14 Days)</span>
+<span class="font-caption text-caption text-fg-faint uppercase bg-surface-2 px-1.5 py-0.5 rounded">Aggregated Telemetry</span>
+</div>
+<div class="flex items-center gap-3 font-caption text-caption text-fg-faint">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-asset-domain"></span>Domains</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-asset-url"></span>URLs</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-asset-ip"></span>IPs</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Domains Small-Multiple -->
+<div class="p-3 bg-surface-2 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="font-label-caps text-label-caps uppercase text-asset-domain">Domains Discovered</span>
+<div class="font-body-code-bold text-headline-lg text-fg mt-0.5">+1,204</div>
+</div>
+<div class="text-right">
+<span class="text-caption font-caption text-fg-faint block">Peak 14d</span>
+<span class="font-body-code text-caption text-good bg-good-soft px-1.5 py-0.5 rounded">1,480/d</span>
+</div>
+</div>
+<!-- Sparkline / Mini Area SVG -->
+<div class="h-20 w-full pt-1">
+<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 280 64">
+<defs>
+<linearGradient id="gradDomain" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0ea371" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#0ea371" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<path d="M0,52 Q20,48 40,50 T80,38 T120,42 T160,25 T200,30 T240,12 T280,18 L280,64 L0,64 Z" fill="url(#gradDomain)"></path>
+<path d="M0,52 Q20,48 40,50 T80,38 T120,42 T160,25 T200,30 T240,12 T280,18" fill="none" stroke="#0ea371" stroke-width="2"></path>
+<circle cx="280" cy="18" fill="#0ea371" r="3"></circle>
+</svg>
+</div>
+<div class="flex justify-between items-center text-caption font-body-code text-fg-faint mt-2 pt-1 bg-surface-3/30 px-1.5 rounded">
+<span class="">D-14</span>
+<span class="">D-7</span>
+<span class="text-fg">Today</span>
+</div>
+</div>
+<!-- URLs Small-Multiple -->
+<div class="p-3 bg-surface-2 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="font-label-caps text-label-caps uppercase text-asset-url">Endpoints / URLs</span>
+<div class="font-body-code-bold text-headline-lg text-fg mt-0.5">+5,320</div>
+</div>
+<div class="text-right">
+<span class="text-caption font-caption text-fg-faint block">Peak 14d</span>
+<span class="font-body-code text-caption text-info bg-info-soft px-1.5 py-0.5 rounded">6,110/d</span>
+</div>
+</div>
+<!-- Sparkline / Mini Area SVG -->
+<div class="h-20 w-full pt-1">
+<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 280 64">
+<defs>
+<linearGradient id="gradUrl" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<path d="M0,45 Q25,40 50,48 T100,28 T150,35 T200,16 T250,22 T280,10 L280,64 L0,64 Z" fill="url(#gradUrl)"></path>
+<path d="M0,45 Q25,40 50,48 T100,28 T150,35 T200,16 T250,22 T280,10" fill="none" stroke="#3b82f6" stroke-width="2"></path>
+<circle cx="280" cy="10" fill="#3b82f6" r="3"></circle>
+</svg>
+</div>
+<div class="flex justify-between items-center text-caption font-body-code text-fg-faint mt-2 pt-1 bg-surface-3/30 px-1.5 rounded">
+<span class="">D-14</span>
+<span class="">D-7</span>
+<span class="text-fg">Today</span>
+</div>
+</div>
+<!-- IPs Small-Multiple -->
+<div class="p-3 bg-surface-2 rounded flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<div>
+<span class="font-label-caps text-label-caps uppercase text-asset-ip">IPs Resolved</span>
+<div class="font-body-code-bold text-headline-lg text-fg mt-0.5">+88</div>
+</div>
+<div class="text-right">
+<span class="text-caption font-caption text-fg-faint block">Peak 14d</span>
+<span class="font-body-code text-caption text-warn bg-warn-soft px-1.5 py-0.5 rounded">142/d</span>
+</div>
+</div>
+<!-- Sparkline / Mini Area SVG -->
+<div class="h-20 w-full pt-1">
+<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 280 64">
+<defs>
+<linearGradient id="gradIp" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#d97706" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#d97706" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<path d="M0,58 Q30,55 60,56 T120,44 T180,38 T240,24 T280,30 L280,64 L0,64 Z" fill="url(#gradIp)"></path>
+<path d="M0,58 Q30,55 60,56 T120,44 T180,38 T240,24 T280,30" fill="none" stroke="#d97706" stroke-width="2"></path>
+<circle cx="280" cy="30" fill="#d97706" r="3"></circle>
+</svg>
+</div>
+<div class="flex justify-between items-center text-caption font-body-code text-fg-faint mt-2 pt-1 bg-surface-3/30 px-1.5 rounded">
+<span class="">D-14</span>
+<span class="">D-7</span>
+<span class="text-fg">Today</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 4: Two-column grid (Top Programs & Top Open Ports) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Top Programs by Domains -->
+<div class="rounded bg-surface p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">adjust</span>
+<h2 class="font-panel-title text-panel-title text-fg">Top Programs by Domains</h2>
+</div>
+<a class="font-caption text-caption text-primary hover:text-accent-hover transition-colors flex items-center gap-0.5" href="#">
+<span class="">View all</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+<div class="space-y-3.5">
+<!-- Program 1 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<span class="font-body-code-bold text-body-code-bold text-fg">uber-bb</span>
+<span class="font-body-code text-caption text-fg-muted">5,142 domains</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 88%;"></div>
+</div>
+</div>
+<!-- Program 2 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<span class="font-body-code-bold text-body-code-bold text-fg">shopify-vdp</span>
+<span class="font-body-code text-caption text-fg-muted">3,890 domains</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 66%;"></div>
+</div>
+</div>
+<!-- Program 3 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<span class="font-body-code-bold text-body-code-bold text-fg">gitlab-core</span>
+<span class="font-body-code text-caption text-fg-muted">2,415 domains</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+</div>
+</div>
+<!-- Program 4 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<span class="font-body-code-bold text-body-code-bold text-fg">stripe-prod</span>
+<span class="font-body-code text-caption text-fg-muted">1,820 domains</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 31%;"></div>
+</div>
+</div>
+<!-- Program 5 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<span class="font-body-code-bold text-body-code-bold text-fg">fintech-test</span>
+<span class="font-body-code text-caption text-fg-muted">982 domains</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 17%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-2 flex items-center justify-between text-caption font-caption text-fg-faint">
+<span class="">Active targets: 24 active</span>
+<span class="">Scope coverage: 99.4%</span>
+</div>
+</div>
+<!-- Top Open Ports -->
+<div class="rounded bg-surface p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-asset-service">terminal</span>
+<h2 class="font-panel-title text-panel-title text-fg">Top Open Ports</h2>
+<span class="font-label-caps text-label-caps uppercase px-1.5 py-0.5 rounded bg-surface-2 border border-border text-fg-muted">by service</span>
+</div>
+<a class="font-caption text-caption text-primary-container hover:text-accent-hover transition-colors flex items-center gap-0.5" href="#">
+<span class="">View all</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+<div class="space-y-3.5">
+<!-- Port 1 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-body-code-bold text-fg">443/tcp</span>
+<span class="font-caption text-caption text-fg-muted">https</span>
+</div>
+<span class="font-body-code text-caption text-fg-muted">8,240 services</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded-full" style="width: 84%;"></div>
+</div>
+</div>
+<!-- Port 2 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-body-code-bold text-fg">80/tcp</span>
+<span class="font-caption text-caption text-fg-muted">http</span>
+</div>
+<span class="font-body-code text-caption text-fg-muted">5,120 services</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded-full" style="width: 52%;"></div>
+</div>
+</div>
+<!-- Port 3 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-body-code-bold text-fg">8443/tcp</span>
+<span class="font-caption text-caption text-fg-muted">alt-https</span>
+</div>
+<span class="font-body-code text-caption text-fg-muted">1,890 services</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded-full" style="width: 20%;"></div>
+</div>
+</div>
+<!-- Port 4 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-body-code-bold text-fg">8080/tcp</span>
+<span class="font-caption text-caption text-fg-muted">http-proxy</span>
+</div>
+<span class="font-body-code text-caption text-fg-muted">1,420 services</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded-full" style="width: 15%;"></div>
+</div>
+</div>
+<!-- Port 5 -->
+<div>
+<div class="flex justify-between items-center font-caption text-caption mb-1">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-body-code-bold text-fg">22/tcp</span>
+<span class="font-caption text-caption text-fg-muted">ssh</span>
+</div>
+<span class="font-body-code text-caption text-fg-muted">640 services</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded-full" style="width: 7%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-2 flex items-center justify-between text-caption font-caption text-fg-faint">
+<span class="">Active services: 9,842</span>
+<span class="">Top protocol: HTTPS (72%)</span>
+</div>
+</div>
+</div>
+<!-- Section 5: Two-column grid (Findings by Severity & Staging Snapshot) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Findings by Severity Card -->
+<div class="rounded bg-surface p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-crit">security</span>
+<h2 class="font-panel-title text-panel-title text-fg">Findings by Severity</h2>
+</div>
+<a class="font-caption text-caption text-primary hover:text-accent-hover transition-colors" href="#">View all →</a>
+</div>
+<!-- Stacked Severity Bar (10px height) -->
+<div class="w-full h-2.5 rounded flex overflow-hidden bg-surface-2 mb-4">
+<div class="bg-crit" style="width: 5%;" title="Critical: 4"></div>
+<div class="bg-error" style="width: 12%;" title="High: 18"></div>
+<div class="bg-warn" style="width: 20%;" title="Medium: 42"></div>
+<div class="bg-info" style="width: 32%;" title="Low: 89"></div>
+<div class="bg-fg-muted" style="width: 31%;" title="Info: 156"></div>
+</div>
+<!-- 5-column metric summary -->
+<div class="space-y-2 text-center"><div class="grid grid-cols-2 gap-2"><div class="p-2 rounded bg-surface-2 flex flex-col items-center"><span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-crit-soft text-crit">Crit</span><span class="font-stat-lg text-stat-lg text-fg mt-1">4</span><span class="font-caption text-caption text-fg-faint">Active</span></div><div class="p-2 rounded bg-surface-2 flex flex-col items-center"><span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-error-container/40 text-error">High</span><span class="font-stat-lg text-stat-lg text-fg mt-1">18</span><span class="font-caption text-caption text-fg-faint">Active</span></div></div><div class="grid grid-cols-3 gap-2"><div class="p-2 rounded bg-surface-2 flex flex-col items-center"><span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-warn-soft text-warn">Med</span><span class="font-stat-lg text-stat-lg text-fg mt-1">42</span><span class="font-caption text-caption text-fg-faint">Active</span></div><div class="p-2 rounded bg-surface-2 flex flex-col items-center"><span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-info-soft text-info">Low</span><span class="font-stat-lg text-stat-lg text-fg mt-1">89</span><span class="font-caption text-caption text-fg-faint">Active</span></div><div class="p-2 rounded bg-surface-2 flex flex-col items-center"><span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-secondary-container text-fg-muted">Info</span><span class="font-stat-lg text-stat-lg text-fg mt-1">156</span><span class="font-caption text-caption text-fg-faint">Active</span></div></div></div>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-2 flex items-center justify-between text-caption font-caption text-fg-faint">
+<span class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>
+            3 CVEs verified in past 24h
+          </span>
+<span class="font-body-code text-caption text-fg-muted">Total: 309</span>
+</div>
+</div>
+<!-- Staging Snapshot Card -->
+<div class="rounded bg-surface p-space-lg shadow-sm flex flex-col justify-between"><div>
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary-container">layers</span>
+<h2 class="font-panel-title text-panel-title text-fg">Staging Snapshot</h2>
+</div>
+<a class="font-caption text-caption text-primary hover:text-accent-hover transition-colors" href="#">View all →</a>
+</div>
+<!-- Stacked Pipeline Progress Track -->
+<div class="w-full h-2.5 rounded flex overflow-hidden bg-surface-2 mb-4">
+<div class="bg-secondary-container" style="width: 2%;" title="Queued: 34"></div>
+<div class="bg-info" style="width: 1%;" title="Dispatched: 12"></div>
+<div class="bg-warn" style="width: 1%;" title="Processing: 8"></div>
+<div class="bg-good" style="width: 95%;" title="Completed: 2,341"></div>
+<div class="bg-crit" style="width: 1%;" title="Failed: 15"></div>
+</div>
+<!-- Symmetrically balanced metrics grid (2 rows matching Findings by Severity) -->
+<div class="space-y-2 text-center">
+<div class="grid grid-cols-2 gap-2">
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-surface-3 text-fg-faint">Total Jobs</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">2,410</span>
+<span class="font-caption text-caption text-fg-faint">All Tasks</span>
+</div>
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-secondary-container text-fg-muted">Queued</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">34</span>
+<span class="font-caption text-caption text-fg-faint">Pending</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-info-soft text-info">Dispatched</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">12</span>
+<span class="font-caption text-caption text-fg-faint">Assigned</span>
+</div>
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-warn-soft text-warn">Processing</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">8</span>
+<span class="font-caption text-caption text-fg-faint">Active</span>
+</div>
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-good-soft text-good">Completed</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">2,341</span>
+<span class="font-caption text-caption text-fg-faint">Done</span>
+</div>
+<div class="p-2 rounded bg-surface-2 flex flex-col items-center border border-border/40">
+<span class="px-1.5 py-0.5 rounded font-label-caps text-label-caps uppercase bg-crit-soft text-crit">Failed</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">15</span>
+<span class="font-caption text-caption text-fg-faint">Errors</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-2 flex items-center justify-between text-caption font-caption text-fg-faint">
+<span class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+Worker instances: 6 running
+</span>
+<span class="font-body-code text-caption text-fg-muted">Throughput: ~182 tasks/min</span>
+</div></div>
+</div>
+<!-- Section 6: Recent Activity (Live WebSocket) -->
+<div class="rounded bg-surface p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-good animate-ping"></span>
+<h2 class="font-panel-title text-panel-title text-fg">Recent Activity (Live WebSocket)</h2>
+<span class="font-caption text-caption text-fg-faint bg-surface-2 px-1.5 py-0.5 rounded">stream::recon.events</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-body-code text-caption text-fg-faint">Auto-scroll: ON</span>
+<button class="p-1 rounded hover:bg-surface-2 text-fg-faint hover:text-fg transition-colors" title="Pause Stream" type="button">
+<span class="material-symbols-outlined text-[16px]">pause</span>
+</button>
+</div>
+</div>
+<!-- 8 Real-time Activity Rows -->
+<div class="space-y-1.5 font-body-default text-body-default">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-asset-domain/10 text-asset-domain">
+<span class="material-symbols-outlined text-[15px]">public</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Discovered domain <span class="font-body-code-bold text-fg text-primary">api-v2.example.com</span> under program <span class="font-body-code text-fg-muted">uber-bb</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">12s ago</span>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-crit-soft text-crit">
+<span class="material-symbols-outlined text-[15px]">warning</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Nuclei found <span class="font-body-code-bold text-crit">CVE-2024-1234</span> on <span class="font-body-code text-fg text-primary">auth.example.com:443</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">45s ago</span>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-surface-3 text-primary-container">
+<span class="material-symbols-outlined text-[15px]">check_circle</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Job <span class="font-body-code text-fg">#8491</span> completed (<span class="font-body-code text-fg-muted">gowitness</span> visual snapshot across 42 targets)
+            </div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">2m ago</span>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-asset-ip/10 text-asset-ip">
+<span class="material-symbols-outlined text-[15px]">dns</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Resolved ASN subnet <span class="font-body-code-bold text-fg">198.51.100.0/24</span> for <span class="font-body-code text-fg-muted">shopify-vdp</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">4m ago</span>
+</div>
+<!-- Row 5 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-asset-url/10 text-asset-url">
+<span class="material-symbols-outlined text-[15px]">link</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Discovered <span class="font-body-code-bold text-asset-url">148 endpoints</span> on <span class="font-body-code text-fg">internal-stage.stripe-prod</span> via gau/wayback
+            </div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">6m ago</span>
+</div>
+<!-- Row 6 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-asset-service/10 text-asset-service">
+<span class="material-symbols-outlined text-[15px]">settings_ethernet</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              New open port <span class="font-body-code-bold text-asset-service">9200 (Elasticsearch)</span> detected on <span class="font-body-code text-fg">logs.dev.gitlab-core</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">9m ago</span>
+</div>
+<!-- Row 7 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-warn-soft text-warn">
+<span class="material-symbols-outlined text-[15px]">flag</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              TLS certificate expiry warning (<span class="font-body-code-bold text-warn">6 days remaining</span>) for <span class="font-body-code text-fg">payment-gateway.fintech-test</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">14m ago</span>
+</div>
+<!-- Row 8 -->
+<div class="flex items-center justify-between p-2 rounded hover:bg-surface-2 transition-colors duration-150">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-7 h-7 rounded flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-[15px]">layers</span>
+</div>
+<div class="font-caption text-caption text-fg truncate">
+              Staging queue batch <span class="font-body-code text-fg">#4018</span> dispatched to runner pool (subdomain bruteforce active)
+            </div>
+</div>
+<span class="font-body-code text-caption text-fg-faint shrink-0 ml-3">18m ago</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+    // Micro-interaction for refresh button
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+    if (refreshBtn && refreshIcon) {
+      refreshBtn.addEventListener('click', () => {
+        refreshIcon.classList.add('rotate-180');
+        refreshBtn.classList.add('opacity-75');
+        setTimeout(() => {
+          refreshIcon.classList.remove('rotate-180');
+          refreshBtn.classList.remove('opacity-75');
+        }, 500);
+      });
+    }
+  </script>
+</div></main></div>
+
+</body></html>

@@ -1,0 +1,934 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Luồng hệ thống ReconOS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: tabs on top; each tab is a diagram card plus a side panel, stacked on narrow screens. */
+:root {
+  --bg: #f3f5f8;
+  --card: #ffffff;
+  --ink: #142033;
+  --muted: #64718a;
+  --border: #dfe4ec;
+  --soft: #eef1f6;
+  --async: #7a4fd6;
+  --c-http: #2563eb;
+  --c-sql: #0e8a5f;
+  --c-s3: #c06a00;
+  --c-queue: #7a4fd6;
+  --c-run: #c62f3b;
+  --c-inproc: #142033;
+  --fail: #c62f3b;
+  --fail-bg: #fdecee;
+  --zone-core: #eaf0f8;
+  --zone-partial: #fbf1e4;
+  --zone-out: #f6f7f9;
+  --tx: #e3ecfb;
+  --loop: #eef6ea;
+  --select: #2457d6;
+  --shadow: 0 1px 2px rgba(20, 32, 51, .06), 0 4px 14px rgba(20, 32, 51, .06);
+  --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+    --c-http: #7aa7ff; --c-sql: #4cc893; --c-s3: #f2a84e; --c-queue: #b49bff; --c-run: #ff7b86; --c-inproc: #e6ebf2; --async: #b49bff; --fail: #ff7b86; --fail-bg: #3a1c21; --zone-core: #182334; --zone-partial: #2c2318; --zone-out: #151b23;
+    --tx: #1c2a44; --loop: #1b2b1e; --select: #7ea2ff; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+  --c-http: #7aa7ff; --c-sql: #4cc893; --c-s3: #f2a84e; --c-queue: #b49bff; --c-run: #ff7b86; --c-inproc: #e6ebf2; --async: #b49bff; --fail: #ff7b86; --fail-bg: #3a1c21; --zone-core: #182334; --zone-partial: #2c2318; --zone-out: #151b23;
+  --tx: #1c2a44; --loop: #1b2b1e; --select: #7ea2ff; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1420px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 32px; }
+h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { display: block; overflow: visible; }
+
+/* Tabs */
+.tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; justify-self: start; }
+.tab { font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); background: none; border: 0; border-radius: 7px; padding: 6px 16px; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.tab:focus-visible, .flow-btn:focus-visible, .node:focus-visible { outline: 2px solid var(--select); outline-offset: 2px; }
+
+/* Views */
+.view { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+.view.arch { grid-template-columns: minmax(0, 1fr) 320px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); min-width: 0; }
+.diagram { padding: 18px; display: grid; gap: 12px; }
+.diagram-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.diagram-head p { margin: 4px 0 0; color: var(--muted); max-width: 90ch; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; color: var(--ink); }
+.notes { margin: 0; padding-left: 18px; color: var(--ink); display: grid; gap: 4px; font-size: 13.5px; }
+.sources { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); align-items: center; }
+.sources code { font-family: var(--mono); font-size: 11.5px; background: var(--soft); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--ink); }
+
+/* Flow list */
+.flow-list { padding: 10px; display: grid; gap: 2px; position: sticky; top: 20px; }
+.flow-group { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 10px 4px; }
+.flow-btn { font: inherit; text-align: left; background: none; border: 0; border-radius: 7px; padding: 7px 10px; color: var(--ink); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.flow-btn:hover { background: var(--soft); }
+.flow-btn[aria-current="true"] { background: var(--soft); font-weight: 600; box-shadow: inset 3px 0 0 var(--select); }
+.flow-btn .n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* Architecture panel */
+.panel { padding: 18px; display: grid; gap: 12px; position: sticky; top: 20px; }
+.panel h3 { margin: 0; font-size: 16px; }
+.panel .kind { font-size: 12px; color: var(--muted); }
+.panel p { margin: 0; }
+.links { display: grid; gap: 6px; }
+.link-row { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; font-size: 13px; padding: 8px 10px; background: var(--soft); border-radius: 8px; }
+.link-row b { font-weight: 600; }
+.link-row span { color: var(--muted); grid-column: 1 / -1; }
+.muted { color: var(--muted); }
+
+/* SVG marks */
+.zone rect { stroke: var(--border); stroke-width: 1; }
+.zone text { font-size: 12px; font-weight: 600; fill: var(--muted); letter-spacing: .04em; }
+.zone text.zone-sub { font-size: 11px; font-weight: 500; letter-spacing: 0; }
+.z-core rect { fill: var(--zone-core); }
+.z-partial rect { fill: var(--zone-partial); }
+.z-out rect { fill: var(--zone-out); stroke-dasharray: 5 4; }
+.shape { fill: var(--card); stroke: var(--ink); stroke-width: 1.3; }
+.shape.ext { stroke-dasharray: 4 3; }
+.shape.part { fill: var(--soft); stroke: var(--muted); }
+.node text, .head text { font-size: 13px; font-weight: 600; fill: var(--ink); }
+.node .sub, .head .sub { font-size: 10.5px; font-weight: 500; fill: var(--muted); }
+.node { cursor: pointer; }
+.node.sel .shape { stroke: var(--select); stroke-width: 2.4; }
+svg.has-sel .node:not(.sel):not(.rel) { opacity: .35; }
+svg.has-sel .edge:not(.on) { opacity: .12; }
+.edge path { fill: none; stroke-width: 2.4; stroke: var(--c); }
+.edge.async path { stroke-dasharray: 8 5; }
+.ch-http { --c: var(--c-http); } .ch-sql { --c: var(--c-sql); } .ch-s3 { --c: var(--c-s3); }
+.ch-queue { --c: var(--c-queue); } .ch-run { --c: var(--c-run); } .ch-inproc { --c: var(--c-inproc); } .ch-ret { --c: var(--muted); }
+/* Flowing dashes show direction: on the selected component, or everywhere when the flow toggle is on. */
+.edge path.flow { stroke-dasharray: 0.1 18; stroke-width: 6; stroke-linecap: round; opacity: 0; stroke: var(--c); }
+#arch.animate .edge path.flow, #arch.has-sel .edge.on path.flow { opacity: .95; animation: dash .9s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -18.1; } }
+.edge text, .msg text { font-size: 12px; fill: var(--ink); paint-order: stroke; stroke: var(--card); stroke-width: 5px; stroke-linejoin: round; }
+
+.badge circle { fill: var(--c); stroke: var(--card); stroke-width: 2; }
+.badge text { font-size: 11px; font-weight: 700; font-family: var(--mono); stroke-width: 0; fill: var(--card); }
+.ch-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ch-table th { text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.ch-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.ch-table tr:last-child td { border-bottom: 0; }
+.ch-table td.no { font-family: var(--mono); font-size: 12px; width: 36px; }
+.ch-table td.no span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--c); color: var(--card); font-weight: 700; }
+.ch-table td.ch b { color: var(--c); }
+.ch-table td.ch { white-space: nowrap; font-weight: 600; }
+.ch-table.has-sel tr:not(.on) { opacity: .35; }
+.lifeline { stroke: var(--ink); stroke-width: 1.6; stroke-dasharray: 5 5; opacity: .85; }
+.msg path { fill: none; stroke-width: 2.2; stroke: var(--c); }
+.msg.return path { stroke-dasharray: 5 4; stroke-width: 1.6; }
+.msg.async path { stroke-dasharray: 8 5; }
+.msg text { fill: var(--ink); }
+.msg.return text { fill: var(--muted); }
+/* Playback: future steps fade, the current step thickens, a packet travels along it. */
+svg.playing .msg.future, svg.playing .step-no.future, svg.playing .fail.future { opacity: .14; }
+svg.playing .msg.active path:not(.flow) { stroke-width: 3.4; }
+/* Flowing dots along arrows, same as the architecture view. */
+.msg path.flow { stroke-dasharray: 0.1 18; stroke-width: 6; stroke-linecap: round; opacity: 0; }
+svg.animate .msg path.flow, svg.playing .msg.active path.flow { opacity: .95; animation: dash .9s linear infinite; }
+svg.animate.playing .msg.future path.flow { opacity: 0; }
+svg.playing .step-no.active circle { fill: var(--c, var(--select)); stroke: none; }
+svg.playing .step-no.active text { fill: var(--card); font-weight: 700; }
+.packet { fill: var(--c); stroke: var(--card); stroke-width: 2.5; }
+.player { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.player button, .anim-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); color: var(--ink); cursor: pointer; }
+.player button.primary, .anim-btn[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.player button:focus-visible, .anim-btn:focus-visible { outline: 2px solid var(--select); outline-offset: 2px; }
+.player .pos { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { #arch .edge path.flow, .msg path.flow { animation: none !important; } }
+.step-no circle { fill: var(--soft); stroke: var(--border); }
+.step-no text { font-size: 10.5px; font-family: var(--mono); fill: var(--muted); text-anchor: middle; }
+.block rect.bg { stroke: none; }
+.block.tx rect.bg { fill: var(--tx); }
+.block.loop rect.bg { fill: var(--loop); }
+.block text { font-size: 11px; font-weight: 600; fill: var(--muted); letter-spacing: .03em; }
+.block.tx text { paint-order: stroke; stroke: var(--tx); stroke-width: 6px; stroke-linejoin: round; }
+.block.loop text { paint-order: stroke; stroke: var(--loop); stroke-width: 6px; stroke-linejoin: round; }
+.fail rect { fill: var(--fail-bg); }
+.fail text { font-size: 12px; fill: var(--fail); font-weight: 500; }
+.col-head { font-size: 11px; font-weight: 600; fill: var(--muted); letter-spacing: .05em; }
+
+@media (max-width: 1100px) {
+  .view, .view.arch { grid-template-columns: 1fr; }
+  .flow-list, .panel { position: static; }
+  .flow-list { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .flow-group { grid-column: 1 / -1; }
+}
+@media (max-width: 620px) { h1 { font-size: 22px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Luồng hệ thống ReconOS</h1>
+      <p class="sub">Thành phần, kênh giao tiếp và các bước xử lý theo từng luồng.</p>
+    </div>
+    <div class="legend" id="legend" aria-label="Chú thích"></div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Chế độ xem">
+    <button type="button" class="tab" role="tab" id="tab-kien-truc" aria-controls="view-kien-truc" data-view="kien-truc">Kiến trúc</button>
+    <button type="button" class="tab" role="tab" id="tab-luong-request" aria-controls="view-luong-request" data-view="luong-request">Luồng request</button>
+    <button type="button" class="tab" role="tab" id="tab-tinh-nang" aria-controls="view-tinh-nang" data-view="tinh-nang">Tính năng</button>
+  </div>
+
+  <section class="view arch" id="view-kien-truc" role="tabpanel" aria-labelledby="tab-kien-truc">
+    <div class="card diagram">
+      <div class="diagram-head">
+        <h2>Kiến trúc tổng thể</h2>
+        <p>Chọn một thành phần để xem vai trò và kênh giao tiếp. Số trên đường nối khớp với bảng bên dưới.</p>
+      </div>
+      <div class="player"><button type="button" class="anim-btn" id="arch-anim" aria-pressed="true">Tắt dòng chảy</button></div>
+      <div class="scroll"><svg id="arch" class="animate" role="img" aria-label="Thành phần của ReconOS theo vùng tin cậy và kênh giao tiếp giữa chúng"></svg></div>
+      <div class="scroll"><table class="ch-table" id="ch-table"><thead><tr><th>#</th><th>Từ → Tới</th><th>Kênh</th><th>Nội dung</th></tr></thead><tbody></tbody></table></div>
+      <div class="sources">Nguồn: <code>system.md</code></div>
+    </div>
+    <aside class="card panel" id="arch-panel" aria-live="polite"></aside>
+  </section>
+
+  <section class="view" id="view-luong-request" role="tabpanel" aria-labelledby="tab-luong-request" hidden>
+    <nav class="card flow-list" aria-label="Luồng request"></nav>
+    <div class="card diagram flow-view"></div>
+  </section>
+
+  <section class="view" id="view-tinh-nang" role="tabpanel" aria-labelledby="tab-tinh-nang" hidden>
+    <nav class="card flow-list" aria-label="Tính năng"></nav>
+    <div class="card diagram flow-view"></div>
+  </section>
+</div>
+
+<script>
+// Everything runs inside one function so no name collides with globals of the host page.
+(() => {
+// Data block. To redraw after the architecture or a flow changes, edit COMPONENTS, LINKS and FLOWS only.
+// shape: proc = process, store = data store, ext = outside the system, part = layer inside Backend API.
+// zone: out | core | worker | target. x, y: position on the architecture diagram (part has none).
+const COMPONENTS = [
+  { id: "br", name: "Trình duyệt", shape: "ext", zone: "out", x: 24, y: 240, role: "Giao diện người dùng. Không tin cậy: backend xác thực và phân quyền mọi request." },
+  { id: "px", name: "Reverse proxy", shape: "proc", zone: "core", x: 210, y: 240, code: "infras/", role: "Giải mã TLS, giới hạn kích thước body, định tuyến tới frontend và Backend API." },
+  { id: "fe", name: "Frontend", shape: "proc", zone: "core", x: 210, y: 390, code: "frontend/", role: "Render giao diện, gọi API và WebSocket của backend." },
+  { id: "api", name: "Backend API", shape: "proc", zone: "core", x: 420, y: 240, code: "backend/", role: "REST, WebSocket, xác thực, phân quyền, kiểm tra scope khi tạo job, nhận output thô và lưu vào MinIO." },
+  { id: "dsp", name: "Dispatcher", shape: "proc", zone: "core", x: 870, y: 110, code: "backend/app/dispatcher/", role: "Chọn job đến lượt, kiểm tra giới hạn, gửi task Celery cho worker. Một bản giữ advisory lock, các bản khác chờ." },
+  { id: "bg", name: "Tiến trình nền", shape: "proc", zone: "core", x: 870, y: 240, code: "backend/app/background/", role: "Celery chạy mã backend. Queue parse: đọc output thô, tạo tài sản và finding. Queue schedule: tạo job định kỳ." },
+  { id: "beat", name: "Celery Beat", shape: "proc", zone: "core", x: 870, y: 370, code: "backend/", role: "Gửi task vào queue schedule theo lịch. Không tạo job, không giao job." },
+  { id: "pg", name: "PostgreSQL", shape: "store", zone: "core", x: 640, y: 240, role: "Program, scope, tài sản, job, finding, metadata output thô, tài khoản, nhật ký thao tác. CSDL reconos_log chứa log ứng dụng." },
+  { id: "obj", name: "MinIO", shape: "store", zone: "core", x: 640, y: 110, role: "Nội dung output thô, gồm file ảnh screenshot. Chỉ Backend API ghi." },
+  { id: "rd", name: "Redis", shape: "store", zone: "core", x: 640, y: 370, role: "Broker Celery: queue job, parse, schedule. Kênh pub/sub cho sự kiện realtime." },
+  { id: "w", name: "Worker", shape: "proc", zone: "worker", x: 1088, y: 240, code: "workers/", role: "Nhận task job, chạy công cụ hoặc engine qua runner, gửi output thô về Backend API. Không truy cập PostgreSQL, MinIO." },
+  { id: "t", name: "Công cụ, engine", shape: "proc", zone: "worker", x: 1088, y: 370, role: "nuclei, gowitness, sqlmap, dalfox chạy trên worker. Osmedeus, Vigolium chạy server riêng trong vùng worker." },
+  { id: "tg", name: "Mục tiêu", shape: "ext", zone: "target", x: 1088, y: 480, role: "Hệ thống của program. Không tin cậy." },
+  { id: "mw", name: "Middleware", shape: "part", zone: "core", role: "Lớp trong Backend API: request ID, kiểm tra CSRF." },
+  { id: "dep", name: "Dependency", shape: "part", zone: "core", role: "Lớp trong Backend API: xác thực, phân quyền, session CSDL." },
+  { id: "sv", name: "Service", shape: "part", zone: "core", role: "Lớp trong Backend API: nghiệp vụ." },
+];
+// ch: http | sql | s3 | queue | run, sets the color. kind: sync = request and response, async = queue, NOTIFY, pub/sub (dashed).
+// via: optional bend points. badge: optional badge position.
+const LINKS = [
+  { from: "br", to: "px", ch: "http", kind: "sync", label: "HTTPS, WSS", detail: "Trang, REST, sự kiện realtime" },
+  { from: "px", to: "api", ch: "http", kind: "sync", label: "HTTP, WebSocket", detail: "Request tới Backend API" },
+  { from: "px", to: "fe", ch: "http", kind: "sync", label: "HTTP", detail: "Trang của frontend" },
+  { from: "api", to: "pg", ch: "sql", kind: "sync", label: "SQL", detail: "Đọc, ghi dữ liệu nghiệp vụ. Ghi job kèm NOTIFY", badge: [616, 264] },
+  { from: "api", to: "obj", ch: "s3", kind: "sync", label: "S3 API", detail: "Lưu, đọc nội dung output thô", via: [[590, 252], [590, 133]] },
+  { from: "api", to: "rd", ch: "queue", kind: "async", label: "Celery, pub/sub", detail: "Task parse, publish sự kiện realtime", via: [[590, 276], [590, 393]] },
+  { from: "dsp", to: "pg", ch: "sql", kind: "sync", label: "SQL, LISTEN", detail: "Chọn job, khóa advisory, nhận NOTIFY", via: [[835, 133], [835, 250], [800, 250]], badge: [835, 168] },
+  { from: "bg", to: "pg", ch: "sql", kind: "sync", label: "SQL", detail: "Tạo, cập nhật tài sản và finding. Ghi job định kỳ", badge: [828, 270] },
+  { from: "bg", to: "obj", ch: "s3", kind: "sync", label: "S3 API", detail: "Parser đọc output thô dạng stream", via: [[940, 205], [710, 205]], badge: [900, 205] },
+  { from: "beat", to: "rd", ch: "queue", kind: "async", label: "Celery", detail: "Task vào queue schedule theo lịch" },
+  { from: "rd", to: "bg", ch: "queue", kind: "async", label: "Celery", detail: "Giao task queue parse, schedule", via: [[700, 330], [960, 330]] },
+  { from: "dsp", to: "rd", ch: "queue", kind: "async", label: "Celery", detail: "Task worker.run_job, chỉ job_id", via: [[1030, 133], [1030, 445], [690, 445]] },
+  { from: "rd", to: "w", ch: "queue", kind: "async", label: "Celery", detail: "Giao task, queue job.<tool module>", via: [[740, 462], [1052, 462], [1052, 270]] },
+  { from: "w", to: "api", ch: "http", kind: "sync", label: "HTTPS, token", detail: "claim, heartbeat, upload output thô, finish, log", via: [[1158, 26], [490, 26]] },
+  { from: "w", to: "t", ch: "run", kind: "sync", label: "Tiến trình con, REST", detail: "Chạy công cụ hoặc gọi REST API của engine" },
+  { from: "t", to: "tg", ch: "run", kind: "sync", label: "Mạng", detail: "Lưu lượng quét, khai thác tới hệ thống của program" },
+];
+const ZONES = [
+  { id: "out", name: "BÊN NGOÀI", sub: "không tin cậy", cls: "z-out", x: 10, y: 190, w: 172, h: 140 },
+  { id: "core", name: "VÙNG LÕI", sub: "tin cậy", cls: "z-core", x: 192, y: 44, w: 850, h: 432 },
+  { id: "worker", name: "VÙNG WORKER", sub: "tin cậy một phần", cls: "z-partial", x: 1060, y: 190, w: 178, h: 246 },
+  { id: "target", name: "MỤC TIÊU", sub: "không tin cậy", cls: "z-out", x: 1060, y: 446, w: 178, h: 100 },
+];
+// Flow step type: call, return, async, self. fail: result when the check does not pass (only when a document states it).
+// blocks: { type: tx | loop, label, from, to } with 1-based step numbers.
+const FLOWS = [
+  { id: "http", tab: "luong-request", group: "Request", title: "Gửi request",
+    summary: "Mọi request REST từ trình duyệt đi qua đủ các bước sau. Lỗi ở bước nào cũng trả theo RFC 9457.",
+    parts: ["br", "px", "mw", "dep", "sv", "pg"],
+    steps: [
+      { from: "br", to: "px", type: "call", text: "Gửi request, cookie phiên" },
+      { from: "px", to: "px", type: "self", text: "Giới hạn kích thước body", fail: "413" },
+      { from: "px", to: "mw", type: "call", text: "Chuyển tiếp request" },
+      { from: "mw", to: "mw", type: "self", text: "Gán request_id" },
+      { from: "mw", to: "mw", type: "self", text: "Kiểm tra Origin", fail: "403 forbidden" },
+      { from: "mw", to: "dep", type: "call", text: "Gọi router" },
+      { from: "dep", to: "pg", type: "call", text: "Đọc phiên", fail: "401 unauthenticated" },
+      { from: "dep", to: "dep", type: "self", text: "Kiểm tra vai trò", fail: "403 forbidden" },
+      { from: "dep", to: "dep", type: "self", text: "Kiểm tra schema", fail: "422 validation_error" },
+      { from: "dep", to: "sv", type: "call", text: "Gọi service" },
+      { from: "sv", to: "pg", type: "call", text: "Lọc theo program", fail: "404 not_found" },
+      { from: "sv", to: "pg", type: "call", text: "Ghi nghiệp vụ, nhật ký" },
+      { from: "dep", to: "pg", type: "call", text: "Commit" },
+      { from: "dep", to: "br", type: "return", text: "Response hoặc lỗi" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 11, to: 13 }],
+    notes: ["Bước 5 kiểm tra cả Origin và Sec-Fetch-Site. Request bị từ chối ở bước 5, 8, 11 được ghi nhật ký thao tác.", "Sự kiện realtime publish sau commit.", "Server component của Next.js đi qua đúng các bước này."],
+    sources: ["request-flow.md", "authentication.md"] },
+  { id: "ws", tab: "luong-request", group: "Request", title: "Mở WebSocket",
+    summary: "Trình duyệt mở một kết nối để nhận sự kiện realtime của các program tài khoản xem được.",
+    parts: ["br", "px", "api", "rd"],
+    steps: [
+      { from: "br", to: "px", type: "call", text: "GET /api/v1/ws" },
+      { from: "px", to: "api", type: "call", text: "Chuyển tiếp request" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra Origin, phiên", fail: "Đóng kết nối" },
+      { from: "api", to: "br", type: "return", text: "Kết nối mở" },
+      { from: "rd", to: "api", type: "async", text: "Sự kiện pub/sub" },
+      { from: "api", to: "api", type: "self", text: "Lọc theo quyền" },
+      { from: "api", to: "br", type: "async", text: "Sự kiện WebSocket" },
+    ],
+    blocks: [{ type: "loop", label: "MỖI SỰ KIỆN", from: 5, to: 7 }],
+    notes: ["Phiên hết hạn hoặc bị thu hồi: server đóng kết nối, trình duyệt về S01.", "Program được gán thay đổi: áp dụng từ sự kiện tiếp theo, không cần kết nối lại."],
+    sources: ["request-flow.md"] },
+  { id: "worker-req", tab: "luong-request", group: "Request", title: "Gọi API worker",
+    summary: "Worker gọi các endpoint /api/v1/worker/ bằng token riêng.",
+    parts: ["w", "px", "dep", "sv", "pg"],
+    steps: [
+      { from: "w", to: "px", type: "call", text: "Gửi request, token" },
+      { from: "px", to: "px", type: "self", text: "Giới hạn body", fail: "413" },
+      { from: "px", to: "dep", type: "call", text: "Chuyển tiếp request" },
+      { from: "dep", to: "pg", type: "call", text: "Đọc token", fail: "401 unauthenticated" },
+      { from: "dep", to: "dep", type: "self", text: "Kiểm tra đường dẫn", fail: "403 forbidden" },
+      { from: "dep", to: "sv", type: "call", text: "Gọi service" },
+      { from: "sv", to: "pg", type: "call", text: "Kiểm tra job, worker", fail: "409 conflict" },
+      { from: "sv", to: "pg", type: "call", text: "Ghi trạng thái job" },
+      { from: "sv", to: "w", type: "return", text: "Response" },
+    ],
+    blocks: [],
+    notes: ["Không kiểm tra CSRF vì worker không dùng cookie.", "Worker thử lại tối đa 5 lần với lỗi mạng và 5xx."],
+    sources: ["request-flow.md", "external-services.md"] },
+
+  { id: "login", tab: "tinh-nang", group: "Tài khoản", title: "Đăng nhập",
+    summary: "Tài khoản đăng nhập bằng tên và mật khẩu, nhận cookie phiên phía server.",
+    parts: ["br", "api", "pg"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /auth/login" },
+      { from: "api", to: "pg", type: "call", text: "Đếm lần đăng nhập sai", fail: "Từ chối tạm thời" },
+      { from: "api", to: "pg", type: "call", text: "Đọc giá trị băm" },
+      { from: "api", to: "api", type: "self", text: "So mật khẩu", fail: "Thông báo lỗi chung" },
+      { from: "api", to: "pg", type: "call", text: "Ghi phiên" },
+      { from: "api", to: "pg", type: "call", text: "Ghi nhật ký" },
+      { from: "api", to: "br", type: "return", text: "Cookie phiên" },
+    ],
+    blocks: [],
+    notes: ["Sai tên đăng nhập hay sai mật khẩu đều trả cùng một thông báo.", "Ghi nhật ký cả lần đăng nhập thất bại.", "Đăng nhập luôn tạo session ID mới."],
+    sources: ["authentication.md"] },
+  { id: "token", tab: "tinh-nang", group: "Tài khoản", title: "Tạo token",
+    summary: "Superadmin tạo token cho một worker. Token chỉ hiển thị một lần.",
+    parts: ["br", "api", "pg", "w"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /workers/{id}/tokens" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra vai trò", fail: "403 forbidden" },
+      { from: "api", to: "api", type: "self", text: "Sinh token" },
+      { from: "api", to: "pg", type: "call", text: "Ghi giá trị băm" },
+      { from: "api", to: "br", type: "return", text: "Token, hiện một lần" },
+      { from: "w", to: "w", type: "self", text: "Đọc biến môi trường" },
+    ],
+    blocks: [],
+    notes: ["Xoay vòng: tạo token mới rồi thu hồi token cũ.", "Token chỉ gọi được endpoint của contract worker."],
+    sources: ["authentication.md", "security.md"] },
+
+  { id: "create-job", tab: "tinh-nang", group: "Job", title: "Tạo job",
+    summary: "Người dùng tạo job trên mục tiêu của program. Mọi mục tiêu phải khớp scope.",
+    parts: ["br", "api", "pg", "dsp"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /jobs" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra quyền" },
+      { from: "api", to: "pg", type: "call", text: "Đọc program, tool module" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra tham số" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra scope", fail: "422 target_out_of_scope" },
+      { from: "api", to: "pg", type: "call", text: "Ghi job" },
+      { from: "api", to: "pg", type: "call", text: "Gửi NOTIFY" },
+      { from: "api", to: "br", type: "return", text: "Job vừa tạo" },
+      { from: "pg", to: "dsp", type: "async", text: "Thông báo job mới" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 6, to: 7 }],
+    notes: ["Một mục tiêu không đạt thì từ chối cả job.", "Nhóm khai thác vào pending_approval, nhóm khác vào queued."],
+    sources: ["request-flow.md", "business-flow.md"] },
+  { id: "approve", tab: "tinh-nang", group: "Job", title: "Duyệt job",
+    summary: "Một tài khoản khác người tạo job duyệt trước khi dispatcher giao job.",
+    parts: ["br", "api", "pg", "dsp"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /jobs/{id}/approve" },
+      { from: "api", to: "api", type: "self", text: "Kiểm tra vai trò", fail: "403 forbidden" },
+      { from: "api", to: "pg", type: "call", text: "Đọc người tạo job", fail: "Từ chối" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển sang queued" },
+      { from: "api", to: "pg", type: "call", text: "Gửi NOTIFY" },
+      { from: "api", to: "br", type: "return", text: "Job đã duyệt" },
+      { from: "pg", to: "dsp", type: "async", text: "Thông báo job duyệt" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 4, to: 5 }],
+    notes: ["Từ chối: POST /jobs/{id}/reject, job sang cancelled."],
+    sources: ["authorization.md", "business-flow.md", "system.md"] },
+  { id: "dispatch", tab: "tinh-nang", group: "Job", title: "Giao job",
+    summary: "Dispatcher chọn job đến lượt và gửi task cho worker qua Redis.",
+    parts: ["pg", "dsp", "rd", "w"],
+    steps: [
+      { from: "pg", to: "dsp", type: "async", text: "Thông báo job mới" },
+      { from: "dsp", to: "pg", type: "call", text: "Chọn job" },
+      { from: "dsp", to: "dsp", type: "self", text: "Kiểm tra scope", fail: "Chuyển cancelled" },
+      { from: "dsp", to: "pg", type: "call", text: "Kiểm tra giới hạn" },
+      { from: "dsp", to: "pg", type: "call", text: "Chuyển sang dispatched" },
+      { from: "dsp", to: "rd", type: "async", text: "Task run_job" },
+      { from: "rd", to: "w", type: "async", text: "Task run_job" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 4, to: 5 }],
+    notes: ["Bỏ qua job chờ duyệt và job của program tạm dừng.", "Chỉ bản dispatcher giữ advisory lock được giao job."],
+    sources: ["system.md", "business-flow.md"] },
+  { id: "run-job", tab: "tinh-nang", group: "Job", title: "Chạy job",
+    summary: "Worker nhận đặc tả job từ Backend API, chạy công cụ và báo kết quả.",
+    parts: ["w", "api", "pg", "t"],
+    steps: [
+      { from: "w", to: "api", type: "call", text: "POST …/claim" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển sang running", fail: "409 conflict" },
+      { from: "api", to: "w", type: "return", text: "Đặc tả job" },
+      { from: "w", to: "t", type: "call", text: "Chạy công cụ" },
+      { from: "w", to: "api", type: "call", text: "POST …/heartbeat" },
+      { from: "api", to: "w", type: "return", text: "continue hoặc cancel" },
+      { from: "w", to: "api", type: "call", text: "PUT …/raw-outputs" },
+      { from: "w", to: "api", type: "call", text: "POST …/finish" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển completed, failed" },
+    ],
+    blocks: [{ type: "loop", label: "ĐỊNH KỲ", from: 5, to: 6 }],
+    notes: ["Endpoint đầy đủ: /api/v1/worker/jobs/{job_id}/claim, heartbeat, raw-outputs/{filename}, finish.", "Quá timeout_minutes: dừng công cụ, finish với failed.", "Mất heartbeat quá ngưỡng: dispatcher chuyển job sang failed."],
+    sources: ["external-services.md"] },
+  { id: "cancel", tab: "tinh-nang", group: "Job", title: "Hủy job",
+    summary: "Người dùng hủy job. Worker biết qua phản hồi của heartbeat.",
+    parts: ["br", "api", "pg", "w", "t"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /jobs/{id}/cancel" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển sang cancelled" },
+      { from: "api", to: "br", type: "return", text: "Job đã hủy" },
+      { from: "w", to: "api", type: "call", text: "POST …/heartbeat" },
+      { from: "api", to: "w", type: "return", text: "cancel" },
+      { from: "w", to: "t", type: "call", text: "Dừng công cụ" },
+      { from: "w", to: "api", type: "call", text: "PUT …/raw-outputs" },
+      { from: "w", to: "api", type: "call", text: "POST …/finish" },
+    ],
+    blocks: [],
+    notes: ["Job queued, dispatched bị hủy: dispatcher không giao.", "Thử lại: POST /jobs/{id}/retry tạo job mới, kiểm tra lại scope."],
+    sources: ["external-services.md", "business-flow.md"] },
+  { id: "schedule", tab: "tinh-nang", group: "Job", title: "Lên lịch job",
+    summary: "Celery Beat kích hoạt lịch quét. Tiến trình nền tạo job qua service của job.",
+    parts: ["beat", "rd", "bg", "pg", "dsp"],
+    steps: [
+      { from: "beat", to: "rd", type: "async", text: "Task schedule" },
+      { from: "rd", to: "bg", type: "async", text: "Task schedule" },
+      { from: "bg", to: "bg", type: "self", text: "Kiểm tra scope" },
+      { from: "bg", to: "pg", type: "call", text: "Ghi job, NOTIFY" },
+      { from: "pg", to: "dsp", type: "async", text: "Thông báo job mới" },
+    ],
+    blocks: [],
+    notes: ["Từ bước Thông báo, job đi tiếp như job tạo từ API.", "Program lưu trữ: lịch quét ngừng."],
+    sources: ["system.md", "business-flow.md"] },
+
+  { id: "raw-parse", tab: "tinh-nang", group: "Kết quả", title: "Parse output",
+    summary: "Backend lưu nguyên vẹn output thô trước, rồi tiến trình nền mới parse.",
+    parts: ["w", "api", "obj", "pg", "rd", "bg"],
+    steps: [
+      { from: "w", to: "api", type: "call", text: "PUT …/raw-outputs" },
+      { from: "api", to: "obj", type: "call", text: "Ghi object" },
+      { from: "api", to: "pg", type: "call", text: "Ghi metadata" },
+      { from: "api", to: "rd", type: "async", text: "Task parse" },
+      { from: "api", to: "w", type: "return", text: "201 hoặc 200" },
+      { from: "rd", to: "bg", type: "async", text: "Task parse" },
+      { from: "bg", to: "obj", type: "call", text: "Đọc object" },
+      { from: "bg", to: "bg", type: "self", text: "Chọn parser" },
+      { from: "bg", to: "pg", type: "call", text: "Upsert tài sản, finding", fail: "Thử lại, rồi failed" },
+      { from: "bg", to: "rd", type: "async", text: "Sự kiện finding mới" },
+    ],
+    blocks: [],
+    notes: ["Công cụ chưa có parser: không gửi task parse, output thô vẫn tải được (G8).", "Parse lại: POST /raw-outputs/{id}/reparse."],
+    sources: ["system.md", "external-services.md"] },
+  { id: "download", tab: "tinh-nang", group: "Kết quả", title: "Tải output",
+    summary: "Người dùng tải nội dung output thô của job thuộc program được gán.",
+    parts: ["br", "api", "pg", "obj"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "GET …/content" },
+      { from: "api", to: "pg", type: "call", text: "Kiểm tra program", fail: "404 not_found" },
+      { from: "api", to: "obj", type: "call", text: "Đọc object" },
+      { from: "api", to: "br", type: "return", text: "File, attachment" },
+    ],
+    blocks: [],
+    notes: ["Output thô tải được kể cả khi công cụ chưa có parser."],
+    sources: ["system.md", "security.md"] },
+  { id: "triage", tab: "tinh-nang", group: "Kết quả", title: "Triage finding",
+    summary: "Người có quyền đổi trạng thái triage của finding.",
+    parts: ["br", "api", "pg", "rd"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "PATCH /findings/{id}" },
+      { from: "api", to: "pg", type: "call", text: "Kiểm tra program", fail: "404 not_found" },
+      { from: "api", to: "pg", type: "call", text: "Cập nhật triage" },
+      { from: "api", to: "pg", type: "call", text: "Ghi nhật ký" },
+      { from: "api", to: "rd", type: "async", text: "Sự kiện finding" },
+      { from: "api", to: "br", type: "return", text: "Finding đã cập nhật" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 3, to: 4 }],
+    notes: ["Triage hàng loạt: POST /findings/bulk-triage.", "Parser gặp lại finding chỉ cập nhật thời điểm phát hiện, giữ trạng thái triage."],
+    sources: ["business-flow.md", "request-flow.md"] },
+  { id: "report", tab: "tinh-nang", group: "Kết quả", title: "Tạo báo cáo",
+    summary: "Tạo báo cáo từ finding confirmed, nộp bên ngoài rồi đánh dấu đã nộp.",
+    parts: ["br", "api", "pg"],
+    steps: [
+      { from: "br", to: "api", type: "call", text: "POST /reports" },
+      { from: "api", to: "pg", type: "call", text: "Ghi báo cáo nháp" },
+      { from: "api", to: "br", type: "return", text: "Báo cáo nháp" },
+      { from: "br", to: "api", type: "call", text: "GET …/export" },
+      { from: "api", to: "br", type: "return", text: "File Markdown" },
+      { from: "br", to: "api", type: "call", text: "POST …/submit" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển sang đã nộp" },
+      { from: "api", to: "pg", type: "call", text: "Chuyển finding reported" },
+      { from: "api", to: "br", type: "return", text: "Báo cáo đã nộp" },
+    ],
+    blocks: [{ type: "tx", label: "MỘT TRANSACTION", from: 7, to: 8 }],
+    notes: ["Gửi báo cáo lên nền tảng bug bounty nằm ngoài phạm vi."],
+    sources: ["business-flow.md"] },
+  { id: "realtime", tab: "tinh-nang", group: "Sự kiện", title: "Đẩy sự kiện",
+    summary: "Tiến trình đổi trạng thái publish sự kiện. Backend API đẩy tới trình duyệt.",
+    parts: ["dsp", "bg", "rd", "api", "br"],
+    steps: [
+      { from: "dsp", to: "rd", type: "async", text: "Sự kiện job" },
+      { from: "bg", to: "rd", type: "async", text: "Sự kiện finding" },
+      { from: "rd", to: "api", type: "async", text: "Sự kiện pub/sub" },
+      { from: "api", to: "api", type: "self", text: "Lọc theo quyền" },
+      { from: "api", to: "br", type: "async", text: "Sự kiện WebSocket" },
+      { from: "br", to: "br", type: "self", text: "Làm mới dữ liệu" },
+    ],
+    blocks: [],
+    notes: ["Backend API cũng publish sự kiện sau commit.", "Frontend gom sự kiện liên tiếp thành một lần làm mới."],
+    sources: ["system.md", "frontend/CLAUDE.md"] },
+];
+
+// ---- Drawing code: fixed encoding, see documentation.md section 10 ----
+const NS = "http://www.w3.org/2000/svg";
+const comp = Object.fromEntries(COMPONENTS.map(c => [c.id, c]));
+const SHAPE_NAME = { proc: "Tiến trình", store: "Kho dữ liệu", ext: "Bên ngoài hệ thống", part: "Lớp trong Backend API" };
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function text(parent, x, y, str, attrs) { const t = el("text", { x, y, ...attrs }, parent); t.textContent = str; return t; }
+function markers(svg, p) {
+  const defs = el("defs", {}, svg);
+  ["http", "sql", "s3", "queue", "run", "inproc", "ret"].forEach(k => {
+    const c = k === "ret" ? "var(--muted)" : `var(--c-${k})`;
+    const m = el("marker", { id: `${p}-${k}`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" }, defs);
+    el("path", { d: k === "ret" ? "M1,1 L9,5 L1,9" : "M0,1 L9,5 L0,9 z", style: k === "ret" ? `fill:none;stroke:${c};stroke-width:1.6` : `fill:${c}` }, m);
+  });
+}
+// One shape per component kind, shared by the architecture view and the flow headers.
+function drawShape(g, c, x, y, w, h) {
+  if (c.shape === "store") {
+    const ry = 7;
+    el("path", { class: "shape", d: `M${x},${y + ry} A${w / 2},${ry} 0 0 1 ${x + w},${y + ry} V${y + h - ry} A${w / 2},${ry} 0 0 1 ${x},${y + h - ry} Z` }, g);
+    el("path", { class: "shape", d: `M${x},${y + ry} A${w / 2},${ry} 0 0 0 ${x + w},${y + ry}`, style: "fill:none" }, g);
+  } else {
+    el("rect", { class: `shape ${c.shape}`, x, y, width: w, height: h, rx: c.shape === "ext" ? h / 2 : 6 }, g);
+  }
+  const cy = y + h / 2 + (c.shape === "store" ? 3 : 0);
+  text(g, x + w / 2, cy + 4, c.name, { "text-anchor": "middle" });
+}
+
+// ---- Legend ----
+(function legend() {
+  const box = document.getElementById("legend");
+  const item = (label, draw, w = 34) => {
+    const span = document.createElement("span");
+    const s = el("svg", { width: w, height: 18, viewBox: `0 0 ${w} 18`, "aria-hidden": "true" });
+    markers(s, "lg" + label.length + Math.random().toString(36).slice(2, 6));
+    draw(s);
+    span.appendChild(s);
+    span.append(label);
+    box.appendChild(span);
+  };
+  const line = (ch, dash) => s => { const g = el("g", { class: `msg ch-${ch}` }, s); el("path", { d: "M2,9 H30", style: dash ? `stroke-dasharray:${dash}` : "", "marker-end": `url(#${s.querySelector(`marker[id$='-${ch}']`).id})` }, g); };
+  item("HTTP", line("http"));
+  item("SQL", line("sql"));
+  item("S3, MinIO", line("s3"));
+  item("Queue, NOTIFY, pub/sub", line("queue", "6 4"));
+  item("Chạy công cụ, tới mục tiêu", line("run"));
+  item("Gọi trong tiến trình", line("inproc"));
+  item("Trả về", line("ret", "5 4"));
+  item("Trục thời gian", s => el("line", { class: "lifeline", x1: 9, x2: 9, y1: 0, y2: 18 }, s), 18);
+  item("Tiến trình", s => el("rect", { class: "shape", x: 2, y: 2, width: 26, height: 14, rx: 3 }, s), 30);
+  item("Kho dữ liệu", s => drawShape(el("g", {}, s), { shape: "store", name: "" }, 4, 1, 20, 16), 28);
+  item("Bên ngoài", s => el("rect", { class: "shape ext", x: 2, y: 2, width: 26, height: 14, rx: 7 }, s), 30);
+})();
+
+// ---- Architecture ----
+const NODE_W = 140, NODE_H = 46;
+const archSvg = document.getElementById("arch");
+const archPanel = document.getElementById("arch-panel");
+const archNodes = {}, archEdges = [];
+let archSel = null;
+(function drawArch() {
+  const W = 1250, H = 556;
+  archSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  archSvg.setAttribute("width", W);
+  archSvg.style.maxWidth = "100%";
+  archSvg.style.height = "auto";
+  archSvg.style.minWidth = "820px";
+  markers(archSvg, "a");
+  ZONES.forEach(z => {
+    const g = el("g", { class: `zone ${z.cls}` }, archSvg);
+    el("rect", { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12 }, g);
+    text(g, z.x + 12, z.y + 20, z.name);
+    if (z.sub) text(g, z.x + 12, z.y + 34, z.sub, { class: "zone-sub" });
+  });
+  const anchor = (c, px, py) => {
+    // Leave or enter the box at a right angle when the neighbour point lines up with it, so arrowheads stay straight.
+    if (px >= c.x && px <= c.x + NODE_W) return [px, py < c.y ? c.y : c.y + NODE_H];
+    if (py >= c.y && py <= c.y + NODE_H) return [px < c.x ? c.x : c.x + NODE_W, py];
+    // Otherwise: point where a line from the box center toward (px, py) leaves the box.
+    const cx = c.x + NODE_W / 2, cy = c.y + NODE_H / 2, dx = px - cx, dy = py - cy;
+    const s = Math.min(Math.abs((NODE_W / 2) / (dx || 1e-9)), Math.abs((NODE_H / 2) / (dy || 1e-9)));
+    return [cx + dx * s, cy + dy * s];
+  };
+  const edgeLayer = el("g", {}, archSvg);
+  const labelLayer = el("g", {}, archSvg);
+  LINKS.forEach(l => {
+    const a = comp[l.from], b = comp[l.to];
+    const via = l.via || [];
+    const first = via[0] || [b.x + NODE_W / 2, b.y + NODE_H / 2];
+    const last = via[via.length - 1] || [a.x + NODE_W / 2, a.y + NODE_H / 2];
+    const pts = [anchor(a, ...first), ...via, anchor(b, ...last)];
+    const g = el("g", { class: `edge ${l.kind} ch-${l.ch}` }, edgeLayer);
+    const d = "M" + pts.map(p => p.join(",")).join(" L");
+    el("path", { d, "marker-end": `url(#a-${l.ch})` }, g);
+    el("path", { d, class: "flow" }, g);
+    // Numbered badge on the longest segment; the channel table below explains each number.
+    let best = 0, mid = pts[0];
+    for (let i = 1; i < pts.length; i++) {
+      const len = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (len > best) { best = len; mid = [(pts[i][0] + pts[i - 1][0]) / 2, (pts[i][1] + pts[i - 1][1]) / 2]; }
+    }
+    if (l.badge) mid = l.badge;
+    const n = archEdges.length + 1;
+    const lg = el("g", { class: `edge badge ch-${l.ch}` }, labelLayer);
+    el("circle", { cx: mid[0], cy: mid[1], r: 10 }, lg);
+    text(lg, mid[0], mid[1] + 4, String(n), { "text-anchor": "middle" });
+    archEdges.push({ l, g, lg, n });
+  });
+  COMPONENTS.filter(c => c.x !== undefined).forEach(c => {
+    const g = el("g", { class: "node", tabindex: 0, role: "button", "aria-label": `${c.name}: ${c.role}` }, archSvg);
+    drawShape(g, c, c.x, c.y, NODE_W, NODE_H);
+    g.addEventListener("click", () => selectArch(c.id));
+    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectArch(c.id); } });
+    archNodes[c.id] = g;
+  });
+})();
+const animBtn = document.getElementById("arch-anim");
+animBtn.addEventListener("click", () => {
+  const on = !archSvg.classList.contains("animate");
+  archSvg.classList.toggle("animate", on);
+  animBtn.setAttribute("aria-pressed", String(on));
+  animBtn.textContent = on ? "Tắt dòng chảy" : "Hiện dòng chảy";
+});
+const chBody = document.querySelector("#ch-table tbody");
+archEdges.forEach(e => {
+  const tr = document.createElement("tr");
+  tr.className = "ch-" + e.l.ch;
+  tr.innerHTML = `<td class="no"><span>${e.n}</span></td><td>${comp[e.l.from].name} → ${comp[e.l.to].name}</td><td class="ch"><b>${e.l.label}</b></td><td>${e.l.detail}</td>`;
+  chBody.appendChild(tr);
+  e.tr = tr;
+});
+function selectArch(id) {
+  archSel = archSel === id ? null : id;
+  archSvg.classList.toggle("has-sel", !!archSel);
+  document.getElementById("ch-table").classList.toggle("has-sel", !!archSel);
+  const rel = new Set();
+  archEdges.forEach(e => {
+    const on = !!archSel && (e.l.from === archSel || e.l.to === archSel);
+    e.g.classList.toggle("on", on); e.lg.classList.toggle("on", on); e.tr.classList.toggle("on", on);
+    if (on) { rel.add(e.l.from); rel.add(e.l.to); }
+  });
+  Object.entries(archNodes).forEach(([k, g]) => { g.classList.toggle("sel", k === archSel); g.classList.toggle("rel", rel.has(k)); });
+  renderArchPanel();
+}
+function renderArchPanel() {
+  if (!archSel) {
+    archPanel.innerHTML = `<h3>Chọn một thành phần</h3><p class="muted">Bảng này hiện vai trò, thư mục mã và kênh giao tiếp của thành phần được chọn. Số trên đường nối khớp với bảng kênh giao tiếp.</p>`;
+    return;
+  }
+  const c = comp[archSel];
+  const rows = LINKS.filter(l => l.from === c.id || l.to === c.id).map(l => {
+    const out = l.from === c.id;
+    const other = comp[out ? l.to : l.from].name;
+    const e = archEdges.find(x => x.l === l);
+    return `<div class="link-row"><b>${e.n}. ${out ? "Tới" : "Từ"} ${other}</b><em class="muted">${l.kind === "async" ? "bất đồng bộ" : "gọi"}</em><span>${l.label}: ${l.detail}</span></div>`;
+  }).join("");
+  archPanel.innerHTML = `<div><h3>${c.name}</h3><div class="kind">${SHAPE_NAME[c.shape]}${c.code ? ` · <code>${c.code}</code>` : ""}</div></div><p>${c.role}</p><div class="links">${rows}</div>`;
+}
+renderArchPanel();
+
+// ---- Sequence diagrams ----
+// Wrap a label so it never runs past its arrow. Canvas measuring works even while the tab is hidden.
+const measureCtx = document.createElement("canvas").getContext("2d");
+measureCtx.font = '12px "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif';
+function wrap(str, maxW) {
+  const words = str.split(" "), lines = [];
+  let line = "";
+  words.forEach(w => {
+    const next = line ? line + " " + w : w;
+    if (line && measureCtx.measureText(next).width > maxW) { lines.push(line); line = w; } else line = next;
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+const LINE_H = 14;
+function drawFlow(svg, f) {
+  svg.innerHTML = "";
+  const COL = f.parts.length >= 7 ? 124 : f.parts.length >= 6 ? 138 : 156, LEFT = 46, TOP = 12, HEAD = 46, ROW = 40, BLOCK_PAD = 26;
+  const FAIL_W = Math.max(110, 30 + 7.2 * Math.max(0, ...f.steps.map(x => (x.fail || "").length)));
+  const xs = Object.fromEntries(f.parts.map((p, i) => [p, LEFT + COL / 2 + i * COL]));
+  const lastX = LEFT + COL * f.parts.length;
+  const W = lastX + FAIL_W + 10;
+  // Vertical layout with extra room where a block starts or ends.
+  const startAt = {}, endAt = {};
+  f.blocks.forEach(b => { (startAt[b.from] ||= []).push(b); (endAt[b.to] ||= []).push(b); });
+  let y = TOP + HEAD + 26;
+  const rowY = [];
+  const SELF_W = COL - 46;
+  const linesOf = f.steps.map(s => wrap(s.text, s.type === "self" ? SELF_W : Math.abs(xs[s.to] - xs[s.from]) - 18));
+  f.steps.forEach((s, i) => {
+    const n = i + 1, extra = (linesOf[i].length - 1) * LINE_H;
+    if (startAt[n]) y += BLOCK_PAD;
+    // Arrow labels stack above the arrow; self labels stack below the loop start.
+    if (s.type !== "self") y += extra;
+    rowY[n] = y;
+    y += s.type === "self" ? ROW + 6 + extra : ROW;
+    if (endAt[n]) y += 8;
+  });
+  const H = y + 10;
+  const stepEls = [];
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  markers(svg, "s" + f.id);
+
+  const blockLabels = [];
+  f.blocks.forEach(b => {
+    const g = el("g", { class: `block ${b.type}` }, svg);
+    const first = f.steps[b.from - 1], last = f.steps[b.to - 1];
+    const above = first.type === "self" ? 0 : (linesOf[b.from - 1].length - 1) * LINE_H;
+    const below = last.type === "self" ? (linesOf[b.to - 1].length - 1) * LINE_H : 0;
+    const y1 = rowY[b.from] - above - BLOCK_PAD + 4, y2 = rowY[b.to] + below + (last.type === "self" ? ROW : ROW - 8);
+    el("rect", { class: "bg", x: LEFT + 6, y: y1, width: lastX - LEFT - 12, height: y2 - y1, rx: 8 }, g);
+    blockLabels.push(() => {
+      const lg = el("g", { class: `block ${b.type}` }, svg);
+      measureCtx.font = '600 11px "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif';
+      const w = measureCtx.measureText(b.label).width + b.label.length * 0.4 + 12;
+      measureCtx.font = '12px "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif';
+      el("rect", { class: "bg", x: LEFT + 10, y: y1 + 3, width: w, height: 16, rx: 4 }, lg);
+      text(lg, LEFT + 16, y1 + 15, b.label);
+    });
+  });
+  text(svg, lastX + 14, TOP + 30, "KHÔNG ĐẠT THÌ", { class: "col-head" });
+  f.parts.forEach(p => {
+    el("line", { class: "lifeline", x1: xs[p], x2: xs[p], y1: TOP + HEAD, y2: H - 6 }, svg);
+    const g = el("g", { class: "head" }, svg);
+    drawShape(g, comp[p], xs[p] - (COL - 24) / 2, TOP, COL - 24, HEAD - 6);
+  });
+  // Block labels go above the lifelines so the dashed lines never cut through them.
+  blockLabels.forEach(draw => draw());
+  f.steps.forEach((s, i) => {
+    const n = i + 1, yy = rowY[n];
+    const ch = chOf(s);
+    const no = el("g", { class: `step-no ch-${ch}` }, svg);
+    el("circle", { cx: 20, cy: yy, r: 10 }, no);
+    text(no, 20, yy + 3.5, String(n));
+    const g = el("g", { class: `msg ${s.type} ch-${ch}` }, svg);
+    const x1 = xs[s.from], x2 = xs[s.to];
+    let path;
+    if (s.type === "self") {
+      path = el("path", { d: `M${x1},${yy - 6} H${x1 + 26} V${yy + 12} H${x1 + 4}`, "marker-end": `url(#s${f.id}-${ch})` }, g);
+      el("path", { d: path.getAttribute("d"), class: "flow" }, g);
+      linesOf[i].forEach((ln, k) => text(g, x1 + 34, yy + 7 + k * LINE_H, ln));
+    } else {
+      const dir = x2 > x1 ? 1 : -1;
+      path = el("path", { d: `M${x1 + dir * 3},${yy + 6} H${x2 - dir * 4}`, "marker-end": `url(#s${f.id}-${ch})` }, g);
+      el("path", { d: path.getAttribute("d"), class: "flow" }, g);
+      const ls = linesOf[i];
+      ls.forEach((ln, k) => text(g, (x1 + x2) / 2, yy - (ls.length - 1 - k) * LINE_H, ln, { "text-anchor": "middle" }));
+    }
+    const parts = [no, g];
+    if (s.fail) {
+      const fg = el("g", { class: "fail" }, svg);
+      parts.push(fg);
+      const t = text(fg, lastX + 22, yy + 4, s.fail);
+      const w = s.fail.length * 7.2;
+      const r = el("rect", { x: lastX + 14, y: yy - 9, width: w + 16, height: 20, rx: 5 }, fg);
+      fg.insertBefore(r, t);
+      el("line", { x1: (s.type === "self" ? x1 + 34 : Math.max(x1, x2)) + 6, x2: lastX + 10, y1: yy + 1, y2: yy + 1, style: "stroke:var(--fail);stroke-width:1;stroke-dasharray:1 4;opacity:.6" }, fg);
+    }
+    stepEls.push({ parts, path, ch });
+  });
+  return stepEls;
+}
+// Color of a message follows its channel, taken from LINKS so no component id is hard-coded.
+function chOf(s) {
+  if (s.type === "return") return "ret";
+  if (s.type === "async") return "queue";
+  if (s.type === "self") return "inproc";
+  const link = LINKS.find(l => (l.from === s.from && l.to === s.to) || (l.from === s.to && l.to === s.from));
+  if (link) return link.ch;
+  const a = comp[s.from], b = comp[s.to];
+  const store = [a, b].find(c => c.shape === "store");
+  if (store) {
+    // A store is reached through one kind of channel; use the most common one among its links.
+    const count = {};
+    LINKS.filter(l => l.from === store.id || l.to === store.id).forEach(l => { count[l.ch] = (count[l.ch] || 0) + 1; });
+    return Object.keys(count).sort((x, y) => count[y] - count[x])[0] || "http";
+  }
+  if (a.shape === "part" && b.shape === "part") return "inproc";
+  return "http";
+}
+
+// Playback: steps light up one by one while a packet travels along each arrow.
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function makePlayer(svg, steps, ui) {
+  let cur = -1, timer = null, raf = null, playing = false;
+  const packet = el("circle", { class: "packet", r: 6, cx: -20, cy: -20 }, svg);
+  function paint() {
+    svg.classList.toggle("playing", cur >= 0);
+    steps.forEach((st, i) => st.parts.forEach(p => {
+      p.classList.toggle("future", cur >= 0 && i > cur);
+      p.classList.toggle("active", i === cur);
+    }));
+    ui.pos.textContent = cur >= 0 ? `Bước ${cur + 1}/${steps.length}` : `${steps.length} bước`;
+    ui.play.textContent = playing ? "❚❚ Dừng" : (cur >= steps.length - 1 ? "↻ Chạy lại" : "▶ Chạy");
+  }
+  function travel(i, done) {
+    const st = steps[i];
+    packet.setAttribute("class", `packet ch-${st.ch}`);
+    if (reduceMotion) { const p = st.path.getPointAtLength(st.path.getTotalLength()); packet.setAttribute("cx", p.x); packet.setAttribute("cy", p.y); done(); return; }
+    const len = st.path.getTotalLength(), dur = Math.min(1100, 350 + len * 1.6), t0 = performance.now();
+    const tick = now => {
+      const k = Math.min(1, (now - t0) / dur), p = st.path.getPointAtLength(len * k);
+      packet.setAttribute("cx", p.x); packet.setAttribute("cy", p.y);
+      if (k < 1) raf = requestAnimationFrame(tick); else done();
+    };
+    raf = requestAnimationFrame(tick);
+  }
+  function go(i, chain) {
+    cur = i; paint();
+    travel(i, () => {
+      if (chain && playing && cur < steps.length - 1) timer = setTimeout(() => go(cur + 1, true), 350);
+      else { playing = false; paint(); }
+    });
+  }
+  function stop() { playing = false; clearTimeout(timer); cancelAnimationFrame(raf); paint(); }
+  ui.play.addEventListener("click", () => {
+    if (playing) return stop();
+    playing = true;
+    go(cur >= steps.length - 1 || cur < 0 ? 0 : cur + 1, true);
+  });
+  ui.next.addEventListener("click", () => { stop(); go(cur >= steps.length - 1 ? 0 : cur + 1, false); });
+  ui.reset.addEventListener("click", () => { stop(); cur = -1; packet.setAttribute("cx", -20); paint(); });
+  paint();
+  return stop;
+}
+
+// ---- Flow tabs ----
+function setupFlowTab(tab) {
+  const view = document.getElementById("view-" + tab);
+  const nav = view.querySelector(".flow-list");
+  const out = view.querySelector(".flow-view");
+  const flows = FLOWS.filter(f => f.tab === tab);
+  let group = null, stopPlayer = null;
+  const btns = {};
+  flows.forEach((f, i) => {
+    if (f.group !== group) {
+      group = f.group;
+      const h = document.createElement("div");
+      h.className = "flow-group";
+      h.textContent = group;
+      nav.appendChild(h);
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "flow-btn";
+    b.innerHTML = `<span class="n">${String(i + 1).padStart(2, "0")}</span><span>${f.title}</span>`;
+    b.addEventListener("click", () => show(f.id));
+    nav.appendChild(b);
+    btns[f.id] = b;
+  });
+  function show(id) {
+    const f = FLOWS.find(x => x.id === id);
+    Object.entries(btns).forEach(([k, b]) => b.setAttribute("aria-current", String(k === id)));
+    if (stopPlayer) stopPlayer();
+    out.innerHTML = `<div class="diagram-head"><h2>${f.title}</h2><p>${f.summary}</p></div><div class="player"><button type="button" class="primary" data-act="play">▶ Chạy</button><button type="button" data-act="next">Bước tiếp ›</button><button type="button" data-act="reset">Về đầu</button><button type="button" class="anim-btn" data-act="flow" aria-pressed="true">Tắt dòng chảy</button><span class="pos"></span></div><div class="scroll"><svg class="animate" role="img" aria-label="Sơ đồ tuần tự: ${f.title}"></svg></div>${f.notes.length ? `<ul class="notes">${f.notes.map(n => `<li>${n}</li>`).join("")}</ul>` : ""}<div class="sources">Nguồn: ${f.sources.map(s => `<code>${s}</code>`).join("")}</div>`;
+    const svg = out.querySelector("svg");
+    const steps = drawFlow(svg, f);
+    const q = a => out.querySelector(`[data-act="${a}"]`);
+    stopPlayer = makePlayer(svg, steps, { play: q("play"), next: q("next"), reset: q("reset"), pos: out.querySelector(".pos") });
+    q("flow").addEventListener("click", e => {
+      const on = !svg.classList.contains("animate");
+      svg.classList.toggle("animate", on);
+      e.currentTarget.setAttribute("aria-pressed", String(on));
+      e.currentTarget.textContent = on ? "Tắt dòng chảy" : "Hiện dòng chảy";
+    });
+  }
+  show(flows[0].id);
+}
+setupFlowTab("luong-request");
+setupFlowTab("tinh-nang");
+
+// ---- Tabs, synced with the URL hash ----
+const VIEWS = ["kien-truc", "luong-request", "tinh-nang"];
+function showView(v) {
+  if (!VIEWS.includes(v)) v = "kien-truc";
+  VIEWS.forEach(x => {
+    document.getElementById("view-" + x).hidden = x !== v;
+    const t = document.getElementById("tab-" + x);
+    t.setAttribute("aria-selected", String(x === v));
+    t.tabIndex = x === v ? 0 : -1;
+  });
+  if (location.hash.slice(1) !== v) { try { history.replaceState(null, "", "#" + v); } catch (e) { /* blocked inside some frames */ } }
+}
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => showView(t.dataset.view));
+  t.addEventListener("keydown", e => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const i = VIEWS.indexOf(t.dataset.view), n = VIEWS[(i + (e.key === "ArrowRight" ? 1 : VIEWS.length - 1)) % VIEWS.length];
+    showView(n);
+    document.getElementById("tab-" + n).focus();
+  });
+});
+window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
+showView(location.hash.slice(1));
+})();
+</script>

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./**/secrets/**)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Edit(./_reference/**)",
+      "Edit(/data/**)",
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)"
+    ],
+    "ask": [
+      "Bash(docker compose down:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "timeout": 30,
+            "prompt": "You check whether Claude kept ReconOS documents in sync before stopping. Hook input: $ARGUMENTS\n\nIf stop_hook_active is true, respond {\"ok\": true}.\nRead last_assistant_message and check two cases.\nCase A: the message reports that the user agreed on a new term, a word replacement, or a wording convention for documents, and the message lacks a line like 'Thuật ngữ mới: X → Y, đã cập nhật glossary'.\nCase B: the message reports a new or changed project decision (business rule, schema, status, endpoint, contract, tool module, module, role, config, library, infrastructure, deferred work), and the message lacks a line starting with 'Đồng bộ tài liệu:'.\nAnswers to general questions, explanations, proposals awaiting the user's choice, and pure code edits that change no decision are NOT decisions.\nIf case A or B holds, respond {\"ok\": false, \"reason\": \"...\"}. Write the reason in Vietnamese: name the decision, tell Claude to update the documents per .claude/rules/doc-sync.md (case A: add the row to bảng Từ không dùng in docs/appendix/glossary.md and grep the old word in docs/, .claude/rules/ and every CLAUDE.md to fix all occurrences), then end with the missing line.\nOtherwise respond {\"ok\": true}. Respond with JSON only."
+          }
+        ]
+      }
+    ]
+  }
+}

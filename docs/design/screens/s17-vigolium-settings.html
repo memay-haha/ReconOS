@@ -1,0 +1,466 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "tertiary-fixed": "#7ef9c0", "warn": "#fbbf24", "secondary": "#c4c6d1", "on-surface": "#d9e3f2", "good-bd": "#1f4f33", "accent-hover": "#5ee0f2", "fg-muted": "#9aa4b2", "secondary-container": "#444750", "primary-container": "#22d3ee", "surface-container-lowest": "#050f19", "error": "#ffb4ab", "info-bd": "#1f3a63", "surface-container": "#17202b", "accent-soft": "#0c2b33", "outline-variant": "#3c494c", "surface": "#14161c", "bg": "#0a0c10", "asset-ip": "#d97706", "on-secondary-fixed-variant": "#444750", "asset-domain": "#0ea371", "fg": "#e7ebf0", "border": "#282d38", "ring": "#22d3ee66", "on-primary": "#00363e", "asset-url": "#3b82f6", "on-secondary-container": "#b3b5bf", "error-container": "#93000a", "warn-bd": "#5a4414", "surface-3": "#232733", "on-background": "#d9e3f2", "outline": "#859397", "on-primary-fixed": "#001f25", "warn-soft": "#2c2109", "on-secondary-fixed": "#181b23", "neutral-bd": "#333a46", "secondary-fixed-dim": "#c4c6d1", "border-strong": "#3a4150", "on-secondary": "#2d3039", "info-soft": "#101c33", "info": "#60a5fa", "surface-bright": "#303a46", "on-tertiary-fixed": "#002113", "accent-soft-bd": "#1b4e5a", "primary-fixed-dim": "#2fd9f4", "on-tertiary": "#003824", "good": "#4ade80", "surface-variant": "#2c3641", "primary": "#8aebff", "on-primary-fixed-variant": "#004e5a", "good-soft": "#102a1a", "on-tertiary-fixed-variant": "#005236", "surface-container-high": "#212b36", "tertiary-container": "#5ad7a0", "accent-ink": "#06222b", "crit-bd": "#5c2330", "surface-dim": "#0a141e", "inverse-on-surface": "#28313d", "surface-2": "#1b1e26", "tertiary-fixed-dim": "#60dda6", "asset-service": "#db2777", "inverse-surface": "#d9e3f2", "primary-fixed": "#a2eeff", "neutral-soft": "#1c2028", "tertiary": "#78f4bb", "secondary-fixed": "#e0e2ed", "on-primary-container": "#005763", "on-error": "#690005", "on-error-container": "#ffdad6", "surface-container-low": "#131c27", "surface-tint": "#2fd9f4", "surface-container-highest": "#2c3641", "fg-faint": "#6a7483", "inverse-primary": "#006877", "crit": "#fb7185", "on-surface-variant": "#bbc9cd", "background": "#0a141e", "on-tertiary-container": "#005b3d", "crit-soft": "#2c1118" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "1.5rem", "space-lg": "1.125rem", "gutter": "1rem", "margin": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin-mobile": "1rem", "space-md": "0.75rem", "gutter-dense": "0.75rem" }, "fontFamily": { "label-caps": ["IBM Plex Sans"], "headline-lg": ["IBM Plex Sans"], "body-code-bold": ["IBM Plex Mono"], "body-code": ["IBM Plex Mono"], "stat-lg": ["IBM Plex Mono"], "caption": ["IBM Plex Sans"], "body-default": ["IBM Plex Sans"], "panel-title": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"] }, "fontSize": { "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" }], "headline-lg": ["21px", { "lineHeight": "28px", "fontWeight": "700" }], "body-code-bold": ["12.5px", { "lineHeight": "18px", "fontWeight": "600" }], "body-code": ["12.5px", { "lineHeight": "18px", "fontWeight": "400" }], "stat-lg": ["27px", { "lineHeight": "32px", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }], "body-default": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "panel-title": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "headline-lg-mobile": ["18px", { "lineHeight": "24px", "fontWeight": "700" }] } } } };</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased selection:bg-primary-container selection:text-accent-ink"><aside class="fixed left-0 top-0 h-screen w-[244px] bg-[#0c0e14] border-r border-[#1e2430] flex flex-col justify-between p-3 select-none z-40 font-body-default"><div class="flex flex-col flex-1 overflow-y-auto"><div class="flex items-center justify-between pb-3 border-b border-[#1a2130]/60"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded bg-[#22d3ee] flex items-center justify-center text-[#06222b] font-black text-sm select-none">R</div><div class="flex items-baseline"><span class="text-[#f1f5f9] font-bold text-[15px] tracking-wide">Recon</span><span class="text-[#22d3ee] font-bold text-[15px] tracking-wide">OS</span></div></div><span class="font-body-code text-[10px] text-[#64748b] bg-[#161d2b] px-1.5 py-0.5 rounded border border-[#1e2430]">v2.4</span></div><nav class="py-3 space-y-3 flex-1"><div class="space-y-0.5"><div class="px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#475569] font-semibold font-label-caps">Recon</div><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">grid_view</span><span class="">Dashboard</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="monitor" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">troubleshoot</span><span class="">Monitor</span></a><a class="flex items-center justify-between px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="domains" href="#"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-[18px] text-[#64748b]">language</span><span class="">Domains</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-[#94a3b8] bg-[#161d2b] border border-[#1e2430]">64</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="screenshots" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">photo_camera</span><span class="">Screenshots</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="programs" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">folder_shared</span><span class="">Programs</span></a><a class="flex items-center justify-between px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="findings" href="#"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-[18px] text-[#64748b]">bug_report</span><span class="">Findings</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-[#f87171] bg-[#450a0a] border border-[#991b1b]/40">29</span></a></div><div class="space-y-0.5 pt-1"><div class="px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#475569] font-semibold font-label-caps">Operations</div><a class="flex items-center justify-between px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="staging-queue" href="#"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-[18px] text-[#64748b]">dns</span><span class="">Staging Queue</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-[#fbbf24] bg-[#451a03] border border-[#b45309]/30">12</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="manage" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">tune</span><span class="">Manage</span></a></div><div class="space-y-0.5 pt-1"><div class="px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#475569] font-semibold font-label-caps">Admin</div><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="users" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">group</span><span class="">Users</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="component-library" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">dashboard_customize</span><span class="">Component Library</span></a></div><div class="space-y-0.5 pt-1"><div class="px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#475569] font-semibold font-label-caps flex items-center justify-between"><span class="">System</span><span class="font-body-code text-[9px] font-bold px-1 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/50">ROOT</span></div><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="health-and-tools" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">show_chart</span><span class="">Health &amp; Tools</span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="osmedeus" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">adjust</span><span class="">Osmedeus</span></a><a class="flex items-center gap-2.5 px-2.5 h-9 rounded-md bg-[#22d3ee]/10 border border-[#22d3ee]/40 text-[#22d3ee] text-[13px] font-medium transition-colors" data-path="vigolium" href="#"><span class="material-symbols-outlined text-[18px] text-[#22d3ee]">shield</span><span class="">Vigolium</span><span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] ml-auto"></span></a><a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-white hover:bg-[#161d2b] transition-colors text-[13px]" data-path="modules" href="#"><span class="material-symbols-outlined text-[18px] text-[#64748b]">extension</span><span class="">Modules</span></a></div></nav></div><div class="mt-4 pt-3 border-t border-[#1a2130]/60"><div class="flex items-center justify-between bg-[#121620] border border-[#1e2738] rounded-lg p-2.5"><div class="flex items-center gap-2"><div class="relative w-7 h-7 rounded bg-[#1a2333] border border-[#26354d] flex items-center justify-center text-[#22d3ee]"><span class="material-symbols-outlined text-[16px]">terminal</span><div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-good border border-[#0c0e14]"></div></div><div class="flex flex-col"><span class="font-body-code text-[12px] font-medium text-white leading-none">operator_01</span><span class="text-[10px] text-[#64748b] leading-tight mt-0.5">Lead SecOps</span></div></div><button class="text-[#64748b] hover:text-[#fb7185] p-1 rounded hover:bg-[#1a2333] transition-colors" title="Log out" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></div></aside><div class="min-h-screen flex flex-col bg-bg pl-[244px]"><header class="fixed top-0 left-[244px] right-0 h-14 bg-surface border-b border-border z-30 flex items-center justify-between px-gutter"><div class="flex items-center gap-gutter"><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><nav class="hidden sm:flex items-center gap-2 text-caption font-caption text-fg-faint"><span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span><span class="text-[10px]">&gt;</span><span class="hover:text-fg cursor-pointer transition-colors">Console</span></nav></div><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center gap-2 bg-surface-2 border border-border rounded px-space-sm py-1 w-72 text-fg-faint hover:border-border-strong focus-within:border-primary focus-within:ring-1 focus-within:ring-ring transition-all cursor-text"><span class="material-symbols-outlined text-[17px] text-fg-muted">search</span><span class="font-body-code text-body-code flex-1">Search system, tools...</span><span class="px-1.5 py-0.2 rounded bg-surface text-[10px] font-body-code text-fg-muted border border-border">⌘K</span></div><a class="flex items-center gap-1.5 px-2 py-1 rounded bg-good-soft border border-good-bd text-good hover:bg-good-bd/30 transition-colors" data-path="health-and-tools" href="#"><span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span><span class="font-body-code text-[11px] font-semibold">Dispatcher online</span></a><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors relative" title="Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span></button><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle theme" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-gutter py-gutter-dense bg-bg flex-1"><div class="flex flex-col w-full space-y-space-md">
+<!-- Sub-header & Action Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md pb-space-xs">
+<div class="flex flex-col space-y-1">
+<div class="flex items-center gap-2 font-caption text-caption text-fg-faint">
+<span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span>
+<span class="text-[9px] text-fg-faint">/</span>
+<span class="hover:text-fg cursor-pointer transition-colors">System</span>
+<span class="text-[9px] text-fg-faint">/</span>
+<span class="text-primary font-body-code">Vigolium</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-fg tracking-tight">Vigolium Settings</h1>
+<p class="font-body-default text-body-default text-fg-muted max-w-3xl">
+        Primary vulnerability scanner, server mode &amp; ingestion proxy, native 334-module suite, and agentic olium loop.
+      </p>
+</div>
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface border border-border-strong hover:bg-surface-2 text-fg font-body-code text-[12px] font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">rule</span>
+<span>Validate Config</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface border border-border-strong hover:bg-surface-2 text-fg font-body-code text-[12px] font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-fg-muted">sync_alt</span>
+<span>Test Connection</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-primary-container text-accent-ink hover:bg-accent-hover font-body-code-bold text-[12px] font-semibold transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px] font-bold">save</span>
+<span>Save Configuration</span>
+</button>
+</div>
+</div>
+<!-- Validation Status Banner -->
+<div class="w-full bg-surface-2 border border-border rounded p-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-good-soft border border-good-bd flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-good text-[18px]">verified</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+<span class="font-body-code-bold text-fg text-[13px]">Config Valid</span>
+<span class="text-fg-faint">•</span>
+<span class="font-body-code text-good text-[12px]">0 Critical Issues</span>
+<span class="text-fg-faint">•</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-warn-soft border border-warn-bd text-warn font-body-code text-[11px]">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span>1 Latency Advisory (Ingest proxy :9003 backlog: 82 msgs)</span>
+</span>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0 self-end md:self-auto">
+<button class="px-2.5 py-1 rounded bg-surface border border-border hover:border-warn text-warn font-body-code text-[11px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span>View Advisory Details</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Navigation Segment Tabs -->
+<div class="w-full bg-surface-container-lowest border-b border-border flex items-center overflow-x-auto select-none">
+<button class="px-4 py-2.5 border-b-2 border-primary text-primary font-body-code-bold text-[12px] flex items-center gap-1.5 whitespace-nowrap bg-surface-container/40" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Connection &amp; Server</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">neurology</span>
+<span>Scan Engine &amp; AI</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">move_to_inbox</span>
+<span>Server &amp; Ingestion</span>
+<span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-warn bg-warn-soft border border-warn-bd">82</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">widgets</span>
+<span>Native Modules (334)</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">filter_center_focus</span>
+<span>Scope Defaults</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">shield_lock</span>
+<span>Hardening</span>
+</button>
+<button class="px-4 py-2.5 border-b-2 border-transparent text-fg-muted hover:text-fg hover:bg-surface transition-colors font-body-code text-[12px] flex items-center gap-1.5 whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[16px]">folder_copy</span>
+<span>Projects</span>
+</button>
+</div>
+<!-- Primary Configuration Matrix -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- LEFT PANE: Section 1 - Server & Ingest Proxy (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col space-y-gutter">
+<!-- Panel: Daemon Core & REST Access -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border pb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">router</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg leading-none">Server &amp; Ingest Proxy</h2>
+<span class="text-caption font-caption text-fg-faint">Local REST control endpoint &amp; passive proxy engine</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[11px] font-body-code bg-good-soft text-good border border-good-bd flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span>
+<span>DAEMON :ACTIVE</span>
+</span>
+</div>
+<!-- REST Base URL -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted flex items-center justify-between">
+<span>REST API Base URL</span>
+<span class="text-fg-faint lowercase font-body-code">bind: loopback only</span>
+</label>
+<div class="flex items-center gap-2">
+<div class="flex-1 flex items-center bg-surface-2 border border-border-strong rounded px-space-sm h-9 focus-within:border-primary">
+<span class="material-symbols-outlined text-[16px] text-fg-muted mr-2">http</span>
+<input class="bg-transparent border-0 font-body-code text-body-code text-fg focus:outline-none w-full select-all" spellcheck="false" type="text" value="http://127.0.0.1:9002">
+</div>
+<span class="px-2 py-1 rounded bg-surface-3 text-fg-muted font-body-code text-[11px] border border-border">PORT: 9002</span>
+</div>
+</div>
+<!-- API Key SecretField -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted flex items-center justify-between">
+<span>Vigolium Master Secret / API Key</span>
+<span class="text-fg-faint lowercase font-body-code">SHA-256 Auth Bearer</span>
+</label>
+<div class="flex items-center gap-2">
+<div class="flex-1 flex items-center bg-surface-2 border border-border-strong rounded px-space-sm h-9">
+<span class="material-symbols-outlined text-[16px] text-fg-muted mr-2">key</span>
+<input class="bg-transparent border-0 font-body-code text-body-code text-primary focus:outline-none w-full select-all tracking-wider" id="vg-api-key-input" readonly="" spellcheck="false" type="password" value="sk-vg-a8f3b149c0d299b2">
+</div>
+<button class="px-2.5 h-9 rounded bg-surface border border-border-strong hover:bg-surface-2 text-fg-muted hover:text-fg text-[12px] font-body-code transition-colors flex items-center gap-1" id="vg-reveal-btn" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+<span>Reveal</span>
+</button>
+<button class="px-2.5 h-9 rounded bg-surface border border-border-strong hover:bg-surface-2 text-fg-muted hover:text-fg text-[12px] font-body-code transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[15px]">autorenew</span>
+<span>Rotate</span>
+</button>
+</div>
+</div>
+<!-- Toggles Section: Ingest & Processing -->
+<div class="pt-2 border-t border-border space-y-3">
+<div class="flex items-center justify-between p-2.5 rounded bg-surface-container-low border border-border">
+<div class="flex flex-col">
+<span class="font-body-code-bold text-fg text-[12.5px] leading-tight">Enable Ingest Proxy (:9003)</span>
+<span class="text-fg-faint text-[11px] font-caption mt-0.5">Accept live streaming request/response flows from browser agents or upstream pipelines.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-accent-ink after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded bg-surface-container-low border border-border">
+<div class="flex flex-col">
+<span class="font-body-code-bold text-fg text-[12.5px] leading-tight">Scan on Receive (Continuous Passive Eval)</span>
+<span class="text-fg-faint text-[11px] font-caption mt-0.5">Immediately pipeline streaming proxy items through active heuristics and rule matching.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-accent-ink after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- HTTPS MITM -->
+<div class="space-y-2 p-3 rounded bg-surface-container-low border border-border">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-code-bold text-fg text-[12.5px] leading-tight">HTTPS Interception (MITM)</span>
+<span class="text-fg-faint text-[11px] font-caption mt-0.5">Dynamically forge TLS leaf certificates to parse payloads inside encrypted sessions.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-accent-ink after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="p-2 rounded bg-crit-soft/60 border border-crit-bd text-[11px] font-body-code text-crit flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] flex-shrink-0">gpp_maybe</span>
+<span>SECURITY WARNING: Only trust generated CA on isolated test machines &amp; dedicated sandboxes.</span>
+</div>
+<!-- CA Fingerprint & Tools -->
+<div class="mt-2 pt-2 border-t border-border/60 flex flex-col gap-2">
+<div class="flex items-center justify-between text-[11px] font-body-code text-fg-muted">
+<span>CA Root Fingerprint (SHA256)</span>
+<span class="text-primary font-body-code">RSA-4096 VALID</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-border font-body-code text-[11px] text-fg-muted break-all select-all">
+                e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+              </div>
+<div class="flex items-center gap-2 pt-1">
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg-muted hover:text-fg text-[11px] font-body-code flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[13px]">folder_open</span>
+<span>View CA Path</span>
+</button>
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg-muted hover:text-fg text-[11px] font-body-code flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[13px]">print</span>
+<span>Print CA</span>
+</button>
+<button class="px-2 py-1 rounded bg-accent-soft border border-accent-soft-bd text-primary hover:bg-primary hover:text-accent-ink text-[11px] font-body-code-bold flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[13px]">install_desktop</span>
+<span>Install Trust</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Burp / Caido Bridge -->
+<div class="pt-2 border-t border-border flex items-center justify-between p-2.5 rounded bg-surface-2 border border-border">
+<div class="flex items-center gap-2.5">
+<div class="w-2.5 h-2.5 rounded-full bg-good animate-ping"></div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-code-bold text-fg text-[12px]">Live Proxy Bridge</span>
+<span class="px-1.5 py-0.2 rounded text-[9px] font-body-code bg-good-soft text-good border border-good-bd">BURP/CAIDO CONNECTED</span>
+</div>
+<span class="text-fg-faint text-[11px] font-body-code">Routing via: http://127.0.0.1:9009 (latency: 1.4ms)</span>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded bg-surface border border-border-strong hover:bg-surface-3 text-fg font-body-code text-[11px] transition-colors" type="button">
+            Configure Bridge
+          </button>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: Section 2 - Agentic Engine & Native Modules (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col space-y-gutter">
+<!-- Agentic Olium LLM Provider -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border pb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg leading-none">Agentic Olium Engine</h2>
+<span class="text-caption font-caption text-fg-faint">Autonomous feedback loop for dynamic verification</span>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-body-code bg-accent-soft text-primary border border-accent-soft-bd">v3.2</span>
+</div>
+<div class="space-y-3">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted">LLM Provider Format</label>
+<select class="w-full bg-surface-2 border border-border-strong rounded px-space-sm h-9 font-body-code text-body-code text-fg focus:outline-none focus:border-primary">
+<option selected="">openai-compatible (Custom Bridge)</option>
+<option>anthropic-native</option>
+<option>ollama-local</option>
+<option>azure-openai-gateway</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted">Target Model Identifier</label>
+<div class="flex items-center bg-surface-2 border border-border-strong rounded px-space-sm h-9 focus-within:border-primary">
+<input class="bg-transparent border-0 font-body-code text-body-code text-fg focus:outline-none w-full" spellcheck="false" type="text" value="claude-3-7-sonnet-custom-bridge">
+</div>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted">Inference Base URL</label>
+<div class="flex items-center bg-surface-2 border border-border-strong rounded px-space-sm h-9 focus-within:border-primary">
+<input class="bg-transparent border-0 font-body-code text-body-code text-fg focus:outline-none w-full" spellcheck="false" type="text" value="http://127.0.0.1:11434/v1">
+</div>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps uppercase text-fg-muted">Engine Secret Key</label>
+<div class="flex items-center bg-surface-2 border border-border-strong rounded px-space-sm h-9">
+<input class="bg-transparent border-0 font-body-code text-body-code text-fg-faint focus:outline-none w-full tracking-widest" readonly="" type="password" value="sk-ant-api03-92a84b901fc8">
+</div>
+</div>
+<div class="pt-1 flex items-center justify-between">
+<span class="text-[11px] font-body-code text-good flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>Context: 128k tokens</span>
+</span>
+<button class="px-3 py-1 rounded bg-surface-2 border border-border-strong hover:bg-surface-3 text-primary font-body-code text-[11px] font-semibold flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+<span>Verify Model</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Native Modules Suite Summary & Top Active Mini Table -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border pb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">extension</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg leading-none">Native Modules Suite</h2>
+<span class="text-caption font-caption text-fg-faint">Core scanning modules execution telemetry</span>
+</div>
+</div>
+<a class="text-primary hover:underline font-body-code text-[11px]" href="#">Manage All</a>
+</div>
+<!-- Stat Tiles Matrix -->
+<div class="grid grid-cols-3 gap-2">
+<div class="p-2.5 rounded bg-surface-2 border border-border flex flex-col">
+<span class="font-label-caps text-[10px] uppercase text-fg-faint leading-none">Total Modules</span>
+<span class="font-stat-lg text-stat-lg text-fg mt-1">334</span>
+<span class="text-[10px] text-fg-muted mt-0.5">Loaded in memory</span>
+</div>
+<div class="p-2.5 rounded bg-surface-2 border border-good-bd/50 flex flex-col">
+<span class="font-label-caps text-[10px] uppercase text-good leading-none">Active</span>
+<span class="font-stat-lg text-stat-lg text-good mt-1">215</span>
+<span class="text-[10px] text-fg-muted mt-0.5">Injecting payloads</span>
+</div>
+<div class="p-2.5 rounded bg-surface-2 border border-border flex flex-col">
+<span class="font-label-caps text-[10px] uppercase text-info leading-none">Passive</span>
+<span class="font-stat-lg text-stat-lg text-info mt-1">119</span>
+<span class="text-[10px] text-fg-muted mt-0.5">Header &amp; DOM audit</span>
+</div>
+</div>
+<!-- Top Active Modules Table -->
+<div class="border border-border rounded overflow-hidden">
+<div class="bg-surface-2 px-3 py-1.5 flex items-center justify-between text-label-caps font-label-caps text-fg-muted uppercase text-[10px]">
+<span>Top Active Modules</span>
+<span>State</span>
+</div>
+<div class="divide-y divide-border bg-surface-container-lowest">
+<div class="px-3 py-2 flex items-center justify-between hover:bg-surface-3 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-crit text-[15px]">bug_report</span>
+<span class="font-body-code text-fg text-[12px]">xss-scanner</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="px-3 py-2 flex items-center justify-between hover:bg-surface-3 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-crit text-[15px]">database</span>
+<span class="font-body-code text-fg text-[12px]">sqli-error-based</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="px-3 py-2 flex items-center justify-between hover:bg-surface-3 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-warn text-[15px]">compare_arrows</span>
+<span class="font-body-code text-fg text-[12px]">ssrf-detector</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="px-3 py-2 flex items-center justify-between hover:bg-surface-3 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-info text-[15px]">schema</span>
+<span class="font-body-code text-fg text-[12px]">graphql-introspection</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<div class="px-3 py-2 flex items-center justify-between hover:bg-surface-3 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-crit text-[15px]">security</span>
+<span class="font-body-code text-fg text-[12px]">cve-2024-deep-check</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 3: Hardening Flags (Horizontal Matrix) -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col space-y-space-md">
+<div class="flex items-center justify-between border-b border-border pb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">security</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg leading-none">Security Hardening &amp; Sandboxing Flags</h2>
+<span class="text-caption font-caption text-fg-faint">System-level lockouts, read-only constraints, and ephemeral states</span>
+</div>
+</div>
+<span class="text-fg-faint text-[11px] font-body-code">RUNTIME ARGUMENTS</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Flag 1: --no-agent -->
+<div class="p-3 rounded bg-surface-2 border border-border flex flex-col justify-between space-y-3">
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg text-[12px]">--no-agent</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<p class="font-body-default text-[11px] text-fg-muted">
+            Completely cut external LLM agent connectivity. Runs purely native regex and deterministic checks.
+          </p>
+</div>
+<span class="text-[10px] font-body-code text-fg-faint uppercase">Status: Inactive</span>
+</div>
+<!-- Flag 2: --view-only -->
+<div class="p-3 rounded bg-surface-2 border border-border flex flex-col justify-between space-y-3">
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg text-[12px]">--view-only</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<p class="font-body-default text-[11px] text-fg-muted">
+            Lock SQLite database to immutable read-only mode. Drops all incoming scanner writes &amp; staging updates.
+          </p>
+</div>
+<span class="text-[10px] font-body-code text-fg-faint uppercase">Status: Inactive</span>
+</div>
+<!-- Flag 3: --disable-warm-session -->
+<div class="p-3 rounded bg-surface-2 border border-border flex flex-col justify-between space-y-3">
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg text-[12px]">--disable-warm-session</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<p class="font-body-default text-[11px] text-fg-muted">
+            Force new TCP handshake per target probe. Eliminates connection reuse fingerprinting artifacts.
+          </p>
+</div>
+<span class="text-[10px] font-body-code text-good uppercase">Status: Enforced</span>
+</div>
+<!-- Flag 4: --no-swagger -->
+<div class="p-3 rounded bg-surface-2 border border-border flex flex-col justify-between space-y-3">
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-body-code-bold text-fg text-[12px]">--no-swagger</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-7 h-4 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-accent-ink after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<p class="font-body-default text-[11px] text-fg-muted">
+            Disable `/docs` and `/redoc` schema definitions on REST port 9002 to suppress local reconnaissance.
+          </p>
+</div>
+<span class="text-[10px] font-body-code text-good uppercase">Status: Enforced</span>
+</div>
+</div>
+</div>
+<script>
+    (function initVigoliumSettings() {
+      const revealBtn = document.getElementById('vg-reveal-btn');
+      const apiKeyInput = document.getElementById('vg-api-key-input');
+      if (revealBtn && apiKeyInput) {
+        revealBtn.addEventListener('click', function() {
+          const isPass = apiKeyInput.type === 'password';
+          apiKeyInput.type = isPass ? 'text' : 'password';
+          revealBtn.querySelector('span:last-child').textContent = isPass ? 'Hide' : 'Reveal';
+          revealBtn.querySelector('span.material-symbols-outlined').textContent = isPass ? 'visibility_off' : 'visibility';
+        });
+      }
+    })();
+  </script>
+</div></main></div>
+
+</body></html>

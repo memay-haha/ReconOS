@@ -1,0 +1,432 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bản đồ tài liệu ReconOS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: group board on the left, sticky detail panel on the right; the panel becomes a bottom sheet on narrow screens. */
+:root {
+  --bg: #f3f5f8;
+  --card: #ffffff;
+  --ink: #142033;
+  --muted: #64718a;
+  --border: #dfe4ec;
+  --soft: #eef1f6;
+  --dep: #2457d6;
+  --dep-bg: #e8eefc;
+  --used: #0d8a5a;
+  --used-bg: #e3f5ed;
+  --sync: #d0510f;
+  --sync-bg: #fdeee4;
+  --shadow: 0 1px 2px rgba(20, 32, 51, .06), 0 4px 14px rgba(20, 32, 51, .06);
+  --font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+    --dep: #7ea2ff; --dep-bg: #1c2a4a; --used: #4cc893; --used-bg: #15352a; --sync: #ff9a5c; --sync-bg: #3a2418;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --card: #171e28; --ink: #e6ebf2; --muted: #8e9ab0; --border: #283242; --soft: #1d2531;
+  --dep: #7ea2ff; --dep-bg: #1c2a4a; --used: #4cc893; --used-bg: #15352a; --sync: #ff9a5c; --sync-bg: #3a2418;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+/* Class rules set display:grid on the views, so hidden must win explicitly. */
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1420px; margin: 0 auto; display: grid; gap: 20px; }
+
+/* Header */
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 32px; }
+h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 2px solid; }
+.sw-dep { border-color: var(--dep); background: var(--dep-bg); }
+.sw-used { border-color: var(--used); background: var(--used-bg); }
+.sw-sync { border-color: var(--sync); background: var(--sync-bg); border-style: dashed; }
+
+/* Main layout */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+.board-wrap { position: relative; min-width: 0; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start; }
+#links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 4; }
+
+/* Group card */
+.group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.group-head { display: flex; gap: 10px; align-items: baseline; }
+.group-num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.group-name { font-weight: 600; font-size: 15px; }
+.group-count { margin-left: auto; font-size: 12px; color: var(--muted); }
+.docs { display: grid; gap: 8px; }
+
+/* Document chip */
+.doc {
+  position: relative; z-index: 3; text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%;
+  background: var(--soft); border: 1.5px solid transparent; border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px;
+  transition: opacity .15s, border-color .15s, background .15s, transform .15s;
+}
+.doc:hover { border-color: var(--border); transform: translateY(-1px); }
+.doc:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+.doc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.doc-name { font-family: var(--mono); font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-purpose { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.tag { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; padding: 0 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); flex: none; }
+.bars { margin-left: auto; display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; flex: none; }
+.bars i { width: 3px; border-radius: 1px; background: var(--border); }
+.bars i:nth-child(1) { height: 5px; } .bars i:nth-child(2) { height: 8px; } .bars i:nth-child(3) { height: 11px; }
+.bars i.on { background: var(--muted); }
+
+.board.has-sel .doc { opacity: .35; }
+.board.has-sel .doc.rel, .board.has-sel .doc.sel { opacity: 1; }
+.doc.sel { background: var(--card); border-color: var(--ink); box-shadow: var(--shadow); }
+.doc.r-dep { background: var(--dep-bg); border-color: var(--dep); }
+.doc.r-used { background: var(--used-bg); border-color: var(--used); }
+.doc.r-sync { background: var(--sync-bg); border-color: var(--sync); border-style: dashed; }
+
+#links path { fill: none; stroke-width: 1.8; }
+#links .l-dep { stroke: var(--dep); }
+#links .l-used { stroke: var(--used); }
+#links .l-sync { stroke: var(--sync); stroke-dasharray: 6 4; }
+
+/* Detail panel */
+.panel { position: sticky; top: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 18px; display: grid; gap: 14px; }
+.panel-close { display: none; }
+.p-name { font-family: var(--mono); font-size: 15px; font-weight: 500; margin: 0; word-break: break-all; }
+.p-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); }
+.p-meta span { background: var(--soft); padding: 2px 8px; border-radius: 999px; }
+.p-purpose { margin: 0; font-size: 14px; }
+.p-sec { display: grid; gap: 6px; }
+.p-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.p-title .swatch { width: 10px; height: 10px; }
+.p-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.p-chip { font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--soft); color: var(--ink); cursor: pointer; }
+.p-chip:hover { border-color: var(--muted); }
+.p-chip:focus-visible, .panel-close:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+.p-none { font-size: 12.5px; color: var(--muted); }
+.p-empty { color: var(--muted); margin: 0; }
+.p-path { font-size: 12px; color: var(--muted); font-family: var(--mono); word-break: break-all; margin: 0; }
+
+/* Tabs */
+.tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; justify-self: start; }
+.tab { font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); background: none; border: 0; border-radius: 7px; padding: 6px 16px; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.tab:focus-visible { outline: 2px solid var(--dep); outline-offset: 2px; }
+
+/* Purpose view */
+.purpose { display: grid; gap: 16px; }
+.p-group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.p-group h2 { margin: 0; padding: 12px 18px; font-size: 15px; font-weight: 600; display: flex; gap: 10px; align-items: baseline; border-bottom: 1px solid var(--border); }
+.p-row { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) auto; gap: 6px 24px; align-items: start; padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.p-row:last-child { border-bottom: 0; }
+.p-row:hover { background: var(--soft); }
+.p-row:focus-visible { outline: 2px solid var(--dep); outline-offset: -2px; }
+.p-file { display: grid; gap: 2px; min-width: 0; }
+.p-file b { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.p-file span { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; }
+.p-about { font-size: 14px; min-width: 0; }
+.p-side { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .p-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 1260px) { .board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1060px) {
+  .layout { grid-template-columns: 1fr; }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel {
+    position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; top: auto; max-height: 52vh; overflow: auto;
+    border-radius: 14px 14px 0 0; padding-top: 14px; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .panel.idle { display: none; }
+  .panel-close { display: block; justify-self: end; font: inherit; font-size: 13px; background: var(--soft); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  body.sheet-open { padding-bottom: 52vh; }
+}
+@media (max-width: 620px) { .board { grid-template-columns: 1fr; } h1 { font-size: 22px; } }
+@media (prefers-reduced-motion: reduce) { .doc { transition: none; } .doc:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bản đồ tài liệu ReconOS</h1>
+      <p class="sub">41 file, 8 nhóm theo thứ tự đọc. Chọn một file để xem tài liệu liên quan.</p>
+    </div>
+    <div class="legend" id="legend" aria-label="Chú thích">
+      <span><i class="swatch sw-dep"></i>Tiền đề</span>
+      <span><i class="swatch sw-used"></i>Kế thừa</span>
+      <span><i class="swatch sw-sync"></i>Phạm vi ảnh hưởng</span>
+      <span><b class="tag">ADR</b><b class="tag">RULE</b><b class="tag">DATA</b>Loại file</span>
+      <span><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Mức thay đổi</span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Chế độ xem">
+    <button type="button" class="tab" role="tab" id="tab-ban-do" aria-controls="view-ban-do" data-view="ban-do">Bản đồ</button>
+    <button type="button" class="tab" role="tab" id="tab-muc-dich" aria-controls="view-muc-dich" data-view="muc-dich">Mục đích</button>
+  </div>
+
+  <div class="layout" id="view-ban-do" role="tabpanel" aria-labelledby="tab-ban-do">
+    <div class="board-wrap" id="board-wrap">
+      <svg id="links" aria-hidden="true"></svg>
+      <div class="board" id="board"></div>
+    </div>
+    <aside class="panel idle" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <div class="purpose" id="view-muc-dich" role="tabpanel" aria-labelledby="tab-muc-dich" hidden></div>
+</div>
+
+<script>
+// Everything runs inside one function so no name collides with globals of the host page.
+(() => {
+// Data block. To redraw after documents change, edit GROUPS and DOCS only; the drawing code stays fixed.
+// kind: doc | adr | rule | data. change: 3 high, 2 medium, 1 low (doc-sync.md).
+// deps: "tiền đề" (roadmap column Phụ thuộc). sync: "phạm vi ảnh hưởng" (doc-sync.md table Kích hoạt).
+const GROUPS = [
+  { id: "nen", name: "Nền tảng" },
+  { id: "adr", name: "Quyết định" },
+  { id: "kt", name: "Kiến trúc" },
+  { id: "dl", name: "Dữ liệu, tích hợp" },
+  { id: "bm", name: "Bảo mật, API" },
+  { id: "vh", name: "Vận hành" },
+  { id: "qt", name: "Quy tắc viết mã" },
+  { id: "hd", name: "Hướng dẫn Claude" },
+];
+const DOCS = [
+  { id: "overview", path: "docs/architecture/overview.md", label: "overview", group: "nen", kind: "doc", change: 1, deps: [], sync: [], status: "🟢 Xong", purpose: "Mục tiêu G1 đến G8, phạm vi", about: "Tầm nhìn, vấn đề cần giải quyết, mục tiêu G1 đến G8, phạm vi và tiêu chí thành công của ReconOS." },
+  { id: "glossary", path: "docs/appendix/glossary.md", label: "glossary", group: "nen", kind: "doc", change: 3, deps: ["overview"], sync: [], status: "🟢 Xong", purpose: "Thuật ngữ, tên trong mã, từ không dùng", about: "Định nghĩa thuật ngữ nghiệp vụ và tên dùng trong mã. Bảng Từ không dùng ghi các thay thế thuật ngữ đã chốt." },
+  { id: "references", path: "docs/appendix/references.md", label: "references", group: "nen", kind: "doc", change: 2, deps: [], sync: [], status: "🟢 Xong", purpose: "Nguồn tham khảo bên ngoài", about: "Nguồn tham khảo bên ngoài cho toàn bộ tài liệu: chuẩn, tài liệu công cụ, quy tắc viết." },
+  { id: "techdebt", path: "docs/tech-debt.md", label: "tech-debt", group: "nen", kind: "doc", change: 3, deps: [], sync: ["roadmap"], status: "🟢 Xong", purpose: "Nợ kỹ thuật, việc còn chờ", about: "Nợ kỹ thuật đã chấp nhận và việc còn chờ, kèm lý do, ảnh hưởng và hướng xử lý." },
+  { id: "roadmap", path: "docs/roadmap.md", label: "roadmap", group: "nen", kind: "doc", change: 2, deps: ["overview"], sync: ["overview", "fe-claude"], status: "🟢 Xong", purpose: "Thứ tự code và tính năng sau này", about: "13 đợt viết mã của phiên bản đầu và tính năng làm sau phiên bản đầu, theo giai đoạn và phụ thuộc." },
+  { id: "adr-db", path: "docs/decisions/adr-own-database.md", label: "adr-own-database", group: "adr", kind: "adr", change: 1, deps: ["overview"], sync: [], status: "🟢 Accepted", purpose: "Tự xây CSDL, bỏ BBRF", about: "Quyết định tự xây CSDL riêng thay cho BBRF, kèm lý do và hệ quả." },
+  { id: "adr-stack", path: "docs/decisions/adr-tech-stack.md", label: "adr-tech-stack", group: "adr", kind: "adr", change: 1, deps: ["overview"], sync: [], status: "🟢 Accepted", purpose: "Chọn FastAPI, Celery, PostgreSQL, Next.js", about: "Quyết định chọn FastAPI, Celery, PostgreSQL, Redis, MinIO, Next.js và lý do loại các phương án khác." },
+  { id: "adr-repo", path: "docs/decisions/adr-repo-structure.md", label: "adr-repo-structure", group: "adr", kind: "adr", change: 1, deps: ["adr-stack"], sync: [], status: "🟢 Accepted", purpose: "Monorepo, cây thư mục", about: "Quyết định tổ chức repo dạng monorepo, kèm cây thư mục đầy đủ." },
+  { id: "techstack", path: "docs/architecture/tech-stack.md", label: "tech-stack", group: "kt", kind: "doc", change: 2, deps: ["adr-stack"], sync: ["coding", "testing", "claude", "be-claude", "fe-claude", "wk-claude"], status: "🟢 Xong", purpose: "Công nghệ, phiên bản", about: "Danh sách công nghệ, phiên bản và vai trò của từng công nghệ." },
+  { id: "dirs", path: "docs/architecture/directory-structure.md", label: "directory-structure", group: "kt", kind: "doc", change: 2, deps: ["adr-repo", "techstack"], sync: ["be-claude", "fe-claude", "wk-claude"], status: "🟢 Xong", purpose: "Vai trò từng thư mục", about: "Vai trò của từng thư mục trong repo và quy tắc đặt mã mới." },
+  { id: "system", path: "docs/architecture/system.md", label: "system", group: "kt", kind: "doc", change: 2, deps: ["overview", "techstack"], sync: ["deployment", "scalability", "config", "flows"], status: "🟢 Xong", purpose: "Tiến trình, kho dữ liệu, kênh giao tiếp", about: "Các tiến trình, kho dữ liệu, kênh giao tiếp và ranh giới tin cậy. Số lần thử lại của task parse." },
+  { id: "modules", path: "docs/architecture/modules.md", label: "modules", group: "kt", kind: "doc", change: 2, deps: ["dirs", "system"], sync: ["depgraph", "dirs", "be-claude"], status: "🟢 Xong", purpose: "17 module backend, tool module", about: "17 module nghiệp vụ của backend và trách nhiệm từng module. Cấu tạo tool module và quy định dùng công cụ." },
+  { id: "depgraph", path: "docs/architecture/dependency-graph.md", label: "dependency-graph", group: "kt", kind: "doc", change: 2, deps: ["modules"], sync: [], status: "🟢 Xong", purpose: "Chiều gọi được phép giữa module", about: "Chiều phụ thuộc được phép giữa các module backend và giữa các package trong repo." },
+  { id: "bizflow", path: "docs/architecture/business-flow.md", label: "business-flow", group: "kt", kind: "doc", change: 2, deps: ["modules"], sync: ["schema", "erd", "reqflow", "authz", "threat", "flows"], status: "🟢 Xong", purpose: "Luồng nghiệp vụ, vòng đời job, finding", about: "Chuỗi nghiệp vụ từ program đến báo cáo. Quy tắc so khớp scope, vòng đời job và vòng đời finding." },
+  { id: "reqflow", path: "docs/architecture/request-flow.md", label: "request-flow", group: "kt", kind: "doc", change: 2, deps: ["authn", "api"], sync: ["flows"], status: "🟢 Xong", purpose: "Các bước một request đi qua", about: "Các bước mà request HTTP, kết nối WebSocket và request của worker đi qua trong Backend API." },
+  { id: "flows", path: "docs/system-flows.html", label: "system-flows.html", group: "kt", kind: "doc", change: 2, deps: ["system", "reqflow", "bizflow", "extsvc", "authn"], sync: [], status: "🟢 Xong", purpose: "Sơ đồ kiến trúc, luồng request", about: "Sơ đồ kiến trúc theo vùng tin cậy, luồng request chung và sơ đồ tuần tự của từng tính năng." },
+  { id: "database", path: "docs/data/database.md", label: "database", group: "dl", kind: "doc", change: 1, deps: ["bizflow"], sync: ["config"], status: "🟢 Xong", purpose: "Quy ước lưu PostgreSQL, MinIO", about: "Quy ước lưu dữ liệu trong PostgreSQL và MinIO: output thô, liên kết tài sản, khử trùng lặp, xóa, index, migration, nơi lưu log." },
+  { id: "schema", path: "docs/data/schema.md", label: "schema", group: "dl", kind: "doc", change: 3, deps: ["bizflow"], sync: ["erd", "openapi", "modules"], status: "🟢 Xong", purpose: "33 bảng, giá trị liệt kê", about: "Mô tả 33 bảng: bảng lưu gì, module nào sở hữu, giá trị liệt kê, ràng buộc duy nhất." },
+  { id: "erd", path: "docs/data/erd.mermaid", label: "erd.mermaid", group: "dl", kind: "data", change: 3, deps: ["schema"], sync: [], status: "Theo schema", purpose: "ERD đầy đủ cột, quan hệ", about: "Sơ đồ quan hệ thực thể đầy đủ cột và khóa của 33 bảng, viết bằng Mermaid." },
+  { id: "extsvc", path: "docs/integrations/external-services.md", label: "external-services", group: "dl", kind: "doc", change: 2, deps: ["modules", "database"], sync: ["openapi", "system", "scalability", "be-claude", "wk-claude", "modules", "deployment", "patterns", "glossary", "flows"], status: "🟢 Xong", purpose: "Contract worker, công cụ, engine", about: "Contract giữa worker và backend: task, endpoint, upload output thô, heartbeat, hủy job. Cách runner gọi công cụ, engine và output thô của từng tool module." },
+  { id: "authn", path: "docs/security/authentication.md", label: "authentication", group: "bm", kind: "doc", change: 1, deps: ["system"], sync: ["security", "threat", "schema", "config", "flows"], status: "🟢 Xong", purpose: "Đăng nhập, phiên, token worker", about: "Xác thực tài khoản đăng nhập và worker: đăng nhập, phiên, chính sách mật khẩu, token worker." },
+  { id: "authz", path: "docs/security/authorization.md", label: "authorization", group: "bm", kind: "doc", change: 2, deps: ["modules", "authn"], sync: ["openapi", "threat"], status: "🟢 Xong", purpose: "Vai trò, ma trận quyền", about: "Ba vai trò, ma trận quyền, quy tắc hai người duyệt job khai thác và cách Backend API kiểm tra quyền." },
+  { id: "threat", path: "docs/security/threat-model.md", label: "threat-model", group: "bm", kind: "doc", change: 2, deps: ["system", "database", "authz"], sync: [], status: "🟢 Xong", purpose: "Mối đe dọa STRIDE, rủi ro tồn dư", about: "Đối tượng cần bảo vệ, mối đe dọa theo STRIDE, biện pháp giảm thiểu và rủi ro tồn dư đã chấp nhận." },
+  { id: "api", path: "docs/api/architecture.md", label: "api/architecture", group: "bm", kind: "doc", change: 3, deps: ["database", "authz"], sync: ["openapi", "authz", "extsvc"], status: "🟢 Xong", purpose: "Quy ước REST API, WebSocket", about: "Quy ước chung của REST API và WebSocket: URL, phân trang, lọc, lỗi RFC 9457, phiên bản, sự kiện realtime." },
+  { id: "openapi", path: "docs/api/openapi.yaml", label: "openapi.yaml", group: "bm", kind: "data", change: 3, deps: ["api"], sync: [], status: "Theo api/architecture", purpose: "Đặc tả mọi endpoint", about: "Đặc tả OpenAPI của toàn bộ endpoint: request, response, mã lỗi." },
+  { id: "config", path: "docs/ops/configuration.md", label: "configuration", group: "vh", kind: "doc", change: 3, deps: ["extsvc"], sync: ["schema", "deployment", "wk-claude"], status: "🟢 Xong", purpose: "Biến môi trường, ngưỡng vận hành", about: "Nguồn cấu hình, biến môi trường của từng tiến trình, ngưỡng vận hành sửa trên UI, nạp thông tin xác thực, xoay vòng khóa mã hóa." },
+  { id: "deployment", path: "docs/ops/deployment.md", label: "deployment", group: "vh", kind: "doc", change: 2, deps: ["system", "config"], sync: [], status: "🟢 Xong", purpose: "Triển khai, rollback, sao lưu", about: "Đóng gói image, cấu hình mạng, triển khai bản mới, rollback và sao lưu ở môi trường phát triển và production." },
+  { id: "perf", path: "docs/ops/performance.md", label: "performance", group: "vh", kind: "doc", change: 1, deps: ["database"], sync: [], status: "🟢 Xong", purpose: "Điểm tối ưu, cách đo", about: "Điểm tối ưu bắt buộc: truy vấn, ghi dữ liệu của parser, upload output thô, cache, realtime, frontend. Cách đo hiệu năng." },
+  { id: "scalability", path: "docs/ops/scalability.md", label: "scalability", group: "vh", kind: "doc", change: 1, deps: ["extsvc", "perf"], sync: [], status: "🟢 Xong", purpose: "Mở rộng tiến trình, kho dữ liệu", about: "Cách mở rộng ngang từng tiến trình và kho dữ liệu, điểm nghẽn dự kiến và thứ tự xử lý." },
+  { id: "coding", path: ".claude/rules/coding-convention.md", label: "coding-convention", group: "qt", kind: "rule", change: 1, deps: ["techstack", "dirs"], sync: [], status: "🟢 Xong", purpose: "Đặt tên, lint, type hint", about: "Quy ước đặt tên, format, lint, type hint và comment cho Python và TypeScript." },
+  { id: "patterns", path: ".claude/rules/design-patterns.md", label: "design-patterns", group: "qt", kind: "rule", change: 1, deps: ["modules"], sync: [], status: "🟢 Xong", purpose: "Router, service, plugin, chống trùng", about: "Mẫu thiết kế bắt buộc: router và service, plugin parser và runner, contract dùng chung, chống xử lý trùng, lấy dữ liệu ở frontend." },
+  { id: "errors", path: ".claude/rules/error-handling.md", label: "error-handling", group: "qt", kind: "rule", change: 1, deps: ["api"], sync: [], status: "🟢 Xong", purpose: "AppError, RFC 9457, thử lại", about: "Cách ném và trả lỗi: AppError, response RFC 9457, timeout, thử lại, xử lý lỗi của worker." },
+  { id: "logging", path: ".claude/rules/logging.md", label: "logging", group: "qt", kind: "rule", change: 1, deps: ["threat"], sync: ["config"], status: "🟢 Xong", purpose: "structlog, cấp độ, che dữ liệu", about: "Định dạng structlog JSON, cấp độ log, nơi ghi, che dữ liệu nhạy cảm." },
+  { id: "testing", path: ".claude/rules/testing.md", label: "testing", group: "qt", kind: "rule", change: 1, deps: ["threat"], sync: [], status: "🟢 Xong", purpose: "Test bắt buộc, độ phủ", about: "Vị trí test, môi trường test, test bắt buộc theo loại mã, dữ liệu test và độ phủ." },
+  { id: "security", path: ".claude/rules/security.md", label: "security", group: "qt", kind: "rule", change: 1, deps: ["threat"], sync: [], status: "🟢 Xong", purpose: "Viết mã an toàn", about: "Quy tắc viết mã an toàn, mỗi quy tắc gắn với một mối đe dọa trong threat-model." },
+  { id: "vnwriting", path: ".claude/rules/vietnamese-writing.md", label: "vietnamese-writing", group: "hd", kind: "rule", change: 1, deps: [], sync: [], status: "🟢 Xong", purpose: "Văn phong tiếng Việt", about: "Quy tắc ngôn ngữ và văn phong khi viết tài liệu tiếng Việt. Luôn nạp." },
+  { id: "claude", path: "CLAUDE.md", label: "CLAUDE.md", group: "hd", kind: "rule", change: 2, deps: ["overview", "techstack", "dirs", "coding", "patterns", "errors", "logging", "testing", "security"], sync: ["be-claude", "fe-claude", "wk-claude"], status: "🟢 Xong", purpose: "Cấm, quy ước, lệnh cho toàn repo", about: "Mục Cấm, quy ước chung, chỉ mục tài liệu, lệnh build và test cho toàn repo." },
+  { id: "be-claude", path: "backend/CLAUDE.md", label: "backend/CLAUDE.md", group: "hd", kind: "rule", change: 2, deps: ["database", "api", "coding", "patterns", "errors", "logging", "testing", "security"], sync: [], status: "🟢 Xong", purpose: "Quy ước riêng backend", about: "Quy ước riêng của backend: module, tiến trình nền, parser, CSDL và API, lệnh chạy." },
+  { id: "fe-claude", path: "frontend/CLAUDE.md", label: "frontend/CLAUDE.md", group: "hd", kind: "rule", change: 2, deps: ["api", "coding", "patterns", "errors", "logging", "testing", "security"], sync: [], status: "🟢 Xong", purpose: "Quy ước riêng frontend", about: "Quy ước riêng của frontend: màn hình, dữ liệu, phần mockup không dựng, lệnh chạy." },
+  { id: "wk-claude", path: "workers/CLAUDE.md", label: "workers/CLAUDE.md", group: "hd", kind: "rule", change: 2, deps: ["extsvc", "coding", "patterns", "errors", "logging", "testing", "security"], sync: [], status: "🟢 Xong", purpose: "Quy ước riêng worker", about: "Quy ước riêng của worker: contract, runner, log, lệnh chạy." },
+  { id: "docsync", path: ".claude/rules/doc-sync.md", label: "doc-sync", group: "hd", kind: "rule", change: 1, deps: ["glossary", "claude"], sync: [], status: "🟢 Xong", purpose: "File phải sửa khi quyết định đổi", about: "Mức thay đổi của từng file và phạm vi ảnh hưởng khi có quyết định mới hoặc thay đổi. Luôn nạp." },
+];
+
+// ---- Drawing code: fixed encoding, see documentation.md section 9 ----
+const byId = Object.fromEntries(DOCS.map(d => [d.id, d]));
+const LEVEL = { 3: "Thay đổi nhiều", 2: "Thay đổi vừa", 1: "Ít thay đổi" };
+const TAG = { adr: "ADR", rule: "RULE", data: "DATA" };
+
+// Order inside a group: dependency tier, so files read earlier come first.
+const tier = {};
+const tierOf = id => tier[id] ?? (tier[id] = byId[id].deps.length ? 1 + Math.max(...byId[id].deps.map(tierOf)) : 0);
+DOCS.forEach(d => tierOf(d.id));
+
+const board = document.getElementById("board");
+const wrap = document.getElementById("board-wrap");
+const links = document.getElementById("links");
+const panel = document.getElementById("panel");
+const chipEl = {};
+
+GROUPS.forEach((g, i) => {
+  const docs = DOCS.filter(d => d.group === g.id).sort((a, b) => tier[a.id] - tier[b.id]);
+  const card = document.createElement("section");
+  card.className = "group";
+  card.innerHTML = `<div class="group-head"><span class="group-num">0${i + 1}</span><span class="group-name">${g.name}</span><span class="group-count">${docs.length} file</span></div><div class="docs"></div>`;
+  const list = card.querySelector(".docs");
+  docs.forEach(d => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "doc";
+    b.title = d.path;
+    b.innerHTML = `<span class="doc-top"><span class="doc-name">${d.label}</span>${TAG[d.kind] ? `<b class="tag">${TAG[d.kind]}</b>` : ""}<span class="bars" aria-label="${LEVEL[d.change]}">${[1, 2, 3].map(n => `<i class="${n <= d.change ? "on" : ""}"></i>`).join("")}</span></span><span class="doc-purpose">${d.purpose}</span>`;
+    b.addEventListener("click", () => select(d.id));
+    list.appendChild(b);
+    chipEl[d.id] = b;
+  });
+  board.appendChild(card);
+});
+
+function relations(id) {
+  const d = byId[id];
+  return {
+    dep: d.deps,
+    used: DOCS.filter(x => x.deps.includes(id)).map(x => x.id),
+    sync: d.sync,
+    syncedBy: DOCS.filter(x => x.sync.includes(id)).map(x => x.id),
+  };
+}
+
+let current = null;
+function select(id) {
+  current = current === id ? null : id;
+  render();
+}
+
+// A file with several roles takes one color: sync first, then dep, then used.
+function render() {
+  const r = current ? relations(current) : null;
+  board.classList.toggle("has-sel", !!current);
+  document.body.classList.toggle("sheet-open", !!current);
+  Object.entries(chipEl).forEach(([id, el]) => {
+    el.classList.remove("sel", "rel", "r-dep", "r-used", "r-sync");
+    if (!r) return;
+    if (id === current) el.classList.add("sel");
+    else if (r.sync.includes(id)) el.classList.add("rel", "r-sync");
+    else if (r.dep.includes(id)) el.classList.add("rel", "r-dep");
+    else if (r.used.includes(id)) el.classList.add("rel", "r-used");
+  });
+  drawLinks(r);
+  renderPanel(r);
+}
+
+function drawLinks(r) {
+  const box = wrap.getBoundingClientRect();
+  links.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+  links.innerHTML = `<defs>${["dep", "used", "sync"].map(k => `<marker id="m-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" style="fill:var(--${k})"/></marker>`).join("")}</defs>`;
+  if (!r) return;
+  const rect = id => {
+    const b = chipEl[id].getBoundingClientRect();
+    return { l: b.left - box.left, r: b.right - box.left, cx: (b.left + b.right) / 2 - box.left, cy: (b.top + b.bottom) / 2 - box.top };
+  };
+  // Arrow direction follows the relation: prerequisites point into the selected file, inheritors and impact point out of it.
+  const line = (from, to, kind) => {
+    const a = rect(from), b = rect(to);
+    let x1, x2, c1, c2;
+    if (b.cx > a.r) {
+      x1 = a.r; x2 = b.l - 2;
+      const dx = Math.max(40, (x2 - x1) * 0.45); c1 = x1 + dx; c2 = x2 - dx;
+    } else if (b.cx < a.l) {
+      x1 = a.l; x2 = b.r + 2;
+      const dx = Math.max(40, (x1 - x2) * 0.45); c1 = x1 - dx; c2 = x2 + dx;
+    } else {
+      // Same column: loop out to the right side.
+      x1 = a.r; x2 = b.r + 2; c1 = x1 + 46; c2 = x2 + 46;
+    }
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", `M${x1},${a.cy} C${c1},${a.cy} ${c2},${b.cy} ${x2},${b.cy}`);
+    p.setAttribute("class", "l-" + kind);
+    p.setAttribute("marker-end", `url(#m-${kind})`);
+    links.appendChild(p);
+  };
+  r.dep.filter(id => !r.sync.includes(id)).forEach(id => line(id, current, "dep"));
+  r.used.filter(id => !r.sync.includes(id)).forEach(id => line(current, id, "used"));
+  r.sync.forEach(id => line(current, id, "sync"));
+}
+
+function chips(ids) {
+  return ids.length ? `<div class="p-list">${ids.map(i => `<button type="button" class="p-chip" data-id="${i}">${byId[i].label}</button>`).join("")}</div>` : `<span class="p-none">Không có</span>`;
+}
+function renderPanel(r) {
+  panel.classList.toggle("idle", !current);
+  if (!current) {
+    panel.innerHTML = `<p class="p-empty">Chọn một file để xem tiền đề, tài liệu kế thừa và phạm vi ảnh hưởng.</p>`;
+    return;
+  }
+  const d = byId[current];
+  const sec = (title, cls, ids) => `<div class="p-sec"><div class="p-title">${cls ? `<i class="swatch ${cls}"></i>` : ""}${title} · ${ids.length}</div>${chips(ids)}</div>`;
+  panel.innerHTML = `
+    <button type="button" class="panel-close" id="panel-close">Đóng</button>
+    <div style="display:grid;gap:6px">
+      <h2 class="p-name">${d.label}</h2>
+      <p class="p-path">${d.path}</p>
+      <div class="p-meta"><span>${GROUPS.find(g => g.id === d.group).name}</span><span>${LEVEL[d.change]}</span><span>${d.status}</span></div>
+    </div>
+    <p class="p-purpose">${d.purpose}.</p>
+    ${sec("Tiền đề", "sw-dep", r.dep)}
+    ${sec("Kế thừa", "sw-used", r.used)}
+    ${sec("Phạm vi ảnh hưởng", "sw-sync", r.sync)}
+    ${sec("Nguồn ảnh hưởng", "", r.syncedBy)}`;
+  panel.querySelectorAll(".p-chip").forEach(c => c.addEventListener("click", () => select(c.dataset.id)));
+  panel.querySelector("#panel-close").addEventListener("click", () => select(current));
+}
+
+// ---- Purpose view ----
+const purposeView = document.getElementById("view-muc-dich");
+GROUPS.forEach((g, i) => {
+  const docs = DOCS.filter(d => d.group === g.id).sort((a, b) => tier[a.id] - tier[b.id]);
+  const sec = document.createElement("section");
+  sec.className = "p-group";
+  sec.innerHTML = `<h2><span class="group-num">0${i + 1}</span>${g.name}<span class="group-count">${docs.length} file</span></h2>`;
+  docs.forEach(d => {
+    const row = document.createElement("div");
+    row.className = "p-row";
+    row.tabIndex = 0;
+    row.title = "Xem trên bản đồ";
+    row.innerHTML = `<div class="p-file"><b>${d.label}</b><span>${d.path}</span></div><div class="p-about">${d.about}</div><div class="p-side">${TAG[d.kind] ? `<b class="tag">${TAG[d.kind]}</b>` : ""}<span class="bars" aria-label="${LEVEL[d.change]}">${[1, 2, 3].map(n => `<i class="${n <= d.change ? "on" : ""}"></i>`).join("")}</span>${d.status}</div>`;
+    const go = () => { current = d.id; showView("ban-do"); render(); chipEl[d.id].scrollIntoView({ block: "center", behavior: "smooth" }); };
+    row.addEventListener("click", go);
+    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    sec.appendChild(row);
+  });
+  purposeView.appendChild(sec);
+});
+
+// ---- Tabs, synced with the URL hash ----
+const VIEWS = ["ban-do", "muc-dich"];
+function showView(view) {
+  if (!VIEWS.includes(view)) view = "ban-do";
+  VIEWS.forEach(v => {
+    document.getElementById("view-" + v).hidden = v !== view;
+    document.getElementById("tab-" + v).setAttribute("aria-selected", String(v === view));
+    document.getElementById("tab-" + v).tabIndex = v === view ? 0 : -1;
+  });
+  document.getElementById("legend").style.visibility = view === "ban-do" ? "visible" : "hidden";
+  document.body.classList.toggle("sheet-open", view === "ban-do" && !!current);
+  if (location.hash.slice(1) !== view) { try { history.replaceState(null, "", "#" + view); } catch (e) { /* blocked inside some frames */ } }
+}
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => showView(t.dataset.view));
+  t.addEventListener("keydown", e => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const next = VIEWS[(VIEWS.indexOf(t.dataset.view) + 1) % VIEWS.length];
+    showView(next);
+    document.getElementById("tab-" + next).focus();
+  });
+});
+window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
+showView(location.hash.slice(1));
+
+new ResizeObserver(() => drawLinks(current ? relations(current) : null)).observe(wrap);
+if (document.fonts) document.fonts.ready.then(() => drawLinks(current ? relations(current) : null));
+render();
+})();
+</script>

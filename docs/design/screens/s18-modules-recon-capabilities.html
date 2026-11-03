@@ -1,0 +1,1121 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "fg": "#e7ebf0", "crit-bd": "#5c2330", "on-background": "#d9e3f2", "ring": "#22d3ee66", "on-primary-fixed-variant": "#004e5a", "info-soft": "#101c33", "neutral-soft": "#1c2028", "good-bd": "#1f4f33", "surface-container": "#17202b", "on-error-container": "#ffdad6", "surface-container-high": "#212b36", "accent-soft": "#0c2b33", "bg": "#0a0c10", "secondary": "#c4c6d1", "tertiary-fixed": "#7ef9c0", "primary-fixed": "#a2eeff", "on-secondary-fixed": "#181b23", "on-secondary-container": "#b3b5bf", "surface-2": "#1b1e26", "asset-service": "#db2777", "primary": "#8aebff", "accent-ink": "#06222b", "surface-container-lowest": "#050f19", "on-surface": "#d9e3f2", "on-tertiary-fixed": "#002113", "asset-domain": "#0ea371", "warn": "#fbbf24", "primary-container": "#22d3ee", "border": "#282d38", "fg-muted": "#9aa4b2", "tertiary-fixed-dim": "#60dda6", "surface-tint": "#2fd9f4", "inverse-on-surface": "#28313d", "on-secondary": "#2d3039", "inverse-surface": "#d9e3f2", "good": "#4ade80", "error-container": "#93000a", "secondary-fixed-dim": "#c4c6d1", "fg-faint": "#6a7483", "crit-soft": "#2c1118", "secondary-fixed": "#e0e2ed", "asset-url": "#3b82f6", "on-primary-container": "#005763", "on-tertiary": "#003824", "secondary-container": "#444750", "surface": "#14161c", "crit": "#fb7185", "outline-variant": "#3c494c", "info": "#60a5fa", "on-tertiary-container": "#005b3d", "on-primary-fixed": "#001f25", "neutral-bd": "#333a46", "tertiary-container": "#5ad7a0", "surface-variant": "#2c3641", "on-secondary-fixed-variant": "#444750", "border-strong": "#3a4150", "surface-3": "#232733", "info-bd": "#1f3a63", "outline": "#859397", "on-surface-variant": "#bbc9cd", "warn-bd": "#5a4414", "warn-soft": "#2c2109", "surface-container-highest": "#2c3641", "on-error": "#690005", "surface-container-low": "#131c27", "background": "#0a141e", "on-tertiary-fixed-variant": "#005236", "on-primary": "#00363e", "inverse-primary": "#006877", "error": "#ffb4ab", "surface-dim": "#0a141e", "asset-ip": "#d97706", "good-soft": "#102a1a", "accent-soft-bd": "#1b4e5a", "tertiary": "#78f4bb", "accent-hover": "#5ee0f2", "surface-bright": "#303a46", "primary-fixed-dim": "#2fd9f4" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "gutter": "1rem", "margin": "1.5rem", "margin-mobile": "1rem", "space-md": "0.75rem", "space-xs": "0.25rem", "space-lg": "1.125rem", "gutter-dense": "0.75rem", "space-xl": "1.5rem" }, "fontFamily": { "body-default": ["IBM Plex Sans"], "stat-lg": ["IBM Plex Mono"], "body-code": ["IBM Plex Mono"], "label-caps": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"], "panel-title": ["IBM Plex Sans"], "caption": ["IBM Plex Sans"], "headline-lg": ["IBM Plex Sans"], "body-code-bold": ["IBM Plex Mono"] }, "fontSize": { "body-default": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "stat-lg": ["27px", { "lineHeight": "32px", "fontWeight": "600" }], "body-code": ["12.5px", { "lineHeight": "18px", "fontWeight": "400" }], "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" }], "headline-lg-mobile": ["18px", { "lineHeight": "24px", "fontWeight": "700" }], "panel-title": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }], "headline-lg": ["21px", { "lineHeight": "28px", "fontWeight": "700" }], "body-code-bold": ["12.5px", { "lineHeight": "18px", "fontWeight": "600" }] } } } };</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased selection:bg-primary-container selection:text-accent-ink"><aside class="fixed left-0 top-0 h-screen w-60 bg-surface-container-lowest border-r border-border z-40 flex flex-col justify-between select-none"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-14 px-gutter flex items-center justify-between border-b border-border"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-accent-ink text-[18px]">terminal</span></div><div class="flex items-baseline font-panel-title text-panel-title"><span class="text-fg font-bold tracking-tight">Recon</span><span class="text-primary font-bold tracking-tight">OS</span></div></div><span class="px-1.5 py-0.5 rounded text-[10px] font-body-code text-fg-muted bg-surface-container border border-border">v2.4</span></div><nav class="px-space-sm py-space-md space-y-space-md flex-1" data-active-classes="bg-surface-3 text-primary border-l-2 border-primary font-semibold"><div class="space-y-1"><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">grid_view</span><span class="">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="monitor" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">show_chart</span><span>Monitor</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="domains" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">language</span><span>Domains</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-fg-muted bg-surface-2 border border-border">64</span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="screenshots" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">photo_camera</span><span>Screenshots</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="programs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">folder</span><span>Programs</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="findings" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">bug_report</span><span>Findings</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-crit bg-crit-soft border border-crit-bd">29</span></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint">Operations</div><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="staging-queue" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">dns</span><span>Staging Queue</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-warn bg-warn-soft border border-warn-bd">12</span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="manage" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">tune</span><span>Manage</span></div></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint">Admin</div><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="users" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">group</span><span>Users</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="component-library" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">widgets</span><span>Component Library</span></div></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint flex items-center justify-between"><span>System</span><span class="text-[9px] px-1 rounded bg-crit-soft text-crit font-body-code border border-crit-bd font-semibold">ROOT</span></div><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="health-and-tools" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">vital_signs</span><span>Health &amp; Tools</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="osmedeus" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">radar</span><span>Osmedeus</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="vigolium" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">security</span><span>Vigolium</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-1.5 rounded border border-primary/50 bg-accent-soft/40 text-primary font-semibold transition-colors" data-path="modules" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">extension</span><span>Modules</span></div><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span></a></div></nav></div><div class="p-space-sm border-t border-border bg-surface-container-lowest"><div class="flex items-center justify-between p-2 rounded bg-surface border border-border"><div class="flex items-center gap-2"><div class="relative w-7 h-7 rounded bg-surface-2 border border-border flex items-center justify-center"><span class="material-symbols-outlined text-fg-muted text-[16px]">terminal</span><div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-good border border-surface"></div></div><div class="flex flex-col"><span class="font-body-code-bold text-body-code-bold text-fg leading-none">operator_01</span><span class="text-[10px] text-fg-faint leading-tight mt-0.5">Lead SecOps</span></div></div><button class="text-fg-faint hover:text-crit p-1 rounded hover:bg-surface-2 transition-colors" title="Log out" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></div></aside><div class="pl-60 min-h-screen flex flex-col bg-bg"><header class="fixed top-0 left-60 right-0 h-14 bg-surface border-b border-border z-30 flex items-center justify-between px-gutter"><div class="flex items-center gap-gutter"><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><nav class="hidden sm:flex items-center gap-2 text-caption font-caption text-fg-faint"><span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span><span class="text-[10px]">&gt;</span><span class="hover:text-fg cursor-pointer transition-colors">System</span><span class="text-[10px]">&gt;</span><span class="text-fg font-semibold">Console</span></nav></div><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center gap-2 bg-surface-2 border border-border rounded px-space-sm py-1 w-72 text-fg-faint hover:border-border-strong focus-within:border-primary focus-within:ring-1 focus-within:ring-ring transition-all cursor-text"><span class="material-symbols-outlined text-[17px] text-fg-muted">search</span><span class="font-body-code text-body-code flex-1">Search system, tools...</span><span class="px-1.5 py-0.2 rounded bg-surface text-[10px] font-body-code text-fg-muted border border-border">⌘K</span></div><a class="flex items-center gap-1.5 px-2 py-1 rounded bg-good-soft border border-good-bd text-good hover:bg-good-bd/30 transition-colors" data-path="health-and-tools" href="#"><span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span><span class="font-body-code text-[11px] font-semibold">Dispatcher online</span></a><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors relative" title="Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span></button><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle theme" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-gutter py-gutter-dense bg-bg flex-1"><div class="flex flex-col w-full">
+<!-- Top Command Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-lg">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-fg tracking-tight">Modules</h1>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-body-code text-primary bg-accent-soft border border-accent-soft-bd">CATALOG_V2</span>
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-body-code text-good bg-good-soft border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-ping"></span>
+          Dispatcher Synced
+        </span>
+</div>
+<p class="font-body-default text-body-default text-fg-muted">
+        Recon capabilities mapped to engines. Unified execution contract for Run Scan and Staging Queue.
+      </p>
+</div>
+<!-- Actions & View Switcher -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Grid / Table View Switcher -->
+<div class="flex items-center p-0.5 rounded bg-surface-2 border border-border">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded text-primary font-panel-title text-panel-title bg-surface shadow-sm border border-border-strong transition-all" id="view-grid-btn" title="Card Grid View" type="button">
+<span class="material-symbols-outlined text-[16px]">grid_view</span>
+<span class="text-[12px]">Grid</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded text-fg-muted hover:text-fg font-panel-title text-panel-title hover:bg-surface-3 transition-all" id="view-table-btn" title="Tabular Matrix" type="button">
+<span class="material-symbols-outlined text-[16px]">table_rows</span>
+<span class="text-[12px]">Table</span>
+</button>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface text-fg-muted hover:text-fg hover:bg-surface-2 border border-border-strong font-label-caps text-label-caps transition-colors" id="refresh-index-btn" type="button">
+<span class="material-symbols-outlined text-[15px] transition-transform duration-500" id="refresh-icon">sync</span>
+<span>Refresh Index</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary-container text-accent-ink hover:bg-accent-hover font-panel-title text-panel-title shadow-sm transition-colors" id="new-module-btn" type="button">
+<span class="material-symbols-outlined text-[17px]">add</span>
+<span>New Module</span>
+</button>
+</div>
+</div>
+<!-- Operational Metric Gallery (4 StatTiles) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md mb-space-lg">
+<!-- StatTile 1 -->
+<div class="relative bg-surface rounded p-space-md border border-border flex flex-col justify-between overflow-hidden group hover:border-border-strong transition-colors">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-primary"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">MODULES</span>
+<span class="material-symbols-outlined text-primary text-[18px]">terminal</span>
+</div>
+<div class="mt-space-sm flex items-baseline justify-between">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">9 <span class="text-caption text-fg-muted font-body-default">total</span></span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-body-code text-primary bg-accent-soft border border-accent-soft-bd">CORE SPEC</span>
+</div>
+<div class="mt-space-xs font-caption text-caption text-fg-muted flex items-center justify-between border-t border-border/50 pt-1.5">
+<span>Unified execution units</span>
+<span class="text-primary font-body-code text-[11px]">v2.4 Ready</span>
+</div>
+</div>
+<!-- StatTile 2 -->
+<div class="relative bg-surface rounded p-space-md border border-border flex flex-col justify-between overflow-hidden group hover:border-border-strong transition-colors">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-good"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">ENABLED</span>
+<span class="material-symbols-outlined text-good text-[18px]">check_circle</span>
+</div>
+<div class="mt-space-sm flex items-baseline justify-between">
+<span class="font-stat-lg text-stat-lg text-good tracking-tight">8 <span class="text-caption text-fg-muted font-body-default">active</span></span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-body-code text-crit bg-crit-soft border border-crit-bd">1 disabled</span>
+</div>
+<div class="mt-space-xs font-caption text-caption text-fg-muted flex items-center justify-between border-t border-border/50 pt-1.5">
+<span class="truncate">Disabled capability: oast</span>
+<span class="text-fg-faint font-body-code text-[11px]">88.8% ready</span>
+</div>
+</div>
+<!-- StatTile 3 -->
+<div class="relative bg-surface rounded p-space-md border border-border flex flex-col justify-between overflow-hidden group hover:border-border-strong transition-colors">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-info"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">ENGINES</span>
+<span class="material-symbols-outlined text-info text-[18px]">hub</span>
+</div>
+<div class="mt-space-sm flex items-baseline justify-between">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">4 <span class="text-caption text-fg-muted font-body-default">bound</span></span>
+<div class="flex -space-x-1">
+<span class="w-4 h-4 rounded-full bg-surface-3 border border-border flex items-center justify-center text-[9px] text-info font-bold" title="Osmedeus">O</span>
+<span class="w-4 h-4 rounded-full bg-surface-3 border border-border flex items-center justify-center text-[9px] text-primary font-bold" title="Vigolium">V</span>
+<span class="w-4 h-4 rounded-full bg-surface-3 border border-border flex items-center justify-center text-[9px] text-warn font-bold" title="gowitness">G</span>
+<span class="w-4 h-4 rounded-full bg-surface-3 border border-border flex items-center justify-center text-[9px] text-good font-bold" title="httpx">H</span>
+</div>
+</div>
+<div class="mt-space-xs font-caption text-caption text-fg-muted flex items-center justify-between border-t border-border/50 pt-1.5">
+<span class="truncate">Osmedeus, Vigolium, gowitness...</span>
+<a class="text-info hover:underline font-body-code text-[11px]" href="#">Bindings →</a>
+</div>
+</div>
+<!-- StatTile 4 -->
+<div class="relative bg-surface rounded p-space-md border border-border flex flex-col justify-between overflow-hidden group hover:border-border-strong transition-colors">
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-warn"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">JOBS (24H)</span>
+<span class="material-symbols-outlined text-warn text-[18px]">dynamic_feed</span>
+</div>
+<div class="mt-space-sm flex items-baseline justify-between">
+<span class="font-stat-lg text-stat-lg text-warn tracking-tight">1,420 <span class="text-caption text-fg-muted font-body-default">run</span></span>
+<span class="text-[11px] font-body-code text-good flex items-center">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>14.2%
+        </span>
+</div>
+<div class="mt-space-xs font-caption text-caption text-fg-muted flex items-center justify-between border-t border-border/50 pt-1.5">
+<a class="text-primary hover:underline flex items-center gap-1 font-body-code text-[11px]" href="#">
+<span>Inspect S10 Staging</span>
+<span class="material-symbols-outlined text-[12px]">open_in_new</span>
+</a>
+<span class="text-fg-faint font-body-code text-[11px]">0 stalled</span>
+</div>
+</div>
+</div>
+<!-- Operational Filter Toolbar -->
+<div class="bg-surface rounded border border-border p-space-md mb-space-lg flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-space-md">
+<!-- Left: Search and Phase Pills -->
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-space-md flex-1">
+<!-- Search Input -->
+<div class="relative min-w-[260px] max-w-md">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-faint text-[17px]">filter_alt</span>
+<input class="w-full bg-surface-2 border border-border-strong rounded pl-8 pr-8 py-1.5 font-body-code text-body-code text-fg placeholder:text-fg-faint focus:border-primary focus:ring-1 focus:ring-ring focus:outline-none transition-all" id="module-search" placeholder="Filter modules, capabilities, engines..." type="text">
+<button class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg text-[14px]" id="clear-search">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+<!-- Segmented Phase Selector -->
+<div class="flex items-center bg-surface-2 p-0.5 rounded border border-border overflow-x-auto select-none" id="phase-filter-group">
+<button class="phase-btn px-2.5 py-1 rounded bg-surface text-primary border border-border-strong font-label-caps text-label-caps transition-all" data-phase="all">
+          All (9)
+        </button>
+<button class="phase-btn px-2.5 py-1 rounded text-fg-muted hover:text-fg hover:bg-surface-3 font-label-caps text-label-caps transition-all" data-phase="discovery">
+          Discovery (2)
+        </button>
+<button class="phase-btn px-2.5 py-1 rounded text-fg-muted hover:text-fg hover:bg-surface-3 font-label-caps text-label-caps transition-all" data-phase="enumeration">
+          Enumeration (5)
+        </button>
+<button class="phase-btn px-2.5 py-1 rounded text-fg-muted hover:text-fg hover:bg-surface-3 font-label-caps text-label-caps transition-all" data-phase="assessment">
+          Assessment (2)
+        </button>
+</div>
+</div>
+<!-- Right: Engine filter & Show Disabled Switch -->
+<div class="flex items-center justify-between md:justify-end gap-space-lg border-t xl:border-t-0 pt-2 xl:pt-0 border-border">
+<!-- Engine Dropdown Filter -->
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase hidden sm:inline">Engine:</span>
+<select class="bg-surface-2 border border-border-strong text-fg font-body-code text-[12px] rounded px-2.5 py-1.5 focus:border-primary focus:outline-none cursor-pointer" id="engine-select-filter">
+<option value="all">All Engines (4)</option>
+<option value="osmedeus">Osmedeus</option>
+<option value="vigolium">Vigolium Native</option>
+<option value="gowitness">gowitness</option>
+<option value="httpx">httpx / wappalyzer</option>
+</select>
+</div>
+<!-- Toggle Show Disabled -->
+<label class="flex items-center gap-2.5 cursor-pointer select-none">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase">Show Disabled</span>
+<div class="relative">
+<input checked="" class="sr-only peer" id="toggle-show-disabled" type="checkbox">
+<div class="w-8 h-4 bg-surface-2 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-secondary after:border-border after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</div>
+</label>
+</div>
+</div>
+<!-- Live Capability Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-space-md" id="module-cards-grid">
+<!-- CARD 1: Subdomain Enum -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="osmedeus vigolium" data-module-id="subdomain-enum" data-phase="discovery" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-info-soft border border-info-bd text-info flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-info"></span> Discovery
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">subdomain-enum</span>
+</div>
+<!-- Toggle -->
+<label class="relative inline-flex items-center cursor-pointer" title="Enable/Disable Capability">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold flex items-center gap-1.5">
+<span>Subdomain Enumeration</span>
+</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Horizontal &amp; vertical DNS brute/passive enumeration. Feeds unmapped apex targets.
+        </p>
+<!-- Engine Binding Specs -->
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-accent-soft border border-accent-soft-bd text-primary font-body-code text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">radar</span> Osmedeus (subfinder/amass)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">Vigolium discovery</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-asset-domain flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">language</span> BBRF domain
+            </span>
+</div>
+</div>
+<!-- Telemetry bar -->
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 18m ago
+          </span>
+<span class="font-body-code text-fg-muted">482 jobs today</span>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 2: DNS Resolve -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="osmedeus" data-module-id="dns-resolve" data-phase="discovery" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-info-soft border border-info-bd text-info flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-info"></span> Discovery
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">dns-resolve</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">DNS Resolve</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          High-throughput recursive record resolution, CNAME chains, wildcards identification.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-fg font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">dns</span> Osmedeus (dnsx)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">massdns native</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-fg flex items-center gap-1">
+<span class="text-asset-domain font-body-code text-[11px]">domain</span> / <span class="text-asset-ip font-body-code text-[11px]">IP (A/CNAME)</span>
+</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 22m ago
+          </span>
+<span class="font-body-code text-fg-muted">340 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 3: Port Scan -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="osmedeus" data-module-id="port-scan" data-phase="enumeration" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-secondary-container/40 border border-border-strong text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Enumeration
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">port-scan</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">Port Scan</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Fast syn-scan for top 100/1000 ports across CIDR pools and resolved endpoints.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-fg font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">router</span> Osmedeus (naabu)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">nmap (deep)</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-asset-service flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">electrical_services</span> BBRF service
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 1h ago
+          </span>
+<span class="font-body-code text-fg-muted">185 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 4: HTTP Probe -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="osmedeus vigolium" data-module-id="http-probe" data-phase="enumeration" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-secondary-container/40 border border-border-strong text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Enumeration
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">http-probe</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">HTTP Probe</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Live web service validation, title extraction, TLS certificate and redirect tracking.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-fg font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">http</span> Osmedeus (httpx)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">Vigolium probe</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-asset-url flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">link</span> BBRF url + HTTP meta
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 12m ago
+          </span>
+<span class="font-body-code text-fg-muted">512 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 5: Content Discovery -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="osmedeus vigolium" data-module-id="content-discovery" data-phase="enumeration" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-secondary-container/40 border border-border-strong text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Enumeration
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">content-discovery</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">Content Discovery</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Context-aware web directory &amp; parameter fuzzing with smart soft-404 heuristics.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-fg font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder_open</span> Osmedeus (ffuf)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">Vigolium discovery</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-asset-url flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder</span> BBRF url
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 3h ago
+          </span>
+<span class="font-body-code text-fg-muted">64 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 6: Screenshot -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="gowitness" data-module-id="screenshot" data-phase="enumeration" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-secondary-container/40 border border-border-strong text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Enumeration
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">screenshot</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">Screenshot Engine</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Headless Chrome capture of active web interfaces for visual inspection workflow.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-warn font-body-code text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span> gowitness
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-faint font-body-code">None (dedicated)</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-fg-muted flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">image</span> gowitness DB (capture)
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 5m ago
+          </span>
+<span class="font-body-code text-fg-muted">128 captures today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 7: Tech Detect -->
+<div class="module-card bg-surface border border-border hover:border-border-strong rounded p-space-lg flex flex-col justify-between transition-all duration-150" data-engine="httpx vigolium" data-module-id="tech-detect" data-phase="enumeration" data-status="enabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-secondary-container/40 border border-border-strong text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Enumeration
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">tech-detect</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">Tech Fingerprinting</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Framework, CMS, CDN, and backend fingerprinting via headers and hash signatures.
+        </p>
+<div class="space-y-2 mb-space-md bg-surface-2/60 p-2.5 rounded border border-border/80">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-good font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">code</span> httpx / wappalyzer
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">Vigolium</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-fg flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-asset-url">tag</span> url tech tags
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 2h ago
+          </span>
+<span class="font-body-code text-fg-muted">88 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-primary bg-accent-soft hover:bg-accent-soft-bd/40 border border-accent-soft-bd px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 8: Vuln Scan (Core Assessment - Featured) -->
+<div class="module-card bg-surface border-2 border-primary/40 hover:border-primary rounded p-space-lg flex flex-col justify-between transition-all duration-150 relative shadow-sm" data-engine="vigolium" data-module-id="vuln-scan" data-phase="assessment" data-status="enabled">
+<div class="absolute -top-2.5 right-4 px-2 py-0.2 rounded bg-primary text-accent-ink font-label-caps text-[9px] uppercase tracking-wider font-bold">
+        CORE ASSESSMENT
+      </div>
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-crit-soft border border-crit-bd text-crit flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span> Assessment
+            </span>
+<span class="font-body-code text-primary text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">vuln-scan</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold flex items-center gap-1.5">
+<span>Vulnerability Assessment</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">bolt</span>
+</h3>
+<p class="font-body-default text-[12px] text-fg-muted mt-0.5 mb-space-md">
+          Continuous signature &amp; AI-driven assessment engine across all discovered web parameters.
+        </p>
+<!-- Engine specs -->
+<div class="space-y-2 mb-space-md bg-accent-soft/30 p-2.5 rounded border border-accent-soft-bd">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-2 py-0.5 rounded bg-accent-soft border border-primary text-primary font-body-code-bold text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">security</span> Vigolium (native 334 + agentic)
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">nuclei runner</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-crit flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">bug_report</span> Findings (BBRF / PostgreSQL)
+            </span>
+</div>
+</div>
+<!-- Dependency Notice -->
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-2 border border-border text-[11px] font-body-code text-fg-muted mb-space-md">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="truncate">Requires Vigolium server (:9002) • healthy</span>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 4m ago
+          </span>
+<span class="font-body-code text-crit font-semibold">790 findings indexed</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">tune</span> Configure
+        </button>
+<button class="run-now-btn text-accent-ink bg-primary-container hover:bg-accent-hover px-2.5 py-1 rounded font-body-code text-[12px] font-semibold transition-colors flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Run now
+        </button>
+</div>
+</div>
+<!-- CARD 9: OAST / Interactsh (Disabled State) -->
+<div class="module-card bg-surface/50 border border-border/80 rounded p-space-lg flex flex-col justify-between transition-all duration-150 opacity-80 hover:opacity-100" data-engine="vigolium" data-module-id="oast" data-phase="assessment" data-status="disabled">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps uppercase bg-neutral-soft border border-neutral-bd text-fg-faint flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-fg-faint"></span> Assessment
+            </span>
+<span class="font-body-code text-fg-faint text-[12px] bg-surface-2 px-1.5 py-0.5 rounded border border-border">oast</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer capability-toggle" type="checkbox">
+<div class="w-7 h-3.5 bg-surface-2 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[2px] after:bg-secondary after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-container peer-checked:after:bg-accent-ink"></div>
+</label>
+</div>
+<h3 class="font-panel-title text-panel-title text-fg-muted font-semibold">OAST / Out-of-Band Listener</h3>
+<p class="font-body-default text-[12px] text-fg-faint mt-0.5 mb-space-md">
+          Out-of-band correlation server for blind SSRF, blind XSS, and async DNS exfiltration.
+        </p>
+<!-- Warning Tag -->
+<div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-warn-soft border border-warn-bd text-warn text-[11px] font-body-code mb-space-md">
+<span class="material-symbols-outlined text-[15px] shrink-0">warning</span>
+<span class="truncate">Disabled • External listener not configured</span>
+</div>
+<div class="space-y-2 mb-space-md bg-surface-2/40 p-2.5 rounded border border-border/50">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Primary Engine:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 border border-border-strong text-fg-muted font-body-code text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">tap_and_play</span> Vigolium OAST
+            </span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Alternative:</span>
+<span class="text-fg-muted font-body-code">interactsh</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-fg-faint font-label-caps uppercase">Target Output:</span>
+<span class="font-body-code text-fg-faint flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">radio</span> OAST interactions
+            </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption text-fg-faint border-t border-border pt-2 mb-space-md">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Idle (no listener)
+          </span>
+<span class="font-body-code text-fg-faint">0 jobs today</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-border">
+<button class="configure-btn text-fg-muted hover:text-fg hover:bg-surface-2 px-2.5 py-1 rounded font-body-code text-[12px] border border-transparent hover:border-border transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">settings</span> Configure
+        </button>
+<button class="enable-btn text-good hover:bg-good-soft px-2.5 py-1 rounded font-body-code text-[12px] border border-good-bd font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">power_settings_new</span> Enable
+        </button>
+</div>
+</div>
+</div>
+<!-- Tabular Matrix View (Hidden by default, toggled via grid/table buttons) -->
+<div class="hidden bg-surface rounded border border-border overflow-hidden" id="module-table-container">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-2 border-b border-border text-fg-muted font-label-caps text-label-caps uppercase h-9">
+<th class="py-2 px-space-md">Status</th>
+<th class="py-2 px-space-md">Scan Type</th>
+<th class="py-2 px-space-md">Capability</th>
+<th class="py-2 px-space-md">Phase</th>
+<th class="py-2 px-space-md">Primary Engine</th>
+<th class="py-2 px-space-md">Alternative</th>
+<th class="py-2 px-space-md">Output Contract</th>
+<th class="py-2 px-space-md">24h Jobs</th>
+<th class="py-2 px-space-md text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border font-body-default text-[12.5px]" id="table-rows">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">subdomain-enum</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">Subdomain Enum</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-info-soft text-info">Discovery</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg">Osmedeus (subfinder/amass)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">Vigolium discovery</td>
+<td class="py-2.5 px-space-md font-body-code text-asset-domain">BBRF domain</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">482</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">dns-resolve</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">DNS Resolve</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-info-soft text-info">Discovery</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg">Osmedeus (dnsx)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">massdns</td>
+<td class="py-2.5 px-space-md font-body-code text-asset-ip">BBRF domain/IP</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">340</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">port-scan</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">Port Scan</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-secondary-container/50 text-secondary">Enumeration</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg">Osmedeus (naabu)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">nmap (deep)</td>
+<td class="py-2.5 px-space-md font-body-code text-asset-service">BBRF service</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">185</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">http-probe</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">HTTP Probe</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-secondary-container/50 text-secondary">Enumeration</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg">Osmedeus (httpx)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">Vigolium probe</td>
+<td class="py-2.5 px-space-md font-body-code text-asset-url">BBRF url + HTTP meta</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">512</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">content-discovery</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">Content Discovery</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-secondary-container/50 text-secondary">Enumeration</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg">Osmedeus (ffuf)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">Vigolium discovery</td>
+<td class="py-2.5 px-space-md font-body-code text-asset-url">BBRF url</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">64</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">screenshot</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">Screenshot</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-secondary-container/50 text-secondary">Enumeration</span></td>
+<td class="py-2.5 px-space-md font-body-code text-warn">gowitness</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">-</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">gowitness DB</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">128</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary">tech-detect</td>
+<td class="py-2.5 px-space-md font-semibold text-fg">Tech Detect</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-secondary-container/50 text-secondary">Enumeration</span></td>
+<td class="py-2.5 px-space-md font-body-code text-good">httpx / wappalyzer</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">Vigolium</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">url tech tags</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">88</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px]" type="button">Run</button>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="bg-surface-container/30 hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-good inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-primary font-bold">vuln-scan</td>
+<td class="py-2.5 px-space-md font-semibold text-primary">Vuln Scan (Core)</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-crit-soft text-crit">Assessment</span></td>
+<td class="py-2.5 px-space-md font-body-code text-primary font-semibold">Vigolium (native 334)</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-muted">nuclei</td>
+<td class="py-2.5 px-space-md font-body-code text-crit">Findings (BBRF / DB)</td>
+<td class="py-2.5 px-space-md font-body-code text-crit font-semibold">790</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-primary hover:underline font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-primary hover:text-accent-hover font-body-code text-[11px] font-semibold" type="button">Run now</button>
+</td>
+</tr>
+<!-- Row 9 -->
+<tr class="opacity-60 hover:opacity-100 hover:bg-surface-3 transition-colors">
+<td class="py-2.5 px-space-md">
+<span class="w-2 h-2 rounded-full bg-fg-faint inline-block"></span>
+</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">oast</td>
+<td class="py-2.5 px-space-md font-semibold text-fg-muted">OAST / Interactsh</td>
+<td class="py-2.5 px-space-md"><span class="px-1.5 py-0.5 rounded text-[10px] font-label-caps bg-neutral-soft text-fg-faint">Assessment</span></td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">Vigolium OAST</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">interactsh</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">OAST interactions</td>
+<td class="py-2.5 px-space-md font-body-code text-fg-faint">0</td>
+<td class="py-2.5 px-space-md text-right">
+<button class="text-fg-muted hover:text-fg font-body-code text-[11px] mr-2" type="button">Configure</button>
+<button class="text-good hover:underline font-body-code text-[11px]" type="button">Enable</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Operational Cross-Links Bar (S15 / S16 / S17) -->
+<div class="mt-space-lg p-space-md rounded bg-surface border border-border flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-surface-2 border border-border flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">build</span>
+</div>
+<div>
+<span class="font-panel-title text-panel-title text-fg font-semibold">Engine &amp; Dependency Diagnostics</span>
+<p class="font-caption text-caption text-fg-faint">Ensure underlying binaries and RPC endpoints are healthy before dispatching batch scans.</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<a class="px-2.5 py-1.5 rounded bg-surface-2 hover:bg-surface-3 border border-border-strong text-fg-muted hover:text-fg font-body-code text-[12px] flex items-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[15px] text-good">check</span>
+<span>S15: Binary Dependencies (14/14)</span>
+</a>
+<a class="px-2.5 py-1.5 rounded bg-surface-2 hover:bg-surface-3 border border-border-strong text-fg-muted hover:text-fg font-body-code text-[12px] flex items-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[15px] text-primary">radar</span>
+<span>S16: Osmedeus Profiles</span>
+</a>
+<a class="px-2.5 py-1.5 rounded bg-surface-2 hover:bg-surface-3 border border-border-strong text-fg-muted hover:text-fg font-body-code text-[12px] flex items-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[15px] text-tertiary">security</span>
+<span>S17: Vigolium Settings (:9002)</span>
+</a>
+</div>
+</div>
+<!-- Modal: Run Scan Capability Modal (Interactive Quick Dispatch) -->
+<div class="fixed inset-0 z-50 hidden flex items-center justify-center p-space-md bg-bg/80 backdrop-blur-sm" id="run-module-modal">
+<div class="bg-surface border border-border-strong rounded-lg max-w-lg w-full p-space-lg shadow-2xl relative">
+<div class="flex items-center justify-between pb-space-sm border-b border-border mb-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">rocket_launch</span>
+<h2 class="font-panel-title text-panel-title text-fg font-bold" id="modal-module-title">Dispatch Capability</h2>
+</div>
+<button class="text-fg-faint hover:text-fg p-1 rounded hover:bg-surface-2" id="close-run-modal-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="space-y-space-md">
+<div>
+<label class="block font-label-caps text-label-caps uppercase text-fg-faint mb-1">Target Scope / Program</label>
+<select class="w-full bg-surface-2 border border-border-strong rounded px-3 py-1.5 text-fg font-body-code text-[12.5px] focus:border-primary focus:outline-none">
+<option>Acme Corp • wildcard-all (*.acmewidgets.com)</option>
+<option>Fintech Vault • scoped-apex (api.fintechvault.io)</option>
+<option>Global Logistics • core-infrastructure</option>
+</select>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps uppercase text-fg-faint mb-1">Target Engine Override</label>
+<div class="flex gap-2">
+<label class="flex-1 p-2 bg-surface-2 border border-primary/50 rounded flex items-center justify-between cursor-pointer">
+<span class="font-body-code text-[12px] text-fg" id="modal-primary-engine">Primary</span>
+<span class="text-[10px] font-label-caps text-primary uppercase font-bold">DEFAULT</span>
+</label>
+<label class="flex-1 p-2 bg-surface-2 border border-border rounded flex items-center justify-between cursor-pointer hover:border-border-strong">
+<span class="font-body-code text-[12px] text-fg-muted" id="modal-alt-engine">Alternative</span>
+<span class="text-[10px] font-label-caps text-fg-faint uppercase">OPTIONAL</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps uppercase text-fg-faint mb-1">Concurrency &amp; Rate Limit</label>
+<div class="grid grid-cols-2 gap-space-sm">
+<input class="bg-surface-2 border border-border-strong rounded px-3 py-1.5 font-body-code text-[12px] text-fg" type="text" value="Threads: 40">
+<input class="bg-surface-2 border border-border-strong rounded px-3 py-1.5 font-body-code text-[12px] text-fg" type="text" value="Rate: 150 req/sec">
+</div>
+</div>
+<div class="p-2.5 rounded bg-accent-soft/40 border border-accent-soft-bd text-[11px] font-body-code text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">info</span>
+<span>Job will be pushed directly to Staging Queue (S10) priority pool 0.</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm mt-space-lg pt-space-sm border-t border-border">
+<button class="px-3 py-1.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted font-body-code text-[12px]" id="cancel-run-modal-btn" type="button">
+          Cancel
+        </button>
+<button class="px-4 py-1.5 rounded bg-primary-container text-accent-ink hover:bg-accent-hover font-body-code text-[12px] font-semibold flex items-center gap-1.5" id="confirm-run-modal-btn" type="button">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span> Dispatch to Queue
+        </button>
+</div>
+</div>
+</div>
+<!-- Notification Toast -->
+<div class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-surface border border-good-bd text-good px-4 py-2.5 rounded shadow-xl flex items-center gap-2 font-body-code text-[12px]" id="module-toast">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+<span id="module-toast-msg">Capability config saved</span>
+</div>
+</div>
+<script>
+  (function initModulesCatalog() {
+    // DOM Elements
+    const searchInput = document.getElementById('module-search');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const phaseBtns = document.querySelectorAll('.phase-btn');
+    const engineFilter = document.getElementById('engine-select-filter');
+    const showDisabledToggle = document.getElementById('toggle-show-disabled');
+    const cards = document.querySelectorAll('.module-card');
+    const viewGridBtn = document.getElementById('view-grid-btn');
+    const viewTableBtn = document.getElementById('view-table-btn');
+    const cardsGrid = document.getElementById('module-cards-grid');
+    const tableContainer = document.getElementById('module-table-container');
+    const refreshBtn = document.getElementById('refresh-index-btn');
+    const refreshIcon = document.getElementById('refresh-icon');
+
+    const runModal = document.getElementById('run-module-modal');
+    const modalTitle = document.getElementById('modal-module-title');
+    const closeRunModalBtn = document.getElementById('close-run-modal-btn');
+    const cancelRunModalBtn = document.getElementById('cancel-run-modal-btn');
+    const confirmRunModalBtn = document.getElementById('confirm-run-modal-btn');
+    const toast = document.getElementById('module-toast');
+    const toastMsg = document.getElementById('module-toast-msg');
+
+    let currentPhase = 'all';
+
+    // Show Notification Toast
+    function showToast(message, isGood = true) {
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      if (isGood) {
+        toast.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 pointer-events-none bg-surface border border-good-bd text-good px-4 py-2.5 rounded shadow-xl flex items-center gap-2 font-body-code text-[12px] translate-y-0 opacity-100';
+      } else {
+        toast.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 pointer-events-none bg-surface border border-warn-bd text-warn px-4 py-2.5 rounded shadow-xl flex items-center gap-2 font-body-code text-[12px] translate-y-0 opacity-100';
+      }
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3200);
+    }
+
+    // Filter Logic
+    function applyFilters() {
+      const query = (searchInput.value || '').toLowerCase().trim();
+      const selectedEngine = engineFilter.value;
+      const showDisabled = showDisabledToggle.checked;
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const phase = card.getAttribute('data-phase');
+        const engine = card.getAttribute('data-engine') || '';
+        const status = card.getAttribute('data-status');
+
+        const matchesQuery = !query || text.includes(query);
+        const matchesPhase = (currentPhase === 'all') || (phase === currentPhase);
+        const matchesEngine = (selectedEngine === 'all') || engine.includes(selectedEngine);
+        const matchesDisabled = showDisabled ? true : (status === 'enabled');
+
+        if (matchesQuery && matchesPhase && matchesEngine && matchesDisabled) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      if (query.length > 0) {
+        clearSearchBtn.classList.remove('hidden');
+      } else {
+        clearSearchBtn.classList.add('hidden');
+      }
+    }
+
+    // Phase Selection
+    phaseBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        phaseBtns.forEach(b => {
+          b.className = 'phase-btn px-2.5 py-1 rounded text-fg-muted hover:text-fg hover:bg-surface-3 font-label-caps text-label-caps transition-all';
+        });
+        btn.className = 'phase-btn px-2.5 py-1 rounded bg-surface text-primary border border-border-strong font-label-caps text-label-caps transition-all';
+        currentPhase = btn.getAttribute('data-phase');
+        applyFilters();
+      });
+    });
+
+    // Inputs listeners
+    searchInput.addEventListener('input', applyFilters);
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      applyFilters();
+    });
+    engineFilter.addEventListener('change', applyFilters);
+    showDisabledToggle.addEventListener('change', applyFilters);
+
+    // View Switching
+    viewGridBtn.addEventListener('click', () => {
+      viewGridBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-primary font-panel-title text-panel-title bg-surface shadow-sm border border-border-strong transition-all';
+      viewTableBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-fg-muted hover:text-fg font-panel-title text-panel-title hover:bg-surface-3 transition-all';
+      cardsGrid.classList.remove('hidden');
+      tableContainer.classList.add('hidden');
+    });
+
+    viewTableBtn.addEventListener('click', () => {
+      viewTableBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-primary font-panel-title text-panel-title bg-surface shadow-sm border border-border-strong transition-all';
+      viewGridBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-fg-muted hover:text-fg font-panel-title text-panel-title hover:bg-surface-3 transition-all';
+      cardsGrid.classList.add('hidden');
+      tableContainer.classList.remove('hidden');
+    });
+
+    // Refresh Index action
+    refreshBtn.addEventListener('click', () => {
+      refreshIcon.classList.add('rotate-180');
+      setTimeout(() => {
+        refreshIcon.classList.remove('rotate-180');
+        showToast('Capabilities catalog refreshed (9 definitions loaded)');
+      }, 500);
+    });
+
+    // Capability Card Toggles (Enabled / Disabled)
+    document.querySelectorAll('.capability-toggle').forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const card = e.target.closest('.module-card');
+        const isChecked = e.target.checked;
+        const moduleId = card.getAttribute('data-module-id');
+        
+        if (isChecked) {
+          card.setAttribute('data-status', 'enabled');
+          card.classList.remove('opacity-80');
+          showToast(`Module '${moduleId}' enabled for scan orchestrations`);
+        } else {
+          card.setAttribute('data-status', 'disabled');
+          card.classList.add('opacity-80');
+          showToast(`Module '${moduleId}' disabled`, false);
+        }
+        applyFilters();
+      });
+    });
+
+    // Modal Triggers for 'Run now'
+    document.querySelectorAll('.run-now-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.module-card');
+        const modId = card.getAttribute('data-module-id');
+        const titleEl = card.querySelector('h3');
+        const title = titleEl ? titleEl.textContent.trim() : modId;
+        
+        modalTitle.textContent = `Dispatch Capability: ${title}`;
+        runModal.classList.remove('hidden');
+      });
+    });
+
+    function closeRunModal() {
+      runModal.classList.add('hidden');
+    }
+
+    closeRunModalBtn.addEventListener('click', closeRunModal);
+    cancelRunModalBtn.addEventListener('click', closeRunModal);
+    confirmRunModalBtn.addEventListener('click', () => {
+      closeRunModal();
+      showToast('Capability job dispatched to Staging Queue (S10)');
+    });
+
+    // Configure button interactions
+    document.querySelectorAll('.configure-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.module-card');
+        const modId = card.getAttribute('data-module-id');
+        showToast(`Opened parameter schema for '${modId}'`);
+      });
+    });
+
+    // Quick Enable button on card 9
+    document.querySelectorAll('.enable-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.module-card');
+        const toggle = card.querySelector('.capability-toggle');
+        if (toggle) {
+          toggle.checked = true;
+          toggle.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+
+  })();
+</script></main></div>
+
+</body></html>

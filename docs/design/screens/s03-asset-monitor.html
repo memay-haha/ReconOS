@@ -1,0 +1,1226 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0e14; }
+    ::-webkit-scrollbar-thumb { background: #282d38; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3c494c; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#0a141e",
+            "outline": "#859397",
+            "secondary-container": "#444750",
+            "primary": "#8aebff",
+            "warn-bd": "#5a4414",
+            "error": "#ffb4ab",
+            "surface-container-low": "#131c27",
+            "outline-variant": "#3c494c",
+            "fg-faint": "#6a7483",
+            "info-bd": "#1f3a63",
+            "surface-container-highest": "#2c3641",
+            "accent-soft": "#0c2b33",
+            "border": "#282d38",
+            "primary-fixed": "#a2eeff",
+            "info-soft": "#101c33",
+            "accent-ink": "#06222b",
+            "good-bd": "#1f4f33",
+            "asset-domain": "#0ea371",
+            "asset-service": "#db2777",
+            "warn-soft": "#2c2109",
+            "fg-muted": "#9aa4b2",
+            "secondary": "#c4c6d1",
+            "neutral-bd": "#333a46",
+            "on-surface": "#d9e3f2",
+            "good": "#4ade80",
+            "bg": "#0a0c10",
+            "surface-variant": "#2c3641",
+            "asset-ip": "#d97706",
+            "fg": "#e7ebf0",
+            "crit-soft": "#2c1118",
+            "ring": "#22d3ee66",
+            "crit-bd": "#5c2330",
+            "accent-soft-bd": "#1b4e5a",
+            "surface-3": "#232733",
+            "good-soft": "#102a1a",
+            "surface": "#14161c",
+            "warn": "#fbbf24",
+            "surface-container": "#17202b",
+            "tertiary": "#78f4bb",
+            "accent-hover": "#5ee0f2",
+            "crit": "#fb7185",
+            "info": "#60a5fa",
+            "primary-container": "#22d3ee",
+            "surface-bright": "#303a46",
+            "border-strong": "#3a4150",
+            "surface-2": "#1b1e26",
+            "asset-url": "#3b82f6"
+          },
+          fontFamily: {
+            "caption": ["IBM Plex Sans", "sans-serif"],
+            "stat-lg": ["IBM Plex Mono", "monospace"],
+            "label-caps": ["IBM Plex Sans", "sans-serif"],
+            "headline-lg": ["IBM Plex Sans", "sans-serif"],
+            "body-code-bold": ["IBM Plex Mono", "monospace"],
+            "body-code": ["IBM Plex Mono", "monospace"],
+            "body-default": ["IBM Plex Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-bg text-fg font-body-default text-[13px] antialiased select-none h-screen w-screen overflow-hidden flex">
+<!-- Fixed Sidebar (244px) -->
+<aside class="w-[244px] h-screen fixed left-0 top-0 bg-[#0c0e14] border-r border-[#1e2430] p-3 flex flex-col justify-between select-none z-30">
+  <div class="flex flex-col flex-1 min-h-0">
+    <!-- App Brand Header -->
+    <div class="h-10 px-1 flex items-center justify-between shrink-0 mb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded bg-[#22d3ee] text-[#06222b] font-bold font-headline-lg flex items-center justify-center text-sm shadow-sm">R</div>
+        <div class="flex items-center tracking-tight font-headline-lg text-[15px] font-bold leading-none">
+          <span class="text-[#e7ebf0]">Recon</span>
+          <span class="text-[#22d3ee] ml-0.5">OS</span>
+        </div>
+      </div>
+      <span class="font-mono text-[10px] text-[#64748b] border border-[#282d38] px-1.5 py-0.5 rounded bg-[#161d2b]">v2.4</span>
+    </div>
+
+    <!-- Navigation links -->
+    <nav class="flex-1 space-y-4 overflow-y-auto pr-0.5">
+      <!-- RECON Group -->
+      <div class="space-y-0.5">
+        <div class="px-2.5 py-1 font-label-caps text-[10px] text-fg-faint uppercase tracking-wider font-semibold">RECON</div>
+        <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150" href="/">
+          <span class="material-symbols-outlined text-[16px]">dashboard</span>
+          <span class="">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded bg-[#22d3ee]/10 border border-[#22d3ee]/40 text-[#22d3ee] font-medium transition-colors duration-150" href="/monitor" aria-current="page">
+          <span class="material-symbols-outlined text-[16px] text-[#22d3ee]">visibility</span>
+          <span class="">Monitor</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] ml-auto"></span>
+        </a>
+        <a href="/domains" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">language</span>
+          <span class="">Domains</span>
+          <span class="ml-auto font-mono text-[11px] px-1.5 py-0.2 rounded bg-[#161d2b] text-[#94a3b8]">64</span>
+        </a>
+        <a href="/screenshots" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">photo_camera</span>
+          <span class="">Screenshots</span>
+        </a>
+        <a href="/programs" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">folder</span>
+          <span class="">Programs</span>
+        </a>
+        <a href="/findings" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">bug_report</span>
+          <span class="">Findings</span>
+          <span class="ml-auto font-mono text-[11px] px-1.5 py-0.2 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/40 font-semibold">29</span>
+        </a>
+      </div>
+
+      <!-- OPERATIONS Group -->
+      <div class="space-y-0.5 pt-1">
+        <div class="px-2.5 py-1 font-label-caps text-[10px] text-fg-faint uppercase tracking-wider font-semibold">OPERATIONS</div>
+        <a href="/staging" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">rule</span>
+          <span class="">Staging Queue</span>
+          <span class="ml-auto font-mono text-[11px] px-1.5 py-0.2 rounded bg-[#451a03] text-[#fbbf24] font-semibold">12</span>
+        </a>
+        <a href="/manage" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">settings_input_component</span>
+          <span class="">Manage</span>
+        </a>
+      </div>
+
+      <!-- ADMIN Group -->
+      <div class="space-y-0.5 pt-1">
+        <div class="px-2.5 py-1 font-label-caps text-[10px] text-fg-faint uppercase tracking-wider font-semibold">ADMIN</div>
+        <a href="/admin/users" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">group</span>
+          <span class="">Users</span>
+        </a>
+        <a href="/admin/components" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">widgets</span>
+          <span class="">Component Library</span>
+        </a>
+      </div>
+
+      <!-- SYSTEM Group -->
+      <div class="space-y-0.5 pt-1">
+        <div class="px-2.5 py-1 flex items-center justify-between">
+          <span class="font-label-caps text-[10px] text-fg-faint uppercase tracking-wider font-semibold">SYSTEM</span>
+          <span class="font-mono text-[9px] font-bold uppercase text-[#f87171] bg-[#450a0a] border border-[#991b1b]/50 px-1 py-0.2 rounded">ROOT</span>
+        </div>
+        <a href="/system/health" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">health_and_safety</span>
+          <span class="">Health &amp; Tools</span>
+        </a>
+        <a href="/system/osmedeus" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">radar</span>
+          <span class="">Osmedeus</span>
+        </a>
+        <a href="/system/vigolium" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">shield</span>
+          <span class="">Vigolium</span>
+        </a>
+        <a href="/system/modules" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors duration-150">
+          <span class="material-symbols-outlined text-[16px]">extension</span>
+          <span class="">Modules</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- User Profile Chip Footer -->
+  <div class="mt-2 shrink-0">
+    <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#121620] border border-[#1e2738]">
+      <div class="flex items-center gap-2 overflow-hidden min-w-0">
+        <div class="relative shrink-0">
+          <div class="w-7 h-7 rounded bg-surface-3 flex items-center justify-center border border-border-strong text-primary">
+            <span class="material-symbols-outlined text-[16px]">terminal</span>
+          </div>
+          <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4ade80] ring-2 ring-[#121620]"></span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-mono text-[12px] text-white truncate font-medium">operator_01</span>
+          <span class="font-caption text-[10.5px] text-[#64748b] truncate">Lead SecOps</span>
+        </div>
+      </div>
+      <button class="p-1 text-fg-faint hover:text-crit transition-colors rounded hover:bg-surface-3 ml-1 shrink-0" title="Log out" type="button">
+        <span class="material-symbols-outlined text-[15px]">logout</span>
+      </button>
+    </div>
+  </div>
+</aside>
+<!-- Main View Area (Occupies remaining width 100%, 100vh flex column) -->
+<div class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden bg-bg pl-[244px]">
+<!-- Topbar (56px) -->
+<header class="h-14 bg-surface border-b border-border shrink-0 flex items-center justify-between px-4 z-20">
+<div class="flex items-center gap-3">
+<button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 border border-border transition-colors" title="Toggle Rail" type="button">
+<span class="material-symbols-outlined text-[18px]">menu</span>
+</button>
+<div class="flex items-center gap-1.5 text-fg-faint font-caption text-[11px]">
+<span class="hover:text-fg transition-colors">ReconOS</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="hover:text-fg transition-colors">Recon</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-fg font-medium">Operations Console</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative flex items-center w-72">
+<span class="material-symbols-outlined absolute left-2.5 text-fg-faint text-[16px] pointer-events-none">search</span>
+<input class="w-full h-8 pl-8 pr-12 bg-surface-2 border border-border rounded text-fg placeholder:text-fg-faint font-body-default text-xs focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search programs, domains… (⌘K)" readonly="" type="text">
+<kbd class="absolute right-2 font-body-code text-[10px] text-fg-faint border border-border px-1 py-0.2 rounded bg-surface">⌘K</kbd>
+</div>
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-good-soft border border-good-bd">
+<span class="w-2 h-2 rounded-full bg-good animate-ping duration-1000"></span>
+<span class="font-body-code text-[11px] text-good uppercase tracking-wider font-semibold">Dispatcher online</span>
+</div>
+<div class="h-4 w-px bg-border"></div>
+<div class="flex items-center gap-1">
+<button class="relative p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Telemetry Notifications" type="button">
+<span class="material-symbols-outlined text-[18px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-crit rounded-full ring-2 ring-surface"></span>
+</button>
+<button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Toggle Console Mode" type="button">
+<span class="material-symbols-outlined text-[18px]">dark_mode</span>
+</button>
+</div>
+<div class="h-4 w-px bg-border"></div>
+<div class="flex items-center pl-0.5">
+<img alt="Profile" class="w-7 h-7 rounded-full object-cover border border-border-strong" src="https://lh3.googleusercontent.com/aida/AEtjO1WBtVNn6knYSxuDZPa6oZP042_eh6hILVgSroShcMRViYAT5IHbnHqrQGSUHcK0CI_laPdY6VttZz9YUq7ZpwNMRmeemcnKYkJtwAKB0M-TOvcwmraDb_uN8UVNiPMpBPM42LEYyNQBR91RWUAvXfbMdb-Lq6T5hsXMjiY-XWpe5uMdIkn_0b5Zxh9LiqdCt5_9tXqWztERvWD1gN8iQr_1HXzRrMadMIPS-xehG5Wg-A">
+</div>
+</div>
+</header>
+<!-- Page Head & Filter Controls Section (Shrink 0) -->
+<div class="px-4 pt-3 pb-1 shrink-0 flex flex-col gap-2.5">
+<!-- Page Title & Actions -->
+<div class="flex flex-row items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<h1 class="font-headline-lg text-lg font-bold text-fg tracking-tight whitespace-nowrap">Asset Monitor</h1>
+<span class="px-2 py-0.5 rounded-full bg-accent-soft text-primary-container font-body-code text-[11px] uppercase tracking-wider font-semibold whitespace-nowrap">Active Scope</span>
+<span class="text-fg-faint text-xs hidden xl:inline border-l border-border pl-3 truncate">
+            Cross-query all discovered assets across programs with unified filters.
+          </span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<button class="flex items-center gap-1.5 px-3 h-8 rounded bg-surface hover:bg-surface-2 border border-border text-fg text-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px] text-fg-muted">filter_list</span>
+<span>Filters</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</button>
+<button class="flex items-center gap-1.5 px-3 h-8 rounded bg-surface hover:bg-surface-2 border border-border text-fg text-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px] text-fg-muted">download</span>
+<span>Export CSV</span>
+</button>
+</div>
+</div>
+<!-- Asset Class Tabs & Realtime status -->
+<div class="flex items-center justify-between border-b border-border">
+<nav aria-label="Asset Class Tabs" class="flex items-center gap-6 overflow-x-auto">
+<a class="relative py-2.5 px-0.5 font-medium text-primary-container flex items-center gap-1.5 text-xs whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[16px] text-asset-domain">language</span>
+<span>Domains</span>
+<span class="px-1.5 py-0.5 rounded bg-accent-soft text-primary-container font-body-code text-[11px] font-semibold">14,892</span>
+<span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-container"></span>
+</a>
+<a class="relative py-2.5 px-0.5 text-fg-muted hover:text-fg flex items-center gap-1.5 text-xs whitespace-nowrap transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px] text-asset-ip">router</span>
+<span>IPs</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[11px]">4,105</span>
+</a>
+<a class="relative py-2.5 px-0.5 text-fg-muted hover:text-fg flex items-center gap-1.5 text-xs whitespace-nowrap transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px] text-asset-url">link</span>
+<span>URLs</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[11px]">86,410</span>
+</a>
+<a class="relative py-2.5 px-0.5 text-fg-muted hover:text-fg flex items-center gap-1.5 text-xs whitespace-nowrap transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px] text-asset-service">dns</span>
+<span>Services</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted font-body-code text-[11px]">9,842</span>
+</a>
+</nav>
+<div class="hidden sm:flex items-center gap-1.5 text-fg-faint font-caption text-xs pb-0.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-good"></span>
+<span>Sync Realtime</span>
+</div>
+</div>
+<!-- Filter/Search Toolbar -->
+<div class="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+<div class="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+<div class="relative flex-1 min-w-[260px] max-w-md">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-fg-faint">search</span>
+<input class="w-full h-8 pl-8 pr-3 bg-surface-2 border border-border rounded text-fg placeholder:text-fg-faint font-body-code text-xs focus:outline-none focus:border-primary-container transition-colors" placeholder="Quick filter (e.g. *.corp.internal or 198.51.100.*)..." type="text" value="">
+</div>
+<div class="relative">
+<select class="h-8 pl-2.5 pr-7 bg-surface-2 border border-border rounded text-fg text-xs appearance-none focus:outline-none cursor-pointer">
+<option>All programs (24)</option>
+<option>uber-bb</option>
+<option>shopify-vdp</option>
+<option>internal-sec</option>
+<option>infra-ops</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[15px] text-fg-faint pointer-events-none">expand_more</span>
+</div>
+<div class="flex items-center p-0.5 rounded bg-surface-2 border border-border text-xs">
+<button class="px-2.5 py-0.5 rounded bg-surface-3 text-fg font-medium transition-colors" type="button">All</button>
+<button class="px-2.5 py-0.5 rounded text-fg-muted hover:text-fg transition-colors" type="button">Resolved</button>
+<button class="px-2.5 py-0.5 rounded text-fg-muted hover:text-fg transition-colors" type="button">Unresolved</button>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="font-body-code text-xs text-fg-faint bg-surface-2 border border-border px-2 py-1 rounded">14,892 records</span>
+<button class="p-1.5 text-fg-muted hover:text-fg rounded bg-surface border border-border hover:bg-surface-2 transition-colors" title="Customize columns" type="button">
+<span class="material-symbols-outlined text-[16px]">view_column</span>
+</button>
+</div>
+</div>
+<!-- Bulk Action Bar -->
+<div class="px-3 py-1.5 bg-accent-soft border border-accent-soft-bd rounded flex items-center justify-between gap-2" id="bulkActionBar">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary-container text-[16px]">check_circle</span>
+<span class="text-xs font-medium text-primary-container whitespace-nowrap">3 assets selected</span>
+</div>
+<div class="h-3.5 w-px bg-accent-soft-bd"></div>
+<div class="flex items-center gap-1.5">
+<button class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface hover:bg-surface-2 text-fg text-xs font-medium border border-border transition-colors whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[13px] text-fg-muted">content_copy</span>
+<span>Copy Names</span>
+</button>
+<button class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface hover:bg-surface-2 text-fg text-xs font-medium border border-border transition-colors whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[13px] text-fg-muted">file_download</span>
+<span>Export Selected</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-0.5 rounded bg-primary-container hover:bg-accent-hover text-accent-ink text-xs font-semibold transition-colors whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[13px]">play_arrow</span>
+<span>Stage Scan Jobs</span>
+</button>
+</div>
+</div>
+<button class="flex items-center gap-1 text-fg-muted hover:text-crit text-xs px-1.5 py-0.5 rounded hover:bg-surface transition-colors whitespace-nowrap" id="clearSelectionBtn" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+<span>Clear Selection</span>
+</button>
+</div>
+</div>
+<!-- DataTable Card Container (flex-1 min-h-0 flex flex-col bg-[#14161c] border border-[#282d38] rounded-lg overflow-hidden m-4 mt-2) -->
+<div class="flex-1 min-h-0 flex flex-col bg-[#14161c] border border-[#282d38] rounded-lg overflow-hidden m-4 mt-2">
+<!-- Scrollable Table Viewport -->
+<div class="overflow-y-auto overflow-x-auto flex-1 min-h-0">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="h-8 bg-[#1b1e26] border-b border-[#282d38] text-[11px] font-semibold text-[#9aa4b2] uppercase tracking-wider select-none sticky top-0 z-20 shadow-sm">
+<th class="w-10 px-3 py-2 text-center whitespace-nowrap bg-[#1b1e26]">
+<input checked="" class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">DOMAIN</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">PROGRAM</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">DNS STATUS</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">IP RESOLUTION</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">ASN / ORG</th>
+<th class="px-3.5 py-2 font-semibold text-right whitespace-nowrap bg-[#1b1e26]">URLS</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">OPEN PORTS</th>
+<th class="px-3.5 py-2 font-semibold whitespace-nowrap bg-[#1b1e26]">LAST SCAN</th>
+<th class="px-3.5 py-2 font-semibold text-right whitespace-nowrap bg-[#1b1e26]">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#282d38]/40 text-xs font-body-default">
+<!-- Row 1: Selected -->
+<tr class="bg-surface-3/50 hover:bg-surface-3 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input checked="" class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="auth.prod.example.com">auth.prod.example.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">
+<span>198.51.100.24</span>
+<span class="text-fg-faint text-[11px] ml-1">(2 IPs)</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">182</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">6 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">12m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 2: Selected -->
+<tr class="bg-surface-3/50 hover:bg-surface-3 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input checked="" class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="api-gateway.edge.shopify-vdp.test">api-gateway.edge.shopify-vdp.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">
+<span>198.51.100.45</span>
+<span class="text-fg-faint text-[11px] ml-1">(4 IPs)</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS15169 GOOGLE</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">941</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">4 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">45m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 3: Selected -->
+<tr class="bg-surface-3/50 hover:bg-surface-3 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input checked="" class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="legacy-staging.corp.abc.test">legacy-staging.corp.abc.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-crit-soft text-crit font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>
+<span>NXDOMAIN</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint text-right whitespace-nowrap">0</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-faint">0</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">1d ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="vpn-gw02.colo.test.local">vpn-gw02.colo.test.local</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">infra-ops</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn-soft text-warn font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+<span>timeout</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">192.0.2.14</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS209 CENTURYLINK</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">12</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">3 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">3h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="fleet-telemetry.uber-bb.example.com">fleet-telemetry.uber-bb.example.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.89</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">2,410</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">19 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">10m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="cdn-static-assets.global.abc.test">cdn-static-assets.global.abc.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">104.16.124.96</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">5,820</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">2 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">18m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="checkout-sandbox.dev.example.com">checkout-sandbox.dev.example.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.99</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">64</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">5 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">22m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="old-jira-migration.test.local">old-jira-migration.test.local</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">infra-ops</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-crit-soft text-crit font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>
+<span>NXDOMAIN</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint text-right whitespace-nowrap">0</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-faint">0</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">2d ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 9 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="k8s-ingress.emea.example.com">k8s-ingress.emea.example.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.120</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">319</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">8 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">1h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 10 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="grafana.internal.monitor.abc.test">grafana.internal.monitor.abc.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">10.14.88.52</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">RFC1918 PRIVATE</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">12</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">3 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">1h 14m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 11 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="identity.gitlab-core.org">identity.gitlab-core.org</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">172.67.140.22</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">84</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">4 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">2h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 12 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="checkout-v2.stripe-prod.net">checkout-v2.stripe-prod.net</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">54.239.28.85</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">430</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">3 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">2h 30m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 13 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="sftp-transfer.internal.corp">sftp-transfer.internal.corp</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">infra-ops</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn-soft text-warn font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+<span>timeout</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">192.168.10.42</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">RFC1918 PRIVATE</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">3</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">1 port</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">3h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 14 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="payments-vault.stripe-prod.net">payments-vault.stripe-prod.net</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">52.84.162.11</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">19</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">2 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">3h 40m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 15 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="elastic-search.data.uber-bb.com">elastic-search.data.uber-bb.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.180</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">115</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">7 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">4h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 16 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="admin-console.fintech-test.internal">admin-console.fintech-test.internal</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-crit-soft text-crit font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>
+<span>NXDOMAIN</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">—</td>
+<td class="px-3.5 py-2 font-body-code text-fg-faint text-right whitespace-nowrap">0</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-faint">0</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">4h 15m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 17 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="auth0-tenant.sso.shopify-vdp.com">auth0-tenant.sso.shopify-vdp.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.201</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">34</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">3 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">5h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 18 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="telemetry-ingest.metrics.example.com">telemetry-ingest.metrics.example.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.112</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">512</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">11 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">5h 20m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 19 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="edge-waf-01.cloudflare.uber-bb.com">edge-waf-01.cloudflare.uber-bb.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">172.64.80.1</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">1,890</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">4 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">5h 45m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 20 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="mail-relay.internal-sec.test">mail-relay.internal-sec.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">192.0.2.77</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS209 CENTURYLINK</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">2</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">2 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">6h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 21 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="api-v2.external.shopify-vdp.com">api-v2.external.shopify-vdp.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.32</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS15169 GOOGLE</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">780</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">5 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">6h 15m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 22 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="staging-bastion.infra-ops.net">staging-bastion.infra-ops.net</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">infra-ops</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn-soft text-warn font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+<span>timeout</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.220</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS209 CENTURYLINK</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">1</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">1 port</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">6h 30m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 23 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="billing-gateway.stripe-prod.com">billing-gateway.stripe-prod.com</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">shopify-vdp</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">54.239.30.12</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS16509 AMAZON</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">140</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">3 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">7h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 24 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="consul-cluster.internal.abc.test">consul-cluster.internal.abc.test</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">internal-sec</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">10.14.90.15</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">RFC1918 PRIVATE</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">8</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">6 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">7h 10m ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+<!-- Row 25 -->
+<tr class="hover:bg-surface-2/60 transition-colors duration-100">
+<td class="px-3 py-2 text-center whitespace-nowrap">
+<input class="w-4 h-4 rounded bg-surface text-primary-container focus:ring-0 cursor-pointer accent-[#22d3ee]" type="checkbox">
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-asset-domain">language</span>
+<span class="font-mono text-[13px] text-[#e7ebf0] hover:text-[#22d3ee] cursor-pointer transition-colors truncate max-w-[280px]" title="redis-master.cache.uber-bb.net">redis-master.cache.uber-bb.net</span>
+</div>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="font-body-code text-[11px] text-fg-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">uber-bb</span>
+</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-good-soft text-good font-body-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+<span>resolved</span>
+</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-fg whitespace-nowrap">198.51.100.175</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-muted whitespace-nowrap">AS13335 CLOUDFLARENET</td>
+<td class="px-3.5 py-2 font-body-code text-fg text-right whitespace-nowrap">6</td>
+<td class="px-3.5 py-2 whitespace-nowrap">
+<span class="px-1.5 py-0.5 rounded bg-surface-2 font-body-code text-[11px] text-fg border border-border">2 ports</span>
+</td>
+<td class="px-3.5 py-2 font-body-code text-[11px] text-fg-faint whitespace-nowrap">8h ago</td>
+<td class="px-3.5 py-2 text-right whitespace-nowrap">
+<button class="px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] border border-border hover:text-primary-container transition-colors" type="button">View Detail</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer (sticky bottom-0 z-20 bg-[#14161c] border-t border-[#282d38] px-4 py-3 flex items-center justify-between text-xs text-[#9aa4b2]) -->
+<div class="px-4 py-3 bg-[#14161c] border-t border-[#282d38] flex items-center justify-between text-xs text-[#9aa4b2] shrink-0 sticky bottom-0 z-20">
+<!-- Records overview -->
+<div class="font-body-code text-[11px] text-fg-faint whitespace-nowrap">
+          Showing <span class="text-fg font-medium">1–25</span> of <span class="text-fg font-medium">14,892</span> records
+        </div>
+<!-- Page navigation -->
+<div class="flex items-center gap-1 font-body-code select-none">
+<button class="px-2 py-1 rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors disabled:opacity-40" disabled="" type="button">First</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors disabled:opacity-40" disabled="" type="button">«</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-primary-container text-accent-ink font-semibold" type="button">1</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">2</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">3</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">4</button>
+<span class="px-1 text-fg-faint">...</span>
+<button class="px-2 py-1 rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">596</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">»</button>
+<button class="px-2 py-1 rounded bg-surface-2 text-fg-muted hover:text-fg hover:bg-surface-3 border border-border transition-colors" type="button">Last</button>
+</div>
+<!-- Density / Per-page selector -->
+<div class="flex items-center gap-2 whitespace-nowrap">
+<span class="text-fg-faint text-[11px]">Density:</span>
+<div class="relative">
+<select class="h-7 pl-2 pr-6 bg-surface-2 border border-border rounded text-fg font-body-code text-xs appearance-none focus:outline-none cursor-pointer">
+<option selected="">25 / page</option>
+<option>50 / page</option>
+<option>100 / page</option>
+</select>
+<span class="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-[14px] text-fg-faint pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+    // Interaction for the Clear Selection button
+    const clearBtn = document.getElementById('clearSelectionBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"], thead input[type="checkbox"]');
+        checkboxes.forEach(cb => { cb.checked = false; });
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(r => {
+          r.classList.remove('bg-surface-3/50');
+        });
+        const bulkBar = document.getElementById('bulkActionBar');
+        if (bulkBar) {
+          bulkBar.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+
+</body></html>

@@ -1,0 +1,877 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "fg": "#e7ebf0", "crit-bd": "#5c2330", "on-background": "#d9e3f2", "ring": "#22d3ee66", "on-primary-fixed-variant": "#004e5a", "info-soft": "#101c33", "neutral-soft": "#1c2028", "good-bd": "#1f4f33", "surface-container": "#17202b", "on-error-container": "#ffdad6", "surface-container-high": "#212b36", "accent-soft": "#0c2b33", "bg": "#0a0c10", "secondary": "#c4c6d1", "tertiary-fixed": "#7ef9c0", "primary-fixed": "#a2eeff", "on-secondary-fixed": "#181b23", "on-secondary-container": "#b3b5bf", "surface-2": "#1b1e26", "asset-service": "#db2777", "primary": "#8aebff", "accent-ink": "#06222b", "surface-container-lowest": "#050f19", "on-surface": "#d9e3f2", "on-tertiary-fixed": "#002113", "asset-domain": "#0ea371", "warn": "#fbbf24", "primary-container": "#22d3ee", "border": "#282d38", "fg-muted": "#9aa4b2", "tertiary-fixed-dim": "#60dda6", "surface-tint": "#2fd9f4", "inverse-on-surface": "#28313d", "on-secondary": "#2d3039", "inverse-surface": "#d9e3f2", "good": "#4ade80", "error-container": "#93000a", "secondary-fixed-dim": "#c4c6d1", "fg-faint": "#6a7483", "crit-soft": "#2c1118", "secondary-fixed": "#e0e2ed", "asset-url": "#3b82f6", "on-primary-container": "#005763", "on-tertiary": "#003824", "secondary-container": "#444750", "surface": "#14161c", "crit": "#fb7185", "outline-variant": "#3c494c", "info": "#60a5fa", "on-tertiary-container": "#005b3d", "on-primary-fixed": "#001f25", "neutral-bd": "#333a46", "tertiary-container": "#5ad7a0", "surface-variant": "#2c3641", "on-secondary-fixed-variant": "#444750", "border-strong": "#3a4150", "surface-3": "#232733", "info-bd": "#1f3a63", "outline": "#859397", "on-surface-variant": "#bbc9cd", "warn-bd": "#5a4414", "warn-soft": "#2c2109", "surface-container-highest": "#2c3641", "on-error": "#690005", "surface-container-low": "#131c27", "background": "#0a141e", "on-tertiary-fixed-variant": "#005236", "on-primary": "#00363e", "inverse-primary": "#006877", "error": "#ffb4ab", "surface-dim": "#0a141e", "asset-ip": "#d97706", "good-soft": "#102a1a", "accent-soft-bd": "#1b4e5a", "tertiary": "#78f4bb", "accent-hover": "#5ee0f2", "surface-bright": "#303a46", "primary-fixed-dim": "#2fd9f4" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "gutter": "1rem", "margin": "1.5rem", "margin-mobile": "1rem", "space-md": "0.75rem", "space-xs": "0.25rem", "space-lg": "1.125rem", "gutter-dense": "0.75rem", "space-xl": "1.5rem" }, "fontFamily": { "body-default": ["IBM Plex Sans"], "stat-lg": ["IBM Plex Mono"], "body-code": ["IBM Plex Mono"], "label-caps": ["IBM Plex Sans"], "headline-lg-mobile": ["IBM Plex Sans"], "panel-title": ["IBM Plex Sans"], "caption": ["IBM Plex Sans"], "headline-lg": ["IBM Plex Sans"], "body-code-bold": ["IBM Plex Mono"] }, "fontSize": { "body-default": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "stat-lg": ["27px", { "lineHeight": "32px", "fontWeight": "600" }], "body-code": ["12.5px", { "lineHeight": "18px", "fontWeight": "400" }], "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" }], "headline-lg-mobile": ["18px", { "lineHeight": "24px", "fontWeight": "700" }], "panel-title": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }], "headline-lg": ["21px", { "lineHeight": "28px", "fontWeight": "700" }], "body-code-bold": ["12.5px", { "lineHeight": "18px", "fontWeight": "600" }] } } } };</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased selection:bg-primary-container selection:text-accent-ink"><aside class="fixed left-0 top-0 h-screen w-60 bg-surface-container-lowest border-r border-border z-40 flex flex-col justify-between select-none"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-14 px-gutter flex items-center justify-between border-b border-border"><div class="flex items-center gap-space-sm"><div class="w-7 h-7 rounded bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-accent-ink text-[18px]">terminal</span></div><div class="flex items-baseline font-panel-title text-panel-title"><span class="text-fg font-bold tracking-tight">Recon</span><span class="text-primary font-bold tracking-tight">OS</span></div></div><span class="px-1.5 py-0.5 rounded text-[10px] font-body-code text-fg-muted bg-surface-container border border-border">v2.4</span></div><nav class="px-space-sm py-space-md space-y-space-md flex-1" data-active-classes="bg-surface-3 text-primary border-l-2 border-primary font-semibold"><div class="space-y-1"><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">grid_view</span><span class="">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="monitor" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">show_chart</span><span class="">Monitor</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="domains" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">language</span><span class="">Domains</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-fg-muted bg-surface-2 border border-border">64</span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="screenshots" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">photo_camera</span><span class="">Screenshots</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="programs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">folder</span><span class="">Programs</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="findings" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">bug_report</span><span class="">Findings</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-crit bg-crit-soft border border-crit-bd">29</span></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint">Operations</div><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="staging-queue" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">dns</span><span class="">Staging Queue</span></div><span class="px-1.5 py-0.2 rounded text-[10px] font-body-code text-warn bg-warn-soft border border-warn-bd">12</span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="manage" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">tune</span><span class="">Manage</span></div></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint">Admin</div><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="users" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">group</span><span class="">Users</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="component-library" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">widgets</span><span class="">Component Library</span></div></a></div><div class="space-y-1"><div class="px-space-sm py-1 font-label-caps text-label-caps uppercase text-fg-faint flex items-center justify-between"><span class="">System</span><span class="text-[9px] px-1 rounded bg-crit-soft text-crit font-body-code border border-crit-bd font-semibold">ROOT</span></div><a class="flex items-center justify-between px-space-sm py-1.5 rounded bg-accent-soft text-primary border border-primary/30 font-semibold transition-colors" data-path="health-and-tools" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px] text-primary">vital_signs</span><span class="">Health &amp; Tools</span></div><span class="w-1.5 h-1.5 rounded-full bg-primary"></span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="osmedeus" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">radar</span><span class="">Osmedeus</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="vigolium" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">security</span><span class="">Vigolium</span></div></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors" data-path="modules" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[17px]">extension</span><span class="">Modules</span></div></a></div></nav></div><div class="p-space-sm border-t border-border bg-surface-container-lowest"><div class="flex items-center justify-between p-2 rounded bg-surface border border-border"><div class="flex items-center gap-2"><div class="relative w-7 h-7 rounded bg-surface-2 border border-border flex items-center justify-center"><span class="material-symbols-outlined text-fg-muted text-[16px]">terminal</span><div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-good border border-surface"></div></div><div class="flex flex-col"><span class="font-body-code-bold text-body-code-bold text-fg leading-none">operator_01</span><span class="text-[10px] text-fg-faint leading-tight mt-0.5">Lead SecOps</span></div></div><button class="text-fg-faint hover:text-crit p-1 rounded hover:bg-surface-2 transition-colors" title="Log out" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></div></aside><div class="pl-60 min-h-screen flex flex-col bg-bg"><header class="fixed top-0 left-60 right-0 h-14 bg-surface border-b border-border z-30 flex items-center justify-between px-gutter"><div class="flex items-center gap-gutter"><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[20px]">menu_open</span></button><nav class="hidden sm:flex items-center gap-2 text-caption font-caption text-fg-faint"><span class="hover:text-fg cursor-pointer transition-colors">ReconOS</span><span class="text-[10px]">&gt;</span><span class="hover:text-fg cursor-pointer transition-colors">System</span><span class="text-[10px]">&gt;</span><span class="text-fg font-semibold">Console</span></nav></div><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center gap-2 bg-surface-2 border border-border rounded px-space-sm py-1 w-72 text-fg-faint hover:border-border-strong focus-within:border-primary focus-within:ring-1 focus-within:ring-ring transition-all cursor-text"><span class="material-symbols-outlined text-[17px] text-fg-muted">search</span><span class="font-body-code text-body-code flex-1">Search system, tools...</span><span class="px-1.5 py-0.2 rounded bg-surface text-[10px] font-body-code text-fg-muted border border-border">⌘K</span></div><a class="flex items-center gap-1.5 px-2 py-1 rounded bg-good-soft border border-good-bd text-good hover:bg-good-bd/30 transition-colors" data-path="health-and-tools" href="#"><span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span><span class="font-body-code text-[11px] font-semibold">Dispatcher online</span></a><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors relative" title="Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span></button><button class="text-fg-muted hover:text-fg p-1.5 rounded hover:bg-surface-2 transition-colors" title="Toggle theme" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-14 px-gutter py-gutter-dense bg-bg flex-1"><div class="flex flex-col w-full pb-12">
+<!-- Top Command & Action Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-margin">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm mb-1">
+<h1 class="font-headline-lg text-headline-lg text-fg tracking-tight">System Health</h1>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-2 text-fg-muted font-body-code text-caption border border-border">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-ping"></span>
+<span class="">TICK 30s</span>
+</span>
+</div>
+<p class="font-body-default text-body-default text-fg-muted">
+        Stack components and scanning tool binaries. Telemetry auto-refreshes every 30s.
+      </p>
+</div>
+<!-- Right Controls -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Segmented View Filter -->
+<div class="bg-surface-2 p-0.5 rounded border border-border flex items-center">
+<button class="px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors bg-surface-3 text-primary shadow-sm" id="viewServicesBtn" type="button">
+          Services
+        </button>
+<button class="px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors text-fg-muted hover:text-fg" id="viewToolsBtn" type="button">
+          Tools
+        </button>
+</div>
+<!-- Quick Actions -->
+<button class="flex items-center gap-1.5 px-space-md h-9 rounded bg-surface border border-border hover:bg-surface-2 text-fg font-label-caps text-caption uppercase transition-colors active:scale-[0.98]" id="refreshBtn" type="button">
+<span class="material-symbols-outlined text-[17px] text-fg-muted transition-transform" id="refreshIcon">refresh</span>
+<span class="">Refresh</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md h-9 rounded bg-primary-container text-accent-ink font-label-caps text-caption uppercase tracking-wider font-semibold hover:bg-accent-hover transition-colors shadow-sm active:scale-[0.98]" id="diagBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">vital_signs</span>
+<span class="">Run Diagnostics</span>
+</button>
+</div>
+</div>
+<!-- Summary Row: 4 Metric StatTiles with Colored Headbands -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md mb-space-lg">
+<!-- Stat 1 -->
+<div class="bg-surface rounded border border-border p-space-md relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-good via-warn to-warn-bd"></div>
+<div>
+<div class="flex items-center justify-between text-fg-faint font-label-caps text-label-caps uppercase mb-1">
+<span class="">Services</span>
+<span class="material-symbols-outlined text-[16px] text-fg-muted">dns</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight">7 / 8 <span class="font-body-default text-caption text-fg-muted font-normal">healthy</span></div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-border flex items-center justify-between text-caption">
+<span class="text-warn flex items-center gap-1 font-body-code">
+<span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+          1 degraded (Vigolium)
+        </span>
+<span class="text-fg-faint font-body-code">87.5%</span>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface rounded border border-border p-space-md relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-1 bg-info"></div>
+<div>
+<div class="flex items-center justify-between text-fg-faint font-label-caps text-label-caps uppercase mb-1">
+<span class="">Tools</span>
+<span class="material-symbols-outlined text-[16px] text-info">terminal</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight">9 <span class="font-body-default text-caption text-fg-muted font-normal">installed</span></div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-border flex items-center justify-between text-caption">
+<span class="text-info flex items-center gap-1 font-body-code">
+<span class="material-symbols-outlined text-[14px]">upgrade</span>
+          2 outdated (subfinder, nuclei)
+        </span>
+<span class="text-fg-faint font-body-code">v-check</span>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface rounded border border-border p-space-md relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-1 bg-good"></div>
+<div>
+<div class="flex items-center justify-between text-fg-faint font-label-caps text-label-caps uppercase mb-1">
+<span class="">Workers</span>
+<span class="material-symbols-outlined text-[16px] text-good">memory</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight">3 <span class="font-body-default text-caption text-fg-muted font-normal">online</span></div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-border flex items-center justify-between text-caption">
+<span class="text-good font-body-code">fleet load 42%</span>
+<div class="w-16 bg-surface-2 h-1.5 rounded-full overflow-hidden">
+<div class="bg-good h-full w-[42%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface rounded border border-border p-space-md relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<div>
+<div class="flex items-center justify-between text-fg-faint font-label-caps text-label-caps uppercase mb-1">
+<span class="">Queue Depth</span>
+<span class="material-symbols-outlined text-[16px] text-primary">swap_calls</span>
+</div>
+<div class="font-stat-lg text-stat-lg text-fg tracking-tight">14 <span class="font-body-default text-caption text-fg-muted font-normal">jobs</span></div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-border flex items-center justify-between text-caption">
+<span class="text-primary font-body-code">Redis 7 pool</span>
+<a class="text-primary hover:text-accent-hover inline-flex items-center gap-0.5 font-label-caps text-[10px] uppercase" data-path="staging-queue" href="#">
+          Stage S10 <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Diagnostics Status Banner (Compact Utilitarian) -->
+<div class="bg-surface-2 border-l-4 border-l-warn border-y border-r border-border p-space-sm sm:px-space-md sm:py-2.5 rounded mb-space-lg flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-start sm:items-center gap-2">
+<span class="material-symbols-outlined text-warn text-[18px] shrink-0 mt-0.5 sm:mt-0">warning</span>
+<div class="font-body-code text-[12px] text-fg leading-tight">
+<span class="text-fg-faint">Last diagnostic:</span> <span class="text-fg-muted">14m ago</span>
+<span class="mx-1.5 text-border-strong hidden sm:inline">|</span>
+<span class="text-good">Paths OK (9/9)</span>
+<span class="mx-1.5 text-border-strong hidden sm:inline">|</span>
+<span class="text-warn">Warn: Vigolium server latency high (420ms)</span>
+</div>
+</div>
+<button class="self-start sm:self-auto text-caption font-label-caps text-primary hover:text-accent-hover uppercase underline tracking-wider shrink-0 flex items-center gap-1" onclick="document.getElementById('diagModal').classList.remove('hidden')" type="button">
+<span class="">View Diagnostics Log</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+<!-- SECTION 4.1: Services Grid (8 Component Cards) -->
+<div class="flex flex-col mb-space-xl" id="servicesSection">
+<div class="flex items-center justify-between pb-space-sm mb-space-md border-b border-border">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">hub</span>
+<h2 class="font-panel-title text-panel-title text-fg tracking-tight">Core Services Telemetry</h2>
+</div>
+<div class="font-body-code text-caption text-fg-faint">
+        8 monitors active · polling :00/:30
+      </div>
+</div>
+<!-- 8 Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- 1: FastAPI Backend -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">FastAPI Backend</div>
+<span class="font-body-code text-[11px] text-fg-faint">API Gateway &amp; Engine</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="http://127.0.0.1:8000/api/v1/health">http://127.0.0.1:8000...</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">v1.4.2</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-good font-semibold">8 ms</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">12s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between">
+<span class="font-body-code text-[10px] text-fg-faint">PID 3291 · port 8000</span>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 2: PostgreSQL 16 -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">PostgreSQL 16</div>
+<span class="font-body-code text-[11px] text-fg-faint">Primary Recon Datastore</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="127.0.0.1:5432 (pool 18/50)">127.0.0.1:5432 (18/50)</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">PostgreSQL 16.2</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-good font-semibold">3 ms</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">12s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between">
+<span class="font-body-code text-[10px] text-fg-faint">Pool OK · 32 conn idle</span>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 3: Redis 7 -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">Redis 7</div>
+<span class="font-body-code text-[11px] text-fg-faint">Queue, Cache &amp; PubSub</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg">127.0.0.1:6379</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">Redis 7.2.4</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency / Queue</span>
+<span class="text-primary font-semibold">1 ms · 14 jobs</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">12s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between">
+<span class="font-body-code text-[10px] text-fg-faint">Mem: 38.4MB / 512MB</span>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 4: BBRF (CouchDB) -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">BBRF (CouchDB)</div>
+<span class="font-body-code text-[11px] text-fg-faint">Recon Asset Ledger</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="http://127.0.0.1:5984">http://127.0.0.1:5984</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">3.3.3</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-good font-semibold">14 ms</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">18s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between">
+<span class="font-body-code text-[10px] text-fg-faint">Sync: Master active</span>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 5: Osmedeus API -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">Osmedeus API</div>
+<span class="font-body-code text-[11px] text-fg-faint">Distributed Scanner Node</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="http://192.0.2.10:8002">http://192.0.2.10:8002</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">v4.5.1</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-good font-semibold">28 ms</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">22s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between gap-1">
+<a class="text-primary hover:text-accent-hover text-[11px] font-body-code flex items-center gap-0.5" data-path="osmedeus" href="#">
+<span class="material-symbols-outlined text-[14px]">tune</span> Settings
+          </a>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 6: Vigolium Server (Degraded Warning) -->
+<div class="bg-surface rounded border-2 border-warn-bd p-space-md flex flex-col justify-between relative shadow-sm">
+<div class="absolute -top-2.5 right-3 px-1.5 py-0.2 bg-warn-soft border border-warn-bd text-warn font-body-code text-[10px] uppercase font-bold rounded">
+          DEGRADED
+        </div>
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold flex items-center gap-1.5">
+<span class="">Vigolium Server</span>
+</div>
+<span class="font-body-code text-[11px] text-warn">Ingest Proxy Latency Spike</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-warn-soft text-warn border border-warn-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-warn animate-pulse"></span>
+              degraded
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="http://127.0.0.1:9002">http://127.0.0.1:9002</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">v0.5.3-rc2</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-warn font-bold">420 ms (elevated)</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">5s ago</span>
+</div>
+</div>
+<!-- Alert details callout -->
+<div class="mt-2.5 p-1.5 rounded bg-warn-soft/60 border border-warn-bd text-[10.5px] font-body-code text-warn leading-tight">
+            Proxy active (:9003) with elevated ingest backlog (82 msgs).
+          </div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between gap-1">
+<a class="text-primary hover:text-accent-hover text-[11px] font-body-code flex items-center gap-0.5" data-path="vigolium" href="#">
+<span class="material-symbols-outlined text-[14px]">tune</span> Settings
+          </a>
+<button class="recheck-btn px-2 py-1 rounded bg-warn-soft hover:bg-warn-soft/80 text-warn text-[11px] font-body-code border border-warn-bd transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 7: gowitness DB -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">gowitness DB</div>
+<span class="font-body-code text-[11px] text-fg-faint">Screenshot Metadata Store</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Endpoint</span>
+<span class="text-fg truncate max-w-[150px]" title="postgresql://recon:***@127.0.0.1:5432/gowitness">pg://.../gowitness</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Version</span>
+<span class="text-fg">v3.0.5 schema</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Latency</span>
+<span class="text-good font-semibold">5 ms</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Check</span>
+<span class="text-fg-muted">15s ago</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between">
+<span class="font-body-code text-[10px] text-fg-faint">1,429 captures indexed</span>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+<!-- 8: Dispatcher Daemon -->
+<div class="bg-surface rounded border border-border p-space-md flex flex-col justify-between hover:border-border-strong transition-colors">
+<div>
+<div class="flex items-start justify-between gap-2 mb-space-sm">
+<div>
+<div class="font-panel-title text-panel-title text-fg font-semibold">Dispatcher Daemon</div>
+<span class="font-body-code text-[11px] text-fg-faint">Pipeline Task Scheduler</span>
+</div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body-code font-semibold bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+              healthy
+            </span>
+</div>
+<div class="space-y-1.5 pt-2 border-t border-border font-body-code text-caption">
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Status</span>
+<span class="text-fg font-body-code">Running (PID 4821)</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Last Dispatch</span>
+<span class="text-fg">2m ago (subfinder)</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Heartbeat</span>
+<span class="text-good font-semibold">3s ago</span>
+</div>
+<div class="flex items-center justify-between text-fg-faint">
+<span class="">Concurrency</span>
+<span class="text-fg-muted">4 workers / max 8</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-border flex items-center justify-between gap-1">
+<a class="text-primary hover:text-accent-hover text-[11px] font-body-code flex items-center gap-0.5" data-path="staging-queue" href="#">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Dispatch Now
+          </a>
+<button class="recheck-btn px-2 py-1 rounded bg-surface-2 hover:bg-surface-3 text-fg text-[11px] font-body-code border border-border transition-colors" type="button">
+            Recheck
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 4.2: Embedded Tools CLI Quick-View Section -->
+<div class="flex flex-col bg-surface rounded border border-border overflow-hidden" id="toolsSection">
+<!-- Header with Filters & Counts -->
+<div class="px-space-md py-space-sm bg-surface-2 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">build</span>
+<h2 class="font-panel-title text-panel-title text-fg font-semibold">Core Recon Binaries</h2>
+<span class="px-1.5 py-0.2 rounded font-body-code text-caption text-fg-muted bg-surface border border-border">9 tracked</span>
+</div>
+<!-- Filter Badges -->
+<div class="flex items-center gap-1.5 overflow-x-auto text-caption font-body-code">
+<button class="tool-filter active px-2.5 py-1 rounded bg-surface-3 text-primary border border-primary/30" data-filter="all" type="button">
+          All (9)
+        </button>
+<button class="tool-filter px-2.5 py-1 rounded bg-surface text-fg-muted hover:text-fg border border-border" data-filter="installed" type="button">
+          Installed (7)
+        </button>
+<button class="tool-filter px-2.5 py-1 rounded bg-surface text-warn hover:text-warn-bd border border-border flex items-center gap-1" data-filter="outdated" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-warn"></span>
+          Outdated (2)
+        </button>
+<button class="tool-filter px-2.5 py-1 rounded bg-surface text-fg-faint hover:text-fg border border-border" data-filter="missing" type="button">
+          Missing (0)
+        </button>
+</div>
+</div>
+<!-- Table of binary tools -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse font-body-code text-body-code">
+<thead>
+<tr class="bg-surface-2/70 text-fg-muted text-[11px] font-label-caps uppercase border-b border-border tracking-wider">
+<th class="py-2.5 px-space-md font-semibold">Tool Binary</th>
+<th class="py-2.5 px-space-md font-semibold">Source</th>
+<th class="py-2.5 px-space-md font-semibold">Installed Version</th>
+<th class="py-2.5 px-space-md font-semibold">Latest Upstream</th>
+<th class="py-2.5 px-space-md font-semibold">Status</th>
+<th class="py-2.5 px-space-md font-semibold">Executable Path</th>
+<th class="py-2.5 px-space-md font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border">
+<!-- Row 1: subfinder (outdated) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="outdated">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-domain">travel_explore</span>
+<span class="">subfinder</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">osmedeus</span>
+</td>
+<td class="py-2.5 px-space-md text-warn font-semibold">v2.6.3</td>
+<td class="py-2.5 px-space-md text-good">v2.6.6</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-warn-soft text-warn border border-warn-bd">
+<span class="material-symbols-outlined text-[12px]">update</span>
+                outdated
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/subfinder</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="update-tool-btn px-2 py-0.5 rounded bg-primary-container text-accent-ink hover:bg-accent-hover text-[11px] font-semibold transition-colors" type="button">
+                Update
+              </button>
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 2: httpx (installed) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-url">http</span>
+<span class="">httpx</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">osmedeus</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">v1.3.8</td>
+<td class="py-2.5 px-space-md text-fg-muted">v1.3.8</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/httpx</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 3: naabu (installed) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-ip">router</span>
+<span class="">naabu</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">osmedeus</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">v2.3.1</td>
+<td class="py-2.5 px-space-md text-fg-muted">v2.3.1</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/naabu</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 4: nmap (installed - system) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-service">radar</span>
+<span class="">nmap</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-surface-3 text-primary border border-accent-soft-bd">system</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">7.94-RELEASE</td>
+<td class="py-2.5 px-space-md text-fg-muted">7.94-RELEASE</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/bin/nmap</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 5: ffuf (installed) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-asset-url">dataset</span>
+<span class="">ffuf</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">osmedeus</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">v2.1.0</td>
+<td class="py-2.5 px-space-md text-fg-muted">v2.1.0</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/ffuf</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 6: nuclei (outdated) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="outdated">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-crit">pest_control</span>
+<span class="">nuclei</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">osmedeus</span>
+</td>
+<td class="py-2.5 px-space-md text-warn font-semibold">v3.1.8</td>
+<td class="py-2.5 px-space-md text-good">v3.2.4</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-warn-soft text-warn border border-warn-bd">
+<span class="material-symbols-outlined text-[12px]">update</span>
+                outdated
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/nuclei</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="update-tool-btn px-2 py-0.5 rounded bg-primary-container text-accent-ink hover:bg-accent-hover text-[11px] font-semibold transition-colors" type="button">
+                Update
+              </button>
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 7: gowitness (installed) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-info">photo_camera</span>
+<span class="">gowitness</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-neutral-soft text-fg-muted border border-neutral-bd">system</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">v3.0.5</td>
+<td class="py-2.5 px-space-md text-fg-muted">v3.0.5</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/usr/local/bin/gowitness</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+<!-- Row 8: vigolium (installed) -->
+<tr class="tool-row hover:bg-surface-2/60 transition-colors" data-status="installed">
+<td class="py-2.5 px-space-md font-semibold text-fg flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-tertiary">security</span>
+<span class="">vigolium-cli</span>
+</td>
+<td class="py-2.5 px-space-md">
+<span class="px-1.5 py-0.5 rounded text-[10.5px] bg-accent-soft text-primary border border-accent-soft-bd">vigolium</span>
+</td>
+<td class="py-2.5 px-space-md text-fg">v0.5.3</td>
+<td class="py-2.5 px-space-md text-fg-muted">v0.5.3</td>
+<td class="py-2.5 px-space-md">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-good-soft text-good border border-good-bd">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                installed
+              </span>
+</td>
+<td class="py-2.5 px-space-md text-fg-faint text-[11.5px] font-mono">/opt/vigolium/bin/vg</td>
+<td class="py-2.5 px-space-md text-right space-x-1">
+<button class="px-2 py-0.5 rounded bg-surface-2 hover:bg-surface-3 text-fg-muted text-[11px] border border-border transition-colors" type="button">
+                Recheck
+              </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Telemetry Meta -->
+<div class="px-space-md py-2 bg-surface-2/40 border-t border-border flex flex-wrap items-center justify-between text-caption font-body-code text-fg-faint gap-2">
+<div class="flex items-center gap-space-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-good"></span>
+<span class="">Binary verification hash integrity valid (SHA256 locked)</span>
+</div>
+<div class="flex items-center gap-space-md">
+<span class="">Upstream feed: github.com/projectdiscovery</span>
+<span class="">Last upstream sync: 23m ago</span>
+</div>
+</div>
+</div>
+<!-- Diagnostics Log / Modal Overlay Drawer (Hidden by default) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-space-md bg-bg/80 backdrop-blur-sm" id="diagModal">
+<div class="bg-surface border border-border-strong rounded-lg shadow-xl w-full max-w-3xl flex flex-col overflow-hidden max-h-[85vh]">
+<!-- Modal Header -->
+<div class="px-space-lg py-space-md bg-surface-2 border-b border-border flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">monitor_heart</span>
+<div class="font-panel-title text-panel-title text-fg font-semibold">System Diagnostics Console Output</div>
+</div>
+<button class="text-fg-faint hover:text-fg p-1 rounded hover:bg-surface transition-colors" onclick="document.getElementById('diagModal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Terminal Body -->
+<div class="p-space-md bg-surface-container-lowest overflow-y-auto font-body-code text-[12px] leading-relaxed text-fg space-y-1">
+<div class="text-fg-faint">[*] Starting ReconOS diagnostic suite v2.4 ...</div>
+<div class="text-fg-muted">[+] Checking local system dependencies...</div>
+<div class="text-good">[OK] kernel: Linux 6.5.0-generic x86_64</div>
+<div class="text-good">[OK] python3: Python 3.11.8 (/usr/bin/python3)</div>
+<div class="text-good">[OK] postgres: connection established (3ms, pool 18/50)</div>
+<div class="text-good">[OK] redis: PING -&gt; PONG (1ms, keycount 184)</div>
+<div class="text-good">[OK] bbrf: couchdb responding on :5984 (14ms)</div>
+<div class="text-good">[OK] osmedeus-api: http://192.0.2.10:8002 responding (28ms)</div>
+<div class="text-warn">[WARN] vigolium: http://127.0.0.1:9002 response latency 420ms exceeds target 100ms</div>
+<div class="text-fg-faint pl-4">-&gt; ingest proxy queue length: 82 items</div>
+<div class="text-fg-faint pl-4">-&gt; suggested action: restart ingest daemon or verify worker throughput</div>
+<div class="text-good">[OK] gowitness: postgresql://.../gowitness schema verified</div>
+<div class="text-good">[OK] dispatcher daemon: active (PID 4821, heartbeat 3s ago)</div>
+<div class="text-fg-muted">[+] Validating binary toolpaths and version signatures...</div>
+<div class="text-warn">[!] subfinder: installed v2.6.3 &lt; remote v2.6.6 (run: reconos-cli tools update subfinder)</div>
+<div class="text-warn">[!] nuclei: installed v3.1.8 &lt; remote v3.2.4 (run: reconos-cli tools update nuclei)</div>
+<div class="text-good">[OK] httpx, naabu, nmap, ffuf, gowitness, vigolium signatures match</div>
+<div class="text-primary-fixed mt-2">[*] Diagnostics complete: 1 warning, 2 updates pending. Execution time: 1.28s</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-space-lg py-space-sm bg-surface-2 border-t border-border flex items-center justify-between">
+<span class="text-caption font-body-code text-fg-faint">Exit code: 0 (warnings suppressed)</span>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-1 rounded bg-surface hover:bg-surface-3 text-fg text-caption font-label-caps uppercase border border-border transition-colors" onclick="document.getElementById('diagModal').classList.add('hidden')" type="button">
+            Close
+          </button>
+<button class="px-space-md py-1 rounded bg-primary-container text-accent-ink hover:bg-accent-hover text-caption font-label-caps uppercase font-semibold transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+            Export Report (.json)
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Refresh spinning micro-interaction
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+    if (refreshBtn && refreshIcon) {
+      refreshBtn.addEventListener('click', () => {
+        refreshIcon.classList.add('animate-spin');
+        setTimeout(() => {
+          refreshIcon.classList.remove('animate-spin');
+        }, 800);
+      });
+    }
+
+    // Run Diagnostics button trigger
+    const diagBtn = document.getElementById('diagBtn');
+    const diagModal = document.getElementById('diagModal');
+    if (diagBtn && diagModal) {
+      diagBtn.addEventListener('click', () => {
+        diagModal.classList.remove('hidden');
+      });
+    }
+
+    // Segmented View Toggle
+    const viewServicesBtn = document.getElementById('viewServicesBtn');
+    const viewToolsBtn = document.getElementById('viewToolsBtn');
+    const servicesSection = document.getElementById('servicesSection');
+    const toolsSection = document.getElementById('toolsSection');
+
+    if (viewServicesBtn && viewToolsBtn) {
+      viewServicesBtn.addEventListener('click', () => {
+        viewServicesBtn.className = 'px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors bg-surface-3 text-primary shadow-sm';
+        viewToolsBtn.className = 'px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors text-fg-muted hover:text-fg';
+        servicesSection.classList.remove('hidden');
+        toolsSection.classList.remove('hidden');
+        servicesSection.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      viewToolsBtn.addEventListener('click', () => {
+        viewToolsBtn.className = 'px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors bg-surface-3 text-primary shadow-sm';
+        viewServicesBtn.className = 'px-space-md py-1 rounded text-caption font-label-caps uppercase transition-colors text-fg-muted hover:text-fg';
+        toolsSection.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // Filter Tool Rows
+    const filterButtons = document.querySelectorAll('.tool-filter');
+    const toolRows = document.querySelectorAll('.tool-row');
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('active', 'bg-surface-3', 'text-primary', 'border-primary/30');
+          b.classList.add('bg-surface', 'text-fg-muted', 'border-border');
+        });
+        btn.classList.add('active', 'bg-surface-3', 'text-primary', 'border-primary/30');
+        btn.classList.remove('bg-surface', 'text-fg-muted');
+
+        const filter = btn.getAttribute('data-filter');
+        toolRows.forEach(row => {
+          const status = row.getAttribute('data-status');
+          if (filter === 'all' || filter === status) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Recheck micro-interactions
+    document.querySelectorAll('.recheck-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const origText = this.textContent;
+        this.textContent = 'Checking...';
+        this.disabled = true;
+        this.classList.add('opacity-70');
+        setTimeout(() => {
+          this.textContent = 'OK';
+          this.classList.remove('opacity-70');
+          setTimeout(() => {
+            this.textContent = origText;
+            this.disabled = false;
+          }, 1200);
+        }, 500);
+      });
+    });
+
+    // Update tool button simulate
+    document.querySelectorAll('.update-tool-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        this.textContent = 'Updating...';
+        this.disabled = true;
+        setTimeout(() => {
+          this.textContent = 'Updated';
+          this.className = 'px-2 py-0.5 rounded bg-good-soft text-good border border-good-bd text-[11px] font-semibold';
+        }, 900);
+      });
+    });
+  })();
+</script></main></div>
+
+</body></html>

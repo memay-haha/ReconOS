@@ -1,0 +1,834 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0a141e","outline":"#859397","secondary-container":"#444750","on-tertiary-fixed-variant":"#005236","primary":"#8aebff","warn-bd":"#5a4414","error":"#ffb4ab","surface-container-low":"#131c27","on-primary-fixed":"#001f25","surface-dim":"#0a141e","outline-variant":"#3c494c","surface-tint":"#2fd9f4","on-primary-container":"#005763","fg-faint":"#6a7483","info-bd":"#1f3a63","on-tertiary-fixed":"#002113","surface-container-highest":"#2c3641","inverse-on-surface":"#28313d","accent-soft":"#0c2b33","border":"#282d38","inverse-primary":"#006877","on-error-container":"#ffdad6","on-background":"#d9e3f2","primary-fixed":"#a2eeff","surface-container-lowest":"#050f19","info-soft":"#101c33","accent-ink":"#06222b","good-bd":"#1f4f33","asset-domain":"#0ea371","on-primary":"#00363e","asset-service":"#db2777","warn-soft":"#2c2109","fg-muted":"#9aa4b2","secondary":"#c4c6d1","neutral-bd":"#333a46","on-surface":"#d9e3f2","on-tertiary":"#003824","error-container":"#93000a","on-secondary-fixed":"#181b23","good":"#4ade80","bg":"#0a0c10","surface-variant":"#2c3641","asset-ip":"#d97706","fg":"#e7ebf0","crit-soft":"#2c1118","secondary-fixed":"#e0e2ed","ring":"#22d3ee66","crit-bd":"#5c2330","on-secondary":"#2d3039","on-surface-variant":"#bbc9cd","accent-soft-bd":"#1b4e5a","surface-3":"#232733","good-soft":"#102a1a","surface":"#14161c","on-primary-fixed-variant":"#004e5a","tertiary-fixed-dim":"#60dda6","warn":"#fbbf24","surface-container":"#17202b","tertiary-container":"#5ad7a0","inverse-surface":"#d9e3f2","on-tertiary-container":"#005b3d","tertiary-fixed":"#7ef9c0","tertiary":"#78f4bb","surface-container-high":"#212b36","on-error":"#690005","accent-hover":"#5ee0f2","neutral-soft":"#1c2028","crit":"#fb7185","info":"#60a5fa","primary-fixed-dim":"#2fd9f4","primary-container":"#22d3ee","on-secondary-fixed-variant":"#444750","surface-bright":"#303a46","secondary-fixed-dim":"#c4c6d1","border-strong":"#3a4150","surface-2":"#1b1e26","on-secondary-container":"#b3b5bf","asset-url":"#3b82f6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.125rem","margin":"1.5rem","gutter-dense":"0.75rem","space-xs":"0.25rem","gutter":"1rem","space-md":"0.75rem","space-sm":"0.5rem","margin-mobile":"1rem","space-xl":"1.5rem"},"fontFamily":{"caption":["IBM Plex Sans"],"stat-lg":["IBM Plex Mono"],"label-caps":["IBM Plex Sans"],"headline-lg":["IBM Plex Sans"],"body-code-bold":["IBM Plex Mono"],"headline-lg-mobile":["IBM Plex Sans"],"body-code":["IBM Plex Mono"],"body-default":["IBM Plex Sans"],"panel-title":["IBM Plex Sans"]},"fontSize":{"caption":["11px",{"lineHeight":"14px","fontWeight":"400"}],"stat-lg":["27px",{"lineHeight":"32px","fontWeight":"600"}],"label-caps":["11px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-lg":["21px",{"lineHeight":"28px","fontWeight":"700"}],"body-code-bold":["12.5px",{"lineHeight":"18px","fontWeight":"600"}],"headline-lg-mobile":["18px",{"lineHeight":"24px","fontWeight":"700"}],"body-code":["12.5px",{"lineHeight":"18px","fontWeight":"400"}],"body-default":["13px",{"lineHeight":"18px","fontWeight":"400"}],"panel-title":["14px",{"lineHeight":"20px","fontWeight":"600"}]}}}}</script></head><body class="bg-bg text-fg font-body-default text-body-default antialiased select-none"><aside class="fixed left-0 top-0 h-screen w-[244px] bg-[#0c0e14] border-r border-[#1e2430] z-50 flex flex-col justify-between p-3 select-none overflow-hidden">
+  <div class="flex flex-col flex-1 min-h-0">
+    <!-- Brand / Logo Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-[#1a2130]/60 shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded bg-[#22d3ee] flex items-center justify-center text-[#06222b] font-black text-sm select-none shadow-[0_0_12px_rgba(34,211,238,0.3)]">
+          R
+        </div>
+        <div class="flex items-baseline font-bold tracking-tight text-[15px]">
+          <span class="text-[#f1f5f9]">Recon</span><span class="text-[#22d3ee] ml-0.5">OS</span>
+        </div>
+      </div>
+      <span class="font-mono text-[10px] text-[#64748b] bg-[#161d2b] px-1.5 py-0.5 rounded border border-[#1e2738]">v2.4</span>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="flex-1 py-3 space-y-4 overflow-y-auto pr-0.5">
+      <!-- RECON GROUP -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[10px] font-bold tracking-wider text-[#64748b] uppercase font-mono">
+          RECON
+        </div>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="dashboard" href="#">
+          <span class="material-symbols-outlined text-[18px]">grid_view</span>
+          <span class="">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="monitor" href="#">
+          <span class="material-symbols-outlined text-[18px]">troubleshoot</span>
+          <span class="">Monitor</span>
+        </a>
+        <a class="flex items-center justify-between px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="domains" href="#">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">language</span>
+            <span class="">Domains</span>
+          </div>
+          <span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#161d2b] text-[#94a3b8] border border-[#1e2738]">64</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="screenshots" href="#">
+          <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+          <span class="">Screenshots</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="programs" href="#">
+          <span class="material-symbols-outlined text-[18px]">folder_supervised</span>
+          <span class="">Programs</span>
+        </a>
+        <a class="flex items-center justify-between px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="findings" href="#">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px]">bug_report</span>
+            <span class="">Findings</span>
+          </div>
+          <span class="text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/40">29</span>
+        </a>
+      </div>
+
+      <!-- OPERATIONS GROUP (ACTIVE) -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[10px] font-bold tracking-wider text-[#64748b] uppercase font-mono">
+          OPERATIONS
+        </div>
+        <a class="flex items-center justify-between px-2.5 h-9 rounded-md bg-[#22d3ee]/10 border border-[#22d3ee]/40 text-[#22d3ee] text-[13px] font-medium transition-colors duration-150 shadow-[0_0_15px_rgba(34,211,238,0.08)]" data-path="staging-queue" href="#">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[18px] text-[#22d3ee]">dns</span>
+            <span class="">Staging Queue</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#451a03] text-[#fbbf24] border border-[#78350f]/50 leading-none">12</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] animate-pulse"></span>
+          </div>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="manage" href="#">
+          <span class="material-symbols-outlined text-[18px]">tune</span>
+          <span class="">Manage</span>
+        </a>
+      </div>
+
+      <!-- ADMIN GROUP -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[10px] font-bold tracking-wider text-[#64748b] uppercase font-mono">
+          ADMIN
+        </div>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="users" href="#">
+          <span class="material-symbols-outlined text-[18px]">group</span>
+          <span class="">Users</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="component-library" href="#">
+          <span class="material-symbols-outlined text-[18px]">widgets</span>
+          <span class="">Component Library</span>
+        </a>
+      </div>
+
+      <!-- SYSTEM GROUP -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between px-2.5 py-1">
+          <span class="text-[10px] font-bold tracking-wider text-[#64748b] uppercase font-mono">SYSTEM</span>
+          <span class="text-[9px] font-bold font-mono px-1 rounded bg-[#450a0a] text-[#f87171] border border-[#991b1b]/50 leading-tight">ROOT</span>
+        </div>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="health-tools" href="#">
+          <span class="material-symbols-outlined text-[18px]">vital_signs</span>
+          <span class="">Health &amp; Tools</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="osmedeus" href="#">
+          <span class="material-symbols-outlined text-[18px]">radar</span>
+          <span class="">Osmedeus</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="vigolium" href="#">
+          <span class="material-symbols-outlined text-[18px]">security</span>
+          <span class="">Vigolium</span>
+        </a>
+        <a class="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#161d2a] text-[13px] transition-colors duration-150" data-path="modules" href="#">
+          <span class="material-symbols-outlined text-[18px]">extension</span>
+          <span class="">Modules</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Bottom User Profile Card -->
+  <div class="border-t border-[#1a2130]/60 pt-2.5 shrink-0">
+    <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#121620] border border-[#1e2738]">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div class="relative shrink-0">
+          <div class="w-8 h-8 rounded bg-[#1a2333] flex items-center justify-center border border-[#243046] text-[#22d3ee]">
+            <span class="material-symbols-outlined text-[18px]">terminal</span>
+          </div>
+          <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4ade80] ring-2 ring-[#121620]"></span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-mono text-xs text-white font-semibold truncate leading-tight">operator_01</span>
+          <span class="text-[10px] text-[#64748b] truncate leading-tight">Lead SecOps</span>
+        </div>
+      </div>
+      <button class="p-1 text-[#64748b] hover:text-[#e2e8f0] transition-colors rounded hover:bg-[#1a2333] ml-1" title="Log out" type="button">
+        <span class="material-symbols-outlined text-[18px]">logout</span>
+      </button>
+    </div>
+  </div>
+</aside><div class="pl-[244px]"><header class="fixed top-0 left-[244px] right-0 h-14 bg-surface border-b border-border z-40 flex items-center justify-between px-margin"><div class="flex items-center gap-space-md"><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 border border-border transition-colors" title="Toggle Rail" type="button"><span class="material-symbols-outlined text-[18px]">menu</span></button><div class="flex items-center gap-1.5 text-fg-faint font-caption text-caption"><span class="hover:text-fg transition-colors">ReconOS</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="hover:text-fg transition-colors">Recon</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="text-fg font-medium">Operations Console</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center w-72"><span class="material-symbols-outlined absolute left-2.5 text-fg-faint text-[16px] pointer-events-none">search</span><input class="w-full h-8 pl-8 pr-12 bg-surface-2 border border-border rounded text-fg placeholder:text-fg-faint font-body-default text-body-default focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search programs, domains… (⌘K)" readonly="" type="text"><kbd class="absolute right-2 font-body-code text-caption text-fg-faint border border-border px-1 py-0.2 rounded bg-surface">⌘K</kbd></div><div class="flex items-center gap-2 px-2.5 py-1 rounded bg-good-soft border border-good-bd"><span class="w-2 h-2 rounded-full bg-good animate-ping duration-1000"></span><span class="font-body-code text-caption text-good uppercase tracking-wider font-medium">Dispatcher online</span></div><div class="h-4 w-px bg-border"></div><div class="flex items-center gap-1"><button class="relative p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Telemetry Notifications" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-crit rounded-full ring-2 ring-surface"></span></button><button class="p-1.5 text-fg-muted hover:text-fg rounded hover:bg-surface-2 transition-colors" title="Toggle Console Mode" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button></div><div class="h-4 w-px bg-border"></div><div class="flex items-center pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-border-strong" src="https://lh3.googleusercontent.com/aida/AEtjO1WBtVNn6knYSxuDZPa6oZP042_eh6hILVgSroShcMRViYAT5IHbnHqrQGSUHcK0CI_laPdY6VttZz9YUq7ZpwNMRmeemcnKYkJtwAKB0M-TOvcwmraDb_uN8UVNiPMpBPM42LEYyNQBR91RWUAvXfbMdb-Lq6T5hsXMjiY-XWpe5uMdIkn_0b5Zxh9LiqdCt5_9tXqWztERvWD1gN8iQr_1HXzRrMadMIPS-xehG5Wg-A"></div></div></header><main class="relative pt-14 bg-bg min-h-screen"><div class="flex flex-col w-full space-y-space-md p-margin">
+<!-- Command Header & Breadcrumb Info -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm bg-surface p-space-lg rounded border border-border">
+<div class="space-y-0.5">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-fg tracking-tight">Staging Queue</span>
+<span class="px-2 py-0.5 rounded font-body-code text-caption bg-surface-2 text-primary-container border border-border">DISPATCH_POOL: ACTIVE</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good animate-pulse"></span>
+          Daemon v2.4
+        </span>
+</div>
+<p class="font-body-default text-body-default text-fg-muted">
+        Distributed scanning job queue, runner coordination and rate-limited dispatch engine.
+      </p>
+</div>
+<!-- Head Actions -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<button class="inline-flex items-center gap-1.5 px-space-md h-8 rounded bg-surface-2 border border-border-strong text-fg hover:bg-surface-3 transition-colors duration-150 font-body-default text-body-default" type="button">
+<span class="material-symbols-outlined text-[16px] text-fg-muted">add_task</span>
+<span>Generate Jobs</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-space-md h-8 rounded bg-surface-2 border border-border-strong text-fg hover:bg-surface-3 transition-colors duration-150 font-body-default text-body-default" type="button">
+<span class="material-symbols-outlined text-[16px] text-crit">replay</span>
+<span>Retry Failed <span class="font-body-code-bold text-caption text-crit ml-0.5">(15)</span></span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-space-md h-8 rounded bg-surface-2 border border-border-strong text-fg hover:bg-surface-3 transition-colors duration-150 font-body-default text-body-default" type="button">
+<span class="material-symbols-outlined text-[16px] text-fg-muted">cleaning_services</span>
+<span>Cleanup</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-space-lg h-8 rounded bg-primary-container hover:bg-accent-hover text-accent-ink font-panel-title text-panel-title font-semibold shadow-sm transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span>Dispatch All (34 Queued)</span>
+</button>
+</div>
+</div>
+<!-- Top Section: 6 Queue State StatTiles -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-space-md">
+<!-- Stat 1: Total Jobs -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-secondary"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">TOTAL JOBS</span>
+<span class="material-symbols-outlined text-[16px]">stacked_bar_chart</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">2,410</span>
+</div>
+<div class="flex items-center justify-between font-caption text-caption text-fg-faint">
+<span>Persistent ledger</span>
+<span class="font-body-code">100%</span>
+</div>
+</div>
+<!-- Stat 2: Queued -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-outline"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">QUEUED</span>
+<span class="material-symbols-outlined text-[16px] text-fg-muted">hourglass_top</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-fg tracking-tight">34</span>
+</div>
+<div class="flex items-center gap-1 font-caption text-caption text-fg-muted truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-fg-faint"></span>
+<span class="truncate">Awaiting worker slot</span>
+</div>
+</div>
+<!-- Stat 3: Dispatched -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-info"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">DISPATCHED</span>
+<span class="material-symbols-outlined text-[16px] text-info">outbox</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-info tracking-tight">12</span>
+</div>
+<div class="flex items-center gap-1 font-caption text-caption text-info truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-info"></span>
+<span class="truncate">Sent to runners</span>
+</div>
+</div>
+<!-- Stat 4: Processing -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-warn"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-warn tracking-wider">PROCESSING</span>
+<span class="material-symbols-outlined text-[16px] text-warn animate-spin">sync</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-warn tracking-tight">8</span>
+</div>
+<div class="flex items-center gap-1 font-caption text-caption text-warn truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-warn"></span>
+<span class="truncate">Active execution</span>
+</div>
+</div>
+<!-- Stat 5: Completed -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-good"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">COMPLETED</span>
+<span class="material-symbols-outlined text-[16px] text-good">check_circle</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-good tracking-tight">2,341</span>
+</div>
+<div class="flex items-center gap-1 font-caption text-caption text-good truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-good"></span>
+<span class="truncate">97.1% success</span>
+</div>
+</div>
+<!-- Stat 6: Failed -->
+<div class="bg-surface p-space-md rounded border border-border relative overflow-hidden flex flex-col justify-between">
+<div class="w-full h-0.5 absolute top-0 left-0 bg-crit"></div>
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-crit tracking-wider">FAILED</span>
+<span class="material-symbols-outlined text-[16px] text-crit">error</span>
+</div>
+<div class="my-1.5">
+<span class="font-stat-lg text-stat-lg text-crit tracking-tight">15</span>
+</div>
+<div class="flex items-center gap-1 font-caption text-caption text-crit truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-crit"></span>
+<span class="truncate">Requires triage</span>
+</div>
+</div>
+</div>
+<!-- Pipeline Stacked Distribution Bar -->
+<div class="bg-surface p-space-md rounded border border-border space-y-space-sm">
+<div class="flex items-center justify-between text-fg-muted">
+<span class="font-label-caps text-label-caps uppercase text-fg-faint tracking-wider">QUEUE SEGMENT PIPELINE DENSITY</span>
+<span class="font-body-code text-caption text-fg-faint">2,410 total entries committed</span>
+</div>
+<!-- Proportional Bar (12px height) -->
+<div class="w-full h-3 rounded overflow-hidden flex bg-surface-2 border border-border">
+<!-- Completed: 2,341 / 2,410 = ~97.1% -->
+<div class="h-full bg-good hover:brightness-110 transition-all duration-150" style="width: 97.13%" title="Completed: 2,341"></div>
+<!-- Queued: 34 / 2,410 = ~1.41% -->
+<div class="h-full bg-outline hover:brightness-110 transition-all duration-150" style="width: 1.41%" title="Queued: 34"></div>
+<!-- Dispatched: 12 / 2,410 = ~0.50% -->
+<div class="h-full bg-info hover:brightness-110 transition-all duration-150" style="width: 0.50%" title="Dispatched: 12"></div>
+<!-- Processing: 8 / 2,410 = ~0.33% -->
+<div class="h-full bg-warn hover:brightness-110 transition-all duration-150" style="width: 0.33%" title="Processing: 8"></div>
+<!-- Failed: 15 / 2,410 = ~0.63% -->
+<div class="h-full bg-crit hover:brightness-110 transition-all duration-150" style="width: 0.63%" title="Failed: 15"></div>
+</div>
+<!-- Legend Badges -->
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1 pt-1 font-caption text-caption">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-good"></span>
+<span class="text-fg-muted">Completed:</span>
+<span class="font-body-code-bold text-fg">2,341 (97.1%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-outline"></span>
+<span class="text-fg-muted">Queued:</span>
+<span class="font-body-code-bold text-fg">34 (1.4%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-info"></span>
+<span class="text-fg-muted">Dispatched:</span>
+<span class="font-body-code-bold text-fg">12 (0.5%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-warn"></span>
+<span class="text-fg-muted">Processing:</span>
+<span class="font-body-code-bold text-fg">8 (0.3%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-crit"></span>
+<span class="text-fg-muted">Failed:</span>
+<span class="font-body-code-bold text-fg">15 (0.6%)</span>
+</div>
+</div>
+</div>
+<!-- Middle Section: 2 Columns (16px gap) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Left Column: Dispatcher & Worker Fleet Status -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col justify-between space-y-space-md">
+<div>
+<div class="flex items-center justify-between pb-space-sm border-b border-border">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-container text-[20px]">precision_manufacturing</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg font-semibold leading-tight">Dispatcher Engine</h2>
+<span class="font-body-code text-caption text-fg-faint">v2.4-daemon [core.sched.fifo]</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-good-soft border border-good-bd text-good font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+            HEALTHY / ONLINE
+          </span>
+</div>
+<!-- Telemetry Meters -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md mt-space-md">
+<!-- Meter 1 -->
+<div class="bg-surface-2 p-space-sm rounded border border-border space-y-1.5">
+<div class="flex items-center justify-between font-caption text-caption">
+<span class="text-fg-muted">Queue Depth Pressure</span>
+<span class="font-body-code-bold text-good">2.1% (Nominal)</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-3 overflow-hidden">
+<div class="h-full bg-good rounded" style="width: 2.1%"></div>
+</div>
+<div class="flex justify-between font-caption text-caption text-fg-faint">
+<span>34 waiting</span>
+<span>1,600 cap</span>
+</div>
+</div>
+<!-- Meter 2 -->
+<div class="bg-surface-2 p-space-sm rounded border border-border space-y-1.5">
+<div class="flex items-center justify-between font-caption text-caption">
+<span class="text-fg-muted">Worker Fleet Capacity</span>
+<span class="font-body-code-bold text-primary">66.7% Utl</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-3 overflow-hidden">
+<div class="h-full bg-primary-container rounded" style="width: 66.7%"></div>
+</div>
+<div class="flex justify-between font-caption text-caption text-fg-faint">
+<span>8 / 12 workers active</span>
+<span>4 idle</span>
+</div>
+</div>
+</div>
+<!-- Key Telemetry Stats Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 my-space-md p-space-sm bg-surface-2 rounded border border-border">
+<div>
+<div class="font-label-caps text-label-caps text-fg-faint uppercase">Throughput</div>
+<div class="font-body-code-bold text-body-default text-fg mt-0.5">~182/min</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-fg-faint uppercase">Job Latency</div>
+<div class="font-body-code-bold text-body-default text-fg mt-0.5">1m 42s</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-fg-faint uppercase">Redis Store</div>
+<div class="font-body-code text-caption text-good mt-0.5 truncate" title="Connected (1.2 MB memory)">1.2 MB (OK)</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-fg-faint uppercase">Last Dispatch</div>
+<div class="font-body-code text-caption text-fg-muted mt-0.5">12s ago</div>
+</div>
+</div>
+<!-- Runner Nodes Mini Table -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase tracking-wider">Active Runner Nodes</span>
+<span class="font-body-code text-caption text-fg-faint">3 connected</span>
+</div>
+<div class="border border-border rounded overflow-hidden">
+<div class="bg-surface-2 px-space-md py-1.5 grid grid-cols-12 font-label-caps text-label-caps text-fg-muted">
+<div class="col-span-4">RUNNER NODE</div>
+<div class="col-span-3">ACTIVE MODULE</div>
+<div class="col-span-3">CONCURRENCY</div>
+<div class="col-span-2 text-right">CPU LOAD</div>
+</div>
+<div class="divide-y divide-border font-body-code text-caption">
+<!-- Node 1 -->
+<div class="px-space-md py-2 grid grid-cols-12 items-center hover:bg-surface-3 transition-colors duration-150">
+<div class="col-span-4 flex items-center gap-1.5 truncate">
+<span class="w-2 h-2 rounded-full bg-good"></span>
+<span class="text-fg font-body-code-bold truncate">runner-01-us-east</span>
+</div>
+<div class="col-span-3 truncate">
+<span class="px-1.5 py-0.2 rounded bg-surface-3 text-primary-container text-caption border border-border">nuclei</span>
+</div>
+<div class="col-span-3 text-fg-muted">4 concurrent</div>
+<div class="col-span-2 text-right font-body-code-bold text-fg">38%</div>
+</div>
+<!-- Node 2 -->
+<div class="px-space-md py-2 grid grid-cols-12 items-center hover:bg-surface-3 transition-colors duration-150">
+<div class="col-span-4 flex items-center gap-1.5 truncate">
+<span class="w-2 h-2 rounded-full bg-good"></span>
+<span class="text-fg font-body-code-bold truncate">runner-02-us-west</span>
+</div>
+<div class="col-span-3 truncate">
+<span class="px-1.5 py-0.2 rounded bg-surface-3 text-info text-caption border border-border">gowitness</span>
+</div>
+<div class="col-span-3 text-fg-muted">2 concurrent</div>
+<div class="col-span-2 text-right font-body-code-bold text-warn">64%</div>
+</div>
+<!-- Node 3 -->
+<div class="px-space-md py-2 grid grid-cols-12 items-center hover:bg-surface-3 transition-colors duration-150">
+<div class="col-span-4 flex items-center gap-1.5 truncate">
+<span class="w-2 h-2 rounded-full bg-good"></span>
+<span class="text-fg font-body-code-bold truncate">runner-03-eu-central</span>
+</div>
+<div class="col-span-3 truncate">
+<span class="px-1.5 py-0.2 rounded bg-surface-3 text-tertiary text-caption border border-border">subfinder</span>
+</div>
+<div class="col-span-3 text-fg-muted">1 concurrent</div>
+<div class="col-span-2 text-right font-body-code-bold text-good">12%</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Queue Distribution -->
+<div class="bg-surface rounded border border-border p-space-lg flex flex-col justify-between space-y-space-md">
+<div class="space-y-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-border">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-container text-[20px]">pie_chart</span>
+<div>
+<h2 class="font-panel-title text-panel-title text-fg font-semibold leading-tight">Queue Distribution</h2>
+<span class="font-body-code text-caption text-fg-faint">Realtime pending workload balance</span>
+</div>
+</div>
+<span class="font-body-code text-caption text-fg-muted">34 pending</span>
+</div>
+<!-- By Scan Type -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase tracking-wider">BY SCAN TYPE</span>
+<span class="font-caption text-caption text-fg-muted">Weighted total</span>
+</div>
+<!-- Bar 1: nuclei-templates (18 queued) ~52.9% -->
+<div class="space-y-1">
+<div class="flex justify-between font-caption text-caption">
+<span class="font-body-code text-fg">nuclei-templates</span>
+<span class="font-body-code-bold text-primary-container">18 queued</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-2 overflow-hidden">
+<div class="h-full bg-primary-container rounded" style="width: 53%"></div>
+</div>
+</div>
+<!-- Bar 2: gowitness-screenshots (8 queued) ~23.5% -->
+<div class="space-y-1">
+<div class="flex justify-between font-caption text-caption">
+<span class="font-body-code text-fg">gowitness-screenshots</span>
+<span class="font-body-code-bold text-info">8 queued</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-2 overflow-hidden">
+<div class="h-full bg-info rounded" style="width: 24%"></div>
+</div>
+</div>
+<!-- Bar 3: portscan-masscan (5 queued) ~14.7% -->
+<div class="space-y-1">
+<div class="flex justify-between font-caption text-caption">
+<span class="font-body-code text-fg">portscan-masscan</span>
+<span class="font-body-code-bold text-warn">5 queued</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-2 overflow-hidden">
+<div class="h-full bg-warn rounded" style="width: 15%"></div>
+</div>
+</div>
+<!-- Bar 4: httpx-probe (3 queued) ~8.8% -->
+<div class="space-y-1">
+<div class="flex justify-between font-caption text-caption">
+<span class="font-body-code text-fg">httpx-probe</span>
+<span class="font-body-code-bold text-asset-service">3 queued</span>
+</div>
+<div class="w-full h-2 rounded bg-surface-2 overflow-hidden">
+<div class="h-full bg-asset-service rounded" style="width: 9%"></div>
+</div>
+</div>
+</div>
+<div class="border-t border-border pt-space-sm"></div>
+<!-- By Program -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-fg-faint uppercase tracking-wider">BY PROGRAM</span>
+<span class="font-caption text-caption text-fg-muted">Target quotas</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<!-- uber-bb: 14 jobs -->
+<div class="p-2 rounded bg-surface-2 border border-border flex items-center justify-between">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-fg-faint text-[16px]">folder</span>
+<span class="font-body-code-bold text-caption text-fg truncate">uber-bb</span>
+</div>
+<span class="font-body-code-bold text-caption text-primary bg-surface-3 px-1.5 py-0.5 rounded">14 jobs</span>
+</div>
+<!-- shopify-vdp: 12 jobs -->
+<div class="p-2 rounded bg-surface-2 border border-border flex items-center justify-between">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-fg-faint text-[16px]">folder</span>
+<span class="font-body-code-bold text-caption text-fg truncate">shopify-vdp</span>
+</div>
+<span class="font-body-code-bold text-caption text-primary bg-surface-3 px-1.5 py-0.5 rounded">12 jobs</span>
+</div>
+<!-- gitlab-core: 5 jobs -->
+<div class="p-2 rounded bg-surface-2 border border-border flex items-center justify-between">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-fg-faint text-[16px]">folder</span>
+<span class="font-body-code-bold text-caption text-fg truncate">gitlab-core</span>
+</div>
+<span class="font-body-code-bold text-caption text-primary bg-surface-3 px-1.5 py-0.5 rounded">5 jobs</span>
+</div>
+<!-- stripe-prod: 3 jobs -->
+<div class="p-2 rounded bg-surface-2 border border-border flex items-center justify-between">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-fg-faint text-[16px]">folder</span>
+<span class="font-body-code-bold text-caption text-fg truncate">stripe-prod</span>
+</div>
+<span class="font-body-code-bold text-caption text-primary bg-surface-3 px-1.5 py-0.5 rounded">3 jobs</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Card "Recent Staged Jobs (Realtime Stream)" -->
+<div class="bg-surface rounded border border-border flex flex-col overflow-hidden">
+<!-- Panel Header & Toolbar -->
+<div class="p-space-md border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-space-sm bg-surface">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-container text-[18px]">stream</span>
+<h3 class="font-panel-title text-panel-title text-fg font-semibold">Recent Staged Jobs</h3>
+<span class="font-caption text-caption text-fg-faint">Realtime Stream</span>
+<span class="w-2 h-2 rounded-full bg-good animate-ping ml-1" title="Stream Active"></span>
+</div>
+<!-- Toolbar Controls -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<!-- Search Input -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2 text-fg-faint text-[16px] pointer-events-none">search</span>
+<input class="h-8 pl-7 pr-3 bg-surface-2 border border-border-strong rounded text-fg placeholder:text-fg-faint font-body-code text-caption focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container w-64 transition-all" placeholder="Filter jobs by ID, domain or target..." type="text">
+</div>
+<!-- Filter: Status -->
+<div class="relative">
+<select class="h-8 pl-2 pr-6 bg-surface-2 border border-border-strong rounded text-fg font-body-default text-caption focus:outline-none focus:border-primary-container appearance-none cursor-pointer">
+<option>Status: All statuses</option>
+<option>Queued</option>
+<option>Dispatched</option>
+<option>Processing</option>
+<option>Completed</option>
+<option>Failed</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 top-2 text-fg-faint text-[16px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filter: Scan Type -->
+<div class="relative">
+<select class="h-8 pl-2 pr-6 bg-surface-2 border border-border-strong rounded text-fg font-body-default text-caption focus:outline-none focus:border-primary-container appearance-none cursor-pointer">
+<option>Scan type: All types</option>
+<option>nuclei</option>
+<option>gowitness</option>
+<option>httpx-probe</option>
+<option>portscan</option>
+<option>subdomain-enum</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 top-2 text-fg-faint text-[16px] pointer-events-none">expand_more</span>
+</div>
+<!-- Toggle Live Stream -->
+<button class="inline-flex items-center gap-1 h-8 px-space-sm rounded bg-surface-2 border border-border-strong text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" id="toggleRefreshBtn" type="button">
+<span class="material-symbols-outlined text-[16px] text-fg-muted" id="refreshIcon">pause</span>
+<span id="refreshLabel">Pause auto-refresh</span>
+</button>
+</div>
+</div>
+<!-- DataTable Container -->
+<div class="w-full overflow-x-auto">
+<table class="w-full border-collapse text-left font-body-default text-body-default">
+<thead>
+<tr class="bg-surface-2 border-b border-border h-8 font-label-caps text-label-caps text-fg-muted uppercase tracking-wider">
+<th class="px-space-md py-2 font-medium">JOB ID</th>
+<th class="px-space-md py-2 font-medium">PROGRAM</th>
+<th class="px-space-md py-2 font-medium">TARGET DOMAIN</th>
+<th class="px-space-md py-2 font-medium">SCAN TYPE</th>
+<th class="px-space-md py-2 font-medium">STATUS</th>
+<th class="px-space-md py-2 font-medium">QUEUED AT</th>
+<th class="px-space-md py-2 font-medium">DURATION</th>
+<th class="px-space-md py-2 font-medium">WORKER</th>
+<th class="px-space-md py-2 font-medium text-right">ACTIONS</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border">
+<!-- Row 1: #8495 (processing) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8495</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">shopify-vdp</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">auth.example.com</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-primary-container font-medium">nuclei</span>
+<span class="text-fg-faint font-body-code text-caption ml-1">(cve-2024-3824)</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-warn-soft text-warn border border-warn-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-warn animate-spin"></span>
+                processing
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">1m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg">42s</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-01</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-crit-soft border border-crit-bd text-crit hover:bg-crit hover:text-surface transition-colors font-body-default text-caption" type="button">Stop</button>
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">Logs</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: #8494 (processing) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8494</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">uber-bb</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">k8s-ingress.emea.example.com</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-info font-medium">gowitness</span>
+<span class="text-fg-faint font-body-code text-caption ml-1">(headless)</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-warn-soft text-warn border border-warn-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-warn animate-spin"></span>
+                processing
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">2m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg">1m 15s</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-02</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-crit-soft border border-crit-bd text-crit hover:bg-crit hover:text-surface transition-colors font-body-default text-caption" type="button">Stop</button>
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">Logs</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: #8493 (dispatched) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8493</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">shopify-vdp</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">checkout-sandbox.dev.example.com</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-asset-service font-medium">httpx-probe</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-info-soft text-info border border-info-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-info"></span>
+                dispatched
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">3m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">-</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-01</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg-muted hover:text-crit hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">Cancel</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: #8492 (queued) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8492</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">uber-bb</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">fleet-telemetry.uber-bb.example.com</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-warn font-medium">portscan</span>
+<span class="text-fg-faint font-body-code text-caption ml-1">(top-1000)</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-neutral-soft text-fg-muted border border-neutral-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-fg-faint"></span>
+                queued
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">4m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">-</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint italic">pending</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-accent-soft border border-accent-soft-bd text-primary-container hover:bg-primary-container hover:text-accent-ink transition-colors font-body-default text-caption" type="button">Dispatch Now</button>
+</div>
+</td>
+</tr>
+<!-- Row 5: #8491 (failed) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group bg-crit-soft/20">
+<td class="px-space-md py-2.5 font-body-code-bold text-crit">#8491</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-fg-muted bg-surface-2 border border-border px-1.5 py-0.5 rounded">internal-sec</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">legacy-dev.test.local</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-primary-container font-medium">nuclei</span>
+<span class="text-fg-faint font-body-code text-caption ml-1">(full)</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-crit-soft text-crit border border-crit-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>
+                failed
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">12m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-crit font-medium">30s (timeout)</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-03</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-2 border border-border-strong text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">Retry</button>
+<button class="px-2 py-1 rounded bg-crit-soft border border-crit-bd text-crit hover:bg-crit hover:text-surface transition-colors font-body-default text-caption" type="button">View Error</button>
+</div>
+</td>
+</tr>
+<!-- Row 6: #8490 (completed) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8490</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">gitlab-core</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">gitlab.internal.abc.test</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-info font-medium">gowitness</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+                completed
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">18m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">2m 14s</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-02</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">View Artifact</button>
+</div>
+</td>
+</tr>
+<!-- Row 7: #8489 (completed) -->
+<tr class="hover:bg-surface-3 transition-colors duration-150 group">
+<td class="px-space-md py-2.5 font-body-code-bold text-fg">#8489</td>
+<td class="px-space-md py-2.5">
+<span class="font-body-code text-caption text-primary bg-surface-2 border border-border px-1.5 py-0.5 rounded">stripe-prod</span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-fg">billing.example.com</td>
+<td class="px-space-md py-2.5 font-caption text-fg-muted">
+<span class="text-tertiary font-medium">subdomain-enum</span>
+</td>
+<td class="px-space-md py-2.5">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-caption text-caption bg-good-soft text-good border border-good-bd">
+<span class="w-1.5 h-1.5 rounded-full bg-good"></span>
+                completed
+              </span>
+</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">25m ago</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-muted">4m 02s</td>
+<td class="px-space-md py-2.5 font-body-code text-caption text-fg-faint">runner-03</td>
+<td class="px-space-md py-2.5 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-2 border border-border text-fg hover:bg-surface-3 transition-colors font-body-default text-caption" type="button">View Artifact</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="p-space-sm px-space-md border-t border-border bg-surface-2 flex flex-col sm:flex-row items-center justify-between gap-space-sm font-caption text-caption">
+<div class="text-fg-muted">
+        Showing <span class="font-body-code-bold text-fg">1–7</span> of <span class="font-body-code-bold text-fg">2,410</span> jobs
+      </div>
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors" type="button">First</button>
+<button class="px-2 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors" type="button">«</button>
+<button class="px-2.5 py-1 rounded bg-primary-container text-accent-ink font-body-code-bold border border-primary-container" type="button">1</button>
+<button class="px-2.5 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors font-body-code" type="button">2</button>
+<button class="px-2.5 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors font-body-code" type="button">3</button>
+<button class="px-2 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors" type="button">»</button>
+<button class="px-2 py-1 rounded bg-surface border border-border text-fg-muted hover:text-fg hover:bg-surface-3 transition-colors" type="button">Last</button>
+</div>
+</div>
+</div>
+<script>
+    (function initStagingQueue() {
+      const toggleBtn = document.getElementById('toggleRefreshBtn');
+      const refreshIcon = document.getElementById('refreshIcon');
+      const refreshLabel = document.getElementById('refreshLabel');
+      let isPaused = false;
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+          isPaused = !isPaused;
+          if (isPaused) {
+            refreshIcon.textContent = 'play_arrow';
+            refreshLabel.textContent = 'Resume auto-refresh';
+            toggleBtn.classList.add('border-warn-bd', 'text-warn');
+          } else {
+            refreshIcon.textContent = 'pause';
+            refreshLabel.textContent = 'Pause auto-refresh';
+            toggleBtn.classList.remove('border-warn-bd', 'text-warn');
+          }
+        });
+      }
+    })();
+  </script>
+</div></main></div>
+
+</body></html>
