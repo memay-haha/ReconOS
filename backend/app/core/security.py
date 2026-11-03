@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Final
 from urllib.parse import urlsplit
 
+import structlog
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error, InvalidHashError
 from fastapi import Request
@@ -137,6 +138,18 @@ def enforce_csrf(request: Request, settings: Settings) -> None:
         raise ForbiddenError(detail="request carries a session cookie without origin headers")
 
 
+log = structlog.get_logger()
+
+# One detail for every rejection: the response body must not reveal which check failed.
+_UNAUTHENTICATED_DETAIL = "authentication is required"
+
+
+def _reject(cause: str) -> UnauthenticatedError:
+    """Log why the request was refused and return the one error the caller sees."""
+    log.info("authentication_rejected", cause=cause)
+    return UnauthenticatedError(detail=_UNAUTHENTICATED_DETAIL)
+
+
 class AllPrograms:
     """Marker for an account that sees every program."""
 
@@ -147,13 +160,13 @@ ALL_PROGRAMS: Final = AllPrograms()
 async def load_current_user(request: Request, session: AsyncSession, settings: Settings) -> User:
     """Resolve the session cookie to an account, or raise UnauthenticatedError.
 
-    Every rejection raises the same error type with a generic title, so a
-    caller cannot tell an unknown cookie from an expired session or a locked
-    account. The detail text is for the server log only.
+    Every rejection raises the same error with the same detail, so the response
+    cannot tell a caller an unknown cookie from an expired session or a locked
+    account. The specific cause goes to the server log as the `cause` field.
     """
     session_id = request.cookies.get(session_cookie(settings).name)
     if session_id is None:
-        raise UnauthenticatedError(detail="no session cookie")
+        raise _reject("no_cookie")
     row = (
         await session.execute(
             select(UserSession, User)
@@ -162,31 +175,43 @@ async def load_current_user(request: Request, session: AsyncSession, settings: S
         )
     ).first()
     if row is None:
-        raise UnauthenticatedError(detail="session not found")
+        raise _reject("unknown_session")
     user_session, user = row
     now = datetime.now(UTC)
     # Absolute lifetime is fixed at login and never extended, unlike the idle window.
     if user_session.expires_at <= now:
-        raise UnauthenticatedError(detail="session reached its maximum lifetime")
+        raise _reject("absolute_expiry")
     idle_minutes = await get_int_setting(session, "session_idle_timeout_minutes")
     if user_session.last_seen_at + timedelta(minutes=idle_minutes) <= now:
-        raise UnauthenticatedError(detail="session expired after inactivity")
+        raise _reject("idle_expiry")
     if user.is_locked:
-        raise UnauthenticatedError(detail="account is locked")
+        raise _reject("account_locked")
     user_session.last_seen_at = now
     return user
 
 
-def require_roles(*roles: UserRole) -> Callable[[User, AsyncSession], Awaitable[User]]:
-    """Deny by default: an endpoint without a guard is callable by nobody."""
+def require_roles(*roles: UserRole) -> Callable[[User, Request], Awaitable[User]]:
+    """Build a guard that admits only the listed roles.
+
+    Called with no roles, the guard denies everyone, Superadmin included.
+    Endpoints that declare no guard at all are not covered here: that needs a
+    router-level default dependency, which does not exist yet.
+    """
     allowed = {role.value for role in roles}
 
-    async def guard(user: User, session: AsyncSession) -> User:
+    async def guard(user: User, request: Request) -> User:
         if user.role not in allowed:
             # Detached: raising below rolls the request transaction back, and a
             # plain record() would be rolled back with it.
             await audit_service.record_detached(
-                action="permission_denied", user_id=user.id, detail={"required": sorted(allowed)}
+                action="permission_denied",
+                user_id=user.id,
+                ip_address=request.client.host if request.client else None,
+                detail={
+                    "required": sorted(allowed),
+                    "method": request.method,
+                    "path": request.url.path,
+                },
             )
             raise ForbiddenError(detail="role is not allowed to perform this action")
         return user

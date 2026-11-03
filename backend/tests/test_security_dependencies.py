@@ -1,3 +1,4 @@
+import json
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 
@@ -131,22 +132,22 @@ async def test_valid_request_refreshes_last_seen(
 
 
 async def test_role_guard_allows_and_denies(
-    db_session: AsyncSession, user_factory: UserFactory
+    request_factory: RequestFactory, user_factory: UserFactory
 ) -> None:
     admin = await user_factory(role=UserRole.ADMIN)
     guard = require_roles(UserRole.SUPERADMIN)
     with pytest.raises(ForbiddenError):
-        await guard(admin, db_session)
+        await guard(admin, request_factory())
     allow = require_roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-    assert (await allow(admin, db_session)).id == admin.id
+    assert (await allow(admin, request_factory())).id == admin.id
 
 
 async def test_denial_is_audited_and_survives_rollback(
-    db_engine: AsyncEngine, db_session: AsyncSession, user_factory: UserFactory
+    db_engine: AsyncEngine, request_factory: RequestFactory, user_factory: UserFactory
 ) -> None:
     user = await user_factory(role=UserRole.USER)
     with pytest.raises(ForbiddenError):
-        await require_roles(UserRole.SUPERADMIN)(user, db_session)
+        await require_roles(UserRole.SUPERADMIN)(user, request_factory())
     # A separate connection cannot see db_session's uncommitted work, so finding
     # the row proves it was committed on its own and survives the rollback.
     async with db_engine.connect() as connection:
@@ -156,6 +157,66 @@ async def test_denial_is_audited_and_survives_rollback(
             )
         ).scalar_one()
     assert count == 1
+
+
+async def test_denial_records_where_it_came_from(
+    db_engine: AsyncEngine, user_factory: UserFactory
+) -> None:
+    user = await user_factory(role=UserRole.USER)
+    request = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "headers": [],
+            "path": "/api/v1/users",
+            "client": ("203.0.113.7", 40000),
+        }
+    )
+    with pytest.raises(ForbiddenError):
+        await require_roles(UserRole.SUPERADMIN)(user, request)
+    async with db_engine.connect() as connection:
+        row = (
+            await connection.execute(
+                text(
+                    "SELECT host(ip_address), detail FROM audit_log"
+                    " WHERE action = 'permission_denied'"
+                )
+            )
+        ).one()
+    assert row[0] == "203.0.113.7"
+    assert row[1] == {"required": ["superadmin"], "method": "POST", "path": "/api/v1/users"}
+
+
+@pytest.mark.parametrize("role", list(UserRole))
+async def test_guard_without_roles_denies_everyone(
+    role: UserRole, request_factory: RequestFactory, user_factory: UserFactory
+) -> None:
+    user = await user_factory(role=role)
+    with pytest.raises(ForbiddenError):
+        await require_roles()(user, request_factory())
+
+
+async def test_rejection_causes_are_indistinguishable(
+    db_session: AsyncSession,
+    settings_factory: SettingsFactory,
+    request_factory: RequestFactory,
+    user_factory: UserFactory,
+) -> None:
+    locked = await user_factory(is_locked=True)
+    locked_id = await make_session(db_session, locked)
+    expired = await user_factory()
+    expired_id = await make_session(db_session, expired, expired=True)
+    bodies = []
+    for request in (
+        request_factory(),
+        request_factory(session_id=new_session_id()),
+        request_factory(session_id=expired_id),
+        request_factory(session_id=locked_id),
+    ):
+        with pytest.raises(UnauthenticatedError) as caught:
+            await load_current_user(request, db_session, settings_factory())
+        bodies.append(json.dumps(caught.value.to_problem(), sort_keys=True))
+    assert len(set(bodies)) == 1
 
 
 async def test_program_filter_skeleton(user_factory: UserFactory) -> None:
