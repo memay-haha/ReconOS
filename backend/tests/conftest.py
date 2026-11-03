@@ -4,7 +4,7 @@ Running against the development stores is forbidden: .claude/rules/testing.md
 """
 
 import os
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
 from app.core.db import build_engine
+from app.core.system_setting import clear_setting_cache
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -48,6 +49,18 @@ def pytest_configure(config: pytest.Config) -> None:
     bucket = os.environ.get("RECONOS_S3_BUCKET")
     if bucket and not bucket.endswith("-test"):
         os.environ["RECONOS_S3_BUCKET"] = f"{bucket}-test"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_setting_cache() -> Iterator[None]:
+    """Clear the process-wide setting cache around every test.
+
+    A value cached by one test would otherwise outlive its rolled-back row and
+    change what a later module reads, so results would depend on test order.
+    """
+    clear_setting_cache()
+    yield
+    clear_setting_cache()
 
 
 @pytest.fixture

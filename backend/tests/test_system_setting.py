@@ -1,17 +1,10 @@
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.system_setting import (
     DEFAULT_SETTINGS,
     SystemSetting,
-    clear_setting_cache,
     get_int_setting,
 )
-
-
-@pytest.fixture(autouse=True)
-def _clean_cache() -> None:
-    clear_setting_cache()
 
 
 def test_defaults_match_the_configuration_document() -> None:
