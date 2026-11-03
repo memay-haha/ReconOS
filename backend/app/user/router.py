@@ -1,12 +1,23 @@
 """HTTP surface of the user module. No query and no business rule lives here."""
 
-from fastapi import APIRouter, Request, Response
+import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request, Response
 
 from app.core.deps import CurrentUser, DbDep, SettingsDep
-from app.core.identity import User
-from app.core.security import enforce_csrf, session_cookie
+from app.core.identity import User, UserRole
+from app.core.pagination import DEFAULT_LIMIT, Page
+from app.core.security import enforce_csrf, require_roles, session_cookie
 from app.user import service
-from app.user.schemas import LoginRequest, PasswordChangeRequest, UserResponse
+from app.user.schemas import (
+    LoginRequest,
+    PasswordChangeRequest,
+    UserCreateRequest,
+    UserResponse,
+    UserSessionResponse,
+    UserUpdateRequest,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
 
@@ -80,4 +91,90 @@ async def change_password(
         new_password=body.new_password,
         session_id=request.cookies[session_cookie(settings).name],
         ip_address=client_ip(request),
+    )
+
+
+superadmin_only = require_roles(UserRole.SUPERADMIN)
+
+
+async def superadmin(request: Request, user: CurrentUser) -> User:
+    # The guard takes the request so a denial records the method, path and IP.
+    return await superadmin_only(user, request)
+
+
+Superadmin = Annotated[User, Depends(superadmin)]
+
+
+@router.post("/users", response_model=UserResponse, tags=["user"])
+async def create_user(
+    request: Request,
+    body: UserCreateRequest,
+    actor: Superadmin,
+    session: DbDep,
+    settings: SettingsDep,
+) -> User:
+    enforce_csrf(request, settings)
+    return await service.create_user(
+        session,
+        actor=actor,
+        username=body.username,
+        display_name=body.display_name,
+        password=body.password,
+        role=body.role,
+    )
+
+
+@router.get("/users", response_model=Page[UserResponse], tags=["user"])
+async def list_users(
+    actor: Superadmin, session: DbDep, limit: int = DEFAULT_LIMIT, cursor: str | None = None
+) -> Page[UserResponse]:
+    return await service.list_users(session, limit=limit, cursor=cursor)
+
+
+@router.get("/users/{user_id}", response_model=UserResponse, tags=["user"])
+async def read_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> User:
+    return await service.get_user(session, user_id)
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse, tags=["user"])
+async def patch_user(
+    request: Request,
+    user_id: uuid.UUID,
+    body: UserUpdateRequest,
+    actor: Superadmin,
+    session: DbDep,
+    settings: SettingsDep,
+) -> User:
+    enforce_csrf(request, settings)
+    return await service.update_user(
+        session, actor=actor, user_id=user_id, display_name=body.display_name, role=body.role
+    )
+
+
+@router.post("/users/{user_id}/lock", status_code=204, tags=["user"])
+async def lock_user(
+    request: Request, user_id: uuid.UUID, actor: Superadmin, session: DbDep, settings: SettingsDep
+) -> None:
+    enforce_csrf(request, settings)
+    await service.set_locked(session, actor=actor, user_id=user_id, locked=True)
+
+
+@router.post("/users/{user_id}/unlock", status_code=204, tags=["user"])
+async def unlock_user(
+    request: Request, user_id: uuid.UUID, actor: Superadmin, session: DbDep, settings: SettingsDep
+) -> None:
+    enforce_csrf(request, settings)
+    await service.set_locked(session, actor=actor, user_id=user_id, locked=False)
+
+
+@router.get("/users/{user_id}/sessions", response_model=Page[UserSessionResponse], tags=["user"])
+async def list_user_sessions(
+    user_id: uuid.UUID,
+    actor: Superadmin,
+    session: DbDep,
+    limit: int = DEFAULT_LIMIT,
+    cursor: str | None = None,
+) -> Page[UserSessionResponse]:
+    return await service.list_sessions_for_user(
+        session, user_id=user_id, limit=limit, cursor=cursor
     )

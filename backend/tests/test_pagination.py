@@ -1,10 +1,18 @@
 import base64
+import json
 import uuid
+from datetime import UTC, datetime
 
 import pytest
 
 from app.core.errors import BadRequestError
-from app.core.pagination import DEFAULT_LIMIT, MAX_LIMIT, decode_cursor, encode_cursor
+from app.core.pagination import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
+    decode_cursor,
+    decode_time_cursor,
+    encode_cursor,
+)
 
 
 def test_round_trip() -> None:
@@ -70,3 +78,20 @@ def test_oversized_cursor_is_handled_without_crashing() -> None:
     cursor = _b64('{"v": "' + "a" * 1_000_000 + '", "id": "' + str(uuid.uuid4()) + '"}')
     value, _ = decode_cursor(cursor)
     assert isinstance(value, str)
+
+
+def encode_cursor_raw(sort_value: object, row_id: uuid.UUID) -> str:
+    """Build a cursor from any value, which encode_cursor's narrow type forbids."""
+    return _b64(json.dumps({"v": sort_value, "id": str(row_id)}))
+
+
+@pytest.mark.parametrize("sort_value", ["not-a-timestamp", 7, None, {"a": 1}])
+def test_time_cursor_rejects_a_sort_value_that_is_not_a_timestamp(sort_value: object) -> None:
+    with pytest.raises(BadRequestError):
+        decode_time_cursor(encode_cursor_raw(sort_value, uuid.uuid4()))
+
+
+def test_time_cursor_round_trips() -> None:
+    moment = datetime(2026, 11, 3, 8, 0, tzinfo=UTC)
+    row_id = uuid.uuid4()
+    assert decode_time_cursor(encode_cursor(moment.isoformat(), row_id)) == (moment, row_id)

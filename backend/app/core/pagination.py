@@ -8,6 +8,7 @@ import base64
 import binascii
 import json
 import uuid
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -25,7 +26,7 @@ class Page[ItemT](BaseModel):
     total_is_estimate: bool = False
 
 
-def encode_cursor(sort_value: object, row_id: uuid.UUID) -> str:
+def encode_cursor(sort_value: str | int | float, row_id: uuid.UUID) -> str:
     payload = json.dumps({"v": sort_value, "id": str(row_id)}, separators=(",", ":"))
     return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii")
 
@@ -56,3 +57,18 @@ def decode_cursor(cursor: str) -> tuple[Any, uuid.UUID]:
     except ValueError as err:
         raise BadRequestError(detail="cursor is not valid") from err
     return payload["v"], row_id
+
+
+def decode_time_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
+    """Decode a cursor whose sort value is an ISO 8601 timestamp.
+
+    decode_cursor guarantees the shape only, so a hostile sort value has to
+    become a 400 here rather than a database error later.
+    """
+    sort_value, row_id = decode_cursor(cursor)
+    if not isinstance(sort_value, str):
+        raise BadRequestError(detail="cursor is not valid")
+    try:
+        return datetime.fromisoformat(sort_value), row_id
+    except ValueError as err:
+        raise BadRequestError(detail="cursor is not valid") from err

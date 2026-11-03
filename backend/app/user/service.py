@@ -5,14 +5,21 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
 from app.audit_log import service as audit_service
 from app.core.db import independent_session
-from app.core.errors import RateLimitedError, UnauthenticatedError
-from app.core.identity import User, UserSession
+from app.core.errors import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    RateLimitedError,
+    UnauthenticatedError,
+)
+from app.core.identity import User, UserRole, UserSession
+from app.core.pagination import MAX_LIMIT, Page, decode_time_cursor, encode_cursor
 from app.core.security import (
     burn_password_comparison,
     check_password_policy,
@@ -23,6 +30,7 @@ from app.core.security import (
 )
 from app.core.system_setting import get_int_setting
 from app.user.models import LoginAttempt
+from app.user.schemas import UserResponse, UserSessionResponse
 
 
 class LoginResult(NamedTuple):
@@ -201,3 +209,145 @@ async def change_password(
     user.password_hash = hash_password(new_password)
     await revoke_sessions_for_user(session, user.id, keep_session_hash=hash_session_id(session_id))
     await audit_service.record(session, action="password_changed", user_id=user.id)
+
+
+async def get_user(session: AsyncSession, user_id: uuid.UUID) -> User:
+    user = await session.get(User, user_id)
+    if user is None:
+        raise NotFoundError(detail="account does not exist")
+    return user
+
+
+async def create_user(
+    session: AsyncSession,
+    *,
+    actor: User,
+    username: str,
+    display_name: str,
+    password: str,
+    role: UserRole,
+) -> User:
+    taken = await session.scalar(select(User.id).where(User.username == username))
+    if taken is not None:
+        raise ConflictError(detail="username is already taken")
+    check_password_policy(password, user_inputs=[username, display_name])
+    user = User(
+        username=username,
+        display_name=display_name,
+        password_hash=hash_password(password),
+        role=role.value,
+    )
+    session.add(user)
+    await session.flush()
+    await audit_service.record(
+        session, action="user_created", user_id=actor.id, resource_type="user", resource_id=user.id
+    )
+    return user
+
+
+async def update_user(
+    session: AsyncSession,
+    *,
+    actor: User,
+    user_id: uuid.UUID,
+    display_name: str | None,
+    role: UserRole | None,
+) -> User:
+    user = await get_user(session, user_id)
+    if role is not None and user.id == actor.id:
+        # Keeping at least one Superadmin: docs/security/authorization.md
+        raise ForbiddenError(detail="an account cannot change its own role")
+    if display_name is not None:
+        user.display_name = display_name
+    if role is not None:
+        user.role = role.value
+        await audit_service.record(
+            session,
+            action="user_role_changed",
+            user_id=actor.id,
+            resource_type="user",
+            resource_id=user.id,
+            detail={"role": role.value},
+        )
+    await audit_service.record(
+        session, action="user_updated", user_id=actor.id, resource_type="user", resource_id=user.id
+    )
+    return user
+
+
+async def set_locked(
+    session: AsyncSession, *, actor: User, user_id: uuid.UUID, locked: bool
+) -> None:
+    user = await get_user(session, user_id)
+    if locked and user.id == actor.id:
+        raise ForbiddenError(detail="an account cannot lock itself")
+    user.is_locked = locked
+    if locked:
+        await revoke_sessions_for_user(session, user.id)
+    await audit_service.record(
+        session,
+        action="user_locked" if locked else "user_unlocked",
+        user_id=actor.id,
+        resource_type="user",
+        resource_id=user.id,
+    )
+
+
+def _clamp(limit: int) -> int:
+    return max(1, min(limit, MAX_LIMIT))
+
+
+async def list_users(
+    session: AsyncSession, *, limit: int, cursor: str | None
+) -> Page[UserResponse]:
+    size = _clamp(limit)
+    stmt = select(User).order_by(User.created_at.desc(), User.id.desc())
+    if cursor is not None:
+        seen_at, seen_id = decode_time_cursor(cursor)
+        stmt = stmt.where(tuple_(User.created_at, User.id) < (seen_at, seen_id))
+    rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
+    total = await session.scalar(select(func.count()).select_from(User)) or 0
+    page_rows = rows[:size]
+    next_cursor = (
+        encode_cursor(page_rows[-1].created_at.isoformat(), page_rows[-1].id)
+        if len(rows) > size
+        else None
+    )
+    return Page[UserResponse](
+        items=[UserResponse.model_validate(row, from_attributes=True) for row in page_rows],
+        next_cursor=next_cursor,
+        total=total,
+    )
+
+
+async def list_sessions_for_user(
+    session: AsyncSession, *, user_id: uuid.UUID, limit: int, cursor: str | None
+) -> Page[UserSessionResponse]:
+    await get_user(session, user_id)
+    size = _clamp(limit)
+    stmt = (
+        select(UserSession)
+        .where(UserSession.user_id == user_id)
+        .order_by(UserSession.created_at.desc(), UserSession.id.desc())
+    )
+    if cursor is not None:
+        seen_at, seen_id = decode_time_cursor(cursor)
+        stmt = stmt.where(tuple_(UserSession.created_at, UserSession.id) < (seen_at, seen_id))
+    rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
+    total = (
+        await session.scalar(
+            select(func.count()).select_from(UserSession).where(UserSession.user_id == user_id)
+        )
+        or 0
+    )
+    page_rows = rows[:size]
+    next_cursor = (
+        encode_cursor(page_rows[-1].created_at.isoformat(), page_rows[-1].id)
+        if len(rows) > size
+        else None
+    )
+    return Page[UserSessionResponse](
+        items=[UserSessionResponse.model_validate(row, from_attributes=True) for row in page_rows],
+        next_cursor=next_cursor,
+        total=total,
+    )

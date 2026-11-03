@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.identity import UserRole
 
@@ -52,3 +52,9 @@ class UserSessionResponse(BaseModel):
     created_at: datetime
     last_seen_at: datetime
     expires_at: datetime
+
+    @field_validator("ip_address", mode="before")
+    @classmethod
+    def _address_as_text(cls, value: object) -> object:
+        # The INET column hands back an ipaddress object, not a string.
+        return None if value is None else str(value)
