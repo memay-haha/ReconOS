@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 40/40 · 🔵 0 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 39/40 · 🔵 1 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -37,7 +37,7 @@
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong        | 2026-11-03 | v1.1: cách mang image MinIO sang máy khác, thư mục `infras/minio/` |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
-| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🟢 Xong        | 2026-11-03 | `make migrate` chạy cả CSDL chính và CSDL log |
+| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt  | 2026-11-03 | Quy trình nhánh: mỗi đợt một nhánh, merge vào `dev` |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong        | 2026-11-03 | v1.9: đóng nợ 14; thêm nợ 18 CI, nợ 19 image MinIO |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong        | 2026-11-03 | v2.1: bỏ CI khỏi đợt 1, chuyển thành nợ 18 |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |

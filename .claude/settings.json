@@ -11,8 +11,7 @@
       "Read(./**/*.key)",
       "Edit(./_reference/**)",
       "Edit(/data/**)",
-      "Bash(rm -rf:*)",
-      "Bash(git push:*)"
+      "Bash(rm -rf:*)"
     ],
     "ask": [
       "Bash(docker compose down:*)",

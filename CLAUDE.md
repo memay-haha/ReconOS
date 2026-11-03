@@ -19,6 +19,9 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 - Khi có quyết định mới hoặc quyết định thay đổi, kể cả thuật ngữ: sửa tài liệu theo [.claude/rules/doc-sync.md](.claude/rules/doc-sync.md) trong cùng lượt.
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
 - Viết và cập nhật tài liệu, ADR: theo [.claude/rules/documentation.md](.claude/rules/documentation.md).
+- Mỗi đợt trong [roadmap.md](docs/roadmap.md) code trên một nhánh riêng, đặt tên `dot-<số>-<chủ đề>`, tách từ `dev`.
+- Xong một đợt: merge nhánh đó vào `dev`, push `dev`, rồi lưu memory theo [agentmemory.md](.claude/rules/agentmemory.md).
+- ❌ Không merge vào `main`. Chỉ người dùng merge `dev` vào `main`.
 
 ## 📚 Chỉ mục tài liệu
 
