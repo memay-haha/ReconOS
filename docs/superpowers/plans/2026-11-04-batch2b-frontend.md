@@ -185,7 +185,7 @@ export function generateCss(markdown) {
       lines.push(`  /* ${group} */`);
     }
     // The light value is the default; a token with no light value is theme invariant.
-    lines.push(`  --${row.name}: ${row.light === '' ? row.dark : row.light};`);
+    lines.push(`  --${row.name}: ${row.values.light === '' ? row.values.dark : row.values.light};`);
   }
   lines.push('}');
   return lines.join('\n') + '\n';
@@ -266,7 +266,7 @@ describe.each([['dark'], ['light']] as const)('%s theme contrast', (theme) => {
   const value = (name: string): string => {
     const row = rows.find((r) => r.name === name);
     if (row === undefined) throw new Error(`unknown token ${name}`);
-    return theme === 'dark' ? row.dark : row.light === '' ? row.dark : row.light;
+    return theme === 'dark' ? row.values.dark : row.values.light === '' ? row.values.dark : row.values.light;
   };
 
   it.each(PAIRS)('%s on %s reaches WCAG AA', (fg, bg) => {
@@ -306,7 +306,7 @@ function luminance(hex: string): number {
   return (
     0.2126 * channel((n >> 16) & 0xff) +
     0.7152 * channel((n >> 8) & 0xff) +
-    0.0722 * (n & 0xff)
+    0.0722 * channel(n & 0xff)
   );
 }
 
@@ -368,15 +368,15 @@ it('overrides every theme dependent token under data-theme dark', () => {
   const dark = css.split('[data-theme="dark"]')[1];
   expect(dark).toBeDefined();
   for (const row of parseTokenTable(designSystem)) {
-    if (row.light === '' || row.light === row.dark) continue;
-    expect(dark).toContain(`--${row.name}: ${row.dark};`);
+    if (row.values.light === '' || row.values.light === row.values.dark) continue;
+    expect(dark).toContain(`--${row.name}: ${row.values.dark};`);
   }
 });
 
 it('keeps theme invariant tokens out of the override block', () => {
   const dark = generateCss(designSystem).split('[data-theme="dark"]')[1];
   for (const row of parseTokenTable(designSystem)) {
-    if (row.light === '') expect(dark).not.toContain(`--${row.name}:`);
+    if (row.values.light === '') expect(dark).not.toContain(`--${row.name}:`);
   }
 });
 ```
@@ -391,18 +391,18 @@ Expected: FAIL, `globals.css` chưa có khối `[data-theme="dark"]`.
 Trong `generateCss`, sau khi đóng `@theme`, thêm:
 
 ```js
-  const themed = rows.filter((row) => row.light !== '' && row.light !== row.dark);
+  const themed = rows.filter((row) => row.values.light !== '' && row.values.light !== row.values.dark);
   lines.push('');
   lines.push('/* Dark theme. The toggle sets data-theme on <html>; without it the');
   lines.push('   media query follows the operating system. */');
   lines.push('@media (prefers-color-scheme: dark) {');
   lines.push('  :root:not([data-theme="light"]) {');
-  for (const row of themed) lines.push(`    --${row.name}: ${row.dark};`);
+  for (const row of themed) lines.push(`    --${row.name}: ${row.values.dark};`);
   lines.push('  }');
   lines.push('}');
   lines.push('');
   lines.push(':root[data-theme="dark"] {');
-  for (const row of themed) lines.push(`  --${row.name}: ${row.dark};`);
+  for (const row of themed) lines.push(`  --${row.name}: ${row.values.dark};`);
   lines.push('}');
 ```
 
