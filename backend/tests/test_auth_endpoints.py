@@ -373,10 +373,16 @@ async def test_password_change_is_throttled_and_audited_like_login(
             .where(LoginAttempt.username == user.username)
         )
         audited = await other.scalar(
+            select(func.count())
+            .select_from(AuditLog)
+            .where(AuditLog.action == "password_change_failed", AuditLog.user_id == user.id)
+        )
+        login_failures = await other.scalar(
             select(func.count()).select_from(AuditLog).where(AuditLog.action == "login_failed")
         )
     assert attempts == 5
     assert audited == 5
+    assert login_failures == 0
     # Even the correct password is refused once the account is throttled.
     blocked = await client.post(
         "/api/v1/auth/password",

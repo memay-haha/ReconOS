@@ -104,12 +104,26 @@ async def check_login_allowed(session: AsyncSession, username: str, ip_address: 
         )
 
 
-async def record_failed_login(username: str, ip_address: str) -> None:
-    """Separate transaction: the request itself ends in 401 and rolls back."""
+async def record_failed_login(
+    username: str,
+    ip_address: str,
+    *,
+    action: str = "login_failed",
+    user_id: uuid.UUID | None = None,
+) -> None:
+    """Separate transaction: the request itself ends in 401 and rolls back.
+
+    The login_attempt row is the throttle counter, shared by every kind of
+    wrong-password attempt. Only the audit action differs by caller.
+    """
     async with independent_session() as session:
         session.add(LoginAttempt(username=username, ip_address=ip_address))
         await audit_service.record(
-            session, action="login_failed", detail={"username": username}, ip_address=ip_address
+            session,
+            action=action,
+            user_id=user_id,
+            detail={"username": username},
+            ip_address=ip_address,
         )
 
 
@@ -179,7 +193,9 @@ async def change_password(
     # so it shares the login throttle and the failed-login trail.
     await check_login_allowed(session, user.username, ip_address)
     if not verify_password(user.password_hash, current_password):
-        await record_failed_login(user.username, ip_address)
+        await record_failed_login(
+            user.username, ip_address, action="password_change_failed", user_id=user.id
+        )
         raise UnauthenticatedError(detail="current password does not match")
     check_password_policy(new_password, user_inputs=[user.username, user.display_name])
     user.password_hash = hash_password(new_password)
