@@ -33,3 +33,11 @@ dist/
 # Hệ điều hành, trình soạn thảo
 .DS_Store
 *.swp
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/

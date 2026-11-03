@@ -1,0 +1,10 @@
+.next/
+coverage/
+node_modules/
+playwright-report/
+pnpm-lock.yaml
+src/styles/globals.css
+CLAUDE.md
+# Rewritten by `next build`
+next-env.d.ts
+tsconfig.json

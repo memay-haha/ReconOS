@@ -1,0 +1,88 @@
+# ReconOS uv workspace root. Package layout: docs/architecture/directory-structure.md
+[project]
+name = "reconos"
+version = "0.1.0"
+description = "ReconOS: security tool orchestration and central raw output storage"
+requires-python = ">=3.15"
+dependencies = [
+    "reconos-backend",
+    "reconos-contracts",
+    "reconos-workers",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["backend", "contracts", "workers"]
+
+[tool.uv.sources]
+reconos-backend = { workspace = true }
+reconos-contracts = { workspace = true }
+reconos-workers = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "httpx", # transport for fastapi.testclient.TestClient
+    "mypy>=2",
+    "pytest>=9",
+    "pytest-asyncio>=1",
+    "pytest-cov>=7",
+    "ruff>=0.17",
+]
+
+# Lint and format rules: .claude/rules/coding-convention.md
+[tool.ruff]
+target-version = "py315"
+line-length = 100
+src = ["backend", "contracts", "workers"]
+# Markdown holds short illustrative snippets in approved documents: ruff must not rewrite them.
+extend-exclude = ["*.md", "_reference", "backend/migrations/versions"]
+
+[tool.ruff.lint]
+select = [
+    "ANN", # type hints on every parameter and return value
+    "ASYNC",
+    "B",
+    "BLE", # no bare except
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "PTH",
+    "RUF",
+    "S", # security rules, required by .claude/rules/security.md
+    "SIM",
+    "T20", # no print(), log through structlog
+    "TRY",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert and spin up fixtures that would trip security and typing rules.
+"**/tests/**" = ["ANN201", "S101", "S105", "S106"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "contracts", "worker"]
+
+[tool.mypy]
+python_version = "3.15"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["backend", "contracts", "workers"]
+exclude = "^backend/migrations/versions/"
+
+# Neither library ships py.typed: docs/architecture/tech-stack.md
+[[tool.mypy.overrides]]
+module = ["aioboto3.*", "celery.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests", "contracts/tests", "workers/tests"]
+addopts = "--strict-markers --strict-config"
+
+[tool.coverage.run]
+branch = true

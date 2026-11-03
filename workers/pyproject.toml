@@ -1,0 +1,24 @@
+# Worker runs tools and uploads raw output. It never imports backend or touches
+# the database: docs/architecture/dependency-graph.md
+[project]
+name = "reconos-workers"
+version = "0.1.0"
+description = "ReconOS worker: runs security tools and uploads raw output"
+requires-python = ">=3.15"
+dependencies = [
+    "celery[redis]>=5",
+    "httpx",
+    "pydantic>=2",
+    "reconos-contracts",
+    "structlog",
+]
+
+[tool.uv.sources]
+reconos-contracts = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["worker"]

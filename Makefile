@@ -1,8 +1,9 @@
 # ReconOS: build, test and dev commands. Run from the repo root.
 # Command names must match the table in CLAUDE.md.
 
+# --noprofile --norc keeps recipes independent of the developer's shell startup files.
 SHELL := /bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := --noprofile --norc -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
 # Optional local overrides (dev only, never committed). Credentials in .env are
