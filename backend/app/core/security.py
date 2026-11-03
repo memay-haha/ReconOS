@@ -17,10 +17,11 @@ from urllib.parse import urlsplit
 
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error, InvalidHashError
+from fastapi import Request
 from zxcvbn import zxcvbn
 
 from app.core.config import Settings
-from app.core.errors import ValidationFailedError
+from app.core.errors import ForbiddenError, ValidationFailedError
 
 MIN_PASSWORD_LENGTH = 12
 MAX_PASSWORD_LENGTH = 128
@@ -106,3 +107,23 @@ class SessionCookie:
 def session_cookie(settings: Settings) -> SessionCookie:
     secure = urlsplit(settings.public_origin).scheme == "https"
     return SessionCookie(name=HOST_COOKIE_NAME if secure else PLAIN_COOKIE_NAME, secure=secure)
+
+
+UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def enforce_csrf(request: Request, settings: Settings) -> None:
+    """Reject browser requests a different site could have triggered.
+
+    Rules and reasoning: docs/api/architecture.md, section Chống CSRF.
+    """
+    if request.method not in UNSAFE_METHODS:
+        return
+    origin = request.headers.get("origin")
+    fetch_site = request.headers.get("sec-fetch-site")
+    if origin is not None and origin != settings.public_origin:
+        raise ForbiddenError(detail="request origin is not allowed")
+    if fetch_site == "cross-site":
+        raise ForbiddenError(detail="cross-site request is not allowed")
+    if origin is None and fetch_site is None and session_cookie(settings).name in request.cookies:
+        raise ForbiddenError(detail="request carries a session cookie without origin headers")
