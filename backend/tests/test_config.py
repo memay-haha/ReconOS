@@ -84,3 +84,35 @@ def test_credentials_stay_masked_when_printed(env: pytest.MonkeyPatch) -> None:
 
     assert "db-pass" not in repr(settings)
     assert "secret" not in repr(settings.s3_secret_key)
+
+
+def test_bootstrap_variables_are_optional(env: pytest.MonkeyPatch) -> None:
+    env.delenv("RECONOS_BOOTSTRAP_ADMIN_USERNAME", raising=False)
+    env.delenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", raising=False)
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_username is None
+    assert settings.bootstrap_admin_password is None
+
+
+def test_bootstrap_variables_are_read(env: pytest.MonkeyPatch) -> None:
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_USERNAME", "rootadmin")
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", "troutmoonlit7Ladder")
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_username == "rootadmin"
+    assert settings.bootstrap_admin_password is not None
+    assert settings.bootstrap_admin_password.get_secret_value() == "troutmoonlit7Ladder"
+
+
+def test_bootstrap_password_reads_file_suffix(env: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    secret_file = tmp_path / "admin_password"
+    secret_file.write_text("troutmoonlit7Ladder\n", encoding="utf-8")
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD_FILE", str(secret_file))
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_password is not None
+    assert settings.bootstrap_admin_password.get_secret_value() == "troutmoonlit7Ladder"

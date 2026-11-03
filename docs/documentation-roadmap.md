@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 34/40 · 🔵 6 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 33/40 · 🔵 7 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -31,7 +31,7 @@
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
 | 21 | `.claude/rules/error-handling.md`          | 16      | 17                   | 🟢 Xong       | 2026-11-01 | v1.1: bảng thử lại chuyển sang system.md, external-services.md |
 | 22 | `.claude/rules/logging.md`                 | 15      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: nơi ghi log chuyển sang database.md |
-| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: bỏ bảng công cụ trùng tech-stack |
+| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-03 | v1.2: lệnh đo độ phủ dùng tên module, dạng đường dẫn không gom được dữ liệu |
 | 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong  | 2026-11-03 | v1.1: từ chối mật khẩu có điểm zxcvbn dưới 3 |
 | 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🟢 Xong  | 2026-11-03 | v1.1: biến bootstrap Superadmin, cookie theo scheme của public origin |
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong   | 2026-11-03 | v1.2: service `bootstrap` chạy lần triển khai đầu |

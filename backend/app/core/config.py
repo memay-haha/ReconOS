@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     public_origin: str
     log_level: str = "info"
     db_pool_size: int = 10
+    # Only the bootstrap command reads these, and only while the user
+    # table is still empty: docs/security/authentication.md
+    bootstrap_admin_username: str | None = None
+    bootstrap_admin_password: SecretStr | None = None
 
     @classmethod
     def settings_customise_sources(

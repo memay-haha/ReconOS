@@ -29,6 +29,7 @@ dev = [
     "pytest-asyncio>=1",
     "pytest-cov>=7",
     "ruff>=0.17",
+    "types-zxcvbn", # zxcvbn ships no py.typed: .claude/rules/coding-convention.md
 ]
 
 # Lint and format rules: .claude/rules/coding-convention.md
