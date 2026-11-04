@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { UserRow } from '@/lib/users';
+import type { UserCore } from '@/lib/users';
 
 import { UserForm } from './user-form';
 
-const EXISTING: UserRow = {
+const EXISTING: UserCore = {
   id: '2',
   username: 'analyst',
   display_name: 'Analyst',

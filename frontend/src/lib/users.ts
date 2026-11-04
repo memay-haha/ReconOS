@@ -6,7 +6,8 @@ import { apiRequest } from './api-client';
 import { sessionKeys } from './sessions';
 import type { CurrentUser } from './auth';
 
-export interface UserRow {
+/** What every endpoint that returns an account carries, writes included. */
+export interface UserCore {
   readonly id: string;
   readonly username: string;
   readonly display_name: string;
@@ -14,6 +15,13 @@ export interface UserRow {
   readonly is_locked: boolean;
   readonly created_at: string;
   readonly last_login_at: string | null;
+}
+
+/** A row of `GET /users`. The count is computed from `user_session` on each read, so
+ * `POST /users` and `PATCH /users/{id}` answer a `UserCore` without it: never copy a
+ * write response into this row, refetch instead (every mutation invalidates `userKeys.all`). */
+export interface UserRow extends UserCore {
+  readonly active_user_session_count: number;
 }
 
 export interface UserPage {
@@ -69,13 +77,13 @@ function useUserMutation<TBody>(
 
 export function useCreateUser() {
   return useUserMutation((body: UserCreateBody) =>
-    apiRequest<UserRow>('/users', { method: 'POST', body: JSON.stringify(body) }),
+    apiRequest<UserCore>('/users', { method: 'POST', body: JSON.stringify(body) }),
   );
 }
 
 export function useUpdateUser(userId: string) {
   return useUserMutation((body: UserUpdateBody) =>
-    apiRequest<UserRow>(`/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    apiRequest<UserCore>(`/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) }),
   );
 }
 

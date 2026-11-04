@@ -5,7 +5,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useActiveSessionCount } from './sessions';
 import { sessionKeys } from './sessions';
-import { useLockUser, useUnlockUser, useUsers, userKeys } from './users';
+import {
+  type UserPage,
+  useLockUser,
+  useUnlockUser,
+  useUpdateUser,
+  useUsers,
+  userKeys,
+} from './users';
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -119,5 +126,38 @@ describe('lock and unlock invalidation', () => {
     result.current.mutate('2');
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(keysOf(spy)).toEqual([userKeys.all]);
+  });
+});
+
+describe('a write response never reaches the row cache', () => {
+  it('keeps the cached active_user_session_count while the refetch is still pending', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const withCount = { ...PAGE.items[0]!, active_user_session_count: 4 };
+    let listReads = 0;
+    const fetchMock = vi.fn((...[, init]: [string, RequestInit?]) => {
+      if (init?.method === 'PATCH') {
+        // POST and PATCH answer without the computed count.
+        return Promise.resolve(Response.json({ ...PAGE.items[0]!, display_name: 'Renamed' }));
+      }
+      listReads += 1;
+      // The refetch after the write never settles, so only an optimistic write could change the cache.
+      if (listReads > 1) return new Promise<Response>(() => undefined);
+      return Promise.resolve(Response.json({ ...PAGE, items: [withCount] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const useBoth = () => ({ list: useUsers(null), update: useUpdateUser('1') });
+    const { result } = renderHook(useBoth, {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+
+    result.current.update.mutate({ display_name: 'Renamed' });
+    await waitFor(() => expect(listReads).toBe(2));
+
+    const cached = client.getQueryData<UserPage>(userKeys.page(null));
+    expect(cached?.items[0]?.active_user_session_count).toBe(4);
+    expect(cached?.items[0]?.display_name).toBe(PAGE.items[0]?.display_name);
   });
 });

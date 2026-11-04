@@ -4,7 +4,7 @@ import { type FormEvent, type ReactElement, type RefObject, useRef, useState } f
 
 import { FieldError } from '@/components/field-error';
 import { ApiError, fieldErrorsOf } from '@/lib/api-client';
-import { type UserRow, useCreateUser, useUpdateUser } from '@/lib/users';
+import { type UserCore, type UserRow, useCreateUser, useUpdateUser } from '@/lib/users';
 
 const ROLES: readonly { value: UserRow['role']; label: string }[] = [
   { value: 'superadmin', label: 'Superadmin' },
@@ -27,7 +27,7 @@ function failureText(error: unknown): string {
 
 export type UserFormProps =
   | { mode: 'create'; user?: never; onDone: () => void }
-  | { mode: 'edit'; user: UserRow; onDone: () => void };
+  | { mode: 'edit'; user: UserCore; onDone: () => void };
 
 /** Two components, one per mode, so each calls exactly the hook it needs and
  * edit mode always has a real account id to patch. */
@@ -72,7 +72,7 @@ function CreateUserForm({ onDone }: { onDone: () => void }): ReactElement {
   );
 }
 
-function EditUserForm({ user, onDone }: { user: UserRow; onDone: () => void }): ReactElement {
+function EditUserForm({ user, onDone }: { user: UserCore; onDone: () => void }): ReactElement {
   const update = useUpdateUser(user.id);
   return (
     <FormBody

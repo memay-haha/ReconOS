@@ -9,6 +9,7 @@ import type { UserRow } from '@/lib/users';
 import { UserActions } from './user-actions';
 
 const OPEN: UserRow = {
+  active_user_session_count: 0,
   id: '2',
   username: 'analyst',
   display_name: 'Analyst',
@@ -31,7 +32,7 @@ describe('UserActions', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Lock' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/users/2/lock');
   });
@@ -40,14 +41,14 @@ describe('UserActions', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<UserActions user={LOCKED} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unlock analyst' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/users/2/unlock');
   });
 
   it('hides Lock on the signed in account, which the backend refuses anyway', () => {
     wrap(<UserActions user={OPEN} isSelf />);
-    expect(screen.queryByRole('button', { name: 'Lock' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lock analyst' })).not.toBeInTheDocument();
   });
 
   it('reports a refusal from the backend in English, not its English title', async () => {
@@ -61,7 +62,7 @@ describe('UserActions', () => {
       ),
     );
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Lock' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('The server refused this action.');
     expect(alert).not.toHaveTextContent('Cannot lock yourself');
@@ -70,7 +71,7 @@ describe('UserActions', () => {
   it('says it could not reach the server on other failures', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed')));
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Lock' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Could not change the account status.',
     );
