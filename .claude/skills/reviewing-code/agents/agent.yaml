@@ -1,0 +1,6 @@
+interface:
+  display_name: "Review code"
+  short_description: "Review code như kỹ sư senior: SOLID, bảo mật, hiệu năng, xử lý lỗi"
+  default_prompt: "Review thay đổi git hiện tại: vi phạm SOLID, rủi ro bảo mật, race condition, xử lý lỗi, hiệu năng, bug điều kiện biên."
+
+# Skill không phụ thuộc nhà cung cấp LLM, không cần cấu hình riêng.
