@@ -31,10 +31,19 @@ export class ApiError extends Error {
     this.code = problem.code ?? 'unknown';
     this.title = title;
     this.detail = problem.detail;
-    const items = Array.isArray(problem.errors) ? problem.errors : [];
-    this.fieldErrors = Object.fromEntries(items.map((item) => [item.field, item.code]));
-    const seconds = retryAfter === null ? Number.NaN : Number.parseInt(retryAfter, 10);
-    if (Number.isFinite(seconds)) this.retryAfterSeconds = seconds;
+    const items: unknown[] = Array.isArray(problem.errors) ? problem.errors : [];
+    const entries: [string, string][] = [];
+    for (const item of items) {
+      const entry = item as { field?: unknown; code?: unknown } | null;
+      if (typeof entry?.field === 'string' && typeof entry.code === 'string') {
+        entries.push([entry.field, entry.code]);
+      }
+    }
+    this.fieldErrors = Object.fromEntries(entries);
+    // Backend emits whole seconds; an HTTP-date or junk is ignored.
+    if (retryAfter !== null && /^\d+$/.test(retryAfter)) {
+      this.retryAfterSeconds = Number.parseInt(retryAfter, 10);
+    }
   }
 }
 
@@ -70,7 +79,18 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  // Read as text first: an empty or non-JSON success body must not throw SyntaxError.
+  const text = await response.text();
+  if (text === '') return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError(
+      response.status,
+      { title: 'Phản hồi không hợp lệ', code: 'invalid_response' },
+      null,
+    );
+  }
 }
 
 export function fieldErrorsOf(error: unknown): Record<string, string> {

@@ -116,6 +116,50 @@ describe('apiRequest', () => {
     const error = (await apiRequest('/auth/login').catch((e: unknown) => e)) as ApiError;
     expect(error.retryAfterSeconds).toBeUndefined();
   });
+
+  it('resolves undefined for an empty 200 body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 200 })));
+    await expect(apiRequest('/x')).resolves.toBeUndefined();
+  });
+
+  it('raises ApiError for a 200 text/html body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('<html>login</html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' },
+        }),
+      ),
+    );
+    const error = await apiRequest('/x').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).not.toBeInstanceOf(SyntaxError);
+  });
+
+  it('ignores malformed entries in errors and keeps the good one', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        respond(422, {
+          title: 'Validation error',
+          errors: [null, 42, { field: 'password', code: 'password_too_weak' }],
+        }),
+      ),
+    );
+    const error = await apiRequest('/x').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).fieldErrors).toEqual({ password: 'password_too_weak' });
+  });
+
+  it.each(['', '120abc', '-5', '1.5'])('rejects Retry-After %j', async (value) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(respond(429, { title: 'x' }, { 'retry-after': value })),
+    );
+    const error = (await apiRequest('/x').catch((e: unknown) => e)) as ApiError;
+    expect(error.retryAfterSeconds).toBeUndefined();
+  });
 });
 
 describe('fieldErrorsOf', () => {
