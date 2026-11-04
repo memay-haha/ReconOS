@@ -303,6 +303,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | spacing-gutter-dense | 0.75rem |  |
 | spacing-margin | 1.5rem |  |
 | spacing-margin-mobile | 1rem |  |
+| spacing-sidebar | 244px |  |
 | spacing-space-xs | 0.25rem |  |
 | spacing-space-sm | 0.5rem |  |
 | spacing-space-md | 0.75rem |  |

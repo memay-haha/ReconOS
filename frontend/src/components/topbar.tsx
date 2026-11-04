@@ -1,44 +1,14 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
-
-import type { CurrentUser } from '@/lib/auth';
-import { useLogout } from '@/lib/auth';
-
 import { ThemeToggle } from './theme-toggle';
 
-const ROLE_LABEL: Record<CurrentUser['role'], string> = {
-  superadmin: 'Superadmin',
-  admin: 'Admin',
-  user: 'User',
-};
-
-export function Topbar({ user }: { user: CurrentUser }) {
-  const router = useRouter();
-  const logout = useLogout();
-
+export function Topbar() {
   return (
-    <header className="flex items-center justify-between gap-space-md border-b border-border bg-surface px-space-md py-space-sm">
-      <span className="font-panel-title text-panel-title text-fg">ReconOS</span>
-      <div className="flex min-w-0 items-center gap-space-sm">
-        <span className="flex min-w-0 flex-col text-right">
-          <span className="truncate text-fg">{user.display_name}</span>
-          <span className="text-caption text-fg-muted">{ROLE_LABEL[user.role]}</span>
-        </span>
-        <ThemeToggle />
-        <button
-          type="button"
-          onClick={() => logout.mutate(undefined, { onSuccess: () => router.push('/login') })}
-          className="rounded-md border border-border px-space-sm py-space-xs text-fg hover:bg-surface-container-high"
-        >
-          Sign out
-        </button>
-        {logout.isError ? (
-          <span role="alert" className="text-caption text-error">
-            Could not sign out. Try again later.
-          </span>
-        ) : null}
-      </div>
+    <header className="fixed top-0 right-0 left-sidebar z-30 flex h-14 items-center justify-between border-b border-border bg-surface px-gutter">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-caption text-fg-faint">
+        <span>ReconOS</span>
+        <span aria-hidden="true">&gt;</span>
+        <span>Console</span>
+      </nav>
+      <ThemeToggle />
     </header>
   );
 }
