@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 
-import { ThemeToggle } from '@/components/theme-toggle';
 import { QueryProvider } from '@/lib/query-provider';
 import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script';
 import '@/styles/globals.css';
@@ -35,9 +34,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="bg-bg text-fg font-body-default text-body-default antialiased">
-        <header className="flex justify-end px-margin py-2">
-          <ThemeToggle />
-        </header>
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
