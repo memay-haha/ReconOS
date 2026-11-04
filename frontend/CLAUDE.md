@@ -8,7 +8,9 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Gọi `fetch` trực tiếp trong component, gọi API trong `useEffect`: [design-patterns.md](../.claude/rules/design-patterns.md).
 - Dùng `dangerouslySetInnerHTML`, render HTML từ output thô, tài sản, finding: [security.md](../.claude/rules/security.md).
 - Dùng kiểu `any`.
-- Dựng các phần mockup đã ghi trong [tech-debt.md](../docs/tech-debt.md): BBRF, gowitness DB, New Module, FIDO2, SSO, Push to Jira, tự sinh job.
+- Dựng các phần mockup đã ghi trong [tech-debt.md](../docs/tech-debt.md): BBRF, gowitness DB, New Module, Push to Jira, tự sinh job.
+- Dựng MFA, FIDO2, WebAuthn, SSO SAML, đồng bộ Active Directory, mTLS, API Tokens trên S12, hoặc vai trò ngoài Superadmin, Admin, User.
+- Dựng phân trang theo số trang. Dùng nút **Trước**, **Sau**.
 
 ## 📐 Quy ước
 
@@ -16,7 +18,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 
 - Dựng màn hình theo thiết kế trong [docs/design/screens/](../docs/design/screens/), danh sách trong `index.json`.
 - Đặt route trong `src/app/` theo màn hình.
-- Sinh khối `@theme` của `src/styles/globals.css` từ bảng token trong [design-system.md](../docs/design/design-system.md) bằng script sinh token. ❌ Không sửa tay khối này: sửa bảng token rồi chạy lại script. Test chạy lại script và so với file đã commit.
+- Sinh `src/styles/globals.css` từ bảng Token Table trong [design-system.md](../docs/design/design-system.md) bằng `scripts/generate-tokens.mjs`, chạy bằng `pnpm --dir frontend tokens`. ❌ Không sửa tay file này: sửa bảng token rồi chạy lại script. Test chạy lại script và so với file đã commit.
 - Một bộ tên token cho cả hai theme: `@theme` giữ giá trị theme sáng, khối `[data-theme="dark"]` ghi đè. ❌ Không rẽ nhánh theo theme trong component.
 - Đặt test unit cạnh file mã, test E2E trong `frontend/e2e/`: [testing.md](../.claude/rules/testing.md).
 - Hỗ trợ hai theme tối, sáng.
@@ -33,7 +35,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Dùng virtual scroll cho bảng dài.
 - Làm mới query tương ứng khi có sự kiện WebSocket.
 - Gom sự kiện WebSocket liên tiếp thành một lần làm mới.
-- Với lỗi API dạng RFC 9457: hiển thị `title`, lỗi từng trường theo `errors`.
+- Với lỗi API dạng RFC 9457: `errors` là mảng `[{field, code}]` chứa mã máy, không chứa câu tiếng Việt. Dịch mã sang tiếng Việt bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu tiếng Việt của màn hình, ❌ không hiển thị `title` tiếng Anh của backend.
 - Chỉ dùng server component cho layout và kiểm tra phiên để chuyển hướng tới S01.
 
 ## 🛠️ Build và test
@@ -43,6 +45,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 | `pnpm --dir frontend dev` | Chạy server phát triển |
 | `pnpm --dir frontend lint` | ESLint |
 | `pnpm --dir frontend exec tsc --noEmit` | Kiểm tra kiểu |
+| `pnpm --dir frontend tokens` | Sinh lại `src/styles/globals.css` từ bảng token |
 | `pnpm --dir frontend test` | Vitest |
 | `pnpm --dir frontend exec playwright test` | E2E, cần `make dev-up` |
 | `pnpm --dir frontend build` | Build chế độ standalone |

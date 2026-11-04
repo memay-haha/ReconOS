@@ -15,7 +15,7 @@
 | 4  | `docs/decisions/adr-tech-stack.md`         | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ, lý do loại Vue và Svelte, JSONB không còn dùng cho trường tùy biến |
 | 5  | `docs/decisions/adr-repo-structure.md`     | 24      | 4                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: Monorepo, cây thư mục đầy đủ nằm trong ADR |
 | 6  | `docs/architecture/tech-stack.md`          | 2       | 4                    | 🔵 Chờ duyệt | 2026-11-04 | v1.8: thêm PyYAML, types-PyYAML vào công cụ phát triển |
-| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🔵 Chờ duyệt | 2026-11-04 | v1.4: module không sở hữu bảng thì không có `models.py` |
+| 7  | `docs/architecture/directory-structure.md` | 3       | 5, 6                 | 🔵 Chờ duyệt | 2026-11-04 | v1.5: thêm `frontend/scripts/` |
 | 8  | `docs/architecture/system.md`              | 4       | 1, 6                 | 🟢 Xong       | 2026-11-01 | v1.2: số lần thử lại của task `parse` chuyển từ error-handling |
 | 9  | `docs/architecture/modules.md`             | 5       | 7, 8                 | 🔵 Chờ duyệt | 2026-11-04 | v1.5: `core` giữ bảng `audit_log` và hai hàm ghi, `audit_log` giữ phần đọc |
 | 10 | `docs/architecture/dependency-graph.md`    | 12      | 9                    | 🔵 Chờ duyệt | 2026-11-04 | v1.4: phần ghi nhật ký xuống `core`, sửa dòng join `user` cho khớp schema.md |
@@ -38,11 +38,11 @@
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt  | 2026-11-03 | Nhánh riêng cho mọi việc của một đợt, kể cả sửa tài liệu. Thêm lệnh `make bootstrap` |
-| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v2.1: nợ 21 thành mục chặn production, thêm nợ 23 dọn dữ liệu |
+| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v2.3: đợt 2b đóng nợ 4, nợ 11, nợ 17 |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong   | 2026-11-03 | v2.3: đợt 2 thêm bảng ngưỡng vận hành |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | Thêm `audit.py` vào mã dùng chung, ghi nhật ký qua `core` |
-| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme, tên mục điều hướng tiếng Anh |
+| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme, tên mục điều hướng tiếng Anh, `errors` là mã máy |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.4: `core` sở hữu bảng `audit_log` |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |
