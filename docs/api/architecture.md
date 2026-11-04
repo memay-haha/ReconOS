@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -41,6 +41,7 @@
 | Sửa một phần | `PATCH`, chỉ gửi trường cần đổi |
 
 - `GET` không đổi dữ liệu.
+- Trường tính từ bảng khác (số đếm, tổng hợp) chỉ có ở endpoint đọc nó, không thêm vào response ghi. Ví dụ: `active_user_session_count` có ở `GET /users` và `GET /users/{user_id}`, không có ở `POST /users`, `PATCH /users/{user_id}`, `GET /auth/me`. Định nghĩa: [glossary.md](../appendix/glossary.md).
 - Response không bao giờ chứa cột thông tin xác thực, giá trị băm mật khẩu, giá trị băm token.
 - Chỉ `POST /auth/login` và `GET /health` không cần xác thực.
 

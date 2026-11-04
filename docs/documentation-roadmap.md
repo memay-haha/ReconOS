@@ -10,7 +10,7 @@
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
 | 1  | `docs/architecture/overview.md`            | 1       | -                    | 🟢 Xong       | 2026-10-30 | v1.10: bỏ ý đang dùng BBRF |
-| 2  | `docs/appendix/glossary.md`                | 27      | 1                    | 🟢 Xong        | 2026-11-02 | v1.10: thêm Tiền đề, Kế thừa, Phạm vi ảnh hưởng, Nguồn ảnh hưởng |
+| 2  | `docs/appendix/glossary.md`                | 27      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v1.11: thêm Số phiên đang hoạt động (`active_user_session_count`) |
 | 3  | `docs/decisions/adr-own-database.md`       | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ theo vietnamese-writing |
 | 4  | `docs/decisions/adr-tech-stack.md`         | 24      | 1                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: sửa từ ngữ, lý do loại Vue và Svelte, JSONB không còn dùng cho trường tùy biến |
 | 5  | `docs/decisions/adr-repo-structure.md`     | 24      | 4                    | 🟢 Xong       | 2026-11-01 | 2026-11-01: Monorepo, cây thư mục đầy đủ nằm trong ADR |
@@ -25,7 +25,7 @@
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🟢 Xong       | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
 | 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-04 | v1.4: nhật ký thao tác tách thành màn hình S14 |
 | 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🟢 Xong       | 2026-11-04 | v1.4: thêm hai mối đe dọa làm lộ mật khẩu ở frontend |
-| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-04 | v1.4: `GET /jobs` lọc theo `status`, `GET /findings` lọc theo `triage_status` (cả `openapi.yaml`) |
+| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-04 | v1.5: trường tính từ bảng khác chỉ có ở endpoint đọc, ví dụ `active_user_session_count` |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🟢 Xong       | 2026-11-01 | v1.0: HTTP, tạo job, WebSocket, request của worker |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
@@ -44,7 +44,7 @@
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Chữ giao diện tiếng Anh, theme tối mặc định, MSW, sidebar bốn nhóm, cấm đọc file ngoài frontend lúc chạy |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
-| 36 | `docs/data/schema.md`                      | 9       | 11                   | 🟢 Xong       | 2026-11-04 | v1.4: `core` sở hữu bảng `audit_log` |
+| 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.5: `active_user_session_count` là trường tính, không phải cột; điều kiện phiên đang hoạt động |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |
 | 38 | `.claude/rules/doc-sync.md`                | -       | 2, 29                | 🟢 Xong         | 2026-11-04 | v1.3: thêm dòng kích hoạt cho bảng token của design system |
 | 39 | `docs/documentation-map.html`              | -       | 29, 38               | 🟢 Xong        | 2026-11-02 | Sơ đồ nhóm, đồ thị 40 file, mục đích từng file. Quy ước vẽ: mục 9 của documentation.md |

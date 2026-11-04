@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import AuditLog
@@ -416,3 +416,84 @@ async def test_all_sessions_paginates(
 async def test_all_sessions_rejects_a_bad_cursor(client: AsyncClient, logged_in: LoggedIn) -> None:
     await logged_in(role=UserRole.SUPERADMIN)
     assert (await client.get("/api/v1/user-sessions?cursor=not-a-cursor")).status_code == 400
+
+
+def _item(body: dict[str, object], user: User) -> dict[str, object]:
+    items = body["items"]
+    assert isinstance(items, list)
+    return next(item for item in items if item["id"] == str(user.id))
+
+
+async def test_user_with_no_session_reads_zero(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    idle_account = await user_factory(role=UserRole.USER)
+    listed = _item((await client.get("/api/v1/users")).json(), idle_account)
+    assert listed["active_user_session_count"] == 0
+    detail = (await client.get(f"/api/v1/users/{idle_account.id}")).json()
+    assert detail["active_user_session_count"] == 0
+
+
+async def test_user_with_several_sessions_reads_the_number(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    busy = await user_factory(role=UserRole.USER)
+    other = await user_factory(role=UserRole.USER)
+    for _ in range(3):
+        await _session_row(db_session, busy)
+    await _session_row(db_session, other)
+    body = (await client.get("/api/v1/users")).json()
+    assert _item(body, busy)["active_user_session_count"] == 3
+    assert _item(body, other)["active_user_session_count"] == 1
+    detail = (await client.get(f"/api/v1/users/{busy.id}")).json()
+    assert detail["active_user_session_count"] == 3
+
+
+async def test_dead_sessions_are_not_counted(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    victim = await user_factory(role=UserRole.USER)
+    expired = await _session_row(db_session, victim, expires_in=-timedelta(hours=1))
+    await _session_row(db_session, victim, idle_for=timedelta(days=30))
+    revoked = await _session_row(db_session, victim)
+    await _session_row(db_session, victim)
+    # Revocation deletes the row: there is no revoked flag to filter on.
+    deleted = await client.delete(f"/api/v1/user-sessions/{revoked.id}", headers=HEADERS)
+    assert deleted.status_code == 204
+    assert expired.expires_at < datetime.now(UTC)
+    body = (await client.get("/api/v1/users")).json()
+    assert _item(body, victim)["active_user_session_count"] == 1
+    detail = (await client.get(f"/api/v1/users/{victim.id}")).json()
+    assert detail["active_user_session_count"] == 1
+
+
+async def test_user_list_reads_sessions_in_one_statement(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    for _ in range(5):
+        await _session_row(db_session, await user_factory(role=UserRole.USER))
+    statements: list[str] = []
+
+    def record(
+        conn: object, cursor: object, statement: str, params: object, context: object, many: bool
+    ) -> None:
+        statements.append(statement)
+
+    engine = db_session.get_bind().engine
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        response = await client.get("/api/v1/users", params={"limit": 200})
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 6
+    # One statement carries the session count for every row: not one per account.
+    # The request's own authentication reads user_session too, so count only the
+    # statements that aggregate it.
+    counting = [s for s in statements if "user_session" in s and "count(" in s]
+    assert len(counting) == 1
+    assert counting[0].lstrip().startswith('SELECT "user"')

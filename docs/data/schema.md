@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md)
 
@@ -45,8 +45,8 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `user` | Tài khoản, vai trò, trạng thái khóa | `password_hash`: Argon2id |
-| `user_session` | Phiên đăng nhập phía server | `session_hash`: giá trị băm session ID, cookie giữ bản gốc |
+| `user` | Tài khoản, vai trò, trạng thái khóa | `password_hash`: Argon2id. Số phiên đang hoạt động (`active_user_session_count`) không phải cột: API tính từ `user_session` mỗi lần đọc |
+| `user_session` | Phiên đăng nhập phía server | `session_hash`: giá trị băm session ID, cookie giữ bản gốc. Không có cột thu hồi: thu hồi xóa dòng. Phiên đang hoạt động khi `expires_at` còn sau hiện tại và `last_seen_at` nằm trong `session_idle_timeout_minutes` |
 | `login_attempt` | Lần đăng nhập sai, dùng để chặn dò mật khẩu | Ghi cả khi tên đăng nhập không tồn tại nên `username` là chuỗi tự do, không có khóa ngoại. Đăng nhập đúng thì xóa dòng của tài khoản đó |
 | `worker` | Máy worker đã đăng ký | `last_heartbeat_at`: lần cuối worker báo còn hoạt động. `tool_modules`: tool module đã cài, worker báo qua heartbeat |
 | `worker_token` | Token của worker, nhiều token để xoay vòng | `token_hash`: giá trị băm. `revoked_at` có giá trị: đã thu hồi |

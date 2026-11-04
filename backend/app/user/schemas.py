@@ -42,6 +42,16 @@ class UserResponse(BaseModel):
     created_at: datetime
 
 
+class UserDetailResponse(UserResponse):
+    """An account with its computed session count, served by the list and detail reads.
+
+    The count is an aggregate over user_session, not a column of user, so only
+    the endpoints that compute it return this shape.
+    """
+
+    active_user_session_count: int
+
+
 class UserSessionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
