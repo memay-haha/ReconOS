@@ -59,6 +59,12 @@ describe('handlersFor', () => {
     expect(builtKeys(IMPLEMENTED)).toContain('GET /domains');
   });
 
+  it('filters a route with a path parameter when its IMPLEMENTED entry is present', () => {
+    expect(builtKeys([])).toContain('GET /users/:user_id');
+    expect(IMPLEMENTED).toContain('GET /users/:user_id');
+    expect(builtKeys(IMPLEMENTED)).not.toContain('GET /users/:user_id');
+  });
+
   it('leaves everything mocked when nothing is implemented yet', () => {
     expect(builtKeys([])).toContain('GET /users');
   });

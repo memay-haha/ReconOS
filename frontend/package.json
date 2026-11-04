@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "tokens": "node scripts/generate-tokens.mjs",
     "colours": "node scripts/colour-audit.mjs",
+    "check:no-mocks": "node scripts/check-no-mocks.mjs",
     "test": "vitest run"
   },
   "dependencies": {

@@ -28,5 +28,8 @@ function route(key: string, resolver: () => Response): MockRoute {
  * backend does not serve, so a mock for a live endpoint never exists. */
 export const mockRoutes: readonly MockRoute[] = [
   route('GET /users', () => HttpResponse.json(page(users))),
+  // Spelled with a path parameter on purpose: it is in IMPLEMENTED, so
+  // registry.test.ts proves the parameter spelling lines up with the filter.
+  route('GET /users/:user_id', () => HttpResponse.json(users[0])),
   route('GET /domains', () => HttpResponse.json(page([]))),
 ];

@@ -92,7 +92,15 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   const [mocksReady, setMocksReady] = useState(process.env.NODE_ENV !== 'development');
   useEffect(() => {
     if (mocksReady) return;
-    void startSampleData().then(() => setMocksReady(true));
+    // A broken worker must not blank the app: fall back to the real network.
+    startSampleData()
+      .catch((error: unknown) => {
+        console.error(
+          'Sample-data layer failed to start; requests go to the real API. Is /mockServiceWorker.js served?',
+          error,
+        );
+      })
+      .finally(() => setMocksReady(true));
   }, [mocksReady]);
   const router = useRouter();
   const pathname = usePathname();
