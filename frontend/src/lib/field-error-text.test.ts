@@ -22,6 +22,7 @@ describe('fieldErrorText', () => {
 
   it('does not read inherited object keys as codes', () => {
     expect(fieldErrorText('toString')).toBe('Giá trị không hợp lệ.');
+    expect(fieldErrorText('__proto__')).toBe('Giá trị không hợp lệ.');
     expect(fieldErrorText('constructor')).toBe('Giá trị không hợp lệ.');
   });
 });

@@ -104,6 +104,23 @@ describe('useCursorStack', () => {
     expect(result.current.canGoBack).toBe(false);
   });
 
+  it('does not push the same cursor twice', () => {
+    const { result } = renderHook(() => useCursorStack());
+    act(() => result.current.goNext('c1'));
+    act(() => result.current.goNext('c1'));
+    act(() => result.current.goBack());
+    expect(result.current.cursor).toBeNull();
+    expect(result.current.canGoBack).toBe(false);
+  });
+
+  it('keeps the stack when the list is refetched', () => {
+    const { result, rerender } = renderHook(() => useCursorStack());
+    act(() => result.current.goNext('c1'));
+    rerender();
+    expect(result.current.cursor).toBe('c1');
+    expect(result.current.canGoBack).toBe(true);
+  });
+
   it('stays on the first page when going back from it', () => {
     const { result } = renderHook(() => useCursorStack());
     act(() => result.current.goBack());

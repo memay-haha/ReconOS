@@ -24,7 +24,9 @@ export function useCursorStack(): {
 
   const goNext = useCallback((next: string | null) => {
     if (next === null) return;
-    setStack((current) => [...current, next]);
+    // A double click, or a caller still holding the previous page's cursor,
+    // must not push the same cursor twice: that would cost the reader two clicks to go back.
+    setStack((current) => (current.at(-1) === next ? current : [...current, next]));
   }, []);
   const goBack = useCallback(() => setStack((current) => current.slice(0, -1)), []);
   const reset = useCallback(() => setStack([]), []);
@@ -57,7 +59,7 @@ export function Pagination({
 }): ReactElement {
   const total = COUNT.format(page.total);
   return (
-    <div className="flex items-center justify-between gap-gutter py-space-md">
+    <div className="flex flex-wrap items-center justify-between gap-gutter py-space-md">
       <span className="text-body-default text-fg-muted">
         {page.totalIsEstimate ? `Khoảng ${total} dòng` : `${total} dòng`}
       </span>

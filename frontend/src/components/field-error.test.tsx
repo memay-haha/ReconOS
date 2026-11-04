@@ -21,6 +21,11 @@ describe('FieldError', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('does not read an inherited key as a field error', () => {
+    const { container } = render(<FieldError errors={{}} field="toString" />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('still says something for a code it does not know', () => {
     render(<FieldError errors={{ username: 'some_future_code' }} field="username" />);
     expect(screen.getByText('Giá trị không hợp lệ.')).toBeInTheDocument();
