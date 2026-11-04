@@ -10,8 +10,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    // Node's built-in localStorage shadows jsdom's and is unusable without a file.
-    execArgv: ['--no-experimental-webstorage'],
     setupFiles: ['./vitest.setup.ts'],
     // Unit tests sit next to the code; e2e belongs to Playwright.
     include: ['src/**/*.test.{ts,tsx}'],

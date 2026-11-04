@@ -12,6 +12,7 @@ describe('ThemeToggle', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('follows the operating system until the reader chooses', () => {
@@ -26,18 +27,6 @@ describe('ThemeToggle', () => {
     expect(localStorage.getItem('reconos-theme')).toBe('dark');
   });
 
-  it('restores the remembered choice', () => {
-    localStorage.setItem('reconos-theme', 'light');
-    render(<ThemeToggle />);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-  });
-
-  it('ignores a stored value that is neither light nor dark', () => {
-    localStorage.setItem('reconos-theme', 'purple');
-    render(<ThemeToggle />);
-    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-  });
-
   it('still renders and switches the page when storage is blocked', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
@@ -50,8 +39,20 @@ describe('ThemeToggle', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
+  it('moves to light on the first click when the operating system is dark', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(prefers-color-scheme: dark)',
+      media: query,
+    }));
+    render(<ThemeToggle />);
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(localStorage.getItem('reconos-theme')).toBe('light');
+  });
+
   it('switches back to light from dark', async () => {
-    localStorage.setItem('reconos-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
     render(<ThemeToggle />);
     await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');

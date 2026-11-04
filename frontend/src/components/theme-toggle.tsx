@@ -1,20 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-
 const STORAGE_KEY = 'reconos-theme';
 type Theme = 'light' | 'dark';
 
 // Storage can throw (private window, blocked site data): the page must still work.
-function remembered(): Theme | null {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    return value === 'light' || value === 'dark' ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 function remember(theme: Theme): void {
   try {
     localStorage.setItem(STORAGE_KEY, theme);
@@ -36,12 +25,8 @@ function current(): Theme | null {
 }
 
 export function ThemeToggle() {
-  // The document attribute is the state. No attribute means "follow the operating system".
-  useEffect(() => {
-    const choice = remembered();
-    if (choice !== null) document.documentElement.setAttribute('data-theme', choice);
-  }, []);
-
+  // The document attribute is the state, set before paint by the script in layout.tsx.
+  // No attribute means "follow the operating system".
   const toggle = () => {
     const shown = current() ?? (prefersDark() ? 'dark' : 'light');
     const next: Theme = shown === 'dark' ? 'light' : 'dark';
