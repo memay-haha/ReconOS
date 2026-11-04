@@ -32,7 +32,7 @@ function isCurrent(pathname: string | null, href: string): boolean {
 
 function Icon({ name }: { name: string }) {
   return (
-    <span aria-hidden="true" className="material-symbols-outlined text-[17px]">
+    <span aria-hidden="true" className="material-symbols-outlined text-icon">
       {name}
     </span>
   );
@@ -94,7 +94,7 @@ function Row({
       {current ? (
         <span
           aria-hidden="true"
-          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-container shadow-[0_0_6px_var(--color-primary-container)]"
+          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-container ring-2 ring-primary-container/30"
         />
       ) : null}
     </Link>

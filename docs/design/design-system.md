@@ -327,6 +327,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | text-panel-title--line-height | 20px |  |
 | text-panel-title--font-weight | 600 |  |
 | font-body-default | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-icon | 17px |  |
 | text-body-default | 13px |  |
 | text-body-default--line-height | 18px |  |
 | text-body-default--font-weight | 400 |  |
