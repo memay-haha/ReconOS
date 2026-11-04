@@ -78,7 +78,22 @@ export function createSessionAwareClient(
   };
 }
 
+/** Resolves once the sample-data layer is up, and immediately outside development.
+ * The import sits inside the NODE_ENV test so a production build removes the branch
+ * and never emits the mock chunk. */
+async function startSampleData(): Promise<void> {
+  if (process.env.NODE_ENV !== 'development') return;
+  const { startMocks } = await import('@/mocks/browser');
+  await startMocks();
+}
+
 export function QueryProvider({ children }: { children: ReactNode }) {
+  // First queries must not fire before the worker can answer them.
+  const [mocksReady, setMocksReady] = useState(process.env.NODE_ENV !== 'development');
+  useEffect(() => {
+    if (mocksReady) return;
+    void startSampleData().then(() => setMocksReady(true));
+  }, [mocksReady]);
   const router = useRouter();
   const pathname = usePathname();
   const [aware] = useState(() =>
@@ -89,5 +104,6 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     aware.onScreenChange(pathname);
   }, [aware, pathname]);
 
+  if (!mocksReady) return null;
   return <QueryClientProvider client={aware.client}>{children}</QueryClientProvider>;
 }
