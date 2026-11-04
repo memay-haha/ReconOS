@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, type KeyboardEvent, type ReactElement, useEffect, useRef } from 'react';
+import { type FormEvent, type ReactElement, useEffect, useRef } from 'react';
 
 import { ApiError, fieldErrorsOf } from '@/lib/api-client';
 import { useChangePassword } from '@/lib/auth';
@@ -12,7 +12,8 @@ const UNREACHABLE = 'Cannot reach the server. Check your connection and try agai
 const UNEXPECTED = 'Could not change the password. Try again later.';
 
 const FOCUSABLE =
-  'input:not([disabled]), button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+  'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), ' +
+  'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 const FIELD =
   'h-10 w-full rounded-sm bg-surface-2 px-space-md text-fg font-body-code text-body-code ' +
   'focus:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring';
@@ -62,37 +63,49 @@ function Body({ onClose }: { onClose: () => void }): ReactElement {
     );
   };
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      onClose();
-      return;
-    }
-    if (event.key !== 'Tab' || dialogRef.current === null) return;
-    const items = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (first === undefined || last === undefined) return;
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
+  // On `document`, not on the panel: a click on the backdrop moves focus to the body, and a
+  // handler on the panel would then see neither Tab nor Escape. The effect re-runs when
+  // `pending` changes so Escape cannot discard a change that is still in flight.
+  const pending = change.isPending;
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!pending) onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || dialogRef.current === null) return;
+      const items = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (first === undefined || last === undefined) return;
+      const active = document.activeElement;
+      const inside = active instanceof Node && dialogRef.current.contains(active);
+      if (!inside) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose, pending]);
 
   const fields = fieldErrorsOf(change.error);
   const message = describeError(change.error, fields);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-gutter backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-gutter">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="change-password-title"
-        onKeyDown={onKeyDown}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface-container p-margin shadow-modal"
       >
         <h2 id="change-password-title" className="font-panel-title text-panel-title text-fg">
@@ -142,8 +155,9 @@ function Body({ onClose }: { onClose: () => void }): ReactElement {
           <div className="flex justify-end gap-space-sm">
             <button
               type="button"
+              disabled={change.isPending}
               onClick={onClose}
-              className="h-10 rounded-sm border border-border px-space-md text-body-default text-fg-muted hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 rounded-sm border border-border px-space-md text-body-default text-fg-muted hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             >
               Cancel
             </button>

@@ -145,15 +145,65 @@ describe('ChangePasswordDialog', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
-  it('moves focus into the dialog and keeps Tab inside it', async () => {
-    wrap(<ChangePasswordDialog open onClose={vi.fn()} />);
+  // The page behind the dialog has focusable content. Without it Tab wraps natively and
+  // these tests would pass with no trap at all.
+  function withPageBehind(onClose: () => void = vi.fn()) {
+    return wrap(
+      <>
+        <button type="button">Behind before</button>
+        <ChangePasswordDialog open onClose={onClose} />
+        <button type="button">Behind after</button>
+      </>,
+    );
+  }
+  const behind = () => [
+    screen.getByRole('button', { name: 'Behind before' }),
+    screen.getByRole('button', { name: 'Behind after' }),
+  ];
+
+  it('moves focus into the dialog on open', () => {
+    withPageBehind();
     expect(screen.getByLabelText(/current password/i)).toHaveFocus();
+  });
+
+  it('keeps Tab and Shift+Tab inside the dialog, never on the page behind', async () => {
+    withPageBehind();
     const submit = screen.getByRole('button', { name: 'Change password' });
     submit.focus();
     await userEvent.tab();
     expect(screen.getByLabelText(/current password/i)).toHaveFocus();
     await userEvent.tab({ shift: true });
     expect(submit).toHaveFocus();
+    for (const outside of behind()) expect(outside).not.toHaveFocus();
+  });
+
+  it('pulls focus back in when Tab is pressed after a click on the backdrop', async () => {
+    withPageBehind();
+    await userEvent.click(screen.getByRole('dialog').parentElement as HTMLElement);
+    expect(screen.getByRole('dialog')).not.toContainElement(document.activeElement as HTMLElement);
+    await userEvent.tab();
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+    await userEvent.click(screen.getByRole('dialog').parentElement as HTMLElement);
+    await userEvent.tab({ shift: true });
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+  });
+
+  it('still closes on Escape after a click on the backdrop', async () => {
+    const onClose = vi.fn();
+    withPageBehind(onClose);
+    await userEvent.click(screen.getByRole('dialog').parentElement as HTMLElement);
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('cannot be cancelled or escaped while the change is in flight', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise<Response>(() => undefined)));
+    const onClose = vi.fn();
+    withPageBehind(onClose);
+    await fill('old secret value', 'troutmoonlit7Ladder');
+    expect(await screen.findByRole('button', { name: 'Cancel' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('returns focus to the button that opened it', async () => {
