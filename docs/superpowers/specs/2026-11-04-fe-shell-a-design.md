@@ -31,7 +31,7 @@
 | Đo từng hex theo đúng vai trò rồi chia đôi: chênh dưới ΔE 5 với token cùng vai trò thì dùng token đó, còn lại mới thêm token mới | Mockup dùng 52 hex viết thẳng, 973 lần. Đo theo vai trò cho thấy chỉ 26 hex thật sự là màu mới. Giá trị tối lấy đúng hex của mockup nên theme tối khớp, vẫn giữ được theme sáng và test tương phản | Thêm token cho cả 41 hex. Cho viết hex thẳng. Ánh xạ sang token gần nhất bất kể vai trò |
 | Chữ giao diện viết tiếng Anh: nhãn nút, thông báo lỗi, chữ trạng thái | Mockup là `lang="en"`. Người dùng chốt ngày 2026-11-04 | Giữ tiếng Việt. Chỉ tên mục điều hướng tiếng Anh |
 | MSW chặn ở tầng mạng, chỉ cho endpoint backend chưa làm | Màn hình gọi đúng endpoint thật trong `openapi.yaml`, không biết mình đang dùng dữ liệu giả. Backend xong thì xóa một file handler | Backend trả dữ liệu mẫu. Hook rẽ nhánh theo cờ |
-| Sidebar theo mockup: hai nhóm, 14 mục, cộng S13 và S14 thành 16. Ba màn hình chi tiết không lên sidebar | Đúng mockup. S05, S07, S09 mở từ màn hình danh sách | Danh sách phẳng 16 mục như đợt 2b |
+| Sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, 14 mục, cộng S13 và S14 thành 16. Ba màn hình chi tiết không lên sidebar | Đúng mockup. S05, S07, S09 mở từ màn hình danh sách | Danh sách phẳng 16 mục như đợt 2b |
 | Thêm S13 output thô và S14 nhật ký thao tác | S14: `authorization.md` cho Admin xem nhật ký, nhưng mọi endpoint khác của S12 chỉ Superadmin, nên Admin mở S12 chỉ thấy lỗi. S13: lưu output thô là mục tiêu G8 mà không mockup nào có chỗ xem | Giữ nhật ký làm panel trong S12. Bỏ qua output thô |
 | Đổi mật khẩu là hộp thoại trong topbar | `POST /auth/password` đã làm xong ở đợt 2a nhưng giao diện không có chỗ gọi, tức một tính năng chết | Màn hình riêng |
 | Dựng Component Library | Có trong sidebar mockup. Dùng để soát lại design system bằng mắt, phục vụ đúng việc theo dõi frontend | Bỏ qua như đợt 2b đã làm |
@@ -115,7 +115,7 @@ Dựng lại theo cấu trúc mockup.
 
 - `make lint`, `make test` đạt. Playwright đạt.
 - Mở `/login` và `/users` ở theme tối, so với mockup không thấy khác biệt về màu và bố cục.
-- Sidebar đủ 16 mục hai nhóm, chỉ mục đã dựng bấm được.
+- Sidebar đủ 16 mục trong bốn nhóm Recon, Operations, Admin, System, chỉ mục đã dựng bấm được.
 - Đổi sang theme sáng, mọi màn hình vẫn đọc được và đạt AA.
 
 ## ⛔ Ngoài phạm vi

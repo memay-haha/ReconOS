@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -76,6 +76,21 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 
 - Trình duyệt chỉ gọi origin của Next.js, không gọi thẳng Backend API. Nhờ vậy `Origin` luôn khớp `RECONOS_PUBLIC_ORIGIN` và cookie `SameSite=Lax` gửi kèm.
 - Production định tuyến `/api/` của trình duyệt ở Nginx: [deployment.md](deployment.md). Server Next.js vẫn cần `RECONOS_API_URL`, vì server component kiểm tra phiên gọi thẳng Backend API ở mỗi request, không đi qua Nginx. Thiếu biến, Next gọi giá trị mặc định `http://127.0.0.1:8000`, tức chính container frontend. S01 vẫn dựng được form đăng nhập, nhưng mọi màn hình sau khi đăng nhập đều hỏng.
+
+### Biến môi trường của bộ test E2E
+
+Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong môi trường production.
+
+| Biến | Thông tin xác thực | Ý nghĩa |
+|---|---|---|
+| `RECONOS_E2E_BASE_URL` | | Địa chỉ Playwright mở ứng dụng, mặc định `http://127.0.0.1:3000`. Playwright lấy host và cổng từ đây để chạy `pnpm dev` |
+| `RECONOS_E2E_USERNAME` | | Tên đăng nhập bộ test dùng. Để trống thì lấy `RECONOS_BOOTSTRAP_ADMIN_USERNAME` |
+| `RECONOS_E2E_PASSWORD` | ✅ | Mật khẩu của tài khoản trên. Để trống thì lấy `RECONOS_BOOTSTRAP_ADMIN_PASSWORD` |
+
+- `frontend/playwright.config.ts` nạp `frontend/.env`, rồi đọc đúng hai biến `RECONOS_BOOTSTRAP_ADMIN_*` trong `.env` ở gốc repo để điền hai biến còn trống. Playwright là tiến trình riêng, không tự đọc file env nào, nên thiếu bước này thì `frontend/.env` điền đủ vẫn không tới được bộ test.
+- Config chỉ lấy hai khóa cần dùng, không nạp cả `.env` ở gốc repo, vì file đó còn chứa mật khẩu CSDL và khóa mã hóa mà server phát triển không cần (G7).
+- Biến đã có sẵn trong môi trường thắng giá trị trong file. Nhờ vậy chạy bộ test bằng tài khoản khác chỉ cần đặt biến ngay trên dòng lệnh.
+- Sau `make init`, bộ test chạy được ngay bằng lệnh trong [testing.md](../../.claude/rules/testing.md), không cần điền thêm biến nào.
 
 ### Biến môi trường của worker
 

@@ -7,7 +7,7 @@ paths:
 ---
 # Kiểm thử
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 21: Kiểm thử
 
 ## ✅ Bắt buộc
@@ -42,6 +42,7 @@ paths:
 | Lỗi | Mỗi lớp `AppError` trả đúng status, `code`, định dạng RFC 9457 |
 
 - Viết test E2E bằng Playwright cho 4 luồng: đăng nhập, tạo job, duyệt job nhóm khai thác bằng tài khoản thứ hai, triage finding.
+- Cho bộ E2E chạy được ngay sau `make init`: `frontend/playwright.config.ts` tự nạp biến môi trường của bộ test theo [configuration.md](../../docs/ops/configuration.md). ❌ Không bắt người chạy điền tay thông tin xác thực vào file thứ hai.
 
 **Dữ liệu test:**
 
