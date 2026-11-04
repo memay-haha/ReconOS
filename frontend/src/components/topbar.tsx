@@ -31,11 +31,11 @@ export function Topbar({ user }: { user: CurrentUser }) {
           onClick={() => logout.mutate(undefined, { onSuccess: () => router.push('/login') })}
           className="rounded-md border border-border px-space-sm py-space-xs text-fg hover:bg-surface-container-high"
         >
-          Đăng xuất
+          Sign out
         </button>
         {logout.isError ? (
           <span role="alert" className="text-caption text-error">
-            Không đăng xuất được. Thử lại sau.
+            Could not sign out. Try again later.
           </span>
         ) : null}
       </div>

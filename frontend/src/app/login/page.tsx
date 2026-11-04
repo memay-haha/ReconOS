@@ -12,9 +12,9 @@ export default async function LoginPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center px-margin-mobile py-space-xl sm:px-margin">
       <div className="w-full max-w-[392px] rounded-lg bg-surface p-margin sm:p-space-xl">
-        <h1 className="font-headline-lg text-headline-lg text-fg">Đăng nhập</h1>
+        <h1 className="font-headline-lg text-headline-lg text-fg">Sign in</h1>
         <p className="mb-space-xl mt-space-xs font-body-default text-body-default text-fg-muted">
-          Nhập thông tin tài khoản để vào ReconOS.
+          Enter your account details to open ReconOS.
         </p>
         <LoginForm />
       </div>

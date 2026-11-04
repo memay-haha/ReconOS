@@ -11,7 +11,7 @@ const ROWS: UserRow[] = [
   {
     id: '1',
     username: 'rootadmin',
-    display_name: 'Quản trị gốc',
+    display_name: 'Root Admin',
     role: 'superadmin',
     is_locked: false,
     created_at: '2026-11-04T08:00:00Z',
@@ -20,7 +20,7 @@ const ROWS: UserRow[] = [
   {
     id: '2',
     username: 'analyst',
-    display_name: 'Người phân tích',
+    display_name: 'Analyst',
     role: 'user',
     is_locked: true,
     created_at: '2026-11-04T08:00:00Z',
@@ -37,13 +37,13 @@ describe('UserTable', () => {
 
   it('marks a locked account', () => {
     render(<UserTable users={ROWS} selectedId={null} onSelect={vi.fn()} />);
-    expect(screen.getByText('Đã khóa')).toBeInTheDocument();
-    expect(screen.getByText('Hoạt động')).toBeInTheDocument();
+    expect(screen.getByText('Locked')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
   });
 
   it('says so when an account has never signed in', () => {
     render(<UserTable users={ROWS} selectedId={null} onSelect={vi.fn()} />);
-    expect(screen.getByText('Chưa đăng nhập')).toBeInTheDocument();
+    expect(screen.getByText('Never signed in')).toBeInTheDocument();
   });
 
   it('renders the last sign-in as dd/mm/yyyy HH:mm', () => {
@@ -75,20 +75,20 @@ describe('UserTable', () => {
 
   it('says the list is empty instead of showing an empty table', () => {
     render(<UserTable users={[]} selectedId={null} onSelect={vi.fn()} />);
-    expect(screen.getByText(/chưa có tài khoản nào/i)).toBeInTheDocument();
+    expect(screen.getByText(/no accounts yet/i)).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });
 
 describe('StatCards', () => {
-  it('writes the numbers with Vietnamese grouping', () => {
+  it('writes the numbers with English grouping', () => {
     render(<StatCards userTotal={1234} sessionTotal={5} />);
-    expect(screen.getByText('1.234')).toBeInTheDocument();
+    expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('shows an unavailable value, not zero, when a total is unknown', () => {
     render(<StatCards userTotal={3} sessionTotal={null} />);
-    expect(screen.getByText('Không khả dụng')).toBeInTheDocument();
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
   });
 });

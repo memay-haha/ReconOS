@@ -11,7 +11,7 @@ describe('FieldError', () => {
 
   it('shows only the message for its own field', () => {
     render(<FieldError errors={{ username: 'missing' }} field="username" />);
-    expect(screen.getByText('Chưa nhập trường này.')).toBeInTheDocument();
+    expect(screen.getByText('This field is required.')).toBeInTheDocument();
   });
 
   it('ignores a code belonging to another field', () => {
@@ -28,7 +28,7 @@ describe('FieldError', () => {
 
   it('still says something for a code it does not know', () => {
     render(<FieldError errors={{ username: 'some_future_code' }} field="username" />);
-    expect(screen.getByText('Giá trị không hợp lệ.')).toBeInTheDocument();
+    expect(screen.getByText('Invalid value.')).toBeInTheDocument();
     expect(screen.queryByText(/some_future_code/)).not.toBeInTheDocument();
   });
 });

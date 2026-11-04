@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 const USER: CurrentUser = {
   id: '1',
   username: 'rootadmin',
-  display_name: 'Quản trị gốc',
+  display_name: 'Root Admin',
   role: 'superadmin',
 };
 
@@ -34,27 +34,27 @@ afterEach(() => {
 describe('Topbar', () => {
   it('shows who is signed in and their role', () => {
     wrap();
-    expect(screen.getByText('Quản trị gốc')).toBeInTheDocument();
+    expect(screen.getByText('Root Admin')).toBeInTheDocument();
     expect(screen.getByText(/superadmin/i)).toBeInTheDocument();
   });
 
   it('sends the reader back to the sign in screen after signing out', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     wrap();
-    await userEvent.click(screen.getByRole('button', { name: /đăng xuất/i }));
+    await userEvent.click(screen.getByRole('button', { name: /sign out/i }));
     expect(push).toHaveBeenCalledWith('/login');
   });
 
   it('tells the reader when signing out failed', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
     wrap();
-    await userEvent.click(screen.getByRole('button', { name: /đăng xuất/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/không đăng xuất được/i);
+    await userEvent.click(screen.getByRole('button', { name: /sign out/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not sign out/i);
     expect(push).not.toHaveBeenCalled();
   });
 
   it('offers the theme toggle', () => {
     wrap();
-    expect(screen.getByRole('button', { name: /giao diện/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /theme/i })).toBeInTheDocument();
   });
 });

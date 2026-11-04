@@ -9,12 +9,12 @@ import { useRevokeSession, useUserSessions } from '@/lib/sessions';
 function revokeFailureText(error: unknown): string {
   // Never the backend's English title. The status picks the sentence; it is not a role check.
   if (error instanceof ApiError && error.status === 403) {
-    return 'Chỉ Superadmin được thu hồi phiên đăng nhập.';
+    return 'Only a Superadmin can revoke sessions.';
   }
   if (error instanceof ApiError && error.status === 404) {
-    return 'Phiên này đã hết hạn hoặc đã bị thu hồi.';
+    return 'This session has expired or was already revoked.';
   }
-  return 'Không thu hồi được phiên. Thử lại sau.';
+  return 'Could not revoke the session. Try again later.';
 }
 
 export function SessionPanel({ userId }: { userId: string }): ReactElement {
@@ -22,7 +22,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
   const revoke = useRevokeSession();
 
   if (sessions.isPending) {
-    return <p className="text-body-default text-fg-muted">Đang tải phiên đăng nhập…</p>;
+    return <p className="text-body-default text-fg-muted">Loading sessions…</p>;
   }
   if (sessions.data === undefined) {
     return (
@@ -30,7 +30,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
         role="alert"
         className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
       >
-        Không tải được phiên đăng nhập.
+        Could not load sessions.
       </p>
     );
   }
@@ -44,12 +44,10 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
           role="alert"
           className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
         >
-          Không làm mới được danh sách phiên đăng nhập.
+          Could not refresh the session list.
         </p>
       )}
-      {items.length === 0 && (
-        <p className="text-body-default text-fg-muted">Không có phiên nào đang hoạt động.</p>
-      )}
+      {items.length === 0 && <p className="text-body-default text-fg-muted">No active sessions.</p>}
       <ul className="flex flex-col gap-space-sm">
         {items.map((row) => (
           <li
@@ -57,9 +55,9 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
             className="flex flex-wrap items-center justify-between gap-space-md rounded-md border border-border p-space-md"
           >
             <span className="flex flex-col text-body-default text-fg">
-              <span>{row.ip_address ?? 'Không rõ địa chỉ'}</span>
+              <span>{row.ip_address ?? 'Address unknown'}</span>
               <span className="text-caption text-fg-muted">
-                Hoạt động gần nhất {formatMoment(row.last_seen_at)}
+                Last active {formatMoment(row.last_seen_at)}
               </span>
             </span>
             <button
@@ -68,7 +66,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
               disabled={revoke.isPending}
               className="h-10 rounded-sm border border-border px-space-xl text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             >
-              Thu hồi
+              Revoke
             </button>
           </li>
         ))}

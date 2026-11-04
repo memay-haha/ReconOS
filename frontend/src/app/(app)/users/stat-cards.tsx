@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 
-const COUNT = new Intl.NumberFormat('vi-VN');
+const COUNT = new Intl.NumberFormat('en-US');
 
 /** A null total means the backend did not provide it (for example a 403): say so rather than show 0. */
 export function StatCards({
@@ -11,8 +11,8 @@ export function StatCards({
   sessionTotal: number | null;
 }): ReactElement {
   const cards = [
-    { label: 'Tổng tài khoản', value: userTotal },
-    { label: 'Phiên đang hoạt động', value: sessionTotal },
+    { label: 'Total accounts', value: userTotal },
+    { label: 'Active sessions', value: sessionTotal },
   ];
   return (
     <div className="grid gap-gutter sm:grid-cols-2">
@@ -20,7 +20,7 @@ export function StatCards({
         <div key={card.label} className="rounded-md border border-border bg-surface p-space-lg">
           <p className="text-body-default text-fg-muted">{card.label}</p>
           {card.value === null ? (
-            <p className="font-body-default text-body-default text-fg-muted">Không khả dụng</p>
+            <p className="font-body-default text-body-default text-fg-muted">Unavailable</p>
           ) : (
             <p className="font-stat-lg text-stat-lg text-fg">{COUNT.format(card.value)}</p>
           )}

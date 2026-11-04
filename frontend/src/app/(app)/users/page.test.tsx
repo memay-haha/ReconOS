@@ -9,7 +9,7 @@ function row(id: string, username: string) {
   return {
     id,
     username,
-    display_name: `Tên ${username}`,
+    display_name: `Name ${username}`,
     role: 'user',
     is_locked: false,
     created_at: '2026-11-04T08:00:00Z',
@@ -41,7 +41,7 @@ describe('UsersPage selection while paging', () => {
           Response.json({
             id: '1',
             username: 'rootadmin',
-            display_name: 'Gốc',
+            display_name: 'Root',
             role: 'superadmin',
           }),
         );
@@ -64,26 +64,26 @@ describe('UsersPage selection while paging', () => {
         .filter((path) => path.startsWith('/api/v1/audit-logs'));
 
     await userEvent.click(await screen.findByRole('button', { name: 'analyst' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Sửa' }));
-    expect(screen.getByRole('button', { name: 'Lưu' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
     await vi.waitFor(() => expect(auditCalls().at(-1)).toBe('/api/v1/audit-logs?user_id=2'));
 
-    const pager = screen.getByRole('navigation', { name: 'Phân trang danh sách tài khoản' });
-    await userEvent.click(within(pager).getByRole('button', { name: /^Sau/ }));
+    const pager = screen.getByRole('navigation', { name: 'Account list pagination' });
+    await userEvent.click(within(pager).getByRole('button', { name: /^Next/ }));
     await screen.findByRole('button', { name: 'other' });
 
-    expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
     const patches = fetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH');
     expect(patches).toHaveLength(0);
 
     // Nothing on screen names the account any more, so the log must be the whole log.
-    expect(screen.queryByRole('region', { name: 'Chi tiết tài khoản' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Account details' })).not.toBeInTheDocument();
     await vi.waitFor(() => expect(auditCalls().at(-1)).toBe('/api/v1/audit-logs'));
   });
 });
 
 const EMPTY = { items: [], next_cursor: null, total: 0, total_is_estimate: false };
-const ME = { id: '1', username: 'rootadmin', display_name: 'Gốc', role: 'superadmin' };
+const ME = { id: '1', username: 'rootadmin', display_name: 'Root', role: 'superadmin' };
 
 type Handler = (path: string) => Response | Promise<Response>;
 
@@ -130,19 +130,19 @@ describe('UsersPage list states', () => {
       if (path === '/api/v1/users') return new Promise<Response>(() => undefined) as never;
       return ok(path) ?? Response.json(EMPTY);
     });
-    expect(screen.getByText('Đang tải danh sách tài khoản…')).toBeInTheDocument();
-    expect(screen.queryByText(/chưa có tài khoản/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('Không tải được danh sách tài khoản.')).not.toBeInTheDocument();
+    expect(screen.getByText('Loading the account list…')).toBeInTheDocument();
+    expect(screen.queryByText(/no accounts yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not load the account list.')).not.toBeInTheDocument();
   });
 
   it('shows the empty list as its own sentence, not as an error or loading', async () => {
     renderPage((path) =>
       path === '/api/v1/users' ? Response.json(EMPTY) : (ok(path) ?? Response.json(EMPTY)),
     );
-    expect(await screen.findByText('Chưa có tài khoản nào.')).toBeInTheDocument();
+    expect(await screen.findByText('No accounts yet.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.queryByText('Đang tải danh sách tài khoản…')).not.toBeInTheDocument();
-    expect(screen.queryByText('Không tải được danh sách tài khoản.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading the account list…')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not load the account list.')).not.toBeInTheDocument();
   });
 
   it('never renders a failed users request as an empty list', async () => {
@@ -151,10 +151,10 @@ describe('UsersPage list states', () => {
         ? Response.json({ title: 'Boom' }, { status: 500 })
         : (ok(path) ?? Response.json(EMPTY)),
     );
-    expect(await screen.findByText('Không tải được danh sách tài khoản.')).toBeInTheDocument();
-    expect(screen.queryByText('Chưa có tài khoản nào.')).not.toBeInTheDocument();
+    expect(await screen.findByText('Could not load the account list.')).toBeInTheDocument();
+    expect(screen.queryByText('No accounts yet.')).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.queryByText('Đang tải danh sách tài khoản…')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading the account list…')).not.toBeInTheDocument();
     expect(screen.queryByText('Boom')).not.toBeInTheDocument();
   });
 });
@@ -168,9 +168,9 @@ describe('UsersPage session card', () => {
       return ok(path) ?? Response.json(EMPTY);
     });
     expect(await screen.findByRole('button', { name: 'analyst' })).toBeInTheDocument();
-    const card = (await screen.findByText('Phiên đang hoạt động')).parentElement as HTMLElement;
-    expect(within(card).getByText('Không khả dụng')).toBeInTheDocument();
-    const users = screen.getByText('Tổng tài khoản').parentElement as HTMLElement;
+    const card = (await screen.findByText('Active sessions')).parentElement as HTMLElement;
+    expect(within(card).getByText('Unavailable')).toBeInTheDocument();
+    const users = screen.getByText('Total accounts').parentElement as HTMLElement;
     expect(within(users).getByText('37')).toBeInTheDocument();
   });
 });
@@ -183,7 +183,7 @@ describe('UsersPage audit panel', () => {
       if (path === '/api/v1/users') return Response.json(list([row('2', 'analyst')], null));
       return ok(path) ?? Response.json(EMPTY);
     });
-    expect(await screen.findByRole('heading', { name: 'Nhật ký thao tác' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Audit log' })).toBeInTheDocument();
     expect(await screen.findByText('user_created')).toBeInTheDocument();
     expect(fetchSpy).toHaveBeenCalledWith('/api/v1/audit-logs');
     await userEvent.click(await screen.findByRole('button', { name: 'analyst' }));

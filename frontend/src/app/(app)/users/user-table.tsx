@@ -12,7 +12,7 @@ const ROLE_LABEL: Record<UserRow['role'], string> = {
 };
 
 function moment(value: string | null): string {
-  return value === null ? 'Chưa đăng nhập' : formatMoment(value);
+  return value === null ? 'Never signed in' : formatMoment(value);
 }
 
 const HEAD = 'px-space-md py-space-sm text-label-caps text-fg-muted';
@@ -29,9 +29,7 @@ export function UserTable({
 }): ReactElement {
   if (users.length === 0) {
     return (
-      <p className="py-space-xl text-center text-body-default text-fg-muted">
-        Chưa có tài khoản nào.
-      </p>
+      <p className="py-space-xl text-center text-body-default text-fg-muted">No accounts yet.</p>
     );
   }
 
@@ -41,19 +39,19 @@ export function UserTable({
         <thead>
           <tr className="border-b border-border">
             <th scope="col" className={HEAD}>
-              Tên đăng nhập
+              Username
             </th>
             <th scope="col" className={HEAD}>
-              Tên hiển thị
+              Display name
             </th>
             <th scope="col" className={HEAD}>
-              Vai trò
+              Role
             </th>
             <th scope="col" className={HEAD}>
-              Trạng thái
+              Status
             </th>
             <th scope="col" className={HEAD}>
-              Đăng nhập gần nhất
+              Last sign-in
             </th>
           </tr>
         </thead>
@@ -83,7 +81,7 @@ export function UserTable({
                 <td className={CELL}>{ROLE_LABEL[row.role]}</td>
                 <td className={CELL}>
                   <span className={row.is_locked ? 'text-crit' : 'text-good'}>
-                    {row.is_locked ? 'Đã khóa' : 'Hoạt động'}
+                    {row.is_locked ? 'Locked' : 'Active'}
                   </span>
                 </td>
                 <td className={CELL}>{moment(row.last_login_at)}</td>

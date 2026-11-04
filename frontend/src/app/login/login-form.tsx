@@ -9,13 +9,14 @@ import { useLogin } from '@/lib/auth';
 /** Every rejected sign in gets the same sentence: the backend answers the same
  * 401 for a wrong username, a wrong password and a locked account, and the
  * screen must not add a distinction the API deliberately removed. */
-const REJECTED = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-const UNREACHABLE = 'Không kết nối được máy chủ. Kiểm tra kết nối rồi thử lại.';
-const UNEXPECTED = 'Không đăng nhập được. Thử lại sau.';
+const REJECTED = 'Incorrect username or password.';
+const UNREACHABLE = 'Cannot reach the server. Check your connection and try again.';
+const UNEXPECTED = 'Could not sign in. Try again later.';
 
 function lockoutMessage(seconds: number | undefined): string {
-  if (seconds === undefined) return 'Tài khoản tạm thời bị chặn do thử sai quá nhiều lần.';
-  return `Tài khoản tạm thời bị chặn do thử sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(seconds / 60))} phút.`;
+  if (seconds === undefined) return 'Too many failed attempts.';
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  return `Too many failed attempts. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
 }
 
 /** Reports what the backend said; it does not decide why a sign in failed. */
@@ -65,7 +66,7 @@ export function LoginForm() {
           htmlFor="username"
           className="font-label-caps text-label-caps uppercase text-fg-muted"
         >
-          Tên đăng nhập
+          Username
         </label>
         <input
           id="username"
@@ -82,7 +83,7 @@ export function LoginForm() {
           htmlFor="password"
           className="font-label-caps text-label-caps uppercase text-fg-muted"
         >
-          Mật khẩu
+          Password
         </label>
         <input
           id="password"
@@ -107,7 +108,7 @@ export function LoginForm() {
         disabled={login.isPending}
         className="h-10 rounded-sm bg-primary px-space-xl font-panel-title text-panel-title text-on-primary focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
-        {login.isPending ? 'Đang đăng nhập…' : 'Đăng nhập'}
+        {login.isPending ? 'Signing in…' : 'Sign in'}
       </button>
     </form>
   );

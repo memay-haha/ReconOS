@@ -19,13 +19,13 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: 'ReconOS',
-  description: 'Điều phối công cụ bảo mật và lưu output tập trung',
+  description: 'Orchestrates security tools and stores their output in one place',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
-      lang="vi"
+      lang="en"
       suppressHydrationWarning
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >

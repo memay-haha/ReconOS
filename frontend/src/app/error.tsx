@@ -11,14 +11,14 @@ export default function ErrorPage({
 }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-space-md px-margin-mobile text-center">
-      <h1 className="font-headline-lg text-headline-lg text-fg">Không tải được trang</h1>
-      <p className="text-fg-muted">Hệ thống đang gặp sự cố. Thử lại sau ít phút.</p>
+      <h1 className="font-headline-lg text-headline-lg text-fg">Could not load this page</h1>
+      <p className="text-fg-muted">Something went wrong on our side. Try again in a few minutes.</p>
       <button
         type="button"
         onClick={reset}
         className="rounded-md border border-border px-space-md py-space-sm text-fg hover:bg-surface-container-high"
       >
-        Thử lại
+        Try again
       </button>
     </main>
   );

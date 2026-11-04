@@ -13,22 +13,22 @@ export interface NavItem {
 
 // The screens in docs/design/screens/index.json minus S01, in that order.
 export const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Dashboard', href: null, batch: 'Đợt 10' },
-  { label: 'Asset Monitor', href: null, batch: 'Đợt 5' },
-  { label: 'Domains', href: null, batch: 'Đợt 5' },
-  { label: 'Domain Detail', href: null, batch: 'Đợt 5' },
-  { label: 'Screenshot Gallery', href: null, batch: 'Đợt 7' },
-  { label: 'Capture Detail', href: null, batch: 'Đợt 7' },
-  { label: 'Programs', href: null, batch: 'Đợt 3' },
-  { label: 'Program Detail', href: null, batch: 'Đợt 3' },
-  { label: 'Staging Queue', href: null, batch: 'Đợt 4' },
-  { label: 'Program Management', href: null, batch: 'Đợt 3' },
-  { label: 'Users & Access Control', href: '/users', batch: 'Đợt 2' },
-  { label: 'System Health & Tools', href: null, batch: 'Đợt 4' },
-  { label: 'Osmedeus Settings', href: null, batch: 'Đợt 5' },
-  { label: 'Vigolium Settings', href: null, batch: 'Đợt 9' },
-  { label: 'Modules Recon Capabilities', href: null, batch: 'Đợt 4' },
-  { label: 'Global Findings Explorer', href: null, batch: 'Đợt 6' },
+  { label: 'Dashboard', href: null, batch: 'Batch 10' },
+  { label: 'Asset Monitor', href: null, batch: 'Batch 5' },
+  { label: 'Domains', href: null, batch: 'Batch 5' },
+  { label: 'Domain Detail', href: null, batch: 'Batch 5' },
+  { label: 'Screenshot Gallery', href: null, batch: 'Batch 7' },
+  { label: 'Capture Detail', href: null, batch: 'Batch 7' },
+  { label: 'Programs', href: null, batch: 'Batch 3' },
+  { label: 'Program Detail', href: null, batch: 'Batch 3' },
+  { label: 'Staging Queue', href: null, batch: 'Batch 4' },
+  { label: 'Program Management', href: null, batch: 'Batch 3' },
+  { label: 'Users & Access Control', href: '/users', batch: 'Batch 2' },
+  { label: 'System Health & Tools', href: null, batch: 'Batch 4' },
+  { label: 'Osmedeus Settings', href: null, batch: 'Batch 5' },
+  { label: 'Vigolium Settings', href: null, batch: 'Batch 9' },
+  { label: 'Modules Recon Capabilities', href: null, batch: 'Batch 4' },
+  { label: 'Global Findings Explorer', href: null, batch: 'Batch 6' },
 ];
 
 // Segment-aware: /users and /users/42 match /users, /usersfoo does not.
@@ -42,7 +42,7 @@ export function Sidebar() {
 
   return (
     <nav
-      aria-label="Điều hướng chính"
+      aria-label="Main navigation"
       className="w-full shrink-0 border-b border-border bg-surface md:w-64 md:border-r md:border-b-0"
     >
       {/* Below md the list folds behind this button so it never squeezes the content. */}
@@ -65,7 +65,7 @@ export function Sidebar() {
             {item.href === null ? (
               <span className="flex flex-col rounded-md px-space-sm py-space-xs text-fg-muted">
                 {item.label}
-                <span className="text-caption text-fg-muted">Có ở {item.batch}</span>
+                <span className="text-caption text-fg-muted">Available in {item.batch}</span>
               </span>
             ) : (
               <Link

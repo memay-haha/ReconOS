@@ -42,7 +42,7 @@ export function ThemeToggle() {
       onClick={toggle}
       className="rounded-md border border-border px-3 py-2 text-fg hover:bg-surface-container-high"
     >
-      Đổi giao diện
+      Toggle theme
     </button>
   );
 }

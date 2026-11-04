@@ -22,7 +22,7 @@ describe('ThemeToggle', () => {
 
   it('writes the choice to the document and remembers it', async () => {
     render(<ThemeToggle />);
-    await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
+    await userEvent.click(screen.getByRole('button', { name: /toggle theme/i }));
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(localStorage.getItem('reconos-theme')).toBe('dark');
   });
@@ -35,7 +35,7 @@ describe('ThemeToggle', () => {
       throw new Error('blocked');
     });
     render(<ThemeToggle />);
-    await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
+    await userEvent.click(screen.getByRole('button', { name: /toggle theme/i }));
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
@@ -46,7 +46,7 @@ describe('ThemeToggle', () => {
     }));
     render(<ThemeToggle />);
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
+    await userEvent.click(screen.getByRole('button', { name: /toggle theme/i }));
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(localStorage.getItem('reconos-theme')).toBe('light');
   });
@@ -54,7 +54,7 @@ describe('ThemeToggle', () => {
   it('switches back to light from dark', async () => {
     document.documentElement.setAttribute('data-theme', 'dark');
     render(<ThemeToggle />);
-    await userEvent.click(screen.getByRole('button', { name: /giao diện/i }));
+    await userEvent.click(screen.getByRole('button', { name: /toggle theme/i }));
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(localStorage.getItem('reconos-theme')).toBe('light');
   });

@@ -8,9 +8,9 @@ import { type UserRow, useLockUser, useUnlockUser } from '@/lib/users';
 function failureText(error: unknown): string {
   // Never the backend's English title. 409 and 403 are the backend refusing the change itself.
   if (error instanceof ApiError && (error.status === 409 || error.status === 403)) {
-    return 'Máy chủ từ chối thao tác này.';
+    return 'The server refused this action.';
   }
-  return 'Không đổi được trạng thái tài khoản.';
+  return 'Could not change the account status.';
 }
 
 export function UserActions({ user, isSelf }: { user: UserRow; isSelf: boolean }): ReactElement {
@@ -29,7 +29,7 @@ export function UserActions({ user, isSelf }: { user: UserRow; isSelf: boolean }
           disabled={active.isPending}
           className="h-10 self-start rounded-sm border border-border px-space-xl text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
         >
-          {user.is_locked ? 'Mở khóa' : 'Khóa'}
+          {user.is_locked ? 'Unlock' : 'Lock'}
         </button>
       )}
       {active.error !== null && (

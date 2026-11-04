@@ -19,7 +19,7 @@ const PAGE = {
     {
       id: '1',
       username: 'rootadmin',
-      display_name: 'Quản trị gốc',
+      display_name: 'Root Admin',
       role: 'superadmin',
       is_locked: false,
       created_at: '2026-11-04T08:00:00Z',

@@ -24,7 +24,7 @@ export class ApiError extends Error {
   readonly retryAfterSeconds?: number;
 
   constructor(status: number, problem: ProblemDetails, retryAfter: string | null) {
-    const title = problem.title ?? 'Yêu cầu không thành công';
+    const title = problem.title ?? 'Request failed';
     super(title);
     this.name = 'ApiError';
     this.status = status;
@@ -87,7 +87,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   } catch {
     throw new ApiError(
       response.status,
-      { title: 'Phản hồi không hợp lệ', code: 'invalid_response' },
+      { title: 'Invalid response', code: 'invalid_response' },
       null,
     );
   }

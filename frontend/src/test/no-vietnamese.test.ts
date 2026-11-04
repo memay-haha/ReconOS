@@ -8,8 +8,7 @@ const srcRoot = fileURLToPath(new URL('../', import.meta.url));
 
 /** Vietnamese letters that no English string contains. Plain ASCII words that
  * happen to be Vietnamese are not worth chasing; the diacritics are. */
-const VIETNAMESE =
-  /[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/iu;
+const VIETNAMESE = /[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/iu;
 
 /** Comments stay in English by convention; a stray word there is not a build failure. */
 function stripComments(code: string): string {

@@ -31,11 +31,11 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
 
   return (
     <section className="flex flex-col gap-space-md">
-      <h2 className="text-panel-title text-fg">Nhật ký thao tác</h2>
+      <h2 className="text-panel-title text-fg">Audit log</h2>
 
       <form onSubmit={onFilter} className="flex flex-wrap items-end gap-space-sm">
         <label htmlFor={labelId} className="flex flex-col gap-space-xs text-body-default text-fg">
-          Thao tác
+          Action
           <input
             id={labelId}
             value={draftAction}
@@ -47,17 +47,17 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
           type="submit"
           className="h-10 rounded-sm border border-border px-space-xl text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          Lọc
+          Filter
         </button>
       </form>
 
-      {logs.isPending && <p className="text-body-default text-fg-muted">Đang tải nhật ký…</p>}
+      {logs.isPending && <p className="text-body-default text-fg-muted">Loading the audit log…</p>}
       {logs.data === undefined && logs.isError && (
         <p
           role="alert"
           className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
         >
-          Không tải được nhật ký thao tác.
+          Could not load the audit log.
         </p>
       )}
       {logs.data !== undefined && (
@@ -68,11 +68,11 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
               role="alert"
               className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
             >
-              Không tải được nhật ký thao tác.
+              Could not load the audit log.
             </p>
           )}
           {logs.data.items.length === 0 ? (
-            <p className="text-body-default text-fg-muted">Không có dòng nhật ký nào.</p>
+            <p className="text-body-default text-fg-muted">No audit log entries.</p>
           ) : (
             <ul className="flex flex-col gap-space-sm">
               {logs.data.items.map((row) => (
@@ -85,15 +85,15 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
                     <span className="text-fg-muted">{formatMoment(row.created_at)}</span>
                   </span>
                   <span className="text-fg-muted">
-                    {row.resource_type ?? 'Không gắn tài nguyên'} ·{' '}
-                    {row.ip_address ?? 'Không rõ địa chỉ'}
+                    {row.resource_type ?? 'No resource attached'} ·{' '}
+                    {row.ip_address ?? 'Address unknown'}
                   </span>
                 </li>
               ))}
             </ul>
           )}
           <Pagination
-            label="Phân trang nhật ký thao tác"
+            label="Audit log pagination"
             page={{
               total: logs.data.total,
               totalIsEstimate: logs.data.total_is_estimate,

@@ -45,7 +45,7 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     const pending = screen.getByText('Dashboard').closest('li');
     expect(pending).not.toBeNull();
-    expect(within(pending as HTMLElement).getByText(/có ở đợt 10/i)).toBeInTheDocument();
+    expect(within(pending as HTMLElement).getByText(/available in batch 10/i)).toBeInTheDocument();
   });
 
   it('marks the current screen for assistive technology', () => {
