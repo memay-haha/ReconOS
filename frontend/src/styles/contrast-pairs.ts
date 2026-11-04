@@ -42,5 +42,7 @@ export const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['color-fg', 'color-bg'],
   // Body text inside cards, panels and table rows.
   ['color-fg', 'color-surface'],
-  // Secondary text on a card: column headers, timestamps, helper lines.
+  // The theme button (theme-toggle.tsx): icon at rest, and the icon on hover.
+  ['color-on-surface-variant', 'color-surface-2'],
+  ['color-on-surface', 'color-surface-container-high'],
 ];

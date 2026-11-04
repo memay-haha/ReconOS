@@ -190,7 +190,7 @@ Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi �
 - Màu accent `#22d3ee`, 4 màu trạng thái `good`, `warn`, `crit`, `info` và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng. Màu `neutral` không có sắc nên chỉ đổi độ sáng.
 - Nhóm `*-fixed*` của Material 3 không đổi theo theme nên hai cột bằng nhau.
 
-Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
+Test `frontend/src/styles/tokens.test.ts` kiểm tra mọi cặp chữ trên nền trong `PAIRS` của `frontend/src/styles/contrast-pairs.ts`, ở cả hai theme, đạt tỉ lệ tương phản tối thiểu 4,5.
 
 | token | dark | light |
 |---|---|---|
@@ -373,7 +373,7 @@ The layout is constructed on a strict **4px modular baseline grid**. Density is 
 
 ### Shell & Structural Geometry
 - **Top Bar:** Fixed `56px` height with continuous bottom border `1px solid var(--border)`.
-- **Primary Rail/Sidebar:** `244px` expanded width, folding into a `64px` icon rail on command or breakpoint compression.
+- **Primary Rail/Sidebar:** `244px` expanded width (token `spacing-sidebar`), folding into a `64px` icon rail on command or breakpoint compression.
 - **Content Canvas:** Fluid grid bound by responsive inner limits:
   - Standard Card Padding: `18px` (`space-lg`).
   - Table Cell Padding: `10px` vertical, `14px` horizontal.

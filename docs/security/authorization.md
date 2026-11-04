@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -22,7 +22,7 @@
 ## 📍 Ở đâu
 
 - Mã: `backend/app/core/security.py`, module `user`. Bảng gán User vào program: [database.md](../data/database.md).
-- Màn hình quản lý tài khoản và vai trò: S12, chỉ Superadmin. Nhật ký thao tác: S14, Superadmin và Admin. Gán User vào program: S09.
+- Màn hình quản lý tài khoản và vai trò: S12, chỉ Superadmin. Nhật ký thao tác: S14, Superadmin và Admin. S14 tách khỏi S12 vì mọi endpoint khác của S12 chỉ Superadmin, nên Admin mở S12 chỉ thấy lỗi. Gán User vào program: S09.
 
 ## ⚙️ Làm như thế nào
 

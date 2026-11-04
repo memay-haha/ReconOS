@@ -28,6 +28,10 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Hiển thị nhãn, trạng thái theo [glossary](../docs/appendix/glossary.md) và giá trị liệt kê trong [schema.md](../docs/data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
 - Viết mọi chữ hiển thị cho người dùng bằng tiếng Anh: nhãn nút, nhãn ô nhập, tiêu đề, chữ trạng thái, thông báo lỗi, chữ khi danh sách rỗng. Đặt `lang="en"` trên `<html>`. Tài liệu vẫn viết tiếng Việt theo [vietnamese-writing.md](../.claude/rules/vietnamese-writing.md).
 - Số hàng nghìn viết theo kiểu tiếng Anh, `1,234`, cho khớp giao diện tiếng Anh. Ngày giờ vẫn `dd/mm/yyyy` và đồng hồ 24 giờ, múi giờ ghim `Asia/Ho_Chi_Minh` vì người vận hành ở Việt Nam.
+- Giữ chiều rộng sidebar bằng token `spacing-sidebar` (244px), nội dung chính lệch theo token này, ❌ không viết `244px` thẳng.
+- Trang `/components` (Component Library) hiển thị bảng Token Table sinh từ `src/styles/token-table.generated.ts`, thang chữ xám và cặp tương phản lấy từ `PAIRS`. Dùng để soát design system bằng mắt, ❌ không chép giá trị token vào trang.
+- Một cặp màu chữ trên nền chỉ vào `PAIRS` trong `src/styles/contrast-pairs.ts` khi có component thật sự vẽ cặp đó. Component mới vẽ cặp chưa có thì thêm cặp trong cùng thay đổi.
+- Test bố cục màn hình bằng cách so khung DOM: `src/test/dom-shape.ts` rút khung từ mockup và từ cây đã render, so thứ tự vùng, số cột bảng, vai trò ARIA. ❌ Không so class hay màu. Màn hình có mockup thì có test `*-shape.test.tsx`.
 - Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
 
 **Dữ liệu:**
