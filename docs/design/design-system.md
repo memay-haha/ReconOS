@@ -418,6 +418,8 @@ Thang bo góc theo Tailwind 4 và khớp từng pixel với mockup trong `docs/d
 
 ## Components
 
+Hex trong mục này là giá trị theme tối. Bảng Token Table ở trên là nguồn duy nhất cho cả hai theme: nhiều token có giá trị sáng khác hẳn, ví dụ `accent-ink` tối `#06222b` nhưng sáng `#00353d`, `accent-hover` tối `#5ee0f2` nhưng sáng `#7fe3f7`. Đọc giá trị sáng ở bảng, không suy từ mục này.
+
 ### Buttons & Interactive Triggers
 - **Primary Button:** Fills with `accent` (`#22d3ee`) coupled with contrasting `accent-ink` (`#06222b`) text and icons at `600` weight. Hover translates to `accent-hover` (`#5ee0f2`). Standard height `36px` (`md`) or `30px` (`sm`).
 - **Secondary / Panel Button:** Surface `#14161c` with `1px solid var(--border-strong)`. Text `#e7ebf0`. Hover fill shifts to `surface-2`.
