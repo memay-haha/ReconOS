@@ -37,8 +37,7 @@ describe('LoginForm', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     wrap(<LoginForm />);
     await submit('rootadmin', 'troutmoonlit7Ladder');
-    await screen.findByRole('button', { name: /đăng nhập/i });
-    expect(push).toHaveBeenCalledWith('/users');
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/users'));
   });
 
   it('clears the password field after signing in', async () => {
@@ -84,10 +83,47 @@ describe('LoginForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/không kết nối được máy chủ/i);
   });
 
-  it('never renders the password back into the document', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+  it('never leaks the password into the document, the alert or the console', async () => {
+    const secret = 'troutmoonlit7Ladder';
+    const spies = (['error', 'log', 'warn'] as const).map((m) =>
+      vi.spyOn(console, m).mockImplementation(() => undefined),
+    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, 'unauthenticated')));
     const { container } = wrap(<LoginForm />);
-    await submit('rootadmin', 'troutmoonlit7Ladder');
-    expect(container.innerHTML).not.toContain('troutmoonlit7Ladder');
+    await submit('rootadmin', secret);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).not.toContain(secret);
+    expect(document.body.textContent).not.toContain(secret);
+    expect(container.querySelector('input[type=password]')?.hasAttribute('value')).toBe(false);
+    for (const spy of spies) {
+      expect(JSON.stringify(spy.mock.calls)).not.toContain(secret);
+    }
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    [0, 1],
+    [1, 1],
+    [60, 1],
+    [61, 2],
+    [900, 15],
+    [901, 16],
+  ])('rounds a Retry-After of %i seconds up to %i minutes', async (seconds, minutes) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(problem(429, 'rate_limited', { 'retry-after': String(seconds) })),
+    );
+    wrap(<LoginForm />);
+    await submit('rootadmin', 'wrong password here');
+    expect(await screen.findByRole('alert')).toHaveTextContent(new RegExp(`sau ${minutes} phút`));
+  });
+
+  it('does not blame the network for an error that is not a failed fetch', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')));
+    wrap(<LoginForm />);
+    await submit('rootadmin', 'whatever password');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/không đăng nhập được/i);
+    expect(alert).not.toHaveTextContent(/kết nối/i);
   });
 });

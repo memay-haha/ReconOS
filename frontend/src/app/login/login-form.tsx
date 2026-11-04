@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 
 import { ApiError } from '@/lib/api-client';
 import { useLogin } from '@/lib/auth';
@@ -15,13 +15,14 @@ const UNEXPECTED = 'Không đăng nhập được. Thử lại sau.';
 
 function lockoutMessage(seconds: number | undefined): string {
   if (seconds === undefined) return 'Tài khoản tạm thời bị chặn do thử sai quá nhiều lần.';
-  return `Tài khoản tạm thời bị chặn do thử sai quá nhiều lần. Thử lại sau ${Math.ceil(seconds / 60)} phút.`;
+  return `Tài khoản tạm thời bị chặn do thử sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(seconds / 60))} phút.`;
 }
 
 /** Reports what the backend said; it does not decide why a sign in failed. */
 function describeError(error: unknown): string | null {
   if (error === null || error === undefined) return null;
-  if (!(error instanceof ApiError)) return UNREACHABLE;
+  // Only a failed fetch (a TypeError) means the server could not be reached.
+  if (!(error instanceof ApiError)) return error instanceof TypeError ? UNREACHABLE : UNEXPECTED;
   if (error.status === 429) return lockoutMessage(error.retryAfterSeconds);
   if (error.status === 401) return REJECTED;
   return UNEXPECTED;
@@ -35,15 +36,17 @@ export function LoginForm() {
   const router = useRouter();
   const login = useLogin();
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // Uncontrolled on purpose: React mirrors a controlled input's value into the
+  // DOM `value` attribute, which would put the password into the markup.
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     login.mutate(
-      { username, password },
+      { username, password: passwordRef.current?.value ?? '' },
       {
         onSuccess: () => {
-          setPassword('');
+          if (passwordRef.current !== null) passwordRef.current.value = '';
           router.push('/users');
         },
       },
@@ -84,8 +87,7 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          ref={passwordRef}
           className={FIELD}
         />
       </div>
