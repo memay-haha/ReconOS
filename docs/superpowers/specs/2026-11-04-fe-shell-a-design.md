@@ -28,7 +28,7 @@
 | Quyết định | Lý do | Phương án đã loại |
 |---|---|---|
 | Theme tối là mặc định, `@theme` giữ bảng tối, khối ghi đè chuyển thành sáng | Mockup là `<html class="dark">`. Đợt 2b đặt bảng sáng làm mặc định nên mở app lên không giống mockup | Chỉ làm theme tối. Giữ sáng làm mặc định |
-| Thêm token cho 41 màu mockup viết thẳng mà bảng token chưa có, gộp cặp gần trùng trước khi đặt tên | Mockup dùng 52 màu viết thẳng, 973 lần. Giá trị tối lấy đúng hex nên khớp từng pixel, vẫn giữ được theme sáng và test tương phản | Cho viết hex thẳng. Ánh xạ sang token gần nhất |
+| Đo từng hex theo đúng vai trò rồi chia đôi: chênh dưới ΔE 5 với token cùng vai trò thì dùng token đó, còn lại mới thêm token mới | Mockup dùng 52 hex viết thẳng, 973 lần. Đo theo vai trò cho thấy chỉ 26 hex thật sự là màu mới. Giá trị tối lấy đúng hex của mockup nên theme tối khớp, vẫn giữ được theme sáng và test tương phản | Thêm token cho cả 41 hex. Cho viết hex thẳng. Ánh xạ sang token gần nhất bất kể vai trò |
 | Chữ giao diện viết tiếng Anh: nhãn nút, thông báo lỗi, chữ trạng thái | Mockup là `lang="en"`. Người dùng chốt ngày 2026-11-04 | Giữ tiếng Việt. Chỉ tên mục điều hướng tiếng Anh |
 | MSW chặn ở tầng mạng, chỉ cho endpoint backend chưa làm | Màn hình gọi đúng endpoint thật trong `openapi.yaml`, không biết mình đang dùng dữ liệu giả. Backend xong thì xóa một file handler | Backend trả dữ liệu mẫu. Hook rẽ nhánh theo cờ |
 | Sidebar theo mockup: hai nhóm, 14 mục, cộng S13 và S14 thành 16. Ba màn hình chi tiết không lên sidebar | Đúng mockup. S05, S07, S09 mở từ màn hình danh sách | Danh sách phẳng 16 mục như đợt 2b |
@@ -47,7 +47,10 @@
 | Cần token mới, ΔE > 5 | 26 | 300 |
 | **Tổng** | **52** | **973** |
 
-- Thêm 41 màu mockup đang viết thẳng mà bảng token chưa có vào bảng Token Table của [design-system.md](../../design/design-system.md), đặt tên theo vai trò chứ không theo giá trị.
+- Dựng `frontend/scripts/colour-map.json` làm nguồn sự thật: mỗi hex của mockup ứng với đúng một token.
+- Đo khoảng cách màu bằng ΔE trên CIELAB, và chỉ so với token **cùng vai trò**: hex dùng cho chữ chỉ so với token chữ, dùng cho nền chỉ so với token nền. So bất kể vai trò sẽ khớp một màu chữ với một token viền.
+- Hex trùng y hệt một token, hoặc chênh dưới ΔE 5 với token cùng vai trò: dùng token đó, ❌ không thêm token mới. Dưới ΔE 2,3 là mắt thường không phân biệt được, dưới 5 là chỉ thấy khác khi đặt cạnh nhau.
+- Hex chênh trên ΔE 5: thêm token mới vào bảng Token Table của [design-system.md](../../design/design-system.md), đặt tên theo vai trò chứ không theo giá trị, gom các hex cùng vai trò và gần nhau thành một token.
 - Gộp cặp lệch một chữ số, ví dụ `#161d2b` và `#161d2a`, thành một token.
 - 11 màu trùng token sẵn có thì dùng tên token, ❌ không thêm token mới.
 - Giá trị tối lấy đúng hex của mockup. Giá trị sáng suy từ cùng màu gốc, như đã làm với 78 token của đợt 2b.
