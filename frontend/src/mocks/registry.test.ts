@@ -56,7 +56,7 @@ describe('handlersFor', () => {
   });
 
   it('builds a handler for an endpoint the backend has not built', () => {
-    expect(builtKeys(IMPLEMENTED)).toContain('GET /domains');
+    expect(builtKeys(IMPLEMENTED)).toContain('GET /programs');
   });
 
   it('filters a route with a path parameter when its IMPLEMENTED entry is present', () => {
