@@ -62,3 +62,4 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 | `pnpm --dir frontend test` | Vitest |
 | `pnpm --dir frontend exec playwright test` | E2E, cần `make init` và Backend API đang chạy. Tài khoản đăng nhập lấy từ `RECONOS_BOOTSTRAP_ADMIN_*`: [configuration.md](../docs/ops/configuration.md) |
 | `pnpm --dir frontend build` | Build chế độ standalone |
+| `pnpm --dir frontend check:no-mocks` | Quét bản build xem dữ liệu mẫu MSW có lọt vào không. Cần `build` trước. `make test` chạy sẵn hai lệnh này |

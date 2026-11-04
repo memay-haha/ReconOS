@@ -55,7 +55,7 @@ Chạy từ gốc repo. Giữ đúng tên lệnh trong bảng dưới. `Makefile
 | `make init` | Cài phụ thuộc bằng uv và pnpm, bật container vùng lõi (`infras/compose/compose.dev.yaml`), chạy migration cho CSDL `reconos` và CSDL log `reconos_log`, tạo tài khoản Superadmin đầu tiên từ `RECONOS_BOOTSTRAP_ADMIN_*`. Chạy lại được, không ghi đè tài khoản đã có |
 | `make backend` | Chạy Backend API và frontend cùng lúc. Ctrl-C dừng cả hai. Cần `make init` trước |
 | `make lint` | ruff format, ruff check, mypy, ESLint, Prettier, `tsc`: [coding-convention.md](.claude/rules/coding-convention.md) |
-| `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make init` trước |
+| `make test` | pytest cho `backend/`, `workers/`, `contracts/`, Vitest cho `frontend/`, rồi build frontend và quét bản build xem dữ liệu mẫu MSW có lọt vào không. Cần `make init` trước |
 
 - Chạy `make lint` và `make test` trước khi báo xong một thay đổi mã.
 - Lệnh chưa có trong `Makefile`: báo rõ chưa chạy được, không báo đã qua.
