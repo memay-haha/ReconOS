@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -122,6 +122,7 @@ Danh sách dùng phân trang cursor theo keyset.
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
 | 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5) |
+| 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
 | 500 | `internal_error` | Lỗi không lường trước. `detail` không chứa stack trace |
 

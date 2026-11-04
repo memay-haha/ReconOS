@@ -13,6 +13,7 @@ from app.core import audit
 from app.core.db import independent_session
 from app.core.errors import (
     ConflictError,
+    CurrentPasswordIncorrectError,
     ForbiddenError,
     NotFoundError,
     RateLimitedError,
@@ -220,7 +221,11 @@ async def change_password(
         await record_failed_login(
             user.username, ip_address, action="password_change_failed", user_id=user.id
         )
-        raise UnauthenticatedError(detail="current password does not match")
+        # 422, not 401: the session is valid, and a 401 would sign the user out.
+        raise CurrentPasswordIncorrectError(
+            detail="current password does not match",
+            errors=[{"field": "current_password", "code": "current_password_incorrect"}],
+        )
     check_password_policy(
         new_password, user_inputs=[user.username, user.display_name], field="new_password"
     )

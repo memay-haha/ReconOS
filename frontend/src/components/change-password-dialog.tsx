@@ -7,7 +7,6 @@ import { useChangePassword } from '@/lib/auth';
 
 import { FieldError } from './field-error';
 
-const WRONG_CURRENT = 'Current password is incorrect.';
 const LOCKED = 'Too many failed attempts. Try again later.';
 const UNREACHABLE = 'Cannot reach the server. Check your connection and try again.';
 const UNEXPECTED = 'Could not change the password. Try again later.';
@@ -23,7 +22,6 @@ const LABEL = 'font-label-caps text-label-caps uppercase tracking-wider text-fg-
 function describeError(error: unknown, fields: Record<string, string>): string | null {
   if (error === null || error === undefined) return null;
   if (!(error instanceof ApiError)) return error instanceof TypeError ? UNREACHABLE : UNEXPECTED;
-  if (error.status === 401) return WRONG_CURRENT;
   if (error.status === 429) return LOCKED;
   // A 422 whose problems are all on a field is already shown beside that field.
   if (Object.keys(fields).length > 0) return null;

@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createSessionAwareClient } from '@/lib/query-provider';
+
 import { ChangePasswordDialog } from './change-password-dialog';
 
 function wrap(
@@ -65,11 +67,36 @@ describe('ChangePasswordDialog', () => {
     expect(screen.queryByText(/password_too_weak/)).not.toBeInTheDocument();
   });
 
-  it('says the current password is wrong on a 401', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, { code: 'unauthenticated' })));
-    wrap(<ChangePasswordDialog open onClose={vi.fn()} />);
+  it('shows the wrong current password beside its field and does not sign the user out', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        problem(422, {
+          code: 'current_password_incorrect',
+          errors: [{ field: 'current_password', code: 'current_password_incorrect' }],
+        }),
+      ),
+    );
+    const goToSignIn = vi.fn();
+    wrap(
+      <ChangePasswordDialog open onClose={vi.fn()} />,
+      createSessionAwareClient('/users', goToSignIn).client,
+    );
     await fill('wrong', 'troutmoonlit7Ladder');
     expect(await screen.findByText('Current password is incorrect.')).toBeInTheDocument();
+    expect(screen.queryByText(/current_password_incorrect/)).not.toBeInTheDocument();
+    expect(goToSignIn).not.toHaveBeenCalled();
+  });
+
+  it('still signs the user out when the session itself has ended (401)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, { code: 'unauthenticated' })));
+    const goToSignIn = vi.fn();
+    wrap(
+      <ChangePasswordDialog open onClose={vi.fn()} />,
+      createSessionAwareClient('/users', goToSignIn).client,
+    );
+    await fill('whatever', 'troutmoonlit7Ladder');
+    await waitFor(() => expect(goToSignIn).toHaveBeenCalledOnce());
   });
 
   it('keeps neither password in the markup', async () => {

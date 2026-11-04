@@ -110,6 +110,18 @@ class TargetOutOfScopeError(AppError):
     title = "Target out of scope"
 
 
+class CurrentPasswordIncorrectError(AppError):
+    """The signed-in account re-proved its password wrongly.
+
+    Deliberately not a 401: the session is valid, and a 401 tells the client the
+    session ended and signs the user out.
+    """
+
+    status = 422
+    code = "current_password_incorrect"
+    title = "Current password incorrect"
+
+
 class RateLimitedError(AppError):
     status = 429
     code = "rate_limited"

@@ -6,6 +6,8 @@ const TEXT: ReadonlyMap<string, string> = new Map([
   ['password_too_short', 'Password is too short.'],
   ['password_too_long', 'Password is too long.'],
   ['password_too_weak', 'Password is easy to guess. Use something longer and less predictable.'],
+  // Raised by backend/app/user/service.py
+  ['current_password_incorrect', 'Current password is incorrect.'],
   // Pydantic reports these as the failure type
   ['missing', 'This field is required.'],
   ['string_too_short', 'Value is too short.'],

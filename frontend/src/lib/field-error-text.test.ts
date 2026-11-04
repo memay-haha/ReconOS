@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { fieldErrorText } from './field-error-text';
 
 describe('fieldErrorText', () => {
+  it('words a wrong current password', () => {
+    expect(fieldErrorText('current_password_incorrect')).toBe('Current password is incorrect.');
+  });
+
   it('writes the password rules in English', () => {
     expect(fieldErrorText('password_too_weak')).toMatch(/easy to guess/);
     expect(fieldErrorText('password_too_short')).toBe('Password is too short.');
