@@ -51,7 +51,8 @@ export function useRevokeSession() {
   return useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest<void>(`/user-sessions/${sessionId}`, { method: 'DELETE' }),
-    // The prefix covers both the per-account list and the active-session count.
-    onSuccess: () => client.invalidateQueries({ queryKey: sessionKeys.all }),
+    // On settle, not only on success: after a 404 the session is already gone, and the
+    // refetch removes the dead row. The prefix covers the per-account list and the count.
+    onSettled: () => client.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }

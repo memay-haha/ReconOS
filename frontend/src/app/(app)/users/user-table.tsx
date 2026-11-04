@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 
+import { formatMoment } from '@/lib/format-moment';
 import type { UserRow } from '@/lib/users';
 
 const ROLE_LABEL: Record<UserRow['role'], string> = {
@@ -10,24 +11,8 @@ const ROLE_LABEL: Record<UserRow['role'], string> = {
   user: 'User',
 };
 
-const MOMENT = new Intl.DateTimeFormat('vi-VN', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-  // Pinned so the text does not depend on the machine: the readers are operators in Vietnam.
-  timeZone: 'Asia/Ho_Chi_Minh',
-});
-
-/** The locale puts the clock first; the project writes dd/mm/yyyy HH:mm. */
 function moment(value: string | null): string {
-  if (value === null) return 'Chưa đăng nhập';
-  const part = Object.fromEntries(
-    MOMENT.formatToParts(new Date(value)).map((p) => [p.type, p.value]),
-  );
-  return `${part.day}/${part.month}/${part.year} ${part.hour}:${part.minute}`;
+  return value === null ? 'Chưa đăng nhập' : formatMoment(value);
 }
 
 const HEAD = 'px-space-md py-space-sm text-label-caps text-fg-muted';

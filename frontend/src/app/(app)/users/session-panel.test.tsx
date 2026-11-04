@@ -50,31 +50,76 @@ describe('SessionPanel', () => {
     expect(await screen.findByText('Không rõ địa chỉ')).toBeInTheDocument();
   });
 
-  it('revokes the session the reader picked and refreshes every sessions query', async () => {
+  it('revokes the session the reader picked and the revoked row disappears', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json(page([ROW])))
-      .mockResolvedValue(new Response(null, { status: 204 }));
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(Response.json(page([])));
     vi.stubGlobal('fetch', fetchMock);
     const { invalidate } = wrap(<SessionPanel userId="2" />);
     await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
     const [path, init] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(path).toBe('/api/v1/user-sessions/s1');
     expect(init.method).toBe('DELETE');
-    await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['sessions'] }));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['sessions'] });
+    expect(await screen.findByText(/không có phiên nào đang hoạt động/i)).toBeInTheDocument();
+    expect(screen.queryByText('203.0.113.9')).not.toBeInTheDocument();
   });
 
-  it('shows a Vietnamese message when the revoke is refused', async () => {
+  it('says the reader lacks permission on 403 and keeps the English title out', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json(page([ROW])))
-      .mockResolvedValue(Response.json({ title: 'Forbidden', status: 403 }, { status: 403 }));
+      .mockResolvedValueOnce(Response.json({ title: 'Forbidden', status: 403 }, { status: 403 }))
+      .mockResolvedValue(Response.json(page([ROW])));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
     await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/máy chủ từ chối/i);
+    expect(alert).toHaveTextContent('Chỉ Superadmin được thu hồi phiên đăng nhập.');
     expect(alert).not.toHaveTextContent('Forbidden');
+  });
+
+  it('says the session is gone on 404 and removes the dead row', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(page([ROW])))
+      .mockResolvedValueOnce(Response.json({ title: 'Not Found', status: 404 }, { status: 404 }))
+      .mockResolvedValue(Response.json(page([])));
+    vi.stubGlobal('fetch', fetchMock);
+    wrap(<SessionPanel userId="2" />);
+    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    expect(await screen.findByText(/không có phiên nào đang hoạt động/i)).toBeInTheDocument();
+    expect(screen.queryByText('203.0.113.9')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Phiên này đã hết hạn hoặc đã bị thu hồi.');
+  });
+
+  it('asks the reader to retry on a network failure', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(page([ROW])))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValue(Response.json(page([ROW])));
+    vi.stubGlobal('fetch', fetchMock);
+    wrap(<SessionPanel userId="2" />);
+    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Không thu hồi được phiên. Thử lại sau.');
+    expect(alert).not.toHaveTextContent('Failed to fetch');
+  });
+
+  it('keeps the good list when a background refetch fails', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(page([ROW])))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValue(Response.json({ title: 'Boom', status: 500 }, { status: 500 }));
+    vi.stubGlobal('fetch', fetchMock);
+    wrap(<SessionPanel userId="2" />);
+    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/không làm mới được/i);
+    expect(screen.getByText('203.0.113.9')).toBeInTheDocument();
   });
 
   it('says so when the account has no live session', async () => {

@@ -2,25 +2,19 @@
 
 import type { ReactElement } from 'react';
 
+import { ApiError } from '@/lib/api-client';
+import { formatMoment } from '@/lib/format-moment';
 import { useRevokeSession, useUserSessions } from '@/lib/sessions';
 
-// Duplicate of the formatter in user-table.tsx (kept there untouched): same zone, same
-// 24-hour clock, same dd/mm/yyyy HH:mm output.
-const MOMENT = new Intl.DateTimeFormat('vi-VN', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-  timeZone: 'Asia/Ho_Chi_Minh',
-});
-
-function moment(value: string): string {
-  const part = Object.fromEntries(
-    MOMENT.formatToParts(new Date(value)).map((p) => [p.type, p.value]),
-  );
-  return `${part.day}/${part.month}/${part.year} ${part.hour}:${part.minute}`;
+function revokeFailureText(error: unknown): string {
+  // Never the backend's English title. The status picks the sentence; it is not a role check.
+  if (error instanceof ApiError && error.status === 403) {
+    return 'Chỉ Superadmin được thu hồi phiên đăng nhập.';
+  }
+  if (error instanceof ApiError && error.status === 404) {
+    return 'Phiên này đã hết hạn hoặc đã bị thu hồi.';
+  }
+  return 'Không thu hồi được phiên. Thử lại sau.';
 }
 
 export function SessionPanel({ userId }: { userId: string }): ReactElement {
@@ -30,7 +24,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
   if (sessions.isPending) {
     return <p className="text-body-default text-fg-muted">Đang tải phiên đăng nhập…</p>;
   }
-  if (sessions.isError) {
+  if (sessions.data === undefined) {
     return (
       <p
         role="alert"
@@ -40,14 +34,24 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
       </p>
     );
   }
-  if (sessions.data.items.length === 0) {
-    return <p className="text-body-default text-fg-muted">Không có phiên nào đang hoạt động.</p>;
-  }
+  const items = sessions.data.items;
 
   return (
     <div className="flex flex-col gap-space-sm">
+      {/* A failed background refetch keeps the last good list and reports above it. */}
+      {sessions.isError && (
+        <p
+          role="alert"
+          className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
+        >
+          Không làm mới được danh sách phiên đăng nhập.
+        </p>
+      )}
+      {items.length === 0 && (
+        <p className="text-body-default text-fg-muted">Không có phiên nào đang hoạt động.</p>
+      )}
       <ul className="flex flex-col gap-space-sm">
-        {sessions.data.items.map((row) => (
+        {items.map((row) => (
           <li
             key={row.id}
             className="flex flex-wrap items-center justify-between gap-space-md rounded-md border border-border p-space-md"
@@ -55,7 +59,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
             <span className="flex flex-col text-body-default text-fg">
               <span>{row.ip_address ?? 'Không rõ địa chỉ'}</span>
               <span className="text-caption text-fg-muted">
-                Hoạt động gần nhất {moment(row.last_seen_at)}
+                Hoạt động gần nhất {formatMoment(row.last_seen_at)}
               </span>
             </span>
             <button
@@ -74,7 +78,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
           role="alert"
           className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
         >
-          Máy chủ từ chối thao tác này hoặc không thu hồi được phiên.
+          {revokeFailureText(revoke.error)}
         </p>
       )}
     </div>
