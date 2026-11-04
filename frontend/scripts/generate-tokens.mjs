@@ -85,6 +85,33 @@ export function parseTokenTable(markdown) {
 }
 
 /**
+ * Dark values for the tokens whose light and dark values differ. One declaration list feeds
+ * both blocks, so the media query and the attribute selector cannot drift apart.
+ * @param {TokenRow[]} rows
+ * @returns {string}
+ */
+function darkOverrides(rows) {
+  const themed = rows.filter(
+    (row) => row.values.light !== '' && row.values.light !== row.values.dark,
+  );
+  /** @param {string} indent */
+  const declarations = (indent) =>
+    themed.map((row) => `${indent}--${row.name}: ${row.values.dark};`).join('\n');
+  return `/* Dark theme. The toggle sets data-theme on <html>; without it the
+   media query follows the operating system. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+${declarations('    ')}
+  }
+}
+
+:root[data-theme="dark"] {
+${declarations('  ')}
+}
+`;
+}
+
+/**
  * @param {string} markdown
  * @returns {string}
  */
@@ -103,7 +130,7 @@ export function generateCss(markdown) {
     const light = row.values.light ?? '';
     lines.push(`  --${row.name}: ${light === '' ? row.values.dark : light};`);
   }
-  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${BASE_LAYER}`;
+  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${BASE_LAYER}\n${darkOverrides(rows)}`;
 }
 
 function main() {

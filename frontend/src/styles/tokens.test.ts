@@ -26,6 +26,36 @@ describe('token generator', () => {
     }
   });
 
+  it('overrides every theme dependent token under data-theme dark', () => {
+    const css = generateCss(designSystem);
+    const dark = css.split('[data-theme="dark"]')[1];
+    expect(dark).toBeDefined();
+    for (const row of parseTokenTable(designSystem)) {
+      if (row.values.light === '' || row.values.light === row.values.dark) continue;
+      expect(dark).toContain(`--${row.name}: ${row.values.dark};`);
+    }
+  });
+
+  it('keeps theme invariant tokens out of the override blocks', () => {
+    const css = generateCss(designSystem);
+    const overrides = css.slice(css.indexOf('@media (prefers-color-scheme: dark)'));
+    expect(overrides).toContain(':root[data-theme="dark"]');
+    for (const row of parseTokenTable(designSystem)) {
+      if (row.values.light === '' || row.values.light === row.values.dark) {
+        expect(overrides).not.toContain(`--${row.name}:`);
+      }
+    }
+  });
+
+  it('declares the same overrides for the media query and the attribute', () => {
+    const css = generateCss(designSystem);
+    const declarations = (block: string) => block.match(/--[\w-]+: [^;]+;/g);
+    const media = css.split('@media (prefers-color-scheme: dark)')[1].split('\n}\n')[0];
+    const attribute = css.split(':root[data-theme="dark"]')[1].split('\n}\n')[0];
+    expect(declarations(media)).toEqual(declarations(attribute));
+    expect(declarations(media)?.length).toBeGreaterThan(0);
+  });
+
   it('skips group rows and the header row', () => {
     const rows = parseTokenTable(designSystem);
     expect(rows.some((r) => r.name === 'token' || r.name.includes('*'))).toBe(false);

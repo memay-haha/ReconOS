@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import { ThemeToggle } from '@/components/theme-toggle';
 import '@/styles/globals.css';
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -25,6 +26,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
       <body className="bg-bg text-fg font-body-default text-body-default antialiased">
+        <header className="flex justify-end px-margin py-2">
+          <ThemeToggle />
+        </header>
         {children}
       </body>
     </html>
