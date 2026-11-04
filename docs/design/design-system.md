@@ -291,6 +291,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | color-thumb-violet | #1a1726 | #ebe7f7 |
 | color-thumb-rose | #221820 | #f7e6ec |
 | color-thumb-warm | #241a14 | #f7ece2 |
+| color-scrim | rgba(10, 12, 16, 0.64) | rgba(10, 12, 16, 0.64) |
 | **Radius** | | |
 | radius-xs | 0.125rem |  |
 | radius-sm | 0.25rem |  |
@@ -299,6 +300,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | radius-xl | 0.75rem |  |
 | radius-full | 9999px |  |
 | **Shadows** | | |
+| shadow-modal | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) |
 | shadow-active-dot | 0 0 6px var(--color-primary-container) | 0 0 6px var(--color-primary) |
 | **Spacing** | | |
 | spacing-gutter | 1rem |  |

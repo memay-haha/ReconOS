@@ -37,3 +37,17 @@ export function useLogout() {
     onSuccess: () => client.clear(),
   });
 }
+
+export interface PasswordChangeBody {
+  readonly current_password: string;
+  readonly new_password: string;
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (body: PasswordChangeBody) =>
+      apiRequest<void>('/auth/password', { method: 'POST', body: JSON.stringify(body) }),
+    // The variables carry two passwords; drop them as soon as the call settles.
+    gcTime: 0,
+  });
+}

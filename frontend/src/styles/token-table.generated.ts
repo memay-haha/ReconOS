@@ -776,6 +776,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     }
   },
   {
+    "group": "Colors",
+    "name": "color-scrim",
+    "values": {
+      "dark": "rgba(10, 12, 16, 0.64)",
+      "light": "rgba(10, 12, 16, 0.64)"
+    }
+  },
+  {
     "group": "Radius",
     "name": "radius-xs",
     "values": {
@@ -821,6 +829,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "values": {
       "dark": "9999px",
       "light": ""
+    }
+  },
+  {
+    "group": "Shadows",
+    "name": "shadow-modal",
+    "values": {
+      "dark": "0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5)",
+      "light": "0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5)"
     }
   },
   {

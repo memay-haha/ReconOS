@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
@@ -247,5 +248,16 @@ describe('Sidebar on a narrow screen', () => {
     wrap(USER);
     expect(document.querySelector('aside')).toHaveClass('md:flex');
     expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass('md:hidden');
+  });
+
+  it('opens the change-password dialog from the account card', async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Sidebar user={USER} counts={{}} onSignOut={() => undefined} signOutFailed={false} />
+      </QueryClientProvider>,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Change password' }));
+    expect(screen.getByRole('dialog', { name: 'Change password' })).toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import type { CurrentUser } from '@/lib/auth';
 
+import { ChangePasswordDialog } from './change-password-dialog';
 import { NAV_GROUPS } from './nav-items';
 import type { NavItem } from './nav-items';
 
@@ -104,10 +105,12 @@ function Row({
 function AccountCard({
   user,
   onSignOut,
+  onChangePassword,
   signOutFailed,
 }: {
   user: CurrentUser;
   onSignOut: () => void;
+  onChangePassword: () => void;
   signOutFailed: boolean;
 }) {
   return (
@@ -128,14 +131,24 @@ function AccountCard({
             <span className="text-caption text-fg-dim">{ROLE_LABEL[user.role]}</span>
           </span>
         </div>
-        <button
-          type="button"
-          aria-label="Sign out"
-          onClick={onSignOut}
-          className="rounded-sm p-1 text-fg-dim hover:bg-surface-container hover:text-fg"
-        >
-          <Icon name="logout" />
-        </button>
+        <div className="flex items-center">
+          <button
+            type="button"
+            aria-label="Change password"
+            onClick={onChangePassword}
+            className="rounded-sm p-1 text-fg-dim hover:bg-surface-container hover:text-fg"
+          >
+            <Icon name="key" />
+          </button>
+          <button
+            type="button"
+            aria-label="Sign out"
+            onClick={onSignOut}
+            className="rounded-sm p-1 text-fg-dim hover:bg-surface-container hover:text-fg"
+          >
+            <Icon name="logout" />
+          </button>
+        </div>
       </div>
       {signOutFailed ? (
         <p role="alert" className="mt-space-xs text-caption text-error">
@@ -161,6 +174,7 @@ export function Sidebar({
   // Below md the 244 px column would leave a phone about 146 px of content, so it folds
   // behind a Menu button. From md up it is the column the mockup draws.
   const [open, setOpen] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   return (
     <>
@@ -227,9 +241,15 @@ export function Sidebar({
           </nav>
         </div>
         {user === null ? null : (
-          <AccountCard user={user} onSignOut={onSignOut} signOutFailed={signOutFailed} />
+          <AccountCard
+            user={user}
+            onSignOut={onSignOut}
+            onChangePassword={() => setChangingPassword(true)}
+            signOutFailed={signOutFailed}
+          />
         )}
       </aside>
+      <ChangePasswordDialog open={changingPassword} onClose={() => setChangingPassword(false)} />
     </>
   );
 }
