@@ -11,9 +11,14 @@ let mockPath = '/users';
 vi.mock('next/navigation', () => ({ usePathname: () => mockPath }));
 
 // The screen names in docs/design/screens/index.json minus S01, in that file's order.
+// Only entries with a mockup file count: an entry with an empty `files` array is
+// a planned screen with no design yet, so the sidebar is not expected to list it.
 const INDEX_PATH = resolve(import.meta.dirname, '../../../docs/design/screens/index.json');
-const EXPECTED_LABELS = (JSON.parse(readFileSync(INDEX_PATH, 'utf8')) as { label: string }[])
+const EXPECTED_LABELS = (
+  JSON.parse(readFileSync(INDEX_PATH, 'utf8')) as { label: string; files: string[] }[]
+)
   .slice(1)
+  .filter((screen) => screen.files.length > 0)
   .map((screen) => screen.label.replace(/^S\d+\.\s*/, ''));
 
 describe('Sidebar', () => {
