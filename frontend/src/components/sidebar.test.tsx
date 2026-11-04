@@ -101,10 +101,23 @@ describe('Sidebar against the mockup', () => {
       NAV_GROUPS.flatMap((g) => g.items.map((i) => ({ group: g.heading, item: i }))).find(
         (e) => e.item.label === label,
       );
+    const operations = NAV_GROUPS.find((g) => g.heading === 'Operations');
+    // Pinned after the mockup's two Operations items.
+    expect(operations?.items.map((i) => i.label)).toEqual([
+      'Staging Queue',
+      'Manage',
+      'Raw Outputs',
+    ]);
     expect(find('Raw Outputs')).toMatchObject({
       group: 'Operations',
       item: { icon: 'description', href: null },
     });
+    // Audit Log follows Users in Admin; Component Library keeps the mockup's last place.
+    expect(NAV_GROUPS.find((g) => g.heading === 'Admin')?.items.map((i) => i.label)).toEqual([
+      'Users',
+      'Audit Log',
+      'Component Library',
+    ]);
     expect(find('Audit Log')).toMatchObject({
       group: 'Admin',
       item: { icon: 'history', href: '/audit-log' },

@@ -187,7 +187,7 @@ export function Sidebar({
               >
                 R
               </span>
-              <span className="text-[15px] font-bold tracking-tight">
+              <span className="font-panel-title text-panel-title font-bold tracking-tight">
                 <span className="text-fg">Recon</span>
                 <span className="text-primary">OS</span>
               </span>
