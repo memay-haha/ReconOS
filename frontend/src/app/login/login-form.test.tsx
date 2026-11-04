@@ -20,9 +20,9 @@ afterEach(() => {
 });
 
 async function submit(username: string, password: string) {
-  await userEvent.type(screen.getByLabelText(/tên đăng nhập/i), username);
-  await userEvent.type(screen.getByLabelText(/mật khẩu/i), password);
-  await userEvent.click(screen.getByRole('button', { name: /đăng nhập/i }));
+  await userEvent.type(screen.getByLabelText(/username/i), username);
+  await userEvent.type(screen.getByLabelText(/password/i), password);
+  await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 }
 
 function problem(status: number, code: string, headers: Record<string, string> = {}) {
@@ -45,16 +45,14 @@ describe('LoginForm', () => {
     wrap(<LoginForm />);
     await submit('rootadmin', 'troutmoonlit7Ladder');
     await vi.waitFor(() => expect(push).toHaveBeenCalled());
-    expect(screen.getByLabelText(/mật khẩu/i)).toHaveValue('');
+    expect(screen.getByLabelText(/password/i)).toHaveValue('');
   });
 
   it('shows one message for every rejected sign in', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, 'unauthenticated')));
     wrap(<LoginForm />);
     await submit('rootadmin', 'wrong password here');
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      /tên đăng nhập hoặc mật khẩu không đúng/i,
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/incorrect username or password/i);
   });
 
   it('tells the reader how long the lockout lasts, rounded up', async () => {
@@ -64,7 +62,7 @@ describe('LoginForm', () => {
     );
     wrap(<LoginForm />);
     await submit('rootadmin', 'wrong password here');
-    expect(await screen.findByRole('alert')).toHaveTextContent(/16 phút/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/16 minutes/i);
   });
 
   it('names no duration when the lockout carries none', async () => {
@@ -72,15 +70,17 @@ describe('LoginForm', () => {
     wrap(<LoginForm />);
     await submit('rootadmin', 'wrong password here');
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/tạm thời bị chặn/i);
-    expect(alert).not.toHaveTextContent(/phút/i);
+    expect(alert).toHaveTextContent(
+      /too many failed attempts. this account is temporarily blocked/i,
+    );
+    expect(alert).not.toHaveTextContent(/minute/i);
   });
 
   it('says the server could not be reached on a network failure', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     wrap(<LoginForm />);
     await submit('rootadmin', 'whatever password');
-    expect(await screen.findByRole('alert')).toHaveTextContent(/không kết nối được máy chủ/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/cannot reach the server/i);
   });
 
   it('never leaks the password into the document, the alert or the console', async () => {
@@ -115,7 +115,9 @@ describe('LoginForm', () => {
     );
     wrap(<LoginForm />);
     await submit('rootadmin', 'wrong password here');
-    expect(await screen.findByRole('alert')).toHaveTextContent(new RegExp(`sau ${minutes} phút`));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      new RegExp(`in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}\\.`),
+    );
   });
 
   it('does not blame the network for an error that is not a failed fetch', async () => {
@@ -123,13 +125,32 @@ describe('LoginForm', () => {
     wrap(<LoginForm />);
     await submit('rootadmin', 'whatever password');
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/không đăng nhập được/i);
-    expect(alert).not.toHaveTextContent(/kết nối/i);
+    expect(alert).toHaveTextContent(/could not sign in/i);
+    expect(alert).not.toHaveTextContent(/reach/i);
   });
 
   it('declares method post so an unhydrated submit cannot put credentials in a URL', () => {
     // A native submit defaults to GET, which writes the fields into the address bar and logs.
     const { container } = wrap(<LoginForm />);
     expect(container.querySelector('form')).toHaveAttribute('method', 'post');
+  });
+
+  it('reveals and hides the password without copying it into the markup', async () => {
+    wrap(<LoginForm />);
+    const field = screen.getByLabelText(/^password$/i);
+    await userEvent.type(field, 'hunter2hunter2');
+    const reveal = screen.getByRole('button', { name: 'Show characters' });
+    expect(reveal).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(reveal);
+    expect(field).toHaveAttribute('type', 'text');
+    expect(field).not.toHaveAttribute('value');
+    expect(field).toHaveValue('hunter2hunter2');
+    // One label, one state: the name never flips, so a screen reader says it once.
+    expect(screen.getByRole('button', { name: 'Show characters' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await userEvent.click(reveal);
+    expect(field).toHaveAttribute('type', 'password');
   });
 });

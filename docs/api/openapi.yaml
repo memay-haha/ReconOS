@@ -493,6 +493,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: status, in: query, schema: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -823,6 +824,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: triage_status, in: query, schema: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -1018,6 +1020,15 @@ paths:
         - $ref: '#/components/parameters/sort'
       responses:
         '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [system]
+      summary: "Xóa log ứng dụng của các ngày trước ngày chọn"
+      x-roles: [superadmin]
+      parameters:
+        - {name: before, in: query, required: true, schema: {type: string, format: date}, description: "Không được sau ngày hiện tại theo UTC"}
+      responses:
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}/logs:
     parameters:

@@ -1,4 +1,8 @@
 // Generates src/styles/globals.css from the token table in the design system.
+// The dark theme is the default: the mockups are dark only, so @theme carries the dark
+// values and the light values are overrides. Without data-theme on <html> the media query
+// follows the operating system (light only when it asks for light); data-theme="dark" or
+// "light" set by the toggle always wins.
 // The stylesheet is never edited by hand: docs/design/design-system.md is the
 // single source, and tokens.test.ts fails when the two drift apart.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -7,6 +11,13 @@ import { fileURLToPath } from 'node:url';
 const HEADER = `/* Design tokens generated from docs/design/design-system.md. Do not hand-edit:
    change the design system first, then regenerate. */
 @import "tailwindcss";
+`;
+
+// Tells the browser the page is dark, so scrollbars, form controls, autofill and the
+// overscroll canvas match. The light blocks below flip it.
+const COLOUR_SCHEME = `:root {
+  color-scheme: dark;
+}
 `;
 
 const BASE_LAYER = `@layer base {
@@ -85,27 +96,29 @@ export function parseTokenTable(markdown) {
 }
 
 /**
- * Dark values for the tokens whose light and dark values differ. One declaration list feeds
+ * Light values for the tokens whose light and dark values differ. One declaration list feeds
  * both blocks, so the media query and the attribute selector cannot drift apart.
  * @param {TokenRow[]} rows
  * @returns {string}
  */
-function darkOverrides(rows) {
+function lightOverrides(rows) {
   const themed = rows.filter(
     (row) => row.values.light !== '' && row.values.light !== row.values.dark,
   );
   /** @param {string} indent */
   const declarations = (indent) =>
-    themed.map((row) => `${indent}--${row.name}: ${row.values.dark};`).join('\n');
-  return `/* Dark theme. The toggle sets data-theme on <html>; without it the
+    themed.map((row) => `${indent}--${row.name}: ${row.values.light};`).join('\n');
+  return `/* Light theme. The toggle sets data-theme on <html>; without it the
    media query follows the operating system. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
 ${declarations('    ')}
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="light"] {
+  color-scheme: light;
 ${declarations('  ')}
 }
 `;
@@ -126,17 +139,42 @@ export function generateCss(markdown) {
       group = row.group;
       lines.push(`  /* ${group} */`);
     }
-    // The light value is the default; a token with no light value is theme invariant.
-    const light = row.values.light ?? '';
-    lines.push(`  --${row.name}: ${light === '' ? row.values.dark : light};`);
+    // The dark value is the default; a token with no dark value falls back to the light one.
+    const dark = row.values.dark ?? '';
+    lines.push(`  --${row.name}: ${dark === '' ? row.values.light : dark};`);
   }
-  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${BASE_LAYER}\n${darkOverrides(rows)}`;
+  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${COLOUR_SCHEME}\n${BASE_LAYER}\n${lightOverrides(rows)}`;
+}
+
+/**
+ * The parsed Token Table as a TypeScript module, so the Component Library page imports its
+ * rows instead of reading docs/ at runtime (the production image carries no docs/).
+ * @param {string} markdown
+ * @returns {string}
+ */
+export function generateTokenModule(markdown) {
+  const rows = parseTokenTable(markdown);
+  return `// Token Table rows generated from docs/design/design-system.md. Do not hand-edit:
+// change the design system first, then run \`pnpm tokens\`.
+export interface TokenRow {
+  readonly group: string | null;
+  readonly name: string;
+  readonly values: Readonly<Record<string, string>>;
+}
+
+export const TOKEN_ROWS: readonly TokenRow[] = ${JSON.stringify(rows, null, 2)};
+`;
 }
 
 function main() {
   const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
   const markdown = readFileSync(`${repoRoot}/docs/design/design-system.md`, 'utf8');
   writeFileSync(`${repoRoot}/frontend/src/styles/globals.css`, generateCss(markdown), 'utf8');
+  writeFileSync(
+    `${repoRoot}/frontend/src/styles/token-table.generated.ts`,
+    generateTokenModule(markdown),
+    'utf8',
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();

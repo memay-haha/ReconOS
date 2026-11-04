@@ -59,6 +59,10 @@ lint: ## ruff format, ruff check, mypy, ESLint, Prettier, tsc
 	$(PNPM_FE) exec prettier --check .
 	$(PNPM_FE) exec tsc --noEmit
 
-test: ## pytest cho backend, workers, contracts và Vitest cho frontend
+test: ## pytest, Vitest, và kiểm tra dữ liệu mẫu không lọt vào bản build
 	uv run pytest backend/tests workers/tests contracts/tests
 	$(PNPM_FE) test
+	@# Dữ liệu mẫu MSW lọt vào bản production là rò dữ liệu, không phải lỗi hiển thị.
+	@# Build rồi quét: chỉ cách này thấy được, vì test unit chạy trên mã nguồn.
+	$(PNPM_FE) build
+	$(PNPM_FE) check:no-mocks

@@ -127,11 +127,11 @@ typography:
     fontWeight: '400'
     lineHeight: 14px
 rounded:
+  xs: 0.125rem
   sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 0.75rem
   full: 9999px
 spacing:
   gutter: 1rem
@@ -180,7 +180,9 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
 
 ### Token Table
 
-Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Cột `light` để trống nghĩa là token không đổi theo theme.
+Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Khối `@theme` giữ cột `dark` vì các mockup chỉ có theme tối. Cột `light` thành khối ghi đè: dưới `prefers-color-scheme: light` khi `<html>` không có `data-theme="dark"`, và dưới `data-theme="light"`. Cột `light` để trống nghĩa là token không đổi theo theme.
+
+Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. Ba token chữ `fg-faint`, `fg-dim`, `fg-dimmest` là ngoại lệ có chủ ý: hex của mockup (`#6a7483` 3,82, `#64748b` 3,80, `#475569` 2,39 trên `color-surface`) không đạt WCAG 2.1 AA, mà theme tối là mặc định. Giữ nguyên sắc, chỉ nâng độ sáng. Mỗi token đạt 4,5 trên các nền mockup thật sự đặt nó lên: `fg-faint` (947 lần dùng, có mặt trên `surface-3`) đạt trên `bg`, `surface`, `surface-2`, `surface-3`; `fg-dim` trên `bg`, `surface-dim`, `surface-container-low`, `surface-container`; `fg-dimmest` (37/37 lần trên nền `bg`) chỉ trên `bg`. Nhờ vậy bốn bậc `fg-muted`, `fg-faint`, `fg-dim`, `fg-dimmest` ở theme tối cách nhau ΔE 8,34, 5,12 và 4,80, đều trên ngưỡng 2,3 mà mắt phân biệt được.
 
 Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
 
@@ -188,7 +190,7 @@ Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi �
 - Màu accent `#22d3ee`, 4 màu trạng thái `good`, `warn`, `crit`, `info` và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng. Màu `neutral` không có sắc nên chỉ đổi độ sáng.
 - Nhóm `*-fixed*` của Material 3 không đổi theo theme nên hai cột bằng nhau.
 
-Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
+Test `frontend/src/styles/tokens.test.ts` kiểm tra mọi cặp chữ trên nền trong `PAIRS` của `frontend/src/styles/contrast-pairs.ts`, ở cả hai theme, đạt tỉ lệ tương phản tối thiểu 4,5.
 
 | token | dark | light |
 |---|---|---|
@@ -246,14 +248,16 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền 
 | color-border | #282d38 | #d2d6df |
 | color-border-strong | #3a4150 | #a0a9ba |
 | color-fg | #e7ebf0 | #171e26 |
-| color-fg-muted | #9aa4b2 | #525e6f |
-| color-fg-faint | #6a7483 | #5f6b7c |
-| color-accent-hover | #5ee0f2 | #00515c |
-| color-accent-ink | #06222b | #f1fafd |
+| color-fg-muted | #9aa4b2 | #3f4a5a |
+| color-fg-faint | #868e9a | #4c5869 |
+| color-fg-dim | #7d8a9e | #566274 |
+| color-fg-dimmest | #75808f | #667286 |
+| color-accent-hover | #5ee0f2 | #7fe3f7 |
+| color-accent-ink | #06222b | #00353d |
 | color-accent-soft | #0c2b33 | #e6f5f9 |
 | color-accent-soft-bd | #1b4e5a | #a1d7e3 |
 | color-ring | #22d3ee66 | #0ea6be66 |
-| color-good | #4ade80 | #0f7635 |
+| color-good | #4ade80 | #0c6b2f |
 | color-good-soft | #102a1a | #e7f8ee |
 | color-good-bd | #1f4f33 | #aee0c3 |
 | color-warn | #fbbf24 | #855f00 |
@@ -271,18 +275,41 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền 
 | color-asset-url | #3b82f6 | #1056c6 |
 | color-asset-ip | #d97706 | #a45904 |
 | color-asset-service | #db2777 | #b3195e |
+| color-border-subtle | #1e2738 | #dde1e8 |
+| color-border-raised | #26354d | #b8c0cd |
+| color-crit-strong | #f87171 | #b91c1c |
+| color-crit-strong-bd | #991b1b | #e8a9a9 |
+| color-crit-strong-soft | #450a0a | #fdecec |
+| color-warn-strong-bd | #78350f | #e9bd9f |
+| color-warn-strong-soft | #451a03 | #fdf0e1 |
+| color-status-pink | #f472b6 | #a8286b |
+| color-status-violet | #c4b5fd | #5b45c2 |
+| color-status-queue | #fb923c | #8f4d08 |
+| color-status-targets | #f97316 | #a3400a |
+| color-thumb-good | #15231c | #e3f4ea |
+| color-thumb-info | #0c2438 | #e0eef9 |
+| color-thumb-violet | #1a1726 | #ebe7f7 |
+| color-thumb-rose | #221820 | #f7e6ec |
+| color-thumb-warm | #241a14 | #f7ece2 |
+| color-scrim | rgba(10, 12, 16, 0.64) | rgba(10, 12, 16, 0.64) |
 | **Radius** | | |
+| radius-xs | 0.125rem |  |
 | radius-sm | 0.25rem |  |
-| radius | 0.5rem |  |
-| radius-md | 0.75rem |  |
-| radius-lg | 1rem |  |
-| radius-xl | 1.5rem |  |
+| radius-md | 0.375rem |  |
+| radius-lg | 0.5rem |  |
+| radius-xl | 0.75rem |  |
 | radius-full | 9999px |  |
+| **Shadows** | | |
+| shadow-modal | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) |
+| shadow-active-dot | 0 0 6px var(--color-primary-container) | 0 0 6px var(--color-primary) |
+| **Blur** | | |
+| blur-scrim | 2px |  |
 | **Spacing** | | |
 | spacing-gutter | 1rem |  |
 | spacing-gutter-dense | 0.75rem |  |
 | spacing-margin | 1.5rem |  |
 | spacing-margin-mobile | 1rem |  |
+| spacing-sidebar | 244px |  |
 | spacing-space-xs | 0.25rem |  |
 | spacing-space-sm | 0.5rem |  |
 | spacing-space-md | 0.75rem |  |
@@ -326,6 +353,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền 
 | text-caption | 11px |  |
 | text-caption--line-height | 14px |  |
 | text-caption--font-weight | 400 |  |
+| text-icon | 17px |  |
 
 ## Typography
 
@@ -345,7 +373,7 @@ The layout is constructed on a strict **4px modular baseline grid**. Density is 
 
 ### Shell & Structural Geometry
 - **Top Bar:** Fixed `56px` height with continuous bottom border `1px solid var(--border)`.
-- **Primary Rail/Sidebar:** `244px` expanded width, folding into a `64px` icon rail on command or breakpoint compression.
+- **Primary Rail/Sidebar:** `244px` expanded width (token `spacing-sidebar`), folding into a `64px` icon rail on command or breakpoint compression.
 - **Content Canvas:** Fluid grid bound by responsive inner limits:
   - Standard Card Padding: `18px` (`space-lg`).
   - Table Cell Padding: `10px` vertical, `14px` horizontal.
@@ -369,7 +397,8 @@ Depth in this system is defined almost exclusively by **tonal layering** and **s
 4. **Level 3 (Interactive Active States):** `#232733` (Row hover fills, interactive control selections).
 5. **Level 4 (Floating Overlays):** `#14161c` flanked by `1px solid #3a4150` with elevation drop:
    - Modals, popovers, and quick-find command palettes take an engineered drop shadow: `0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5)`.
-   - Modals deploy a scrim overlay of `rgba(10, 12, 16, 0.64)` combined with `backdrop-filter: blur(2px)`.
+   - The active navigation dot is the one exception to the no-glow rule: it takes `shadow-active-dot`, a 6px blur in the accent (`primary-container`) in the dark theme. The light theme uses `primary`, because `primary-container` is a pale cyan that a glow cannot show against a near-white surface.
+   - Modals deploy a scrim overlay of `rgba(10, 12, 16, 0.64)` combined with `backdrop-filter: blur(2px)`, token `blur-scrim`.
 
 ### Focus Engine
 Every keyboard/interactive focus state requires a high-contrast focus ring: `3px` solid or spread tint using `--ring` (`#22d3ee66`), offset by `1px` from the component edge.
@@ -379,13 +408,17 @@ Every keyboard/interactive focus state requires a high-contrast focus ring: `3px
 The design uses a restrained, semi-compact curvature language (`roundedness: 2`). This prevents elements from appearing blocky or dated while strictly avoiding consumer-centric bubbly geometries.
 
 ### Geometry Standards
-- **Containers & Panels (`rounded-lg`):** `12px` border radius applied to workspace cards, diagnostic panels, and alert banners.
-- **Modals & Overlays (`rounded-xl`):** `16px` border radius on command palettes and modal viewport surfaces.
-- **Standard Controls (`rounded-md`):** `8px` corner radius applied to inputs, buttons, segmented controls, and dropdown targets.
-- **Sub-atomic Targets (`rounded-sm`):** `4px` to `5px` on checkboxes, tech badges, and inline status badges.
+Thang bo góc theo Tailwind 4 và khớp từng pixel với mockup trong `docs/design/screens/` (mockup dùng thang Tailwind 3). Mockup `rounded-sm` (2px) thành `rounded-xs` trong ứng dụng, mockup `rounded` trần (4px) thành `rounded-sm`. Từ `md` trở lên hai phiên bản trùng pixel nên giữ tên.
+- **Panels, cards, inputs, buttons, badges (`rounded-sm`):** `4px`. Mockup viết `rounded`. Đây là giá trị dùng nhiều nhất.
+- **Sub-atomic Targets (`rounded-xs`):** `2px`. Mockup viết `rounded-sm`.
+- **Medium Controls (`rounded-md`):** `6px`.
+- **Large Containers (`rounded-lg`):** `8px`, dùng cho khối lồng như thẻ tài khoản ở chân sidebar.
+- **Modals & Overlays (`rounded-xl`):** `12px`, dùng cho thẻ đăng nhập và bề mặt modal.
 - **Pill / Circular:** Strictly reserved for status pings (e.g. live sync dots), binary toggle pills, and count pills.
 
 ## Components
+
+Hex trong mục này là giá trị theme tối. Bảng Token Table ở trên là nguồn duy nhất cho cả hai theme: nhiều token có giá trị sáng khác hẳn, ví dụ `accent-ink` tối `#06222b` nhưng sáng `#00353d`, `accent-hover` tối `#5ee0f2` nhưng sáng `#7fe3f7`. Đọc giá trị sáng ở bảng, không suy từ mục này.
 
 ### Buttons & Interactive Triggers
 - **Primary Button:** Fills with `accent` (`#22d3ee`) coupled with contrasting `accent-ink` (`#06222b`) text and icons at `600` weight. Hover translates to `accent-hover` (`#5ee0f2`). Standard height `36px` (`md`) or `30px` (`sm`).

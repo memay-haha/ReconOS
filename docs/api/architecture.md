@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -39,8 +39,10 @@
 | Thời gian | ISO 8601, UTC |
 | Định dạng | JSON. Lỗi: `application/problem+json` |
 | Sửa một phần | `PATCH`, chỉ gửi trường cần đổi |
+| Request ID | Header `X-Request-ID` dạng UUID. Client gửi kèm thì backend dùng lại, thiếu hoặc sai dạng thì sinh mới. Mọi response trả header này: [logging.md](../../.claude/rules/logging.md) |
 
 - `GET` không đổi dữ liệu.
+- Trường tính từ bảng khác (số đếm, tổng hợp) chỉ có ở endpoint đọc nó, không thêm vào response ghi. Ví dụ: `active_user_session_count` có ở `GET /users` và `GET /users/{user_id}`, không có ở `POST /users`, `PATCH /users/{user_id}`, `GET /auth/me`. Định nghĩa: [glossary.md](../appendix/glossary.md).
 - Response không bao giờ chứa cột thông tin xác thực, giá trị băm mật khẩu, giá trị băm token.
 - Chỉ `POST /auth/login` và `GET /health` không cần xác thực.
 
@@ -89,7 +91,7 @@ Danh sách dùng phân trang cursor theo keyset.
 
 ### Lọc
 
-- Tham số lọc trùng tên cột: `program_id`, `severity`, `triage_status`, `in_scope`.
+- Tham số lọc trùng tên cột: `program_id`, `severity`, `triage_status`, `in_scope`, `status`. `GET /jobs` lọc theo `status`, `GET /findings` lọc theo `triage_status`. Giá trị hợp lệ: [schema.md](../data/schema.md).
 - Nhiều giá trị: lặp tham số, `severity=critical&severity=high`.
 - Khoảng thời gian: hậu tố `_from`, `_to`, ví dụ `last_seen_at_from`.
 - Tìm theo chuỗi: `q`, chỉ trên cột endpoint khai báo.
@@ -121,6 +123,7 @@ Danh sách dùng phân trang cursor theo keyset.
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
 | 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5) |
+| 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
 | 500 | `internal_error` | Lỗi không lường trước. `detail` không chứa stack trace |
 

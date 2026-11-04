@@ -1,6 +1,6 @@
 # ReconOS: Thuật ngữ
 
-> Phiên bản: 1.10 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.12 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 27: Phụ lục
 > Liên quan: [overview.md](../architecture/overview.md), [documentation.md](../../.claude/rules/documentation.md)
 
@@ -74,6 +74,7 @@
 | Tài khoản | Danh tính đăng nhập ReconOS, có đúng một vai trò. | Vai trò User. | `user` |
 | Vai trò | Nhóm quyền gán cho tài khoản: Superadmin, Admin, User. Ma trận quyền: [authorization.md](../security/authorization.md). | | `role`, giá trị: `superadmin`, `admin`, `user` |
 | Phiên đăng nhập | Phiên phía server tạo khi tài khoản đăng nhập, gắn với cookie. | Token worker. | `user_session` |
+| Số phiên đang hoạt động | Số phiên đăng nhập của một tài khoản chưa quá hạn tuyệt đối (`expires_at`) và chưa quá thời gian không hoạt động (`session_idle_timeout_minutes`). Thu hồi phiên xóa dòng `user_session`, nên phiên đã thu hồi không có trong số này. Giá trị tính từ `user_session`, không lưu thành cột. | Số dòng `user_session`, số phiên đã tạo. | `active_user_session_count` |
 | Token worker | Token riêng của một worker để gọi endpoint trong contract worker ↔ backend. | Phiên đăng nhập. | `worker_token` |
 | Superadmin | Vai trò quản trị toàn hệ thống: tài khoản, vai trò, công cụ, engine, cấu hình. | | `superadmin` |
 | Admin | Vai trò vận hành nghiệp vụ trên toàn hệ thống: program, scope, job, duyệt job, triage, báo cáo. Không quản trị tài khoản, công cụ, engine. | | `admin` |
@@ -104,6 +105,8 @@ Nguồn duy nhất cho các thay thế thuật ngữ đã chốt. Gặp từ ở
 | Không dùng | Viết thay | Phạm vi |
 |---|---|---|
 | bí mật | thông tin xác thực | API key, token, mật khẩu, URL proxy có tài khoản |
+| che dữ liệu | ẩn thông tin xác thực | Processor thay giá trị bằng `***` trước khi ghi log |
+| hàng đợi lô | bộ đệm log | Vùng nhớ trong tiến trình giữ bản ghi log chờ ghi theo lô. Khác queue Celery |
 | khóa khử trùng lặp | chuỗi khử trùng lặp | `dedup_key` |
 | khóa cho đối tượng không phải khóa mã hóa hay khóa CSDL | khóa object, tên thiết lập, key cache, giá trị băm | Giữ "khóa" cho: khóa mã hóa, khóa chính, khóa ngoại, khóa tự nhiên, khóa phân vùng |
 | primary key, foreign key, natural key | khóa chính, khóa ngoại, khóa tự nhiên | Câu văn. Tên cột, câu SQL giữ nguyên |

@@ -1,6 +1,12 @@
 'use client';
 
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  MutationCache,
+  onlineManager,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
 
@@ -78,7 +84,43 @@ export function createSessionAwareClient(
   };
 }
 
+/** Resolves once the sample-data layer is up, and immediately outside development.
+ * The import sits inside the NODE_ENV test so a production build removes the branch
+ * and never emits the mock chunk. */
+let sampleDataStart: Promise<void> | undefined;
+function startSampleData(): Promise<void> {
+  if (process.env.NODE_ENV !== 'development') return Promise.resolve();
+  // React Strict Mode runs the effect twice in development; a second worker.start()
+  // would throw because the first already patched WebSocket.
+  sampleDataStart ??= (async () => {
+    const { startMocks } = await import('@/mocks/browser');
+    await startMocks();
+  })();
+  return sampleDataStart;
+}
+
 export function QueryProvider({ children }: { children: ReactNode }) {
+  // First queries must not fire before the worker can answer them. The tree still
+  // renders (the server HTML must contain the page, e.g. the sign in form that posts
+  // without JavaScript); the client only holds its requests by reporting itself offline,
+  // which pauses queries and mutations until the worker is up.
+  const [mocksReady, setMocksReady] = useState(process.env.NODE_ENV !== 'development');
+  if (!mocksReady && typeof window !== 'undefined') onlineManager.setOnline(false);
+  useEffect(() => {
+    if (mocksReady) return;
+    // A broken worker must not blank the app: fall back to the real network.
+    startSampleData()
+      .catch((error: unknown) => {
+        console.error(
+          'Sample-data layer failed to start; requests go to the real API. Is /mockServiceWorker.js served?',
+          error,
+        );
+      })
+      .finally(() => {
+        onlineManager.setOnline(navigator.onLine);
+        setMocksReady(true);
+      });
+  }, [mocksReady]);
   const router = useRouter();
   const pathname = usePathname();
   const [aware] = useState(() =>

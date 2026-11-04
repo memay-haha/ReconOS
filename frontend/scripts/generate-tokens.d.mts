@@ -6,3 +6,4 @@ export interface TokenRow {
 
 export function parseTokenTable(markdown: string): TokenRow[];
 export function generateCss(markdown: string): string;
+export function generateTokenModule(markdown: string): string;

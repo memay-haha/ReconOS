@@ -1,60 +1,35 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import type { CurrentUser } from '@/lib/auth';
+import { resolve } from 'node:path';
+
+import { shapeOf, shapeOfMockup } from '@/test/dom-shape';
 
 import { Topbar } from './topbar';
 
-const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+const MOCKUP = resolve(
+  import.meta.dirname,
+  '../../../docs/design/screens/s12-users-access-control.html',
+);
 
-const USER: CurrentUser = {
-  id: '1',
-  username: 'rootadmin',
-  display_name: 'Quản trị gốc',
-  role: 'superadmin',
-};
-
-function wrap() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <Topbar user={USER} />
-    </QueryClientProvider>,
-  );
-}
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  push.mockClear();
-});
-
-describe('Topbar', () => {
-  it('shows who is signed in and their role', () => {
-    wrap();
-    expect(screen.getByText('Quản trị gốc')).toBeInTheDocument();
-    expect(screen.getByText(/superadmin/i)).toBeInTheDocument();
+describe('Topbar against the mockup', () => {
+  it('is a header, as the mockup is', () => {
+    render(<Topbar />);
+    const header = document.querySelector('header') as Element;
+    expect(shapeOf(header, 0, { landmarks: true })[0]).toBe('header');
+    expect(shapeOfMockup(MOCKUP, 'header', 0, { landmarks: true })[0]).toBe('header');
   });
 
-  it('sends the reader back to the sign in screen after signing out', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
-    wrap();
-    await userEvent.click(screen.getByRole('button', { name: /đăng xuất/i }));
-    expect(push).toHaveBeenCalledWith('/login');
-  });
-
-  it('tells the reader when signing out failed', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
-    wrap();
-    await userEvent.click(screen.getByRole('button', { name: /đăng xuất/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/không đăng xuất được/i);
-    expect(push).not.toHaveBeenCalled();
+  it('is fixed to the top, starts at the right edge of the sidebar and is 14 tall', () => {
+    render(<Topbar />);
+    const header = screen.getByRole('banner');
+    for (const cls of ['fixed', 'top-0', 'md:left-sidebar', 'right-0', 'h-14', 'border-b']) {
+      expect(header).toHaveClass(cls);
+    }
   });
 
   it('offers the theme toggle', () => {
-    wrap();
-    expect(screen.getByRole('button', { name: /giao diện/i })).toBeInTheDocument();
+    render(<Topbar />);
+    expect(screen.getByRole('button', { name: /theme/i })).toBeInTheDocument();
   });
 });

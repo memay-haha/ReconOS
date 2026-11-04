@@ -9,13 +9,15 @@ import { useLogin } from '@/lib/auth';
 /** Every rejected sign in gets the same sentence: the backend answers the same
  * 401 for a wrong username, a wrong password and a locked account, and the
  * screen must not add a distinction the API deliberately removed. */
-const REJECTED = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-const UNREACHABLE = 'Không kết nối được máy chủ. Kiểm tra kết nối rồi thử lại.';
-const UNEXPECTED = 'Không đăng nhập được. Thử lại sau.';
+const REJECTED = 'Incorrect username or password.';
+const UNREACHABLE = 'Cannot reach the server. Check your connection and try again.';
+const UNEXPECTED = 'Could not sign in. Try again later.';
 
 function lockoutMessage(seconds: number | undefined): string {
-  if (seconds === undefined) return 'Tài khoản tạm thời bị chặn do thử sai quá nhiều lần.';
-  return `Tài khoản tạm thời bị chặn do thử sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(seconds / 60))} phút.`;
+  if (seconds === undefined)
+    return 'Too many failed attempts. This account is temporarily blocked.';
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  return `Too many failed attempts. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
 }
 
 /** Reports what the backend said; it does not decide why a sign in failed. */
@@ -29,13 +31,17 @@ function describeError(error: unknown): string | null {
 }
 
 const FIELD =
-  'h-10 w-full rounded-sm bg-surface-2 px-space-md text-fg font-body-default text-body-default ' +
-  'border border-border focus:outline-none focus:ring-2 focus:ring-ring';
+  'h-9 w-full rounded-sm bg-surface-2 pl-9 text-fg font-body-code text-body-code ' +
+  'placeholder:text-fg-faint focus:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring';
+const LABEL = 'font-label-caps text-label-caps uppercase tracking-wider text-fg-muted';
+const FIELD_ICON =
+  'material-symbols-outlined pointer-events-none absolute left-space-md text-icon text-fg-faint';
 
 export function LoginForm() {
   const router = useRouter();
   const login = useLogin();
   const [username, setUsername] = useState('');
+  const [revealed, setRevealed] = useState(false);
   // Uncontrolled on purpose: React mirrors a controlled input's value into the
   // DOM `value` attribute, which would put the password into the markup.
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -59,40 +65,60 @@ export function LoginForm() {
     // method="post" is the fallback when the handler never runs (submit before
     // hydration, broken bundle, no JavaScript): the default GET would put the
     // credentials in the URL, history, access logs and Referer.
-    <form method="post" onSubmit={onSubmit} className="flex w-full flex-col gap-space-xl">
-      <div className="flex flex-col gap-space-xs">
-        <label
-          htmlFor="username"
-          className="font-label-caps text-label-caps uppercase text-fg-muted"
-        >
-          Tên đăng nhập
-        </label>
-        <input
-          id="username"
-          name="username"
-          autoComplete="username"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className={FIELD}
-        />
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-space-lg">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <label htmlFor="username" className={LABEL}>
+            Username
+          </label>
+        </div>
+        <div className="relative flex items-center">
+          <span aria-hidden="true" className={FIELD_ICON}>
+            terminal
+          </span>
+          <input
+            id="username"
+            name="username"
+            autoComplete="username"
+            placeholder="e.g. operator_01"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={`${FIELD} pr-space-md`}
+          />
+        </div>
       </div>
-      <div className="flex flex-col gap-space-xs">
-        <label
-          htmlFor="password"
-          className="font-label-caps text-label-caps uppercase text-fg-muted"
-        >
-          Mật khẩu
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          ref={passwordRef}
-          className={FIELD}
-        />
+      <div className="mt-1 flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className={LABEL}>
+            Password
+          </label>
+        </div>
+        <div className="relative flex items-center">
+          <span aria-hidden="true" className={FIELD_ICON}>
+            key
+          </span>
+          <input
+            id="password"
+            name="password"
+            type={revealed ? 'text' : 'password'}
+            autoComplete="current-password"
+            required
+            ref={passwordRef}
+            className={`${FIELD} pr-10`}
+          />
+          <button
+            type="button"
+            aria-label="Show characters"
+            aria-pressed={revealed}
+            onClick={() => setRevealed((r) => !r)}
+            className="absolute right-2.5 flex items-center justify-center p-1 text-fg-faint transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              {revealed ? 'visibility_off' : 'visibility'}
+            </span>
+          </button>
+        </div>
       </div>
       {message !== null && (
         <p
@@ -105,9 +131,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="h-10 rounded-sm bg-primary px-space-xl font-panel-title text-panel-title text-on-primary focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        className="mt-2 flex h-10.5 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
-        {login.isPending ? 'Đang đăng nhập…' : 'Đăng nhập'}
+        {login.isPending ? 'Signing in…' : 'Sign In'}
       </button>
     </form>
   );

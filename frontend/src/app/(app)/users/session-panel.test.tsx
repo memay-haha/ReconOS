@@ -41,13 +41,13 @@ describe('SessionPanel', () => {
     expect(screen.getByText(/04\/11\/2026 16:00/)).toBeInTheDocument();
   });
 
-  it('shows a Vietnamese phrase for a null address', async () => {
+  it('shows an English phrase for a null address', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(Response.json(page([{ ...ROW, ip_address: null }]))),
     );
     wrap(<SessionPanel userId="2" />);
-    expect(await screen.findByText('Không rõ địa chỉ')).toBeInTheDocument();
+    expect(await screen.findByText('Address unknown')).toBeInTheDocument();
   });
 
   it('revokes the session the reader picked and the revoked row disappears', async () => {
@@ -58,12 +58,12 @@ describe('SessionPanel', () => {
       .mockResolvedValueOnce(Response.json(page([])));
     vi.stubGlobal('fetch', fetchMock);
     const { invalidate } = wrap(<SessionPanel userId="2" />);
-    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /revoke/i }));
     const [path, init] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(path).toBe('/api/v1/user-sessions/s1');
     expect(init.method).toBe('DELETE');
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['sessions'] });
-    expect(await screen.findByText(/không có phiên nào đang hoạt động/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no active sessions/i)).toBeInTheDocument();
     expect(screen.queryByText('203.0.113.9')).not.toBeInTheDocument();
   });
 
@@ -75,9 +75,9 @@ describe('SessionPanel', () => {
       .mockResolvedValue(Response.json(page([ROW])));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
-    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /revoke/i }));
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('Chỉ Superadmin được thu hồi phiên đăng nhập.');
+    expect(alert).toHaveTextContent('Only a Superadmin can revoke sessions.');
     expect(alert).not.toHaveTextContent('Forbidden');
   });
 
@@ -89,10 +89,12 @@ describe('SessionPanel', () => {
       .mockResolvedValue(Response.json(page([])));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
-    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
-    expect(await screen.findByText(/không có phiên nào đang hoạt động/i)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: /revoke/i }));
+    expect(await screen.findByText(/no active sessions/i)).toBeInTheDocument();
     expect(screen.queryByText('203.0.113.9')).not.toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Phiên này đã hết hạn hoặc đã bị thu hồi.');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'This session has expired or was already revoked.',
+    );
   });
 
   it('asks the reader to retry on a network failure', async () => {
@@ -103,9 +105,9 @@ describe('SessionPanel', () => {
       .mockResolvedValue(Response.json(page([ROW])));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
-    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /revoke/i }));
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('Không thu hồi được phiên. Thử lại sau.');
+    expect(alert).toHaveTextContent('Could not revoke the session. Try again later.');
     expect(alert).not.toHaveTextContent('Failed to fetch');
   });
 
@@ -117,21 +119,21 @@ describe('SessionPanel', () => {
       .mockResolvedValue(Response.json({ title: 'Boom', status: 500 }, { status: 500 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
-    await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/không làm mới được/i);
+    await userEvent.click(await screen.findByRole('button', { name: /revoke/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not refresh/i);
     expect(screen.getByText('203.0.113.9')).toBeInTheDocument();
   });
 
   it('says so when the account has no live session', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(page([]))));
     wrap(<SessionPanel userId="2" />);
-    expect(await screen.findByText(/không có phiên nào đang hoạt động/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no active sessions/i)).toBeInTheDocument();
   });
 
   it('shows a loading state before the answer arrives', () => {
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => undefined)));
     wrap(<SessionPanel userId="2" />);
-    expect(screen.getByText(/đang tải phiên đăng nhập/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading sessions/i)).toBeInTheDocument();
   });
 
   it('shows an error, not the empty message, when the request fails', async () => {
@@ -140,8 +142,8 @@ describe('SessionPanel', () => {
       vi.fn().mockResolvedValue(Response.json({ title: 'Boom', status: 500 }, { status: 500 })),
     );
     wrap(<SessionPanel userId="2" />);
-    expect(await screen.findByRole('alert')).toHaveTextContent(/không tải được phiên đăng nhập/i);
-    expect(screen.queryByText(/không có phiên nào/i)).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not load sessions/i);
+    expect(screen.queryByText(/no active sessions/i)).not.toBeInTheDocument();
   });
 });
 

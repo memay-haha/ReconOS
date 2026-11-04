@@ -42,14 +42,14 @@ describe('isSessionExpired', () => {
 
 function Panel({ path }: { path: string }): ReactElement {
   const query = useQuery({ queryKey: [path], queryFn: () => apiRequest<unknown>(path) });
-  return <span>{query.isError ? `${path} hỏng` : `${path} ổn`}</span>;
+  return <span>{query.isError ? `${path} broken` : `${path} fine`}</span>;
 }
 
 function Saver(): ReactElement {
   const save = useMutation({ mutationFn: () => apiRequest<void>('/users', { method: 'POST' }) });
   return (
     <button type="button" onClick={() => save.mutate()}>
-      Lưu
+      Save
     </button>
   );
 }
@@ -96,7 +96,7 @@ describe('QueryProvider on an expired session', () => {
     );
 
     await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith(SIGN_IN_PATH));
-    await screen.findByText('/users hỏng');
+    await screen.findByText('/users broken');
     expect(nav.replace).toHaveBeenCalledTimes(1);
   });
 
@@ -108,7 +108,7 @@ describe('QueryProvider on an expired session', () => {
       </QueryProvider>,
     );
 
-    expect(await screen.findByText('/user-sessions hỏng')).toBeInTheDocument();
+    expect(await screen.findByText('/user-sessions broken')).toBeInTheDocument();
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
@@ -121,7 +121,7 @@ describe('QueryProvider on an expired session', () => {
       </QueryProvider>,
     );
 
-    expect(await screen.findByText('/auth/me hỏng')).toBeInTheDocument();
+    expect(await screen.findByText('/auth/me broken')).toBeInTheDocument();
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
@@ -133,7 +133,7 @@ describe('QueryProvider on an expired session', () => {
       </QueryProvider>,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Lưu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await vi.waitFor(() => expect(nav.replace).toHaveBeenCalledWith(SIGN_IN_PATH));
   });
 });

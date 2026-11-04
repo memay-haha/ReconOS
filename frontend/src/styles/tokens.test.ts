@@ -4,17 +4,33 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { generateCss, parseTokenTable } from '../../scripts/generate-tokens.mjs';
+import {
+  generateCss,
+  generateTokenModule,
+  parseTokenTable,
+} from '../../scripts/generate-tokens.mjs';
+import { deltaE } from '../../scripts/colour-audit.mjs';
 import { contrastRatio } from './contrast';
+import { PAIRS } from './contrast-pairs';
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const designSystem = readFileSync(`${repoRoot}/docs/design/design-system.md`, 'utf8');
 const committedCss = readFileSync(`${repoRoot}/frontend/src/styles/globals.css`, 'utf8');
+const committedModule = readFileSync(
+  `${repoRoot}/frontend/src/styles/token-table.generated.ts`,
+  'utf8',
+);
 
 describe('token generator', () => {
   it('reproduces the committed stylesheet exactly', () => {
     // A hand edit to globals.css, or a token table that drifts from it, fails here.
     expect(generateCss(designSystem)).toBe(committedCss);
+  });
+
+  it('reproduces the committed token module exactly', () => {
+    // The Component Library imports this module; an edit to the table without
+    // `pnpm tokens` fails here, as it does for the stylesheet.
+    expect(generateTokenModule(designSystem)).toBe(committedModule);
   });
 
   it('emits every token from the table', () => {
@@ -26,34 +42,37 @@ describe('token generator', () => {
     }
   });
 
-  it('overrides every theme dependent token under data-theme dark', () => {
+  it('puts the dark value in @theme, because the mockups are dark', () => {
     const css = generateCss(designSystem);
-    const dark = css.split('[data-theme="dark"]')[1];
-    expect(dark).toBeDefined();
+    const theme = css.slice(css.indexOf('@theme'), css.indexOf('@media'));
     for (const row of parseTokenTable(designSystem)) {
-      if (row.values.light === '' || row.values.light === row.values.dark) continue;
-      expect(dark).toContain(`--${row.name}: ${row.values.dark};`);
+      if (row.values.dark === '') continue;
+      expect(theme).toContain(`--${row.name}: ${row.values.dark};`);
     }
   });
 
-  it('keeps theme invariant tokens out of the override blocks', () => {
+  it('overrides only the tokens whose light value differs', () => {
     const css = generateCss(designSystem);
-    const overrides = css.slice(css.indexOf('@media (prefers-color-scheme: dark)'));
-    expect(overrides).toContain(':root[data-theme="dark"]');
+    const override = css.slice(css.indexOf(':root[data-theme="light"]'));
     for (const row of parseTokenTable(designSystem)) {
-      if (row.values.light === '' || row.values.light === row.values.dark) {
-        expect(overrides).not.toContain(`--${row.name}:`);
-      }
+      const differs = row.values.light !== '' && row.values.light !== row.values.dark;
+      if (differs) expect(override).toContain(`--${row.name}: ${row.values.light};`);
+      else expect(override).not.toContain(`--${row.name}:`);
     }
   });
 
   it('declares the same overrides for the media query and the attribute', () => {
     const css = generateCss(designSystem);
     const declarations = (block: string) => block.match(/--[\w-]+: [^;]+;/g);
-    const media = css.split('@media (prefers-color-scheme: dark)')[1].split('\n}\n')[0];
-    const attribute = css.split(':root[data-theme="dark"]')[1].split('\n}\n')[0];
+    const media = css.split('@media (prefers-color-scheme: light)')[1].split('\n}\n')[0];
+    const attribute = css.split(':root[data-theme="light"]')[1].split('\n}\n')[0];
     expect(declarations(media)).toEqual(declarations(attribute));
     expect(declarations(media)?.length).toBeGreaterThan(0);
+  });
+
+  it('lets the operating system pick light only when the reader has not chosen dark', () => {
+    const css = generateCss(designSystem);
+    expect(css).toContain(':root:not([data-theme="dark"])');
   });
 
   it('skips group rows and the header row', () => {
@@ -61,40 +80,6 @@ describe('token generator', () => {
     expect(rows.some((r) => r.name === 'token' || r.name.includes('*'))).toBe(false);
   });
 });
-
-/**
- * Foreground token on background token, one entry per place the screens paint text or an
- * icon straight onto that fill. A pair earns a line here only when a component renders
- * the first token on the second one; a pair that nothing renders proves nothing.
- */
-const PAIRS: ReadonlyArray<readonly [string, string]> = [
-  // Body text on the application canvas behind every screen.
-  ['color-fg', 'color-bg'],
-  // Body text inside cards, panels and table rows.
-  ['color-fg', 'color-surface'],
-  // Secondary text on a card: column headers, timestamps, helper lines.
-  ['color-fg-muted', 'color-surface'],
-  // Material role text on a Material role surface, used by the imported role family.
-  ['color-on-surface', 'color-surface'],
-  // Material role supporting text under a list item title.
-  ['color-on-surface-variant', 'color-surface'],
-  // Label of a filled primary button.
-  ['color-on-primary', 'color-primary'],
-  // Label of a tonal primary button and of a selected chip.
-  ['color-on-primary-container', 'color-primary-container'],
-  // Label of a filled destructive button.
-  ['color-on-error', 'color-error'],
-  // Text of an error banner and of a field level error message.
-  ['color-on-error-container', 'color-error-container'],
-  // Status badge: job succeeded, asset alive.
-  ['color-good', 'color-good-soft'],
-  // Status badge: medium severity, job finished with warnings.
-  ['color-warn', 'color-warn-soft'],
-  // Status badge: high severity, job failed.
-  ['color-crit', 'color-crit-soft'],
-  // Status badge: low severity, informational finding.
-  ['color-info', 'color-info-soft'],
-];
 
 describe.each([['dark'], ['light']] as const)('%s theme contrast', (theme) => {
   const rows = parseTokenTable(designSystem);
@@ -115,4 +100,46 @@ it('every colour token has a light value', () => {
     .filter((r) => r.name.startsWith('color-') && r.values.light === '')
     .map((r) => r.name);
   expect(missing).toEqual([]);
+});
+
+describe.each([['dark'], ['light']] as const)('%s theme non-text contrast', (theme) => {
+  const rows = parseTokenTable(designSystem);
+  const value = (name: string): string => {
+    const row = rows.find((r) => r.name === name);
+    if (row === undefined) throw new Error(`unknown token ${name}`);
+    return theme === 'dark' ? row.values.dark : row.values.light || row.values.dark;
+  };
+
+  it.each([
+    ['color-warn-strong-bd', 'color-warn-strong-soft'],
+    ['color-crit-strong-bd', 'color-crit-strong-soft'],
+  ])('%s stays distinguishable from %s', (border, fill) => {
+    expect(contrastRatio(value(border), value(fill))).toBeGreaterThanOrEqual(1.3);
+  });
+});
+
+describe('colour scheme', () => {
+  it('declares dark by default and light in both light override blocks', () => {
+    const css = generateCss(designSystem);
+    const dark = css.slice(0, css.indexOf('@media'));
+    expect(dark).toContain('color-scheme: dark;');
+    const light = css.slice(css.indexOf('@media'));
+    expect(light.match(/color-scheme: light;/g)).toHaveLength(2);
+    expect(light).not.toContain('color-scheme: dark;');
+  });
+});
+
+describe.each([['dark'], ['light']] as const)('%s theme grey ramp', (theme) => {
+  it('keeps consecutive steps visibly apart (deltaE above 2.3)', () => {
+    const rows = parseTokenTable(designSystem);
+    const value = (name: string): string => {
+      const row = rows.find((r) => r.name === name);
+      if (row === undefined) throw new Error(`unknown token ${name}`);
+      return theme === 'dark' ? row.values.dark : row.values.light;
+    };
+    const ramp = ['color-fg-muted', 'color-fg-faint', 'color-fg-dim', 'color-fg-dimmest'];
+    for (let i = 1; i < ramp.length; i++) {
+      expect(deltaE(value(ramp[i - 1]), value(ramp[i])), ramp[i]).toBeGreaterThan(2.3);
+    }
+  });
 });

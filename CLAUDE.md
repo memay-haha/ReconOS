@@ -19,11 +19,17 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 - Khi có quyết định mới hoặc quyết định thay đổi, kể cả thuật ngữ: sửa tài liệu theo [.claude/rules/doc-sync.md](.claude/rules/doc-sync.md) trong cùng lượt.
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
 - Viết và cập nhật tài liệu, ADR: theo [.claude/rules/documentation.md](.claude/rules/documentation.md).
-- Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, đặt tên `dot-<số>-<chủ đề>`, tách từ `dev`.
+- Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, tách từ `dev`.
+- Đặt tên nhánh bằng tiếng Anh, chữ thường, kebab-case, theo mẫu `<loại>/<phần>-<chủ đề>`. Ví dụ: `feat/be-job-queue`, `fix/fe-login-redirect`, `chore/infra-compose-update`.
+  - `<loại>`: `feat` tính năng mới, `fix` sửa lỗi, `hotfix` sửa gấp trên bản đang chạy, `refactor` đổi cấu trúc không đổi hành vi, `perf` hiệu năng, `test` thêm hoặc sửa test, `docs` tài liệu, `chore` việc phụ trợ như cấu hình, thư viện, skill, `ci` pipeline, `build` đóng gói, `release` chuẩn bị phát hành.
+  - `<phần>`: `be`, `fe`, `workers`, `contracts`, `docs`, `infra`.
+  - Chỉ dùng `a-z`, `0-9`, `-`, một dấu `/` sau loại. ❌ Không dấu tiếng Việt, khoảng trắng, chữ hoa, `_`.
 - Tạo nhánh trước khi bắt đầu bất cứ việc gì của một đợt, kể cả thảo luận, viết spec, sửa tài liệu. ❌ Không sửa file khi đang đứng ở `dev`.
 - Commit mọi thay đổi của đợt trên nhánh của đợt đó.
 - Xong một đợt: merge nhánh đó vào `dev`, push `dev`, rồi lưu memory theo [agentmemory.md](.claude/rules/agentmemory.md).
 - ❌ Không merge vào `main`. Chỉ người dùng merge `dev` vào `main`.
+- Thiết kế kiến trúc và mã thành cơ chế chung áp dụng cho mọi trường hợp. ❌ Không tạo ngoại lệ, nhánh đặc biệt cho một trường hợp riêng.
+- Trả lời ngắn gọn, chỉ nêu ý chính và việc cần người dùng quyết.
 
 ## 📚 Chỉ mục tài liệu
 
@@ -55,7 +61,7 @@ Chạy từ gốc repo. Giữ đúng tên lệnh trong bảng dưới. `Makefile
 | `make init` | Cài phụ thuộc bằng uv và pnpm, bật container vùng lõi (`infras/compose/compose.dev.yaml`), chạy migration cho CSDL `reconos` và CSDL log `reconos_log`, tạo tài khoản Superadmin đầu tiên từ `RECONOS_BOOTSTRAP_ADMIN_*`. Chạy lại được, không ghi đè tài khoản đã có |
 | `make backend` | Chạy Backend API và frontend cùng lúc. Ctrl-C dừng cả hai. Cần `make init` trước |
 | `make lint` | ruff format, ruff check, mypy, ESLint, Prettier, `tsc`: [coding-convention.md](.claude/rules/coding-convention.md) |
-| `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make init` trước |
+| `make test` | pytest cho `backend/`, `workers/`, `contracts/`, Vitest cho `frontend/`, rồi build frontend và quét bản build xem dữ liệu mẫu MSW có lọt vào không. Cần `make init` trước |
 
 - Chạy `make lint` và `make test` trước khi báo xong một thay đổi mã.
 - Lệnh chưa có trong `Makefile`: báo rõ chưa chạy được, không báo đã qua.

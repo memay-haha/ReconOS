@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
   // The end-to-end suite and the /api rewrite address the app at 127.0.0.1. Without
   // this, `next dev` blocks that origin (HMR) and the login page never hydrates.
   allowedDevOrigins: ['127.0.0.1'],
+  turbopack: {
+    // msw's export map sets "node": null on ./browser, and Turbopack resolves that
+    // subpath under the node condition when it builds the SSR and Server Component
+    // graphs (and fails the whole compile). Only the browser graph gets the real
+    // file; every other graph gets an empty stub that nothing executes. The mock
+    // layer itself is still behind the NODE_ENV test in query-provider.tsx, so
+    // neither file reaches a production build: scripts/check-no-mocks.mjs verifies it.
+    resolveAlias: {
+      'msw/browser': {
+        browser: './node_modules/msw/lib/browser/index.js',
+        default: './src/mocks/empty-browser.ts',
+      },
+    },
+  },
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${apiUrl}/api/:path*` }];
   },

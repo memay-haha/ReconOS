@@ -96,6 +96,18 @@
     ]
   },
   {
+    "label": "S13. Raw Outputs",
+    "stitch_title": "Raw Outputs (chưa có mockup)",
+    "screen_id": "",
+    "files": []
+  },
+  {
+    "label": "S14. Audit Log",
+    "stitch_title": "Audit Log (chưa có mockup)",
+    "screen_id": "",
+    "files": []
+  },
+  {
     "label": "S15. System Health & Tools",
     "stitch_title": "S15 - System Health & Tools",
     "screen_id": "b5342c495e6c453487d37e76985feb83",

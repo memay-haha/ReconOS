@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -56,7 +56,7 @@
 | Tampering | Sửa output thô sau khi lưu | Chỉ Backend API ghi MinIO, lưu mã băm SHA-256, parser không sửa object |
 | Tampering | Chèn lệnh qua mục tiêu hoặc tham số | Tham số theo allowlist, gọi công cụ bằng danh sách đối số, mục tiêu lấy từ job đã kiểm tra scope |
 | Tampering | Gửi task giả vào Redis | Serializer JSON, model contract kiểm tra mọi task. Tài khoản Redis của worker chỉ dùng queue job |
-| Repudiation | Chối đã duyệt job khai thác, đổi scope | `audit_log` chỉ cho thêm bản ghi, không sửa, không xóa, ghi người thực hiện và thời điểm |
+| Repudiation | Chối đã duyệt job khai thác, đổi scope, tải output thô. Xóa log ứng dụng để xóa dấu vết | `audit_log` chỉ cho thêm bản ghi, không sửa, không xóa, ghi người thực hiện và thời điểm. Chỉ Superadmin xóa được log ứng dụng, thao tác xóa ghi vào `audit_log` ở CSDL chính |
 | Information disclosure | User xem program không được gán | Lọc theo `program_user` ở backend, trả `404` |
 | Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job |
 | Information disclosure | Mật khẩu lọt vào URL khi form gửi trước lúc trang hydrate | Form đăng nhập khai báo `method="post"`, nên trình duyệt không bao giờ gửi thông tin xác thực bằng GET: [security.md](../../.claude/rules/security.md) |

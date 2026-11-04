@@ -6,7 +6,7 @@ Lưu quyết định và việc đã làm của ReconOS để dùng lại ở c�
 
 - Gọi `memory_smart_search` trước khi sửa phần đã có quyết định: tài liệu, schema, hạ tầng, worker, parser, phân quyền. Ưu tiên dùng nhãn ở mục Bộ nhãn làm từ khóa.
 - Với câu hỏi kiến thức chung hoặc việc chưa từng có quyết định liên quan: không gọi `memory_smart_search`.
-- Khi giao việc cho subagent: yêu cầu subagent tự gọi `codegraph_explore` và `memory_smart_search` trước khi sửa, hoặc đưa sẵn kết quả vào prompt.
+- Khi giao việc cho subagent: yêu cầu subagent tự chạy `codegraph explore` và gọi `memory_smart_search` trước khi sửa, hoặc đưa sẵn kết quả vào prompt.
 
 ## Lưu sau khi chốt
 

@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 
 import { readSessionForSignInScreen } from '@/lib/session';
 
+import { ThemeToggle } from '@/components/theme-toggle';
+
 import { LoginForm } from './login-form';
 
 export default async function LoginPage() {
@@ -10,14 +12,37 @@ export default async function LoginPage() {
   if ((await readSessionForSignInScreen()) !== null) redirect('/users');
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-margin-mobile py-space-xl sm:px-margin">
-      <div className="w-full max-w-[392px] rounded-lg bg-surface p-margin sm:p-space-xl">
-        <h1 className="font-headline-lg text-headline-lg text-fg">Đăng nhập</h1>
-        <p className="mb-space-xl mt-space-xs font-body-default text-body-default text-fg-muted">
-          Nhập thông tin tài khoản để vào ReconOS.
-        </p>
-        <LoginForm />
-      </div>
-    </main>
+    <>
+      <header className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center justify-between bg-bg px-margin">
+        <div className="flex items-center gap-space-xs">
+          <span aria-hidden="true" className="material-symbols-outlined text-icon text-primary">
+            radar
+          </span>
+          <span className="font-panel-title text-panel-title font-bold uppercase tracking-tight text-fg">
+            ReconOS
+          </span>
+        </div>
+        <ThemeToggle />
+      </header>
+      <main className="relative flex min-h-dvh w-full items-center justify-center px-margin-mobile pt-14 sm:px-margin">
+        <div className="relative mx-auto w-full max-w-sm py-space-xl">
+          <div className="h-1 w-full rounded-t-xl bg-gradient-to-r from-transparent via-primary to-transparent opacity-80" />
+          <div className="flex flex-col rounded-b-xl bg-surface p-7 shadow-2xl sm:p-8">
+            <div className="mb-space-xl">
+              <h1 className="mb-space-xs font-headline-lg text-headline-lg tracking-tight text-fg">
+                Sign In
+              </h1>
+              <p className="font-body-default text-body-default text-fg-muted">
+                Enter your credentials to access the console.
+              </p>
+            </div>
+            <LoginForm />
+          </div>
+        </div>
+      </main>
+      <footer className="fixed bottom-0 left-0 right-0 z-20 flex h-10 items-center justify-between px-margin font-body-code text-caption text-fg-faint">
+        <span>&copy; ReconOS Security Systems</span>
+      </footer>
+    </>
   );
 }

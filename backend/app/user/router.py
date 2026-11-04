@@ -18,6 +18,7 @@ from app.user.schemas import (
     LoginRequest,
     PasswordChangeRequest,
     UserCreateRequest,
+    UserDetailResponse,
     UserResponse,
     UserSessionResponse,
     UserUpdateRequest,
@@ -118,16 +119,16 @@ async def create_user(body: UserCreateRequest, actor: Superadmin, session: DbDep
     )
 
 
-@router.get("/users", response_model=Page[UserResponse], tags=["user"])
+@router.get("/users", response_model=Page[UserDetailResponse], tags=["user"])
 async def list_users(
     actor: Superadmin, session: DbDep, limit: int = DEFAULT_LIMIT, cursor: str | None = None
-) -> Page[UserResponse]:
+) -> Page[UserDetailResponse]:
     return await service.list_users(session, limit=limit, cursor=cursor)
 
 
-@router.get("/users/{user_id}", response_model=UserResponse, tags=["user"])
-async def read_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> User:
-    return await service.get_user(session, user_id)
+@router.get("/users/{user_id}", response_model=UserDetailResponse, tags=["user"])
+async def read_user(user_id: uuid.UUID, actor: Superadmin, session: DbDep) -> UserDetailResponse:
+    return await service.get_user_detail(session, user_id)
 
 
 @router.patch("/users/{user_id}", response_model=UserResponse, tags=["user"])

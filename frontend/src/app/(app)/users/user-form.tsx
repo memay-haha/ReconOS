@@ -4,7 +4,7 @@ import { type FormEvent, type ReactElement, type RefObject, useRef, useState } f
 
 import { FieldError } from '@/components/field-error';
 import { ApiError, fieldErrorsOf } from '@/lib/api-client';
-import { type UserRow, useCreateUser, useUpdateUser } from '@/lib/users';
+import { type UserCore, type UserRow, useCreateUser, useUpdateUser } from '@/lib/users';
 
 const ROLES: readonly { value: UserRow['role']; label: string }[] = [
   { value: 'superadmin', label: 'Superadmin' },
@@ -20,14 +20,14 @@ const FIELD =
 function failureText(error: unknown): string {
   // A duplicate username is a flat 409 with no field member, so it cannot sit by the input.
   if (error instanceof ApiError && error.status === 409) {
-    return 'Tên đăng nhập này đã có người dùng.';
+    return 'This username is already taken.';
   }
-  return 'Không lưu được tài khoản. Thử lại sau.';
+  return 'Could not save the account. Try again later.';
 }
 
 export type UserFormProps =
   | { mode: 'create'; user?: never; onDone: () => void }
-  | { mode: 'edit'; user: UserRow; onDone: () => void };
+  | { mode: 'edit'; user: UserCore; onDone: () => void };
 
 /** Two components, one per mode, so each calls exactly the hook it needs and
  * edit mode always has a real account id to patch. */
@@ -72,7 +72,7 @@ function CreateUserForm({ onDone }: { onDone: () => void }): ReactElement {
   );
 }
 
-function EditUserForm({ user, onDone }: { user: UserRow; onDone: () => void }): ReactElement {
+function EditUserForm({ user, onDone }: { user: UserCore; onDone: () => void }): ReactElement {
   const update = useUpdateUser(user.id);
   return (
     <FormBody
@@ -125,12 +125,12 @@ function FormBody({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-space-md rounded-md border border-border p-space-md"
+      className="flex flex-col gap-space-md rounded-sm border border-border p-space-md"
     >
       {mode === 'create' && (
         <div className="flex flex-col gap-space-xs">
           <label htmlFor="user-username" className={LABEL}>
-            Tên đăng nhập
+            Username
           </label>
           <input
             id="user-username"
@@ -146,7 +146,7 @@ function FormBody({
 
       <div className="flex flex-col gap-space-xs">
         <label htmlFor="user-display-name" className={LABEL}>
-          Tên hiển thị
+          Display name
         </label>
         <input
           id="user-display-name"
@@ -161,7 +161,7 @@ function FormBody({
       {mode === 'create' && (
         <div className="flex flex-col gap-space-xs">
           <label htmlFor="user-password" className={LABEL}>
-            Mật khẩu
+            Password
           </label>
           <input
             id="user-password"
@@ -177,7 +177,7 @@ function FormBody({
 
       <div className="flex flex-col gap-space-xs">
         <label htmlFor="user-role" className={LABEL}>
-          Vai trò
+          Role
         </label>
         <select
           id="user-role"
@@ -209,14 +209,14 @@ function FormBody({
           disabled={active.isPending}
           className="h-10 rounded-sm bg-primary px-space-xl text-panel-title text-on-primary focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
         >
-          Lưu
+          Save
         </button>
         <button
           type="button"
           onClick={onDone}
           className="h-10 rounded-sm border border-border px-space-xl text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          Hủy
+          Cancel
         </button>
       </div>
     </form>

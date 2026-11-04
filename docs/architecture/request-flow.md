@@ -1,6 +1,6 @@
 # Luồng request
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 6: Luồng request
 > Liên quan: [authentication.md](../security/authentication.md), [authorization.md](../security/authorization.md), [api/architecture.md](../api/architecture.md), [system.md](system.md), [external-services.md](../integrations/external-services.md)
 
@@ -49,7 +49,7 @@ sequenceDiagram
 | Bước | Thành phần | Không đạt thì |
 |---|---|---|
 | 1. Giải mã TLS, giới hạn kích thước body | Reverse proxy | `413` |
-| 2. Gán `request_id`, gắn vào log | Middleware | |
+| 2. Lấy `request_id` từ `X-Request-ID` hoặc sinh mới, gắn vào log | Middleware | |
 | 3. Kiểm tra `Origin`, `Sec-Fetch-Site` với request đổi dữ liệu | Middleware | `403 forbidden` |
 | 4. Đọc cookie, tra giá trị băm của session ID, kiểm tra hết hạn, tài khoản bị khóa | Dependency xác thực | `401 unauthenticated` |
 | 5. Kiểm tra vai trò có quyền gọi endpoint | Dependency phân quyền | `403 forbidden` |
@@ -88,7 +88,7 @@ sequenceDiagram
 
 - `Origin` sai hoặc phiên không hợp lệ: đóng kết nối khi bắt tay.
 - Phiên hết hạn hoặc bị thu hồi khi đang mở: server đóng kết nối, trình duyệt chuyển về S01.
-- Program được gán thay đổi: áp dụng cho sự kiện tiếp theo, không cần kết nối lại.
+- Vai trò hoặc program được gán thay đổi: áp dụng cho sự kiện tiếp theo, không cần kết nối lại.
 
 ### Request từ worker
 

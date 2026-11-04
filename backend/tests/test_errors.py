@@ -8,6 +8,7 @@ from app.core.errors import (
     AppError,
     BadRequestError,
     ConflictError,
+    CurrentPasswordIncorrectError,
     ForbiddenError,
     InternalError,
     NotFoundError,
@@ -31,6 +32,7 @@ ERROR_TABLE = [
     (PayloadTooLargeError, 413, "payload_too_large"),
     (ValidationFailedError, 422, "validation_error"),
     (TargetOutOfScopeError, 422, "target_out_of_scope"),
+    (CurrentPasswordIncorrectError, 422, "current_password_incorrect"),
     (RateLimitedError, 429, "rate_limited"),
     (InternalError, 500, "internal_error"),
 ]

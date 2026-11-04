@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
-from sqlalchemy import ColumnElement, and_, delete, func, select, text, tuple_
+from sqlalchemy import ColumnElement, ScalarSelect, and_, delete, func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -13,6 +13,7 @@ from app.core import audit
 from app.core.db import independent_session
 from app.core.errors import (
     ConflictError,
+    CurrentPasswordIncorrectError,
     ForbiddenError,
     NotFoundError,
     RateLimitedError,
@@ -30,7 +31,7 @@ from app.core.security import (
 )
 from app.core.system_setting import get_int_setting
 from app.user.models import LoginAttempt
-from app.user.schemas import UserResponse, UserSessionResponse
+from app.user.schemas import UserDetailResponse, UserResponse, UserSessionResponse
 
 
 class LoginResult(NamedTuple):
@@ -220,7 +221,11 @@ async def change_password(
         await record_failed_login(
             user.username, ip_address, action="password_change_failed", user_id=user.id
         )
-        raise UnauthenticatedError(detail="current password does not match")
+        # 422, not 401: the session is valid, and a 401 would sign the user out.
+        raise CurrentPasswordIncorrectError(
+            detail="current password does not match",
+            errors=[{"field": "current_password", "code": "current_password_incorrect"}],
+        )
     check_password_policy(
         new_password, user_inputs=[user.username, user.display_name], field="new_password"
     )
@@ -319,24 +324,56 @@ def _clamp(limit: int) -> int:
     return max(1, min(limit, MAX_LIMIT))
 
 
+def _detail(user: User, active_user_session_count: int) -> UserDetailResponse:
+    return UserDetailResponse(
+        **UserResponse.model_validate(user, from_attributes=True).model_dump(),
+        active_user_session_count=active_user_session_count,
+    )
+
+
+async def _active_session_count(session: AsyncSession) -> ScalarSelect[int]:
+    """Correlated count of the live sessions of the enclosing user row.
+
+    It is a scalar subquery in the select list, so Postgres evaluates it only
+    for the rows that survive the page LIMIT, through the user_id index.
+    """
+    live = await _live_session_filter(session)
+    return (
+        select(func.count())
+        .select_from(UserSession)
+        .where(UserSession.user_id == User.id, live)
+        .correlate(User)
+        .scalar_subquery()
+    )
+
+
+async def get_user_detail(session: AsyncSession, user_id: uuid.UUID) -> UserDetailResponse:
+    count = await _active_session_count(session)
+    row = (await session.execute(select(User, count).where(User.id == user_id))).first()
+    if row is None:
+        raise NotFoundError(detail="account does not exist")
+    return _detail(row[0], row[1])
+
+
 async def list_users(
     session: AsyncSession, *, limit: int, cursor: str | None
-) -> Page[UserResponse]:
+) -> Page[UserDetailResponse]:
     size = _clamp(limit)
-    stmt = select(User).order_by(User.created_at.desc(), User.id.desc())
+    count = await _active_session_count(session)
+    stmt = select(User, count).order_by(User.created_at.desc(), User.id.desc())
     if cursor is not None:
         seen_at, seen_id = decode_time_cursor(cursor)
         stmt = stmt.where(tuple_(User.created_at, User.id) < (seen_at, seen_id))
-    rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
+    rows = list((await session.execute(stmt.limit(size + 1))).all())
     total = await session.scalar(select(func.count()).select_from(User)) or 0
     page_rows = rows[:size]
     next_cursor = (
-        encode_cursor(page_rows[-1].created_at.isoformat(), page_rows[-1].id)
+        encode_cursor(page_rows[-1][0].created_at.isoformat(), page_rows[-1][0].id)
         if len(rows) > size
         else None
     )
-    return Page[UserResponse](
-        items=[UserResponse.model_validate(row, from_attributes=True) for row in page_rows],
+    return Page[UserDetailResponse](
+        items=[_detail(user, active) for user, active in page_rows],
         next_cursor=next_cursor,
         total=total,
     )

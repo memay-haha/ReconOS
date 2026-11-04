@@ -40,10 +40,10 @@ export function useCursorStack(): {
   };
 }
 
-const COUNT = new Intl.NumberFormat('vi-VN');
+const COUNT = new Intl.NumberFormat('en-US');
 
 const BUTTON =
-  'rounded-md border border-border px-space-md py-space-sm text-body-default text-fg ' +
+  'rounded-sm border border-border px-space-md py-space-sm text-body-default text-fg ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 export function Pagination({
@@ -61,6 +61,7 @@ export function Pagination({
   onNext: () => void;
 }): ReactElement {
   const total = COUNT.format(page.total);
+  const rows = page.total === 1 ? 'row' : 'rows';
   // The visible word comes first in the accessible name (WCAG 2.5.3 label in name).
   const named = (word: string) => `${word}, ${label.toLowerCase()}`;
   return (
@@ -69,26 +70,26 @@ export function Pagination({
       className="flex flex-wrap items-center justify-between gap-gutter py-space-md"
     >
       <span className="text-body-default text-fg-muted">
-        {page.totalIsEstimate ? `Khoảng ${total} dòng` : `${total} dòng`}
+        {page.totalIsEstimate ? `About ${total} ${rows}` : `${total} ${rows}`}
       </span>
       <span className="flex gap-space-sm">
         <button
           type="button"
-          aria-label={named('Trước')}
+          aria-label={named('Previous')}
           onClick={onBack}
           disabled={!canGoBack}
           className={BUTTON}
         >
-          Trước
+          Previous
         </button>
         <button
           type="button"
-          aria-label={named('Sau')}
+          aria-label={named('Next')}
           onClick={onNext}
           disabled={page.nextCursor === null}
           className={BUTTON}
         >
-          Sau
+          Next
         </button>
       </span>
     </nav>

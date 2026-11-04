@@ -9,9 +9,10 @@ import type { UserRow } from '@/lib/users';
 import { UserActions } from './user-actions';
 
 const OPEN: UserRow = {
+  active_user_session_count: 0,
   id: '2',
   username: 'analyst',
-  display_name: 'Người phân tích',
+  display_name: 'Analyst',
   role: 'user',
   is_locked: false,
   created_at: '2026-11-04T08:00:00Z',
@@ -27,30 +28,30 @@ function wrap(node: ReactNode) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('UserActions', () => {
-  it('offers Khóa for an open account', async () => {
+  it('offers Lock for an open account', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Khóa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/users/2/lock');
   });
 
-  it('offers Mở khóa for a locked account', async () => {
+  it('offers Unlock for a locked account', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<UserActions user={LOCKED} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Mở khóa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unlock analyst' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/users/2/unlock');
   });
 
-  it('hides Khóa on the signed in account, which the backend refuses anyway', () => {
+  it('hides Lock on the signed in account, which the backend refuses anyway', () => {
     wrap(<UserActions user={OPEN} isSelf />);
-    expect(screen.queryByRole('button', { name: 'Khóa' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lock analyst' })).not.toBeInTheDocument();
   });
 
-  it('reports a refusal from the backend in Vietnamese, not its English title', async () => {
+  it('reports a refusal from the backend in English, not its English title', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -61,18 +62,18 @@ describe('UserActions', () => {
       ),
     );
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Khóa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('Máy chủ từ chối thao tác này.');
+    expect(alert).toHaveTextContent('The server refused this action.');
     expect(alert).not.toHaveTextContent('Cannot lock yourself');
   });
 
   it('says it could not reach the server on other failures', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed')));
     wrap(<UserActions user={OPEN} isSelf={false} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Khóa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Không đổi được trạng thái tài khoản.',
+      'Could not change the account status.',
     );
   });
 });

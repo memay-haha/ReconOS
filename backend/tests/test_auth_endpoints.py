@@ -146,7 +146,8 @@ async def test_password_change_requires_the_current_password(
         json={"current_password": "wrong one here", "new_password": "bramble7Quartz!tide"},
         headers=HEADERS,
     )
-    assert response.status_code == 401
+    assert response.status_code == 422
+    assert response.json()["code"] == "current_password_incorrect"
 
 
 async def test_password_change_rejects_a_weak_password(
@@ -370,7 +371,11 @@ async def test_password_change_is_throttled_and_audited_like_login(
             json={"current_password": "wrong one here", "new_password": "bramble7Quartz!tide"},
             headers=HEADERS,
         )
-        assert wrong.status_code == 401
+        assert wrong.status_code == 422
+        assert wrong.json()["code"] == "current_password_incorrect"
+        assert wrong.json()["errors"] == [
+            {"field": "current_password", "code": "current_password_incorrect"}
+        ]
     async with db_engine.connect() as other:
         attempts = await other.scalar(
             select(func.count())
@@ -464,3 +469,15 @@ async def test_a_weak_new_password_names_the_field_the_form_sent(
     )
     assert response.status_code == 422
     assert response.json()["errors"][0]["field"] == "new_password"
+
+
+async def test_password_change_with_no_session_is_still_a_401(client: AsyncClient) -> None:
+    # Only a wrong current password moved to 422. A missing or expired session
+    # must stay 401: that status is what signs the user out.
+    response = await client.post(
+        "/api/v1/auth/password",
+        json={"current_password": PASSWORD, "new_password": "bramble7Quartz!tide"},
+        headers=HEADERS,
+    )
+    assert response.status_code == 401
+    assert response.json()["code"] == "unauthenticated"

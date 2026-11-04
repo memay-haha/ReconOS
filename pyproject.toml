@@ -40,7 +40,8 @@ target-version = "py315"
 line-length = 100
 src = ["backend", "contracts", "workers"]
 # Markdown holds short illustrative snippets in approved documents: ruff must not rewrite them.
-extend-exclude = ["*.md", "_reference", "backend/migrations/versions"]
+# .claude holds third-party skill scripts that are not project code.
+extend-exclude = ["*.md", "_reference", "backend/migrations/versions", ".claude"]
 
 [tool.ruff.lint]
 select = [

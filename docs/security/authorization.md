@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -22,7 +22,7 @@
 ## 📍 Ở đâu
 
 - Mã: `backend/app/core/security.py`, module `user`. Bảng gán User vào program: [database.md](../data/database.md).
-- Màn hình quản lý tài khoản và vai trò: S12. Gán User vào program: S09.
+- Màn hình quản lý tài khoản và vai trò: S12, chỉ Superadmin. Nhật ký thao tác: S14, Superadmin và Admin. S14 tách khỏi S12 vì mọi endpoint khác của S12 chỉ Superadmin, nên Admin mở S12 chỉ thấy lỗi. Gán User vào program: S09.
 
 ## ⚙️ Làm như thế nào
 
@@ -36,6 +36,7 @@
 
 - Mỗi tài khoản có đúng một vai trò.
 - User chỉ thấy program được gán và dữ liệu thuộc program đó: scope, tài sản, job, output thô, finding, báo cáo.
+- User chỉ thao tác trên job mình tạo: hủy, thử lại. ❌ Không thao tác trên job của tài khoản khác.
 
 ### Ma trận quyền
 
@@ -54,15 +55,17 @@
 | Thêm, sửa, xóa scope rule | ✅ | ✅ | ❌ |
 | Gán, bỏ gán User vào program | ✅ | ✅ | ❌ |
 | Xem program, scope, tài sản, screenshot | ✅ | ✅ | ✅ chỉ program được gán |
-| Tạo job, thử lại job | ✅ | ✅ | ✅ chỉ program được gán |
+| Tạo job | ✅ | ✅ | ✅ chỉ program được gán |
+| Thử lại job | ✅ | ✅ | ✅ chỉ job mình tạo |
 | Duyệt, từ chối job nhóm khai thác | ✅ trừ job mình tạo | ✅ trừ job mình tạo | ❌ |
 | Hủy job | ✅ | ✅ | ✅ chỉ job mình tạo |
 | Xem hàng đợi, trạng thái dispatcher | ✅ | ✅ | ✅ job thuộc program được gán |
 | Xem, tải output thô | ✅ | ✅ | ✅ chỉ program được gán |
 | Triage finding | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
-| Xem nhật ký thao tác | ✅ | ✅ | ❌ |
+| Xem nhật ký thao tác trên S14 | ✅ | ✅ | ❌ |
 | Xem log ứng dụng | ✅ | ✅ | ✅ log của job thuộc program được gán |
+| Xóa log ứng dụng trên S15 | ✅ | ❌ | ❌ |
 | Xem dashboard | ✅ | ✅ | ✅ số liệu của program được gán |
 
 - Token worker không mang vai trò. Token chỉ gọi được endpoint của contract worker: [authentication.md](authentication.md).
@@ -74,9 +77,10 @@
 3. Tài nguyên thuộc program: backend kiểm tra User được gán vào program của tài nguyên đó. Truy vấn danh sách luôn lọc theo program được gán.
 4. Với tài nguyên ngoài phạm vi của User, backend trả lỗi giống khi tài nguyên không tồn tại, để không lộ tài nguyên đó có tồn tại.
 5. Duyệt job: backend so người duyệt với người tạo job. Trùng thì từ chối, kể cả Superadmin.
-6. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình và không khóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
-7. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem.
-8. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
+6. Hủy, thử lại job với vai trò User: backend so tài khoản gọi với người tạo job. Khác thì trả `403 forbidden`.
+7. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình và không khóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
+8. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem. Đổi vai trò, gán hoặc bỏ gán program: áp dụng ngay từ sự kiện tiếp theo trên kết nối đang mở.
+9. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
 
 - Mã lỗi khi bị từ chối: [api/architecture.md](../api/architecture.md).
 
@@ -90,5 +94,7 @@ Backend luôn ghi nhật ký thao tác cho các thao tác sau (G7):
 - Thêm, sửa, xóa scope rule.
 - Tạo, duyệt, từ chối, hủy job.
 - Đổi trạng thái triage.
+- Tải nội dung output thô.
+- Xóa log ứng dụng.
 - Tạo, thu hồi token worker. Sửa cấu hình tool module, engine, hệ thống.
 - Yêu cầu bị từ chối vì thiếu quyền, chỉ với phương thức thay đổi dữ liệu `POST`, `PUT`, `PATCH`, `DELETE`. Yêu cầu đọc bị từ chối không ghi dòng nào: nhật ký chỉ thêm dòng và chưa có thời hạn giữ.

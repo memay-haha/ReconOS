@@ -7,32 +7,49 @@ import { Pagination, useCursorStack } from './pagination';
 const noop = () => undefined;
 
 describe('Pagination', () => {
-  it('disables Trước on the first page', () => {
+  it.each([
+    [0, '0 rows'],
+    [1, '1 row'],
+    [2, '2 rows'],
+  ])('writes a total of %i as "%s"', (total, text) => {
+    render(
+      <Pagination
+        page={{ total, totalIsEstimate: false, nextCursor: null }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+      />,
+    );
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
+  it('disables Previous on the first page', () => {
     render(
       <Pagination
         page={{ total: 42, totalIsEstimate: false, nextCursor: 'c1' }}
         canGoBack={false}
         onBack={noop}
         onNext={noop}
-        label="Phân trang thử"
+        label="Test pagination"
       />,
     );
-    expect(screen.getByRole('button', { name: /^Trước/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /^Sau/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Previous/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled();
   });
 
-  it('disables Sau on the last page', () => {
+  it('disables Next on the last page', () => {
     render(
       <Pagination
         page={{ total: 42, totalIsEstimate: false, nextCursor: null }}
         canGoBack
         onBack={noop}
         onNext={noop}
-        label="Phân trang thử"
+        label="Test pagination"
       />,
     );
-    expect(screen.getByRole('button', { name: /^Sau/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /^Trước/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Next/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Previous/ })).toBeEnabled();
   });
 
   it('says the total is an estimate when the backend says so', () => {
@@ -42,24 +59,24 @@ describe('Pagination', () => {
         canGoBack={false}
         onBack={noop}
         onNext={noop}
-        label="Phân trang thử"
+        label="Test pagination"
       />,
     );
-    expect(screen.getByText(/khoảng 1\.000/i)).toBeInTheDocument();
+    expect(screen.getByText(/about 1,000/i)).toBeInTheDocument();
   });
 
-  it('writes an exact total in the Vietnamese thousands format', () => {
+  it('writes an exact total in the English thousands format', () => {
     render(
       <Pagination
         page={{ total: 1234, totalIsEstimate: false, nextCursor: null }}
         canGoBack={false}
         onBack={noop}
         onNext={noop}
-        label="Phân trang thử"
+        label="Test pagination"
       />,
     );
-    expect(screen.getByText(/1\.234/)).toBeInTheDocument();
-    expect(screen.queryByText(/khoảng/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/1,234/)).toBeInTheDocument();
+    expect(screen.queryByText(/about/i)).not.toBeInTheDocument();
   });
 
   it('reports a click on each button', async () => {
@@ -71,11 +88,11 @@ describe('Pagination', () => {
         canGoBack
         onBack={onBack}
         onNext={onNext}
-        label="Phân trang thử"
+        label="Test pagination"
       />,
     );
-    await userEvent.click(screen.getByRole('button', { name: /^Sau/ }));
-    await userEvent.click(screen.getByRole('button', { name: /^Trước/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Next/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Previous/ }));
     expect(onNext).toHaveBeenCalledOnce();
     expect(onBack).toHaveBeenCalledOnce();
   });
@@ -89,17 +106,13 @@ describe('Pagination labelling', () => {
         canGoBack
         onBack={noop}
         onNext={noop}
-        label="Phân trang nhật ký thao tác"
+        label="Audit log pagination"
       />,
     );
+    expect(screen.getByRole('navigation', { name: 'Audit log pagination' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next, audit log pagination' })).toBeInTheDocument();
     expect(
-      screen.getByRole('navigation', { name: 'Phân trang nhật ký thao tác' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Sau, phân trang nhật ký thao tác' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Trước, phân trang nhật ký thao tác' }),
+      screen.getByRole('button', { name: 'Previous, audit log pagination' }),
     ).toBeInTheDocument();
   });
 });

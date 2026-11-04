@@ -19,13 +19,13 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: 'ReconOS',
-  description: 'Điều phối công cụ bảo mật và lưu output tập trung',
+  description: 'Orchestrates security tools and stores their output in one place',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
-      lang="vi"
+      lang="en"
       suppressHydrationWarning
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >
@@ -35,6 +35,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             static; .claude/rules/security.md forbids inlining it. */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/theme-init.js"></script>
+        {/* Icon font the mockups draw their icons with; the page reads fine without it. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
       </head>
       <body className="bg-bg text-fg font-body-default text-body-default antialiased">
         <QueryProvider>{children}</QueryProvider>
