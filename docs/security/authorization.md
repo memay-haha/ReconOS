@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -22,7 +22,7 @@
 ## 📍 Ở đâu
 
 - Mã: `backend/app/core/security.py`, module `user`. Bảng gán User vào program: [database.md](../data/database.md).
-- Màn hình quản lý tài khoản và vai trò: S12. Gán User vào program: S09.
+- Màn hình quản lý tài khoản và vai trò: S12, chỉ Superadmin. Nhật ký thao tác: S14, Superadmin và Admin. Gán User vào program: S09.
 
 ## ⚙️ Làm như thế nào
 
@@ -61,7 +61,7 @@
 | Xem, tải output thô | ✅ | ✅ | ✅ chỉ program được gán |
 | Triage finding | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
-| Xem nhật ký thao tác | ✅ | ✅ | ❌ |
+| Xem nhật ký thao tác trên S14 | ✅ | ✅ | ❌ |
 | Xem log ứng dụng | ✅ | ✅ | ✅ log của job thuộc program được gán |
 | Xem dashboard | ✅ | ✅ | ✅ số liệu của program được gán |
 

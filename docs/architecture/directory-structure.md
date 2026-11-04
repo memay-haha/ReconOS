@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -94,6 +94,7 @@
 | `src/app/` | Route theo màn hình trong `docs/design/screens/` |
 | `src/components/` | Component dùng lại |
 | `src/lib/` | Client gọi API backend, hàm tiện ích |
+| `src/mocks/` | Handler MSW trả dữ liệu mẫu cho endpoint backend chưa làm, chỉ dùng khi phát triển |
 | `src/styles/` | CSS toàn cục |
 | `src/types/` | Kiểu TypeScript |
 | `public/` | Icon, ảnh, font |

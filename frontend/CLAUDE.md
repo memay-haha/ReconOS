@@ -19,23 +19,26 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Dựng màn hình theo thiết kế trong [docs/design/screens/](../docs/design/screens/), danh sách trong `index.json`.
 - Đặt route trong `src/app/` theo màn hình.
 - Sinh `src/styles/globals.css` từ bảng Token Table trong [design-system.md](../docs/design/design-system.md) bằng `scripts/generate-tokens.mjs`, chạy bằng `pnpm --dir frontend tokens`. ❌ Không sửa tay file này: sửa bảng token rồi chạy lại script. Test chạy lại script và so với file đã commit.
-- Một bộ tên token cho cả hai theme: `@theme` giữ giá trị theme sáng, khối `[data-theme="dark"]` ghi đè. ❌ Không rẽ nhánh theo theme trong component.
+- Một bộ tên token cho cả hai theme: `@theme` giữ giá trị theme tối vì mockup là theme tối, khối `[data-theme="light"]` ghi đè. ❌ Không rẽ nhánh theo theme trong component.
+- ❌ Không viết màu bằng hex trong `src/`. Màu mockup chưa có token thì thêm vào bảng Token Table rồi sinh lại.
 - Đặt test unit cạnh file mã, test E2E trong `frontend/e2e/`: [testing.md](../.claude/rules/testing.md).
 - Hỗ trợ hai theme tối, sáng.
 - Hiển thị đúng từ chiều rộng 390 px.
 - Đạt WCAG 2.1 AA.
 - Hiển thị nhãn, trạng thái theo [glossary](../docs/appendix/glossary.md) và giá trị liệt kê trong [schema.md](../docs/data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
-- Đặt tên 16 mục điều hướng trên sidebar bằng tên màn hình tiếng Anh trong [index.json](../docs/design/screens/index.json), bỏ tiền tố số `S..`. Chú thích đợt, nút thao tác, thông báo vẫn viết tiếng Việt.
+- Viết mọi chữ hiển thị cho người dùng bằng tiếng Anh: nhãn nút, nhãn ô nhập, tiêu đề, chữ trạng thái, thông báo lỗi, chữ khi danh sách rỗng. Đặt `lang="en"` trên `<html>`. Tài liệu vẫn viết tiếng Việt theo [vietnamese-writing.md](../.claude/rules/vietnamese-writing.md).
+- Dựng sidebar theo mockup: hai nhóm, mục chính và nhóm System, kèm icon Material Symbols và badge số đếm. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
 
 **Dữ liệu:**
 
 - Đặt client gọi API và hook TanStack Query theo tài nguyên trong `src/lib/`.
+- Endpoint backend chưa làm thì trả dữ liệu mẫu bằng MSW trong `src/mocks/`, chỉ bật ở chế độ phát triển. Màn hình gọi đúng endpoint trong [openapi.yaml](../docs/api/openapi.yaml), ❌ không rẽ nhánh theo cờ thật hay giả. Backend làm xong endpoint nào thì xóa handler của endpoint đó.
 - Cho component trong `src/components/` chỉ nhận dữ liệu qua props.
 - Phân trang danh sách bằng cursor với nút **Trước**, **Sau**: [api/architecture.md](../docs/api/architecture.md).
 - Dùng virtual scroll cho bảng dài.
 - Làm mới query tương ứng khi có sự kiện WebSocket.
 - Gom sự kiện WebSocket liên tiếp thành một lần làm mới.
-- Với lỗi API dạng RFC 9457: `errors` là mảng `[{field, code}]` chứa mã máy, không chứa câu tiếng Việt. Dịch mã sang tiếng Việt bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu tiếng Việt của màn hình, ❌ không hiển thị `title` tiếng Anh của backend.
+- Với lỗi API dạng RFC 9457: `errors` là mảng `[{field, code}]` chứa mã máy. Dịch mã sang câu tiếng Anh bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu của màn hình, ❌ không hiển thị `title` thô của backend.
 - Chỉ dùng server component cho layout và kiểm tra phiên để chuyển hướng tới S01.
 - Xử lý lỗi `401` ở một chỗ duy nhất trong provider của TanStack Query: xóa cache rồi chuyển về S01. ❌ Không để từng màn hình tự xử lý `401`, vì người dùng sẽ thấy nhiều hộp lỗi rời rạc mà không biết phiên đã hết.
 - Cho S01 hiển thị được cả khi Backend API không trả lời. Màn hình kiểm tra phiên của S01 coi mọi lỗi không phải `401`, `403` là chưa biết, và vẫn dựng form. Layout của nhóm route cần đăng nhập thì ngược lại: chỉ `401`, `403` mới là chưa đăng nhập, lỗi khác phải lộ ra, không được giả vờ là đã đăng xuất.
