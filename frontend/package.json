@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint .",
     "tokens": "node scripts/generate-tokens.mjs",
+    "colours": "node scripts/colour-audit.mjs",
     "test": "vitest run"
   },
   "dependencies": {
