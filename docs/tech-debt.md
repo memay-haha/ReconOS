@@ -1,6 +1,6 @@
 # 📋 Nợ kỹ thuật
 
-> Phiên bản: 2.8 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 2.9 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 25: Nợ kỹ thuật
 
 | # | Nợ | Lý do chấp nhận | Ảnh hưởng | Hướng xử lý | Trạng thái |
@@ -36,3 +36,4 @@
 | 29 | Vai trò hiển thị định nghĩa ở ba nơi: `topbar.tsx`, `user-table.tsx`, `user-form.tsx`. `Intl.NumberFormat('vi-VN')` định nghĩa ở hai nơi. | Ba task khác nhau dựng ba component. Ngày 2026-11-04. | Glossary đổi tên hiển thị của một vai trò thì sót một bản, bảng nói một đằng topbar nói một nẻo. | Gom về một module dùng chung, theo đúng cách `src/lib/format-moment.ts` đã làm cho ngày giờ. | 🔴 Chưa làm |
 | 30 | Tài khoản vai trò Admin mở S12 nhận ba hộp lỗi tải dữ liệu, vì mọi endpoint của màn hình trừ `/audit-logs` chỉ dành cho Superadmin. | Đợt 2b chỉ có S12, và đăng nhập luôn chuyển tới `/users`. Ngày 2026-11-04. | Admin thấy màn hình như bị hỏng, trong khi đây là trạng thái quyền bình thường. | Cho ba danh sách hiển thị câu riêng cho `403`, theo cách panel phiên đăng nhập đã làm. Khi có màn hình khác thì đăng nhập chuyển theo vai trò. | 🔴 Chưa làm |
 | 31 | `apiRequest` luôn đặt `Content-Type: application/json` khi có body, nên không gửi được `FormData` hay `Blob`. | Đợt 2b không màn hình nào tải file lên. Ngày 2026-11-04. | Màn hình tải output thô lên sẽ gửi sai `Content-Type` và backend từ chối. | Chỉ đặt `Content-Type` khi body là chuỗi. Làm trước màn hình tải file đầu tiên ở đợt 4. | 🔴 Chưa làm |
+| 32 | Mockup s12 có ô tìm kiếm, select vai trò và dãy pill lọc, nhưng `GET /users` chỉ nhận `limit` và `cursor`. | Lọc phía client chỉ lọc trang hiện tại nên trả kết quả sai. Quyết định bỏ ba control này khi dựng S12, ngày 2026-11-04. | S12 không lọc được danh sách tài khoản. Danh sách dài thì phải bấm Sau nhiều lần để tìm một tài khoản. | Thêm tham số lọc cho `GET /users` theo quy ước tên tham số khớp tên cột trong [api/architecture.md](api/architecture.md), rồi dựng lại ba control. | 🔴 Chưa làm |
