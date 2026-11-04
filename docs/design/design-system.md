@@ -127,11 +127,11 @@ typography:
     fontWeight: '400'
     lineHeight: 14px
 rounded:
+  xs: 0.125rem
   sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 0.75rem
   full: 9999px
 spacing:
   gutter: 1rem
@@ -292,11 +292,11 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | color-thumb-rose | #221820 | #f7e6ec |
 | color-thumb-warm | #241a14 | #f7ece2 |
 | **Radius** | | |
+| radius-xs | 0.125rem |  |
 | radius-sm | 0.25rem |  |
-| radius | 0.5rem |  |
-| radius-md | 0.75rem |  |
-| radius-lg | 1rem |  |
-| radius-xl | 1.5rem |  |
+| radius-md | 0.375rem |  |
+| radius-lg | 0.5rem |  |
+| radius-xl | 0.75rem |  |
 | radius-full | 9999px |  |
 | **Shadows** | | |
 | shadow-active-dot | 0 0 6px var(--color-primary-container) | 0 0 6px var(--color-primary) |
@@ -404,10 +404,12 @@ Every keyboard/interactive focus state requires a high-contrast focus ring: `3px
 The design uses a restrained, semi-compact curvature language (`roundedness: 2`). This prevents elements from appearing blocky or dated while strictly avoiding consumer-centric bubbly geometries.
 
 ### Geometry Standards
-- **Containers & Panels (`rounded-lg`):** `12px` border radius applied to workspace cards, diagnostic panels, and alert banners.
-- **Modals & Overlays (`rounded-xl`):** `16px` border radius on command palettes and modal viewport surfaces.
-- **Standard Controls (`rounded-md`):** `8px` corner radius applied to inputs, buttons, segmented controls, and dropdown targets.
-- **Sub-atomic Targets (`rounded-sm`):** `4px` to `5px` on checkboxes, tech badges, and inline status badges.
+Thang bo góc theo Tailwind 4 và khớp từng pixel với mockup trong `docs/design/screens/` (mockup dùng thang Tailwind 3). Mockup `rounded-sm` (2px) thành `rounded-xs` trong ứng dụng, mockup `rounded` trần (4px) thành `rounded-sm`. Từ `md` trở lên hai phiên bản trùng pixel nên giữ tên.
+- **Panels, cards, inputs, buttons, badges (`rounded-sm`):** `4px`. Mockup viết `rounded`. Đây là giá trị dùng nhiều nhất.
+- **Sub-atomic Targets (`rounded-xs`):** `2px`. Mockup viết `rounded-sm`.
+- **Medium Controls (`rounded-md`):** `6px`.
+- **Large Containers (`rounded-lg`):** `8px`, dùng cho khối lồng như thẻ tài khoản ở chân sidebar.
+- **Modals & Overlays (`rounded-xl`):** `12px`, dùng cho thẻ đăng nhập và bề mặt modal.
 - **Pill / Circular:** Strictly reserved for status pings (e.g. live sync dots), binary toggle pills, and count pills.
 
 ## Components

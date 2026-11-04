@@ -777,6 +777,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
   },
   {
     "group": "Radius",
+    "name": "radius-xs",
+    "values": {
+      "dark": "0.125rem",
+      "light": ""
+    }
+  },
+  {
+    "group": "Radius",
     "name": "radius-sm",
     "values": {
       "dark": "0.25rem",
@@ -785,17 +793,9 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
   },
   {
     "group": "Radius",
-    "name": "radius",
-    "values": {
-      "dark": "0.5rem",
-      "light": ""
-    }
-  },
-  {
-    "group": "Radius",
     "name": "radius-md",
     "values": {
-      "dark": "0.75rem",
+      "dark": "0.375rem",
       "light": ""
     }
   },
@@ -803,7 +803,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "group": "Radius",
     "name": "radius-lg",
     "values": {
-      "dark": "1rem",
+      "dark": "0.5rem",
       "light": ""
     }
   },
@@ -811,7 +811,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "group": "Radius",
     "name": "radius-xl",
     "values": {
-      "dark": "1.5rem",
+      "dark": "0.75rem",
       "light": ""
     }
   },

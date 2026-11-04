@@ -16,7 +16,7 @@ export default function ErrorPage({
       <button
         type="button"
         onClick={reset}
-        className="rounded-md border border-border px-space-md py-space-sm text-fg hover:bg-surface-container-high"
+        className="rounded-sm border border-border px-space-md py-space-sm text-fg hover:bg-surface-container-high"
       >
         Try again
       </button>

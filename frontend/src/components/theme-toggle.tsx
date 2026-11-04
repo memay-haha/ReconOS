@@ -41,7 +41,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="rounded-md border border-border px-3 py-2 text-fg hover:bg-surface-container-high"
+      className="rounded-sm border border-border px-3 py-2 text-fg hover:bg-surface-container-high"
     >
       Toggle theme
     </button>

@@ -31,7 +31,7 @@ function describeError(error: unknown): string | null {
 }
 
 const FIELD =
-  'h-10 w-full rounded bg-surface-2 pl-9 text-fg font-body-code text-body-code ' +
+  'h-10 w-full rounded-sm bg-surface-2 pl-9 text-fg font-body-code text-body-code ' +
   'placeholder:text-fg-faint focus:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring';
 const LABEL = 'font-label-caps text-label-caps uppercase tracking-wider text-fg-muted';
 const FIELD_ICON =
@@ -123,7 +123,7 @@ export function LoginForm() {
       {message !== null && (
         <p
           role="alert"
-          className="rounded border border-crit-bd bg-crit-soft px-space-md py-space-sm font-body-default text-body-default text-crit"
+          className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm font-body-default text-body-default text-crit"
         >
           {message}
         </p>
@@ -131,7 +131,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="mt-space-sm flex h-10 w-full items-center justify-center gap-space-sm rounded bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        className="mt-space-sm flex h-10 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
         {login.isPending ? 'Signing in…' : 'Sign In'}
       </button>

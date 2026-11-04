@@ -23,7 +23,7 @@ const BADGE_TONE: Record<string, string> = {
 };
 const BADGE_NEUTRAL = 'border-border-subtle bg-surface-container-low text-fg-muted';
 
-const ROW = 'flex items-center justify-between rounded px-2.5 py-1.5 text-body-default';
+const ROW = 'flex items-center justify-between rounded-sm px-2.5 py-1.5 text-body-default';
 
 // Segment-aware: /users and /users/42 match /users, /usersfoo does not.
 function isCurrent(pathname: string | null, href: string): boolean {
@@ -41,7 +41,7 @@ function Icon({ name }: { name: string }) {
 function Count({ endpoint, value }: { endpoint: string; value: number }) {
   return (
     <span
-      className={`rounded border px-1.5 font-body-code text-caption ${BADGE_TONE[endpoint] ?? BADGE_NEUTRAL}`}
+      className={`rounded-sm border px-1.5 font-body-code text-caption ${BADGE_TONE[endpoint] ?? BADGE_NEUTRAL}`}
     >
       {value}
     </span>
@@ -114,7 +114,7 @@ function AccountCard({
     <div className="mt-gutter border-t border-border-subtle/60 pt-space-md">
       <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-dim p-space-md">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded border border-border-raised bg-surface-container text-fg-muted">
+          <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-border-raised bg-surface-container text-fg-muted">
             <Icon name="terminal" />
             <span
               aria-hidden="true"
@@ -132,7 +132,7 @@ function AccountCard({
           type="button"
           aria-label="Sign out"
           onClick={onSignOut}
-          className="rounded p-1 text-fg-dim hover:bg-surface-container hover:text-fg"
+          className="rounded-sm p-1 text-fg-dim hover:bg-surface-container hover:text-fg"
         >
           <Icon name="logout" />
         </button>
@@ -183,7 +183,7 @@ export function Sidebar({
             <div className="flex items-center gap-2.5">
               <span
                 aria-hidden="true"
-                className="flex h-7 w-7 items-center justify-center rounded bg-primary-container text-sm font-black text-accent-ink"
+                className="flex h-7 w-7 items-center justify-center rounded-sm bg-primary-container text-sm font-black text-accent-ink"
               >
                 R
               </span>
@@ -192,7 +192,7 @@ export function Sidebar({
                 <span className="text-primary">OS</span>
               </span>
             </div>
-            <span className="ml-auto rounded border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-caption text-fg-dim">
+            <span className="ml-auto rounded-sm border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-caption text-fg-dim">
               v2.4
             </span>
           </div>
@@ -205,7 +205,7 @@ export function Sidebar({
                       {group.heading}
                     </span>
                     {group.tag === undefined ? null : (
-                      <span className="rounded border border-crit-strong-bd bg-crit-strong-soft px-1 font-body-code text-caption font-bold text-crit-strong">
+                      <span className="rounded-sm border border-crit-strong-bd bg-crit-strong-soft px-1 font-body-code text-caption font-bold text-crit-strong">
                         {group.tag}
                       </span>
                     )}

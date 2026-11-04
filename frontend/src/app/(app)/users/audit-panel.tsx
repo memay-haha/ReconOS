@@ -78,7 +78,7 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
               {logs.data.items.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-col gap-space-xs rounded-md border border-border p-space-md text-body-default text-fg"
+                  className="flex flex-col gap-space-xs rounded-sm border border-border p-space-md text-body-default text-fg"
                 >
                   <span className="flex flex-wrap justify-between gap-space-md">
                     <span className="text-body-code">{row.action}</span>

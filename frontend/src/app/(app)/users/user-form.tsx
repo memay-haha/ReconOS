@@ -125,7 +125,7 @@ function FormBody({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-space-md rounded-md border border-border p-space-md"
+      className="flex flex-col gap-space-md rounded-sm border border-border p-space-md"
     >
       {mode === 'create' && (
         <div className="flex flex-col gap-space-xs">

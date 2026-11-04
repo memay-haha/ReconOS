@@ -43,7 +43,7 @@ export function useCursorStack(): {
 const COUNT = new Intl.NumberFormat('en-US');
 
 const BUTTON =
-  'rounded-md border border-border px-space-md py-space-sm text-body-default text-fg ' +
+  'rounded-sm border border-border px-space-md py-space-sm text-body-default text-fg ' +
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 export function Pagination({

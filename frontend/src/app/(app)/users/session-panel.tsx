@@ -52,7 +52,7 @@ export function SessionPanel({ userId }: { userId: string }): ReactElement {
         {items.map((row) => (
           <li
             key={row.id}
-            className="flex flex-wrap items-center justify-between gap-space-md rounded-md border border-border p-space-md"
+            className="flex flex-wrap items-center justify-between gap-space-md rounded-sm border border-border p-space-md"
           >
             <span className="flex flex-col text-body-default text-fg">
               <span>{row.ip_address ?? 'Address unknown'}</span>

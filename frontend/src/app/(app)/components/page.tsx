@@ -38,7 +38,7 @@ function Swatch({ row, bg }: { row: Row; bg: Row }): ReactElement {
     <li
       data-testid="swatch"
       data-token={row.name}
-      className="flex items-center gap-space-md rounded-md border border-border bg-bg p-space-md"
+      className="flex items-center gap-space-md rounded-sm border border-border bg-bg p-space-md"
     >
       <span
         aria-hidden="true"
@@ -62,7 +62,7 @@ function RampCell({ token, surface }: { token: Row; surface: Row }): ReactElemen
   return (
     <li
       data-testid={`ramp-${token.name.replace('color-', '')}`}
-      className="rounded-md border border-border p-space-md"
+      className="rounded-sm border border-border p-space-md"
       style={{ backgroundColor: `var(--${surface.name})`, color: `var(--${token.name})` }}
     >
       <span className="text-body-default">
@@ -116,7 +116,7 @@ export default async function ComponentsPage(): Promise<ReactElement> {
         <div
           role="region"
           aria-label="Grey text ramp"
-          className="flex flex-col gap-space-md rounded-md border border-border p-space-lg"
+          className="flex flex-col gap-space-md rounded-sm border border-border p-space-lg"
         >
           <p className="text-body-default text-fg-muted">
             Grey text ramp, each step on the surfaces it is used on. Ratios are WCAG 2.1 contrast
@@ -154,7 +154,7 @@ export default async function ComponentsPage(): Promise<ReactElement> {
               key={role}
               data-testid="type-role"
               data-role={role}
-              className="rounded-md border border-border bg-surface p-space-md"
+              className="rounded-sm border border-border bg-surface p-space-md"
               style={{
                 fontFamily: `var(--font-${role})`,
                 fontSize: `var(--text-${role})`,
@@ -175,7 +175,7 @@ export default async function ComponentsPage(): Promise<ReactElement> {
               key={size}
               data-testid="type-size"
               data-size={size}
-              className="flex items-center gap-space-md rounded-md border border-border bg-surface p-space-md"
+              className="flex items-center gap-space-md rounded-sm border border-border bg-surface p-space-md"
             >
               <span
                 aria-hidden="true"
@@ -216,7 +216,7 @@ export default async function ComponentsPage(): Promise<ReactElement> {
           <FieldError errors={{ username: 'missing' }} field="username" />
         </div>
 
-        <div className="rounded-md border border-border bg-surface p-space-lg">
+        <div className="rounded-sm border border-border bg-surface p-space-lg">
           <p className="text-label-caps text-fg-muted uppercase">Active sessions</p>
           <p className="font-stat-lg text-stat-lg text-fg">1.234</p>
         </div>

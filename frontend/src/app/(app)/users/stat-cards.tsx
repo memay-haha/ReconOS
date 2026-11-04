@@ -17,7 +17,7 @@ export function StatCards({
   return (
     <div className="grid gap-gutter sm:grid-cols-2">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-md border border-border bg-surface p-space-lg">
+        <div key={card.label} className="rounded-sm border border-border bg-surface p-space-lg">
           <p className="text-body-default text-fg-muted">{card.label}</p>
           {card.value === null ? (
             <p className="font-body-default text-body-default text-fg-muted">Unavailable</p>

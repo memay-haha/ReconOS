@@ -76,7 +76,7 @@ export default function UsersPage(): ReactElement {
       {users.isError && (
         <p
           role="alert"
-          className="rounded-md bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
+          className="rounded-sm bg-crit-soft px-space-md py-space-sm text-body-default text-crit"
         >
           Could not load the account list.
         </p>
@@ -94,7 +94,7 @@ export default function UsersPage(): ReactElement {
           {selectedUser !== null && (
             <section
               aria-label="Account details"
-              className="flex flex-col gap-space-md rounded-md border border-border p-space-md"
+              className="flex flex-col gap-space-md rounded-sm border border-border p-space-md"
             >
               <h2 className="text-panel-title text-fg">{selectedUser.display_name}</h2>
               <div className="flex flex-wrap items-start gap-space-sm">
