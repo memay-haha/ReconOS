@@ -8,7 +8,7 @@ paths:
 ---
 # Quy tắc viết mã an toàn
 
-> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 
 ## ✅ Bắt buộc
@@ -57,6 +57,7 @@ Mỗi quy tắc gắn với một mối đe dọa trong [threat-model.md](../../
 - Hiển thị dữ liệu từ output thô, tài sản, finding dưới dạng văn bản.
 - Coi header, tiêu đề trang, banner là dữ liệu không tin cậy.
 - Khi xuất CSV: thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`.
+- Khai báo `method="post"` cho form gửi thông tin xác thực. Bấm gửi trước khi trang hydrate làm trình duyệt gửi GET, đẩy tên đăng nhập và mật khẩu vào URL, vào lịch sử trình duyệt, log máy chủ và header `Referer` (G7).
 
 **Header response, đặt ở reverse proxy:**
 

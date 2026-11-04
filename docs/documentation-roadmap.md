@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 24/40 · 🔵 16 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 22/40 · 🔵 18 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -24,7 +24,7 @@
 | 13 | `docs/integrations/external-services.md`   | 13      | 9, 12                | 🟢 Xong       | 2026-11-01 | v1.2: bảng thử lại của worker, runner chuyển từ error-handling |
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🔵 Chờ duyệt | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
 | 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-04 | v1.3: chỉ ghi nhật ký yêu cầu bị từ chối với phương thức thay đổi dữ liệu |
-| 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🟢 Xong | 2026-11-03 | v1.2: thuộc tính cookie trỏ về authentication.md, thêm mối đe dọa mất quyền quản trị |
+| 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🔵 Chờ duyệt | 2026-11-04 | v1.3: thêm mối đe dọa mật khẩu lọt vào URL khi form gửi trước lúc hydrate |
 | 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-04 | v1.2: thêm `GET /user-sessions`, `openapi.yaml` có 110 thao tác |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🟢 Xong       | 2026-11-01 | v1.0: HTTP, tạo job, WebSocket, request của worker |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🟢 Xong       | 2026-11-03 | v1.1: bỏ qua kiểu cho thư viện không có `py.typed` khai báo trong `pyproject.toml` |
@@ -32,7 +32,7 @@
 | 21 | `.claude/rules/error-handling.md`          | 16      | 17                   | 🟢 Xong       | 2026-11-01 | v1.1: bảng thử lại chuyển sang system.md, external-services.md |
 | 22 | `.claude/rules/logging.md`                 | 15      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: nơi ghi log chuyển sang database.md |
 | 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-03 | v1.2: lệnh đo độ phủ dùng tên module, dạng đường dẫn không gom được dữ liệu |
-| 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong  | 2026-11-03 | v1.1: từ chối mật khẩu có điểm zxcvbn dưới 3 |
+| 24 | `.claude/rules/security.md`                | 17      | 16                   | 🔵 Chờ duyệt | 2026-11-04 | v1.2: form gửi thông tin xác thực phải khai báo method post |
 | 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🔵 Chờ duyệt | 2026-11-04 | v1.4: biến `RECONOS_API_URL` của frontend, Next chuyển tiếp `/api/*` |
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong   | 2026-11-03 | v1.2: service `bootstrap` chạy lần triển khai đầu |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
