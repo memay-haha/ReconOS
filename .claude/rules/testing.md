@@ -7,7 +7,7 @@ paths:
 ---
 # Kiểm thử
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 21: Kiểm thử
 
 ## ✅ Bắt buộc
@@ -17,6 +17,7 @@ paths:
 - Đặt test Python trong `<package>/tests/`.
 - Đặt test frontend cạnh file mã: `*.test.ts`, `*.test.tsx`.
 - Đặt test E2E (end-to-end) trong `frontend/e2e/`.
+- Test chặn quy ước giao diện, ví dụ chặn chữ tiếng Việt lọt vào giao diện tiếng Anh, phải quét cả `frontend/src/` và `frontend/e2e/`. Chỉ quét `src/` thì bộ E2E hỏng mà không test nào báo.
 - Dùng công cụ test và phiên bản theo [tech-stack.md](../../docs/architecture/tech-stack.md).
 
 **Môi trường:**

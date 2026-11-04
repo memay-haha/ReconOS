@@ -31,7 +31,7 @@
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
 | 21 | `.claude/rules/error-handling.md`          | 16      | 17                   | 🟢 Xong       | 2026-11-01 | v1.1: bảng thử lại chuyển sang system.md, external-services.md |
 | 22 | `.claude/rules/logging.md`                 | 15      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: nơi ghi log chuyển sang database.md |
-| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-04 | v1.3: Makefile chỉ giữ lint và test |
+| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-04 | v1.4: test chặn quy ước giao diện phải quét cả `e2e/` |
 | 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong       | 2026-11-04 | v1.3: method post, ô mật khẩu không kiểm soát, gcTime 0 |
 | 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🟢 Xong       | 2026-11-04 | v1.6: RECONOS_API_URL bắt buộc ở mọi môi trường, thiếu thì hỏng màn hình sau đăng nhập |
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong   | 2026-11-03 | v1.2: service `bootstrap` chạy lần triển khai đầu |
