@@ -48,20 +48,16 @@ Chỉ đọc file liên quan tới tác vụ đang làm, không đọc toàn b�
 
 ## 🛠️ Build và test
 
-Chạy từ gốc repo. Khi viết `Makefile` lúc bắt đầu viết mã, giữ đúng tên lệnh trong bảng dưới.
+Chạy từ gốc repo. Giữ đúng tên lệnh trong bảng dưới. `Makefile` chỉ có 4 lệnh này, không thêm lệnh mới mà không hỏi.
 
 | Lệnh | Việc |
 |---|---|
-| `make dev-up`, `make dev-down` | Bật, tắt các container vùng lõi cho phát triển: `infras/compose/compose.dev.yaml` |
-| `make migrate` | `alembic upgrade head` cho CSDL `reconos` và CSDL log `reconos_log` của môi trường phát triển |
-| `make bootstrap` | Tạo tài khoản Superadmin đầu tiên từ biến môi trường, chỉ có tác dụng khi CSDL chưa có tài khoản |
+| `make init` | Cài phụ thuộc bằng uv và pnpm, bật container vùng lõi (`infras/compose/compose.dev.yaml`), chạy migration cho CSDL `reconos` và CSDL log `reconos_log`, tạo tài khoản Superadmin đầu tiên từ `RECONOS_BOOTSTRAP_ADMIN_*`. Chạy lại được, không ghi đè tài khoản đã có |
+| `make backend` | Chạy Backend API và frontend cùng lúc. Ctrl-C dừng cả hai. Cần `make init` trước |
 | `make lint` | ruff format, ruff check, mypy, ESLint, Prettier, `tsc`: [coding-convention.md](.claude/rules/coding-convention.md) |
-| `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make dev-up` trước |
-| `make test-coverage` | Độ phủ 100% nhánh cho scope, phân quyền, schema tham số: [testing.md](.claude/rules/testing.md) |
-| `make e2e` | Playwright |
-| `make build` | Build image `reconos-backend`, `reconos-frontend`, `reconos-worker` |
-| `make engine-check` | Gọi thử Osmedeus, Vigolium qua HTTP. Địa chỉ trong biến `OSMEDEUS_URL`, `VIGOLIUM_URL` của `Makefile`, ghi đè được bằng `.env` |
+| `make test` | pytest cho `backend/`, `workers/`, `contracts/` và Vitest cho `frontend/`. Cần `make init` trước |
 
 - Chạy `make lint` và `make test` trước khi báo xong một thay đổi mã.
 - Lệnh chưa có trong `Makefile`: báo rõ chưa chạy được, không báo đã qua.
+- Lệnh ngoài bảng gọi thẳng, không thêm vào `Makefile`: Playwright, độ phủ, build image, kiểm tra engine. Xem [testing.md](.claude/rules/testing.md) và [deployment.md](docs/ops/deployment.md).
 - Triển khai, rollback: [deployment.md](docs/ops/deployment.md).

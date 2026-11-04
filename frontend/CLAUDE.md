@@ -49,5 +49,5 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 | `pnpm --dir frontend exec tsc --noEmit` | Kiểm tra kiểu |
 | `pnpm --dir frontend tokens` | Sinh lại `src/styles/globals.css` từ bảng token |
 | `pnpm --dir frontend test` | Vitest |
-| `pnpm --dir frontend exec playwright test` | E2E, cần `make dev-up` |
+| `pnpm --dir frontend exec playwright test` | E2E, cần `make init` và Backend API đang chạy |
 | `pnpm --dir frontend build` | Build chế độ standalone |
