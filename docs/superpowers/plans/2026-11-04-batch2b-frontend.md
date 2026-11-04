@@ -26,6 +26,7 @@
 - Lỗi API theo RFC 9457: hiển thị `title`, lỗi từng trường theo `errors`.
 - Hiển thị đúng từ chiều rộng 390 px. Đạt WCAG 2.1 AA ở cả hai theme.
 - ❌ Không sửa tay khối `@theme` của `src/styles/globals.css`. Sửa bảng token rồi chạy lại script.
+- Chỉ dùng tên lớp Tailwind suy ra được từ token đã có trong `@theme`: màu `--color-*`, khoảng cách `--spacing-*`, bo góc `--radius-*`, font `--font-*`, cỡ chữ `--text-*`. Khoảng cách tên là `space-xs` đến `space-xl`, `gutter`, `margin`, nên lớp là `p-space-sm`, không có `p-sm`. Vai trò chữ chỉ có `headline-lg`, `headline-lg-mobile`, `panel-title`, `stat-lg`, `label-caps`, `body-default`, `body-code`, `body-code-bold`, `caption`. ❌ Không bịa tên lớp. Cần token mới: thêm dòng vào bảng Token Table rồi chạy `pnpm --dir frontend tokens`.
 - ❌ Không dựng phần mockup đã ghi trong [tech-debt.md](../../tech-debt.md): MFA, FIDO2, WebAuthn, SSO SAML, Active Directory, mTLS, API Tokens, vai trò ngoài glossary.
 - Đặt test unit cạnh file mã, test E2E trong `frontend/e2e/`.
 - Mỗi commit kết thúc bằng dòng `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
@@ -1392,7 +1393,7 @@ export function Topbar({ user }: { user: CurrentUser }) {
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-border bg-surface px-4 py-3">
-      <span className="font-headline-sm text-fg">ReconOS</span>
+      <span className="font-panel-title text-panel-title text-fg">ReconOS</span>
       <div className="flex items-center gap-3">
         <span className="flex flex-col text-right">
           <span className="text-fg">{user.display_name}</span>
@@ -2262,7 +2263,7 @@ export function StatCards({
       {cards.map((card) => (
         <div key={card.label} className="rounded-lg border border-border bg-surface p-4">
           <p className="text-fg-muted">{card.label}</p>
-          <p className="font-headline-lg text-headline-lg text-fg">{COUNT.format(card.value)}</p>
+          <p className="font-stat-lg text-stat-lg text-fg">{COUNT.format(card.value)}</p>
         </div>
       ))}
     </div>
@@ -3179,7 +3180,7 @@ export function AuditPanel({ userId }: { userId: string | null }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-headline-sm text-fg">Nhật ký thao tác</h2>
+      <h2 className="font-panel-title text-panel-title text-fg">Nhật ký thao tác</h2>
 
       <form onSubmit={onFilter} className="flex items-end gap-2">
         <label className="flex flex-col gap-1 text-fg">
