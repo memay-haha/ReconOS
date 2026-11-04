@@ -13,7 +13,7 @@ export interface NavItem {
 
 // The screens in docs/design/screens/index.json minus S01, in that order.
 export const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Tổng quan', href: null, batch: 'Đợt 10' },
+  { label: 'Dashboard', href: null, batch: 'Đợt 10' },
   { label: 'Theo dõi tài sản', href: null, batch: 'Đợt 5' },
   { label: 'Domain', href: null, batch: 'Đợt 5' },
   { label: 'Chi tiết domain', href: null, batch: 'Đợt 5' },
@@ -21,7 +21,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Chi tiết screenshot', href: null, batch: 'Đợt 7' },
   { label: 'Program', href: null, batch: 'Đợt 3' },
   { label: 'Chi tiết program', href: null, batch: 'Đợt 3' },
-  { label: 'Hàng đợi job', href: null, batch: 'Đợt 4' },
+  { label: 'Hàng đợi', href: null, batch: 'Đợt 4' },
   { label: 'Quản lý program', href: null, batch: 'Đợt 3' },
   { label: 'Tài khoản và phân quyền', href: '/users', batch: 'Đợt 2' },
   { label: 'Tình trạng hệ thống', href: null, batch: 'Đợt 4' },
@@ -30,6 +30,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Tool module', href: null, batch: 'Đợt 4' },
   { label: 'Finding', href: null, batch: 'Đợt 6' },
 ];
+
+// Segment-aware: /users and /users/42 match /users, /usersfoo does not.
+function isCurrent(pathname: string | null, href: string): boolean {
+  return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -60,12 +65,12 @@ export function Sidebar() {
             {item.href === null ? (
               <span className="flex flex-col rounded-md px-space-sm py-space-xs text-fg-muted">
                 {item.label}
-                <span className="text-caption text-fg-muted">{item.batch}</span>
+                <span className="text-caption text-fg-muted">Có ở {item.batch}</span>
               </span>
             ) : (
               <Link
                 href={item.href}
-                aria-current={pathname?.startsWith(item.href) ? 'page' : undefined}
+                aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
                 className="block rounded-md px-space-sm py-space-xs text-fg hover:bg-surface-container-high aria-[current=page]:bg-accent-soft"
               >
                 {item.label}

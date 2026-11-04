@@ -33,6 +33,11 @@ export function Topbar({ user }: { user: CurrentUser }) {
         >
           Đăng xuất
         </button>
+        {logout.isError ? (
+          <span role="alert" className="text-caption text-error">
+            Không đăng xuất được. Thử lại sau.
+          </span>
+        ) : null}
       </div>
     </header>
   );

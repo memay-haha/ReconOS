@@ -45,6 +45,14 @@ describe('Topbar', () => {
     expect(push).toHaveBeenCalledWith('/login');
   });
 
+  it('tells the reader when signing out failed', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
+    wrap();
+    await userEvent.click(screen.getByRole('button', { name: /đăng xuất/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/không đăng xuất được/i);
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it('offers the theme toggle', () => {
     wrap();
     expect(screen.getByRole('button', { name: /giao diện/i })).toBeInTheDocument();
