@@ -18,15 +18,15 @@ export interface NavGroup {
 }
 
 // Groups, headings and order follow the sidebar in docs/design/screens/s12-users-access-control.html.
-// S05, S07 and S09 are detail screens opened from their list screens, so they are not here.
+// S05, S07 (Screenshot Detail) and S09 are detail screens opened from their list screens, so they are not here.
 export const NAV_GROUPS: readonly NavGroup[] = [
   {
     heading: 'Recon',
     items: [
-      { label: 'Dashboard', href: null, icon: 'grid_view', part: 'Part D' },
+      { label: 'Dashboard', href: '/dashboard', icon: 'grid_view', part: 'Part D' },
       { label: 'Monitor', href: null, icon: 'show_chart', part: 'Part C' },
       { label: 'Domains', href: null, icon: 'language', part: 'Part C', badge: '/domains' },
-      { label: 'Screenshots', href: null, icon: 'photo_camera', part: 'Part D' },
+      { label: 'Screenshots', href: '/screenshots', icon: 'photo_camera', part: 'Part D' },
       { label: 'Programs', href: null, icon: 'folder', part: 'Part B' },
       {
         label: 'Findings',

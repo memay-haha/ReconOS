@@ -151,22 +151,33 @@ describe('Sidebar against the mockup', () => {
 describe('Sidebar behaviour', () => {
   it('leaves the three detail screens off the sidebar', () => {
     const labels = NAV_GROUPS.flatMap((g) => g.items).map((i) => i.label);
-    for (const name of ['Domain Detail', 'Capture Detail', 'Program Detail'])
+    for (const name of ['Domain Detail', 'Screenshot Detail', 'Program Detail'])
       expect(labels).not.toContain(name);
   });
 
-  it('lets the reader reach only the screens part A builds', () => {
+  it('lets the reader reach only the screens that are built', () => {
     wrap();
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs.sort()).toEqual(['/audit-log', '/components', '/users']);
+    expect(hrefs.sort()).toEqual([
+      '/audit-log',
+      '/components',
+      '/dashboard',
+      '/screenshots',
+      '/users',
+    ]);
   });
 
   it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {
     wrap();
-    const pending = screen.getByText('Dashboard').closest('li') as HTMLElement;
+    // Any screen still unbuilt will do: each part fills in its own hrefs.
+    const unbuilt = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.href === null);
+    if (unbuilt === undefined) return;
+    const pending = screen.getByText(unbuilt.label).closest('li') as HTMLElement;
     expect(within(pending).queryByRole('link')).toBeNull();
     expect(within(pending).queryByRole('button')).toBeNull();
-    expect(within(pending).getByText(/available in part d/i)).toBeInTheDocument();
+    expect(
+      within(pending).getByText(new RegExp(`available in ${unbuilt.part}`, 'i')),
+    ).toBeInTheDocument();
   });
 
   it('marks the current screen, by whole path segment', () => {
