@@ -6,6 +6,7 @@ One transaction per request, no commit inside a service: .claude/rules/design-pa
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import lru_cache
 
 from sqlalchemy import MetaData
 from sqlalchemy.engine import URL, make_url
@@ -72,3 +73,52 @@ async def session_scope(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
             await session.rollback()
             raise
         await session.commit()
+
+
+@lru_cache
+def get_engine() -> AsyncEngine:
+    """One engine per process. Building an engine per call opens a new pool."""
+    return build_engine()
+
+
+# A failed login and a permission denial are one INSERT and a COMMIT, so two
+# connections absorb the concurrency of a whole process.
+INDEPENDENT_POOL_SIZE = 2
+# Wait briefly for a free connection, then fail. SQLAlchemy's 30 s default
+# would turn a burst of failed logins into a stalled request answered 500,
+# where the caller should have seen 401 or 429.
+INDEPENDENT_POOL_TIMEOUT_SECONDS = 2.0
+
+
+@lru_cache
+def get_independent_engine() -> AsyncEngine:
+    """One engine per process for the independent session, with its own pool.
+
+    The caller already holds a connection from the request pool. Borrowing the
+    second one from that same pool is the classic self-deadlock shape once the
+    pool saturates, and a denied request is the fastest way to saturate it, so
+    this engine never shares connections with the request flow. No overflow:
+    the write is short, and queueing here is better than growing a pool nothing
+    bounds.
+    """
+    settings = get_settings()
+    return create_async_engine(
+        _url_with_password(settings.database_url, settings.db_password.get_secret_value()),
+        pool_size=INDEPENDENT_POOL_SIZE,
+        max_overflow=0,
+        pool_timeout=INDEPENDENT_POOL_TIMEOUT_SECONDS,
+        pool_pre_ping=True,
+    )
+
+
+@asynccontextmanager
+async def independent_session() -> AsyncIterator[AsyncSession]:
+    """A transaction of its own, so the row survives a rolled back request.
+
+    Failed logins and permission denials must stay on record even though the
+    request itself returns an error: docs/security/authorization.md. The audit
+    table carries no foreign key, so this write never waits on another
+    transaction: docs/data/schema.md.
+    """
+    async with session_scope(get_independent_engine()) as session:
+        yield session

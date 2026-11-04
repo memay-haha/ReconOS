@@ -17,9 +17,10 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 **Module:**
 
-- Tạo đủ file cho mỗi module trong `app/<module>/`: `router.py`, `service.py`, `models.py`, `schemas.py`. Danh sách module: [modules.md](../docs/architecture/modules.md).
+- Tạo đủ file cho mỗi module trong `app/<module>/`: `router.py`, `service.py`, `models.py`, `schemas.py`. Module không sở hữu bảng nào thì bỏ `models.py`. Danh sách module: [modules.md](../docs/architecture/modules.md).
 - Import model mới vào `app/core/models.py` để Alembic phát hiện.
-- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `storage.py`, `realtime.py`.
+- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `deps.py`, `identity.py`, `audit.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `pagination.py`, `storage.py`, `system_setting.py`, `realtime.py`.
+- Ghi nhật ký thao tác qua `app/core/audit.py`. Module `audit_log` chỉ giữ phần đọc: [dependency-graph.md](../docs/architecture/dependency-graph.md).
 - Viết migration CSDL chính trong `migrations/`, migration CSDL log trong `migrations_log/`. Bảng `app_log` phân vùng theo ngày nên migration viết tay, không autogenerate.
 
 **Tiến trình nền:**
@@ -55,6 +56,7 @@ Chạy từ gốc repo sau `make dev-up`:
 |---|---|
 | `uv run alembic -c backend/alembic.ini upgrade head` | Chạy migration CSDL chính |
 | `uv run alembic -c backend/alembic.ini -n log upgrade head` | Chạy migration CSDL log |
+| `uv run --directory backend python -m app.bootstrap` | Tạo tài khoản Superadmin đầu tiên từ biến môi trường |
 | `uv run alembic -c backend/alembic.ini revision --autogenerate -m "<mô tả>"` | Tạo migration, đọc lại trước khi commit |
 | `uv run pytest backend/tests` | Test backend |
 | `uv run uvicorn app.main:app --reload --app-dir backend` | Chạy Backend API khi phát triển |

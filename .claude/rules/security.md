@@ -8,7 +8,7 @@ paths:
 ---
 # Quy tắc viết mã an toàn
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 
 ## ✅ Bắt buộc
@@ -34,6 +34,7 @@ Mỗi quy tắc gắn với một mối đe dọa trong [threat-model.md](../../
 - Nạp khóa từ `RECONOS_ENCRYPTION_KEYS`: [configuration.md](../../docs/ops/configuration.md).
 - Sinh nonce ngẫu nhiên 96 bit cho mỗi lần mã hóa.
 - Băm mật khẩu bằng Argon2id.
+- Từ chối mật khẩu có điểm zxcvbn dưới 3: [authentication.md](../../docs/security/authentication.md).
 - Băm session ID, token worker bằng SHA-256 trước khi lưu.
 - So sánh giá trị băm, token bằng `hmac.compare_digest`.
 - Sinh token, session ID bằng `secrets`.
@@ -56,6 +57,9 @@ Mỗi quy tắc gắn với một mối đe dọa trong [threat-model.md](../../
 - Hiển thị dữ liệu từ output thô, tài sản, finding dưới dạng văn bản.
 - Coi header, tiêu đề trang, banner là dữ liệu không tin cậy.
 - Khi xuất CSV: thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`.
+- Khai báo `method="post"` cho form gửi thông tin xác thực. Bấm gửi trước khi trang hydrate làm trình duyệt gửi GET, đẩy tên đăng nhập và mật khẩu vào URL, vào lịch sử trình duyệt, log máy chủ và header `Referer` (G7).
+- Để ô nhập mật khẩu ở dạng không kiểm soát, đọc giá trị qua `ref` khi gửi và xóa qua `ref` sau khi xong. React sao giá trị của ô có kiểm soát vào thuộc tính `value` trong DOM, nên mật khẩu nằm trong markup và lọt vào mọi thứ đọc được DOM (G7).
+- Đặt `gcTime: 0` cho mutation nhận thông tin xác thực, để TanStack Query không giữ lại `variables` sau khi mutation kết thúc.
 
 **Header response, đặt ở reverse proxy:**
 

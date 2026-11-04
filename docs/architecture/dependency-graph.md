@@ -1,6 +1,6 @@
 # Đồ thị phụ thuộc
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 12: Đồ thị phụ thuộc
 > Liên quan: [modules.md](modules.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -45,28 +45,31 @@ Module ở tầng trên được phép gọi `service.py` của module ở tần
 | Tầng | Module | Được phép gọi |
 |---|---|---|
 | 0 | `core` | Thư viện bên ngoài |
-| 1 | `user`, `audit_log`, `tag`, `alert` | Tầng 0. `audit_log` được phép gọi `user` |
-| 2 | `program`, `tool_module`, `engine` | Tầng 0, 1 |
-| 3 | `scope` | Tầng 0 đến 2 |
-| 4 | `asset`, `job` | Tầng 0 đến 3 |
-| 5 | `raw_output`, `screenshot`, `finding` | Tầng 0 đến 4 |
-| 6 | `parser`, `dispatcher`, `report` | Tầng 0 đến 5 |
-| 7 | `dashboard` | Tầng 0 đến 6, chỉ đọc |
+| 1 | `audit_log`, phần đọc | Tầng 0 |
+| 2 | `user`, `tag`, `alert` | Tầng 0, 1 |
+| 3 | `program`, `tool_module`, `engine` | Tầng 0 đến 2 |
+| 4 | `scope` | Tầng 0 đến 3 |
+| 5 | `asset`, `job` | Tầng 0 đến 4 |
+| 6 | `raw_output`, `screenshot`, `finding` | Tầng 0 đến 5 |
+| 7 | `parser`, `dispatcher`, `report` | Tầng 0 đến 6 |
+| 8 | `dashboard` | Tầng 0 đến 7, chỉ đọc |
 
-- Ngoại lệ trong cùng tầng: `audit_log` gọi `user` để lấy thông tin tài khoản thực hiện.
-- Mọi module ghi nhật ký thao tác qua `audit_log`, kiểm tra quyền qua `core`.
+- `core` giữ bảng `audit_log` và hai hàm ghi nhật ký, vì dependency kiểm tra vai trò ở tầng 0 ghi lại yêu cầu bị từ chối. Module `audit_log` ở tầng 1 giữ phần đọc: schema, hàm liệt kê, router.
+- Mọi module ghi nhật ký thao tác qua `core`, kiểm tra quyền qua `core`.
+- `audit_log` không gọi `user`. Cột `audit_log.user_id` là UUID không có khóa ngoại nên phần đọc join bằng cột đó, không qua ràng buộc: [schema.md](../data/schema.md).
+- `core` giữ bảng `user`, `user_session` và dependency xác thực, phân quyền, vì module ở mọi tầng đều cần. Nhờ vậy bảng tầng không có ngoại lệ nào.
 - `job`, `parser`, `dispatcher` tạo cảnh báo qua `alert`. `alert` không gọi module nghiệp vụ. Khóa ngoại của `alert` tới `finding`, `job` khai báo bằng tên bảng.
 
 ```mermaid
 flowchart BT
     core["core"]
+    audit["audit_log"] --> core
     user["user"] --> core
-    audit["audit_log"] --> user
     tag["tag"] --> core
     alert["alert"] --> core
-    program["program"] --> audit
-    tool["tool_module"] --> audit
-    engine["engine"] --> audit
+    program["program"] --> core
+    tool["tool_module"] --> core
+    engine["engine"] --> core
     scope["scope"] --> program
     asset["asset"] --> scope
     asset --> tag
@@ -99,6 +102,7 @@ flowchart BT
 | Output thô đã lưu cần parse | `raw_output` gửi task parse theo tên task. `parser` nhận task, không bị `raw_output` import |
 | Finding liên kết output thô cùng tầng | Chỉ khóa ngoại tới bảng output thô. `finding` không gọi `raw_output` |
 | Model cần khóa ngoại tới tầng trên | Khai báo khóa ngoại bằng tên bảng dạng chuỗi, không import model của tầng trên |
+| Danh sách nhật ký thao tác cần tên tài khoản | `audit_log` join bảng `user` theo cột UUID `user_id`, cột này không có khóa ngoại. `audit_log` không gọi `user`. Response của đợt 2a chưa có trường tên tài khoản |
 
 ### Phụ thuộc bên ngoài
 

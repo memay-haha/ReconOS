@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md)
 
@@ -148,8 +148,11 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 | `finding` | `program_id`, `triage_status`, `severity` | S20 lọc |
 | `asset_event` | `program_id`, `created_at` | Dòng hoạt động trên S02, S05 |
 | `alert` | `program_id`, `created_at` | Chuông thông báo |
-| `audit_log` | `created_at` | Tra nhật ký thao tác |
+| `audit_log` | `created_at`, `id` | Tra nhật ký thao tác, phân trang keyset |
 | `audit_log` | `user_id`, `created_at` | Tra nhật ký thao tác theo tài khoản |
+| `audit_log` | `action` | Lọc nhật ký theo tên thao tác |
+| `login_attempt` | `username`, `attempted_at` | Đếm lần đăng nhập sai của tài khoản trong cửa sổ đếm |
+| `login_attempt` | `ip_address`, `attempted_at` | Đếm lần đăng nhập sai của địa chỉ IP trong cửa sổ đếm |
 | `app_log` | `job_id`, `logged_at` | Log của job trên S10 |
 | `app_log` | `level`, `logged_at` | Log lỗi trên S15 |
 

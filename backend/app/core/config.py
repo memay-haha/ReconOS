@@ -7,8 +7,9 @@ accepts a _FILE suffix pointing at a file, which Docker secrets rely on.
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
@@ -19,6 +20,7 @@ from pydantic_settings import (
 
 ENV_PREFIX = "RECONOS_"
 FILE_SUFFIX = "_FILE"
+ORIGIN_FORMAT = "public_origin must look like https://host[:port]"
 
 
 class FileSuffixSource(EnvSettingsSource):
@@ -54,6 +56,24 @@ class Settings(BaseSettings):
     public_origin: str
     log_level: str = "info"
     db_pool_size: int = 10
+    # Only the bootstrap command reads these, and only while the user
+    # table is still empty: docs/security/authentication.md
+    bootstrap_admin_username: str | None = None
+    bootstrap_admin_password: SecretStr | None = None
+
+    @field_validator("public_origin")
+    @classmethod
+    def _origin_scheme_and_host_only(cls, value: str) -> str:
+        """Reduce the variable to what a browser puts in an Origin header.
+
+        A trailing slash or a path would make the CSRF comparison fail on every
+        mutating request, login included, with a message that points nowhere
+        near the cause. A malformed value stops the process at startup instead.
+        """
+        parts = urlsplit(value)
+        if parts.scheme not in {"http", "https"} or not parts.netloc:
+            raise ValueError(ORIGIN_FORMAT)
+        return f"{parts.scheme}://{parts.netloc}"
 
     @classmethod
     def settings_customise_sources(

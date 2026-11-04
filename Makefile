@@ -23,7 +23,7 @@ OSMEDEUS_URL  ?= http://192.168.80.133:8002
 VIGOLIUM_URL  ?= http://192.168.80.133:9002
 ENGINE_TIMEOUT ?= 5
 
-.PHONY: help dev-up dev-down migrate lint test test-coverage e2e build engine-check
+.PHONY: help dev-up dev-down migrate bootstrap lint test test-coverage e2e build engine-check
 
 help: ## List available commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-15s %s\n", $$1, $$2}'
@@ -39,6 +39,9 @@ migrate: ## Run alembic upgrade head on both dev databases
 	$(ALEMBIC) upgrade head
 	$(ALEMBIC) -n log upgrade head
 
+bootstrap: ## Create the first Superadmin from RECONOS_BOOTSTRAP_ADMIN_* (only while no account exists)
+	uv run --directory backend python -m app.bootstrap
+
 lint: ## ruff format, ruff check, mypy, ESLint, Prettier, tsc
 	uv run ruff format --check .
 	uv run ruff check .
@@ -51,17 +54,12 @@ test: ## pytest for backend, workers, contracts and Vitest for frontend (needs d
 	uv run pytest backend/tests workers/tests contracts/tests
 	$(PNPM_FE) test
 
-test-coverage: ## 100% branch coverage for scope, authorization, parameter schemas
-	@if [ ! -d backend/app/scope ]; then \
-		echo "skip: module scope chưa có, xem đợt 3 trong docs/roadmap.md"; \
-		exit 0; \
-	fi; \
-	uv run pytest \
-		--cov=backend/app/scope \
-		--cov=backend/app/core/security.py \
-		--cov=contracts \
-		--cov-branch --cov-fail-under=100 \
-		backend/tests/scope backend/tests/core contracts/tests
+test-coverage: ## 100% branch coverage for security, scope and parameter schemas
+	@mods="--cov=app.core.security"; \
+	if [ -d backend/app/scope ]; then mods="$$mods --cov=app.scope"; fi; \
+	if [ -d contracts/contracts/schemas ]; then mods="$$mods --cov=contracts"; fi; \
+	echo "==> $$mods"; \
+	uv run pytest $$mods --cov-branch --cov-fail-under=100 backend/tests contracts/tests
 
 e2e: ## Playwright end-to-end tests (needs dev-up)
 	$(PNPM_FE) exec playwright test

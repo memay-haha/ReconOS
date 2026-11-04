@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -50,7 +50,7 @@
 | STRIDE | Mối đe dọa | Biện pháp |
 |---|---|---|
 | Spoofing | Đoán, dò mật khẩu | Argon2id, chặn khi đăng nhập sai nhiều lần, chính sách mật khẩu: [authentication.md](authentication.md) |
-| Spoofing | Lấy cắp cookie phiên | Cookie `__Host-`, `HttpOnly`, `Secure`. CSDL chỉ lưu giá trị băm session ID. Thu hồi phiên |
+| Spoofing | Lấy cắp cookie phiên | Thuộc tính cookie theo [authentication.md](authentication.md). CSDL chỉ lưu giá trị băm session ID. Thu hồi phiên |
 | Spoofing | Token worker bị lộ | Token riêng mỗi worker, chỉ gọi endpoint contract worker, thu hồi được, lưu giá trị băm |
 | Spoofing | Trang khác gửi request thay người dùng | Kiểm tra `Origin`, `Sec-Fetch-Site`, cookie `SameSite=Lax`: [api/architecture.md](../api/architecture.md) |
 | Tampering | Sửa output thô sau khi lưu | Chỉ Backend API ghi MinIO, lưu mã băm SHA-256, parser không sửa object |
@@ -59,10 +59,13 @@
 | Repudiation | Chối đã duyệt job khai thác, đổi scope | `audit_log` chỉ cho thêm bản ghi, không sửa, không xóa, ghi người thực hiện và thời điểm |
 | Information disclosure | User xem program không được gán | Lọc theo `program_user` ở backend, trả `404` |
 | Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job |
+| Information disclosure | Mật khẩu lọt vào URL khi form gửi trước lúc trang hydrate | Form đăng nhập khai báo `method="post"`, nên trình duyệt không bao giờ gửi thông tin xác thực bằng GET: [security.md](../../.claude/rules/security.md) |
+| Information disclosure | Mật khẩu nằm trong markup vì React sao giá trị ô có kiểm soát vào thuộc tính `value` | Ô mật khẩu để dạng không kiểm soát, đọc qua `ref`. Mutation đăng nhập đặt `gcTime: 0`: [security.md](../../.claude/rules/security.md) |
 | Information disclosure | Truy cập trực tiếp MinIO | MinIO chỉ trong vùng lõi, không mở bucket công khai. Tải file qua Backend API có kiểm tra quyền |
 | Information disclosure | Lỗi lộ chi tiết hệ thống | Phản hồi lỗi theo RFC 9457, không có stack trace, câu SQL |
 | Denial of service | File output thô vượt `upload_max_bytes`, gói nén nở lớn khi giải nén | Upload dạng stream, giới hạn kích thước. Parser đọc stream, giới hạn tổng dung lượng sau giải nén |
 | Denial of service | Tạo job hàng loạt | Giới hạn số job đồng thời và tốc độ theo tool module, program |
+| Denial of service | Mất quyền quản trị tài khoản | Superadmin không đổi vai trò và không khóa chính mình: [authorization.md](authorization.md) |
 | Elevation of privilege | Người tạo tự duyệt job khai thác | Backend so người duyệt với người tạo, từ chối kể cả Superadmin |
 | Elevation of privilege | Nội dung từ mục tiêu chạy script trên UI | React escape mặc định. ❌ Không render HTML từ output thô. CSP (Content Security Policy) chặn script ngoài |
 | Elevation of privilege | Công thức trong file CSV (Comma-Separated Values) xuất ra | Thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@` |

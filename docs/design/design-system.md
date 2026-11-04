@@ -145,6 +145,8 @@ spacing:
   space-xl: 1.5rem
 ---
 
+> Khối `colors` trong frontmatter là bản xuất của Stitch, giữ nguyên để nạp lại được vào công cụ. Nguồn màu duy nhất của mã là bảng Token Table ở mục Color Strategy & Roles: chỉ bảng đó sinh ra `frontend/src/styles/globals.css`. Hai nơi khác nhau thì bảng Token Table đúng.
+
 ## Brand & Style
 
 This design system delivers a hyper-focused, mission-critical workspace engineered specifically for security analysts, incident responders, and reconnaissance operators. Built on the principles of **technical utilitarianism** and **high-density ergonomics**, the interface discards decorative marketing tropes—such as neon glows, aggressive glassmorphism, or gratuitous gradients—in favor of structural clarity, high data fidelity, and uninterrupted visual stamina during prolonged operations.
@@ -175,6 +177,155 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
   - `Medium`: `warn-soft` fill with `warn` text.
   - `Low`: `info-soft` fill with `info` text.
   - `Info`: `neutral-soft` fill with `neutral` text.
+
+### Token Table
+
+Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Cột `light` để trống nghĩa là token không đổi theo theme.
+
+Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
+
+- Nền và chữ đổi chiều cho nhau: `bg`, `surface*`, `*-soft` chuyển sang gần trắng, `fg*`, `on-*` chuyển sang tối.
+- Màu accent `#22d3ee`, 4 màu trạng thái `good`, `warn`, `crit`, `info` và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng. Màu `neutral` không có sắc nên chỉ đổi độ sáng.
+- Nhóm `*-fixed*` của Material 3 không đổi theo theme nên hai cột bằng nhau.
+
+Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
+
+| token | dark | light |
+|---|---|---|
+| **Colors** | | |
+| color-surface | #14161c | #f0f1f4 |
+| color-surface-dim | #0a141e | #d7e0ea |
+| color-surface-bright | #303a46 | #fbfcfd |
+| color-surface-container-lowest | #050f19 | #ffffff |
+| color-surface-container-low | #131c27 | #f5f7fa |
+| color-surface-container | #17202b | #f0f3f7 |
+| color-surface-container-high | #212b36 | #e9edf1 |
+| color-surface-container-highest | #2c3641 | #e4e8ec |
+| color-on-surface | #d9e3f2 | #141a24 |
+| color-on-surface-variant | #bbc9cd | #3b4f54 |
+| color-inverse-surface | #d9e3f2 | #29313d |
+| color-inverse-on-surface | #28313d | #f0f2f5 |
+| color-outline | #859397 | #607176 |
+| color-outline-variant | #3c494c | #bfcccf |
+| color-surface-tint | #2fd9f4 | #087f91 |
+| color-primary | #8aebff | #006675 |
+| color-on-primary | #00363e | #ffffff |
+| color-primary-container | #22d3ee | #a3eeff |
+| color-on-primary-container | #005763 | #00353d |
+| color-inverse-primary | #006877 | #8aebff |
+| color-secondary | #c4c6d1 | #434656 |
+| color-on-secondary | #2d3039 | #ffffff |
+| color-secondary-container | #444750 | #e2e4e9 |
+| color-on-secondary-container | #b3b5bf | #303340 |
+| color-tertiary | #78f4bb | #007041 |
+| color-on-tertiary | #003824 | #ffffff |
+| color-tertiary-container | #5ad7a0 | #c1f0dc |
+| color-on-tertiary-container | #005b3d | #003d29 |
+| color-error | #ffb4ab | #bf181d |
+| color-on-error | #690005 | #ffffff |
+| color-error-container | #93000a | #ffdad6 |
+| color-on-error-container | #ffdad6 | #470004 |
+| color-primary-fixed | #a2eeff | #a2eeff |
+| color-primary-fixed-dim | #2fd9f4 | #2fd9f4 |
+| color-on-primary-fixed | #001f25 | #001f25 |
+| color-on-primary-fixed-variant | #004e5a | #004e5a |
+| color-secondary-fixed | #e0e2ed | #e0e2ed |
+| color-secondary-fixed-dim | #c4c6d1 | #c4c6d1 |
+| color-on-secondary-fixed | #181b23 | #181b23 |
+| color-on-secondary-fixed-variant | #444750 | #444750 |
+| color-tertiary-fixed | #7ef9c0 | #7ef9c0 |
+| color-tertiary-fixed-dim | #60dda6 | #60dda6 |
+| color-on-tertiary-fixed | #002113 | #002113 |
+| color-on-tertiary-fixed-variant | #005236 | #005236 |
+| color-background | #0a141e | #f4f7fa |
+| color-on-background | #d9e3f2 | #141a24 |
+| color-surface-variant | #2c3641 | #dfe5ec |
+| color-bg | #0a0c10 | #f9f9fb |
+| color-surface-2 | #1b1e26 | #e7e9ee |
+| color-surface-3 | #232733 | #dcdfe7 |
+| color-border | #282d38 | #d2d6df |
+| color-border-strong | #3a4150 | #a0a9ba |
+| color-fg | #e7ebf0 | #171e26 |
+| color-fg-muted | #9aa4b2 | #525e6f |
+| color-fg-faint | #6a7483 | #5f6b7c |
+| color-accent-hover | #5ee0f2 | #00515c |
+| color-accent-ink | #06222b | #f1fafd |
+| color-accent-soft | #0c2b33 | #e6f5f9 |
+| color-accent-soft-bd | #1b4e5a | #a1d7e3 |
+| color-ring | #22d3ee66 | #0ea6be66 |
+| color-good | #4ade80 | #0f7635 |
+| color-good-soft | #102a1a | #e7f8ee |
+| color-good-bd | #1f4f33 | #aee0c3 |
+| color-warn | #fbbf24 | #855f00 |
+| color-warn-soft | #2c2109 | #fbf2df |
+| color-warn-bd | #5a4414 | #e8ce96 |
+| color-crit | #fb7185 | #a51d31 |
+| color-crit-soft | #2c1118 | #fae5eb |
+| color-crit-bd | #5c2330 | #e6a8b6 |
+| color-info | #60a5fa | #0f59b3 |
+| color-info-soft | #101c33 | #e4ecfb |
+| color-info-bd | #1f3a63 | #a5c0e9 |
+| color-neutral-soft | #1c2028 | #eaecf0 |
+| color-neutral-bd | #333a46 | #c4cad4 |
+| color-asset-domain | #0ea371 | #0b7f58 |
+| color-asset-url | #3b82f6 | #1056c6 |
+| color-asset-ip | #d97706 | #a45904 |
+| color-asset-service | #db2777 | #b3195e |
+| **Radius** | | |
+| radius-sm | 0.25rem |  |
+| radius | 0.5rem |  |
+| radius-md | 0.75rem |  |
+| radius-lg | 1rem |  |
+| radius-xl | 1.5rem |  |
+| radius-full | 9999px |  |
+| **Spacing** | | |
+| spacing-gutter | 1rem |  |
+| spacing-gutter-dense | 0.75rem |  |
+| spacing-margin | 1.5rem |  |
+| spacing-margin-mobile | 1rem |  |
+| spacing-space-xs | 0.25rem |  |
+| spacing-space-sm | 0.5rem |  |
+| spacing-space-md | 0.75rem |  |
+| spacing-space-lg | 1.125rem |  |
+| spacing-space-xl | 1.5rem |  |
+| **Typography** | | |
+| font-stat-lg | var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, monospace |  |
+| text-stat-lg | 27px |  |
+| text-stat-lg--line-height | 32px |  |
+| text-stat-lg--font-weight | 600 |  |
+| font-headline-lg | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-headline-lg | 21px |  |
+| text-headline-lg--line-height | 28px |  |
+| text-headline-lg--font-weight | 700 |  |
+| font-headline-lg-mobile | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-headline-lg-mobile | 18px |  |
+| text-headline-lg-mobile--line-height | 24px |  |
+| text-headline-lg-mobile--font-weight | 700 |  |
+| font-panel-title | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-panel-title | 14px |  |
+| text-panel-title--line-height | 20px |  |
+| text-panel-title--font-weight | 600 |  |
+| font-body-default | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-body-default | 13px |  |
+| text-body-default--line-height | 18px |  |
+| text-body-default--font-weight | 400 |  |
+| font-body-code | var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, monospace |  |
+| text-body-code | 12.5px |  |
+| text-body-code--line-height | 18px |  |
+| text-body-code--font-weight | 400 |  |
+| font-body-code-bold | var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, monospace |  |
+| text-body-code-bold | 12.5px |  |
+| text-body-code-bold--line-height | 18px |  |
+| text-body-code-bold--font-weight | 600 |  |
+| font-label-caps | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-label-caps | 11px |  |
+| text-label-caps--line-height | 14px |  |
+| text-label-caps--font-weight | 600 |  |
+| text-label-caps--letter-spacing | 0.05em |  |
+| font-caption | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
+| text-caption | 11px |  |
+| text-caption--line-height | 14px |  |
+| text-caption--font-weight | 400 |  |
 
 ## Typography
 

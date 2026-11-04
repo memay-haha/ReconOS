@@ -1,6 +1,6 @@
 # Đồng bộ tài liệu khi quyết định thay đổi
 
-> Phiên bản: 1.2 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 
 Áp dụng khi có quyết định mới hoặc quyết định thay đổi: người dùng chốt trong hội thoại, ADR mới, thay đổi mã làm đổi hành vi hệ thống.
 
@@ -39,6 +39,7 @@
 | Biến môi trường, `system_setting` | `configuration.md` | `system_setting` trong `schema.md`, `deployment.md`. Worker dùng: `workers/CLAUDE.md` |
 | Thư viện, phiên bản, công cụ phát triển | `tech-stack.md`. Đổi lựa chọn: ADR mới | `coding-convention.md`, `testing.md`, lệnh trong các `CLAUDE.md` |
 | Thư mục, file mã | `directory-structure.md` | `CLAUDE.md` của phần tương ứng |
+| Token màu, bán kính, khoảng cách, chữ của giao diện | `docs/design/design-system.md`: bảng Token Table | Chạy `pnpm --dir frontend tokens` sinh lại `frontend/src/styles/globals.css`. ❌ Không sửa tay khối `@theme`. File này không nằm trong `documentation-roadmap.md` |
 | Tiến trình, thành phần hạ tầng | `system.md` | `deployment.md`, `scalability.md`, `configuration.md` |
 | Số lần thử lại, timeout | `system.md` cho task `parse`, `external-services.md` cho worker và runner | `error-handling.md` chỉ liên kết, không chép số |
 | Ghi log, nơi lưu log | `logging.md`, `database.md` | `configuration.md` khi có biến mới |

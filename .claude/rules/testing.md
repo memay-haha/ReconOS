@@ -7,7 +7,7 @@ paths:
 ---
 # Kiểm thử
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
 > Mục 21: Kiểm thử
 
 ## ✅ Bắt buộc
@@ -89,7 +89,7 @@ def test_nuclei_runner() -> None:
 ## 🔍 Cách kiểm tra
 
 ```bash
-uv run pytest --cov=backend/app/scope --cov=backend/app/core/security.py --cov=contracts --cov-branch --cov-fail-under=100 backend/tests/scope backend/tests/core contracts/tests
+uv run pytest --cov=app.core.security --cov=app.scope --cov=contracts --cov-branch --cov-fail-under=100 backend/tests contracts/tests
 uv run pytest
 pnpm --dir frontend test
 pnpm --dir frontend exec playwright test

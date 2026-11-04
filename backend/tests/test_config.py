@@ -84,3 +84,61 @@ def test_credentials_stay_masked_when_printed(env: pytest.MonkeyPatch) -> None:
 
     assert "db-pass" not in repr(settings)
     assert "secret" not in repr(settings.s3_secret_key)
+
+
+def test_bootstrap_variables_are_optional(env: pytest.MonkeyPatch) -> None:
+    env.delenv("RECONOS_BOOTSTRAP_ADMIN_USERNAME", raising=False)
+    env.delenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", raising=False)
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_username is None
+    assert settings.bootstrap_admin_password is None
+
+
+def test_bootstrap_variables_are_read(env: pytest.MonkeyPatch) -> None:
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_USERNAME", "rootadmin")
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD", "troutmoonlit7Ladder")
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_username == "rootadmin"
+    assert settings.bootstrap_admin_password is not None
+    assert settings.bootstrap_admin_password.get_secret_value() == "troutmoonlit7Ladder"
+
+
+def test_bootstrap_password_reads_file_suffix(env: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    secret_file = tmp_path / "admin_password"
+    secret_file.write_text("troutmoonlit7Ladder\n", encoding="utf-8")
+    env.setenv("RECONOS_BOOTSTRAP_ADMIN_PASSWORD_FILE", str(secret_file))
+
+    settings = Settings()
+
+    assert settings.bootstrap_admin_password is not None
+    assert settings.bootstrap_admin_password.get_secret_value() == "troutmoonlit7Ladder"
+
+
+def test_public_origin_keeps_scheme_and_host_only(env: pytest.MonkeyPatch) -> None:
+    # A trailing slash would make the CSRF comparison fail on every mutating
+    # request, login included, while the cookie policy still looked right.
+    env.setenv("RECONOS_PUBLIC_ORIGIN", "https://reconos.example.com/")
+
+    assert Settings().public_origin == "https://reconos.example.com"
+
+
+def test_public_origin_keeps_an_explicit_port(env: pytest.MonkeyPatch) -> None:
+    env.setenv("RECONOS_PUBLIC_ORIGIN", "http://127.0.0.1:3000/app")
+
+    assert Settings().public_origin == "http://127.0.0.1:3000"
+
+
+@pytest.mark.parametrize(
+    "value", ["reconos.example.com", "ftp://reconos.example.com", "https://", ""]
+)
+def test_a_malformed_public_origin_stops_the_process(env: pytest.MonkeyPatch, value: str) -> None:
+    env.setenv("RECONOS_PUBLIC_ORIGIN", value)
+
+    with pytest.raises(ValidationError) as excinfo:
+        Settings()
+
+    assert "public_origin" in str(excinfo.value)
