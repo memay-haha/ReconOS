@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   // Standalone output keeps the runtime image small: docs/ops/deployment.md
   output: 'standalone',
   reactStrictMode: true,
+  // The end-to-end suite and the /api rewrite address the app at 127.0.0.1. Without
+  // this, `next dev` blocks that origin (HMR) and the login page never hydrates.
+  allowedDevOrigins: ['127.0.0.1'],
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${apiUrl}/api/:path*` }];
   },

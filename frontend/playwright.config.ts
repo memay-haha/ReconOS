@@ -6,10 +6,9 @@ export default defineConfig({
   testDir: './e2e',
   use: { baseURL, trace: 'on-first-retry' },
   webServer: {
-    // Production build: dev mode blocks the 127.0.0.1 origin (HMR), so the page never hydrates.
-    command: 'pnpm build && pnpm start --hostname 127.0.0.1 --port 3000',
+    command: 'pnpm dev --hostname 127.0.0.1 --port 3000',
     url: baseURL,
     reuseExistingServer: true,
-    timeout: 300_000,
+    timeout: 120_000,
   },
 });
