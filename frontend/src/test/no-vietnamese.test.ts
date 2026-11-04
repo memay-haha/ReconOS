@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { globSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
