@@ -468,7 +468,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "color-accent-hover",
     "values": {
       "dark": "#5ee0f2",
-      "light": "#00515c"
+      "light": "#7fe3f7"
     }
   },
   {
@@ -476,7 +476,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "color-accent-ink",
     "values": {
       "dark": "#06222b",
-      "light": "#f1fafd"
+      "light": "#00353d"
     }
   },
   {
@@ -508,7 +508,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "color-good",
     "values": {
       "dark": "#4ade80",
-      "light": "#0f7635"
+      "light": "#0c6b2f"
     }
   },
   {

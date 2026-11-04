@@ -252,12 +252,12 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra mọi cặp chữ trên n�
 | color-fg-faint | #868e9a | #4c5869 |
 | color-fg-dim | #7d8a9e | #566274 |
 | color-fg-dimmest | #75808f | #667286 |
-| color-accent-hover | #5ee0f2 | #00515c |
-| color-accent-ink | #06222b | #f1fafd |
+| color-accent-hover | #5ee0f2 | #7fe3f7 |
+| color-accent-ink | #06222b | #00353d |
 | color-accent-soft | #0c2b33 | #e6f5f9 |
 | color-accent-soft-bd | #1b4e5a | #a1d7e3 |
 | color-ring | #22d3ee66 | #0ea6be66 |
-| color-good | #4ade80 | #0f7635 |
+| color-good | #4ade80 | #0c6b2f |
 | color-good-soft | #102a1a | #e7f8ee |
 | color-good-bd | #1f4f33 | #aee0c3 |
 | color-warn | #fbbf24 | #855f00 |
