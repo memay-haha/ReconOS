@@ -18,7 +18,7 @@ const landmarks = { landmarks: true };
 
 /** What the mockup draws that the screen deliberately does not: demo telemetry the
  * screen cannot know (version, dispatcher state, node name, encryption claim), the
- * theme button (see the theme decision in the task report), and decorative halos. */
+ * theme indicator (replaced by the real ThemeToggle, checked below), and decorative halos. */
 const OMITTED_FROM_HEADER = [
   'span.font-body-code',
   'div.hidden',
@@ -84,12 +84,24 @@ describe('S01 against its mockup', () => {
     expect(tags).toEqual(['header', 'main', 'footer']);
   });
 
-  it('shows the mockup header words except the omitted telemetry and theme button', async () => {
+  it('shows the mockup header words except the omitted telemetry', async () => {
     const { container } = await renderPage();
     const mockHeader = mockupDocument().querySelector('header') as Element;
     dropMatching(mockHeader, OMITTED_FROM_HEADER);
     const mockWords = wordsOf(mockHeader);
-    expect(wordsOf(container.querySelector('header') as Element)).toEqual(mockWords);
+    const header = container.querySelector('header') as Element;
+    header.querySelector('button')?.remove(); // the theme button, checked in its own test
+    expect(wordsOf(header)).toEqual(mockWords);
+  });
+
+  it('puts the theme button at the right end of the header, 32px like the mockup', async () => {
+    const { container } = await renderPage();
+    const header = container.querySelector('header') as Element;
+    const button = header.lastElementChild as HTMLElement;
+    expect(button.tagName).toBe('BUTTON');
+    expect(button).toHaveAccessibleName(/^Switch to \w+ theme$/);
+    expect(button.className).toMatch(/\bh-8\b/);
+    expect(button.className).toMatch(/\bw-8\b/);
   });
 
   it('shows no claim in the footer that the screen cannot back', async () => {

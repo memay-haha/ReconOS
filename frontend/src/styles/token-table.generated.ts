@@ -848,6 +848,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     }
   },
   {
+    "group": "Blur",
+    "name": "blur-scrim",
+    "values": {
+      "dark": "2px",
+      "light": ""
+    }
+  },
+  {
     "group": "Spacing",
     "name": "spacing-gutter",
     "values": {

@@ -302,6 +302,8 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | **Shadows** | | |
 | shadow-modal | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) | 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) |
 | shadow-active-dot | 0 0 6px var(--color-primary-container) | 0 0 6px var(--color-primary) |
+| **Blur** | | |
+| blur-scrim | 2px |  |
 | **Spacing** | | |
 | spacing-gutter | 1rem |  |
 | spacing-gutter-dense | 0.75rem |  |
@@ -396,7 +398,7 @@ Depth in this system is defined almost exclusively by **tonal layering** and **s
 5. **Level 4 (Floating Overlays):** `#14161c` flanked by `1px solid #3a4150` with elevation drop:
    - Modals, popovers, and quick-find command palettes take an engineered drop shadow: `0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5)`.
    - The active navigation dot is the one exception to the no-glow rule: it takes `shadow-active-dot`, a 6px blur in the accent (`primary-container`) in the dark theme. The light theme uses `primary`, because `primary-container` is a pale cyan that a glow cannot show against a near-white surface.
-   - Modals deploy a scrim overlay of `rgba(10, 12, 16, 0.64)` combined with `backdrop-filter: blur(2px)`.
+   - Modals deploy a scrim overlay of `rgba(10, 12, 16, 0.64)` combined with `backdrop-filter: blur(2px)`, token `blur-scrim`.
 
 ### Focus Engine
 Every keyboard/interactive focus state requires a high-contrast focus ring: `3px` solid or spread tint using `--ring` (`#22d3ee66`), offset by `1px` from the component edge.

@@ -100,7 +100,7 @@ function Body({ onClose }: { onClose: () => void }): ReactElement {
   const message = describeError(change.error, fields);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-gutter">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-gutter backdrop-blur-scrim">
       <div
         ref={dialogRef}
         role="dialog"

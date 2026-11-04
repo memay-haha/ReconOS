@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 
 import { readSessionForSignInScreen } from '@/lib/session';
 
+import { ThemeToggle } from '@/components/theme-toggle';
+
 import { LoginForm } from './login-form';
 
 export default async function LoginPage() {
@@ -20,6 +22,7 @@ export default async function LoginPage() {
             ReconOS
           </span>
         </div>
+        <ThemeToggle />
       </header>
       <main className="relative flex min-h-dvh w-full items-center justify-center px-margin-mobile pt-14 sm:px-margin">
         <div className="relative mx-auto w-full max-w-sm py-space-xl">

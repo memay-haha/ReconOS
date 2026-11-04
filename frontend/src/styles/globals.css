@@ -114,6 +114,9 @@
   --shadow-modal: 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-active-dot: 0 0 6px var(--color-primary-container);
 
+  /* Blur */
+  --blur-scrim: 2px;
+
   /* Spacing */
   --spacing-gutter: 1rem;
   --spacing-gutter-dense: 0.75rem;

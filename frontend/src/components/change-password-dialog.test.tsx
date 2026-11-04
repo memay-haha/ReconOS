@@ -139,6 +139,12 @@ describe('ChangePasswordDialog', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('blurs the page behind the overlay through the blur-scrim token', () => {
+    wrap(<ChangePasswordDialog open onClose={vi.fn()} />);
+    const overlay = screen.getByRole('dialog').parentElement as HTMLElement;
+    expect(overlay.className).toContain('backdrop-blur-scrim');
+  });
+
   it('is announced as a modal dialog with a name', () => {
     wrap(<ChangePasswordDialog open onClose={vi.fn()} />);
     const dialog = screen.getByRole('dialog', { name: 'Change password' });
