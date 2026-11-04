@@ -824,6 +824,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     }
   },
   {
+    "group": "Shadows",
+    "name": "shadow-active-dot",
+    "values": {
+      "dark": "0 0 6px var(--color-primary-container)",
+      "light": "0 0 6px var(--color-primary)"
+    }
+  },
+  {
     "group": "Spacing",
     "name": "spacing-gutter",
     "values": {
@@ -1041,14 +1049,6 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
   },
   {
     "group": "Typography",
-    "name": "text-icon",
-    "values": {
-      "dark": "17px",
-      "light": ""
-    }
-  },
-  {
-    "group": "Typography",
     "name": "text-body-default",
     "values": {
       "dark": "13px",
@@ -1204,6 +1204,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "text-caption--font-weight",
     "values": {
       "dark": "400",
+      "light": ""
+    }
+  },
+  {
+    "group": "Typography",
+    "name": "text-icon",
+    "values": {
+      "dark": "17px",
       "light": ""
     }
   }

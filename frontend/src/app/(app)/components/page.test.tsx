@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseTokenTable } from '../../../../scripts/generate-tokens.mjs';
 import { contrastRatio } from '@/styles/contrast';
 import { PAIRS } from '@/styles/contrast-pairs';
+import { TOKEN_ROWS } from '@/styles/token-table.generated';
+import { KNOWN_SIZES, typeRoles } from '@/styles/type-roles';
 
 // The page imports the generated token module. The tests swap its rows, which is the only
 // way to prove the list of tokens is not a copy in the page source. A separate drift test in
@@ -95,19 +97,25 @@ describe('Component Library', () => {
     expect(within(ramp).getAllByTestId('ramp-fg-dimmest')).toHaveLength(1);
   });
 
-  it('shows the type roles, which are the text rows that have a font row', async () => {
+  it('shows exactly the type roles that typeRoles reports for the Token Table', async () => {
     render(await ComponentsPage());
     const roles = screen.getAllByTestId('type-role').map((r) => r.getAttribute('data-role'));
-    const rows = parseTokenTable(designSystem);
-    const fontRoles = rows
-      .filter((row) => row.name.startsWith('font-'))
-      .map((row) => row.name.replace('font-', ''))
-      .filter((name) => rows.some((row) => row.name === `text-${name}`));
-    expect([...roles].sort()).toEqual([...fontRoles].sort());
+    expect([...roles].sort()).toEqual([...typeRoles(TOKEN_ROWS)].sort());
     // Named voices a reviewer looks for; the count is deliberately not asserted.
     for (const known of ['headline-lg', 'panel-title', 'body-default', 'label-caps']) {
       expect(roles).toContain(known);
     }
+  });
+
+  it('classifies every text-* row as a role or a named size, so none vanishes unnoticed', () => {
+    const roles = new Set(typeRoles(TOKEN_ROWS));
+    const bases = TOKEN_ROWS.map((row) => row.name)
+      .filter((name) => /^text-[a-z]+(-[a-z]+)*$/.test(name))
+      .map((name) => name.replace(/^text-/, ''));
+    expect(bases.length).toBeGreaterThan(KNOWN_SIZES.length);
+    const unclassified = bases.filter((base) => !roles.has(base) && !KNOWN_SIZES.includes(base));
+    // A failure here is a role missing its font-* row, or a new size nobody listed in KNOWN_SIZES.
+    expect(unclassified).toEqual([]);
   });
 
   it('shows a bare size such as the icon size as a size, never among the roles', async () => {

@@ -94,7 +94,7 @@ function Row({
       {current ? (
         <span
           aria-hidden="true"
-          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-container ring-2 ring-primary-container/30"
+          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-container shadow-active-dot"
         />
       ) : null}
     </Link>

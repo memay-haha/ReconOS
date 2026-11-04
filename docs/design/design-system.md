@@ -298,6 +298,8 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | radius-lg | 1rem |  |
 | radius-xl | 1.5rem |  |
 | radius-full | 9999px |  |
+| **Shadows** | | |
+| shadow-active-dot | 0 0 6px var(--color-primary-container) | 0 0 6px var(--color-primary) |
 | **Spacing** | | |
 | spacing-gutter | 1rem |  |
 | spacing-gutter-dense | 0.75rem |  |
@@ -327,7 +329,6 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | text-panel-title--line-height | 20px |  |
 | text-panel-title--font-weight | 600 |  |
 | font-body-default | var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif |  |
-| text-icon | 17px |  |
 | text-body-default | 13px |  |
 | text-body-default--line-height | 18px |  |
 | text-body-default--font-weight | 400 |  |
@@ -348,6 +349,7 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | text-caption | 11px |  |
 | text-caption--line-height | 14px |  |
 | text-caption--font-weight | 400 |  |
+| text-icon | 17px |  |
 
 ## Typography
 
@@ -391,6 +393,7 @@ Depth in this system is defined almost exclusively by **tonal layering** and **s
 4. **Level 3 (Interactive Active States):** `#232733` (Row hover fills, interactive control selections).
 5. **Level 4 (Floating Overlays):** `#14161c` flanked by `1px solid #3a4150` with elevation drop:
    - Modals, popovers, and quick-find command palettes take an engineered drop shadow: `0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5)`.
+   - The active navigation dot is the one exception to the no-glow rule: it takes `shadow-active-dot`, a 6px blur in the accent (`primary-container`) in the dark theme. The light theme uses `primary`, because `primary-container` is a pale cyan that a glow cannot show against a near-white surface.
    - Modals deploy a scrim overlay of `rgba(10, 12, 16, 0.64)` combined with `backdrop-filter: blur(2px)`.
 
 ### Focus Engine
