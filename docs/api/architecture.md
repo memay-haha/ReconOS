@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -94,8 +94,34 @@ Danh sách dùng phân trang cursor theo keyset.
 - Tham số lọc trùng tên cột: `program_id`, `severity`, `triage_status`, `in_scope`, `status`. `GET /jobs` lọc theo `status`, `GET /findings` lọc theo `triage_status`. Giá trị hợp lệ: [schema.md](../data/schema.md).
 - Nhiều giá trị: lặp tham số, `severity=critical&severity=high`.
 - Khoảng thời gian: hậu tố `_from`, `_to`, ví dụ `last_seen_at_from`.
-- Tìm theo chuỗi: `q`, chỉ trên cột endpoint khai báo.
+- Tìm theo chuỗi: `q`, chỉ trên cột endpoint khai báo. Hiện chưa endpoint nào khai báo `q`: nợ 32, nợ 39 trong [tech-debt.md](../tech-debt.md).
+- Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/asset-events`, `/screenshots`, `/findings`.
 - User chỉ nhận dữ liệu của program được gán, kể cả khi không truyền `program_id`.
+
+### Trường tính và số liệu tổng hợp
+
+Trường tính không phải cột, API tính mỗi lần đọc và chỉ có ở endpoint ghi dưới đây.
+
+| Endpoint | Trường |
+|---|---|
+| `GET /programs`, `GET /programs/{program_id}` | `in_scope_rule_count`, `out_of_scope_rule_count`, `domain_count`, `ip_count`, `url_count`, `service_count`, `finding_counts` |
+| `GET /domains`, `GET /domains/{domain_id}` | `ips`: danh sách địa chỉ IP, `url_count`, `service_count`, `finding_counts`. Riêng `GET /domains/{domain_id}` có thêm `tags` |
+| `GET /asset-events` | `asset_type`, `asset_name`, `program_name` |
+| `GET /users` gọi bởi Admin | Chỉ `id`, `username`, `role` |
+
+- `finding_counts` là object theo 5 mức severity, đếm finding có `triage_status` khác `false_positive`, `duplicate`, `resolved`.
+
+Response tổng hợp:
+
+| Endpoint | Trường |
+|---|---|
+| `GET /dashboard/summary` | `programs`: số program xem được. `assets`: số `domain`, `ip`, `url`, `service`. `findings_by_severity`: như `finding_counts`. `jobs_by_status`: đủ 7 trạng thái job |
+| `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: số job `queued` theo từng nhóm |
+| `GET /system/health` | `components[]`: `name`, `status` (`ok`, `degraded`, `down`), `latency_ms`, `checked_at`. Thêm `queue_length`, `workers_online` |
+
+- `components[].name` theo thành phần trong [system.md](../architecture/system.md): `api`, `dispatcher`, `background`, `beat`, `postgres`, `reconos_log`, `redis`, `minio`, `osmedeus`, `vigolium`.
+- Backend tính `status` và `workers_online`. Frontend chỉ hiển thị. ❌ Không trả PID, đường dẫn, địa chỉ IP nội bộ.
+- Số liệu chỉ tính trên program tài khoản xem được.
 
 ### Lỗi
 

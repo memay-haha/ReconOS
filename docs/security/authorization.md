@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -54,6 +54,7 @@
 | Quản lý proxy, lịch quét định kỳ của program | ✅ | ✅ | ❌ |
 | Thêm, sửa, xóa scope rule | ✅ | ✅ | ❌ |
 | Gán, bỏ gán User vào program | ✅ | ✅ | ❌ |
+| Xem danh sách tài khoản rút gọn: `id`, `username`, `role` | ✅ | ✅ | ❌ |
 | Xem program, scope, tài sản, screenshot | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo job | ✅ | ✅ | ✅ chỉ program được gán |
 | Thử lại job | ✅ | ✅ | ✅ chỉ job mình tạo |

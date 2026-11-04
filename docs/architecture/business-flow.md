@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.1 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md)
 
@@ -47,7 +47,7 @@ flowchart LR
 | Bước | Ai làm | Màn hình |
 |---|---|---|
 | Tạo program, khai báo scope rule | Admin, Superadmin | S08, S09, S11 |
-| Tạo job thủ công trên mục tiêu hoặc tài sản | Admin, Superadmin, User trên program được gán | S09, S18 |
+| Tạo job thủ công trên mục tiêu hoặc tài sản | Admin, Superadmin, User trên program được gán | S03, S04, S05, S09, S18 |
 | Tạo job theo lịch quét định kỳ của program | Tiến trình nền | S09 |
 | Duyệt job nhóm khai thác | Admin, Superadmin, không phải người tạo job | S10 |
 | Giao job, kiểm tra lại scope | Dispatcher | S10 |
@@ -55,6 +55,8 @@ flowchart LR
 | Lưu output thô, parse | Backend API, tiến trình nền | |
 | Triage finding | Admin, Superadmin, User trên program được gán | S20 |
 | Tạo báo cáo | Admin, Superadmin, User trên program được gán | |
+
+- Tạo job từ nhiều tài sản đã chọn trên S03, S04: chỉ khi mọi tài sản thuộc cùng một program, vì một job thuộc một program.
 
 - Tài sản mới không tự sinh job. Job chỉ tạo thủ công hoặc theo lịch quét định kỳ. Tự sinh job: [roadmap.md](../roadmap.md).
 

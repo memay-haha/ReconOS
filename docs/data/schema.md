@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md)
 
@@ -60,7 +60,7 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `program` | Program bug bounty hoặc VDP (Vulnerability Disclosure Program) | `platform`: HackerOne, Bugcrowd, Intigriti hoặc program tự vận hành. `archived_at`: thời điểm lưu trữ |
+| `program` | Program bug bounty hoặc VDP (Vulnerability Disclosure Program) | `platform`: HackerOne, Bugcrowd, Intigriti hoặc program tự vận hành. `archived_at`: thời điểm lưu trữ. Số scope rule, số tài sản, số finding không phải cột: [api/architecture.md](../api/architecture.md) |
 | `program_user` | Gán User vào program | Admin, Superadmin không cần dòng gán |
 | `scope_rule` | Scope rule In-Scope, Out-of-Scope | `reason`: bắt buộc khi `scope_type` là `out_of_scope` |
 | `proxy` | Proxy của program | `url_encrypted`: URL proxy, có thể chứa tên đăng nhập và mật khẩu |
@@ -80,7 +80,7 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `domain` | Domain, subdomain | `apex`: domain gốc. `is_wildcard`: domain trả lời DNS cho mọi subdomain |
+| `domain` | Domain, subdomain | `apex`: domain gốc. `is_wildcard`: domain trả lời DNS cho mọi subdomain. Số URL, số service, số finding không phải cột: [api/architecture.md](../api/architecture.md) |
 | `ip` | Địa chỉ IPv4, IPv6 | `cdn_name` là `NULL`: không thuộc CDN. `asn_org`: tổ chức sở hữu ASN (Autonomous System Number) |
 | `domain_ip` | Domain phân giải ra IP | Khóa chính gồm `record_type`: bản ghi A và AAAA tách riêng |
 | `service` | Cổng mở trên IP | `name`: tên dịch vụ như `https`. `product`, `version`: phần mềm nhận diện được |

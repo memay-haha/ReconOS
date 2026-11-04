@@ -44,8 +44,8 @@ paths:
   /users:
     get:
       tags: [user]
-      summary: "Danh sách tài khoản"
-      x-roles: [superadmin]
+      summary: "Danh sách tài khoản. Admin chỉ nhận id, username, role"
+      x-roles: [superadmin, admin]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
@@ -178,6 +178,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: status, in: query, schema: {type: string, enum: [active, paused]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -494,6 +495,8 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - {name: status, in: query, schema: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: target, in: query, schema: {type: string}, description: "Job có mục tiêu này"}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -557,7 +560,7 @@ paths:
   /dispatcher/status:
     get:
       tags: [dispatcher]
-      summary: "Trạng thái dispatcher và hàng đợi"
+      summary: "Trạng thái dispatcher và hàng đợi, trường theo api/architecture.md"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -615,6 +618,9 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
+        - {name: dns_status, in: query, schema: {type: string, enum: [unknown, resolved, nxdomain, timeout]}}
+        - {name: in_scope, in: query, schema: {type: boolean}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -645,6 +651,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -667,6 +674,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -689,6 +697,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -711,6 +720,8 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -729,12 +740,14 @@ paths:
   /screenshots:
     get:
       tags: [screenshot]
-      summary: "Danh sách screenshot"
+      summary: "Danh sách screenshot. sort nhận perception_hash để ảnh giống nhau đứng cạnh nhau"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -825,6 +838,9 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - {name: triage_status, in: query, schema: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: severity, in: query, schema: {type: string, enum: [critical, high, medium, low, info]}}
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -950,7 +966,7 @@ paths:
   /dashboard/summary:
     get:
       tags: [dashboard]
-      summary: "Số liệu tổng hợp S02"
+      summary: "Số liệu tổng hợp S02, trường theo api/architecture.md"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -982,7 +998,7 @@ paths:
   /system/health:
     get:
       tags: [dashboard]
-      summary: "Tình trạng thành phần hệ thống S15"
+      summary: "Tình trạng thành phần hệ thống S15, trường theo api/architecture.md"
       x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -1018,6 +1034,10 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: level, in: query, schema: {type: string, enum: [info, warning, error, critical]}}
+        - {name: service, in: query, schema: {type: string}}
+        - {name: logged_at_from, in: query, schema: {type: string, format: date-time}}
+        - {name: logged_at_to, in: query, schema: {type: string, format: date-time}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -1127,6 +1147,7 @@ components:
     limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
     cursor: {name: cursor, in: query, schema: {type: string}}
     sort: {name: sort, in: query, schema: {type: string}}
+    program_id: {name: program_id, in: query, schema: {type: string, format: uuid}}
   responses:
     Page:
       description: Một trang dữ liệu

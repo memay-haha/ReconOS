@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 23/42 · 🔵 19 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 21/42 · 🔵 21 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -19,13 +19,13 @@
 | 8  | `docs/architecture/system.md`              | 4       | 1, 6                 | 🟢 Xong       | 2026-11-01 | v1.2: số lần thử lại của task `parse` chuyển từ error-handling |
 | 9  | `docs/architecture/modules.md`             | 5       | 7, 8                 | 🟢 Xong       | 2026-11-04 | v1.5: `core` giữ bảng `audit_log` và hai hàm ghi, `audit_log` giữ phần đọc |
 | 10 | `docs/architecture/dependency-graph.md`    | 12      | 9                    | 🟢 Xong       | 2026-11-04 | v1.4: phần ghi nhật ký xuống `core`, sửa dòng join `user` cho khớp schema.md |
-| 11 | `docs/architecture/business-flow.md`       | 11      | 9                    | 🟢 Xong        | 2026-11-01 | v1.1: lưu trữ program |
+| 11 | `docs/architecture/business-flow.md`       | 11      | 9                    | 🔵 Chờ duyệt | 2026-11-05 | v1.2: tạo job trên S03, S04, S05 |
 | 12 | `docs/data/database.md`                    | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.3: Superadmin xóa log ứng dụng theo ngày |
-| 13 | `docs/integrations/external-services.md`   | 13      | 9, 12                | 🟢 Xong       | 2026-11-01 | v1.2: bảng thử lại của worker, runner chuyển từ error-handling |
+| 13 | `docs/integrations/external-services.md`   | 13      | 9, 12                | 🔵 Chờ duyệt | 2026-11-05 | v1.3: gowitness ghi cả URL chụp lỗi |
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🟢 Xong       | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
-| 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-04 | v1.7: Superadmin xóa log ứng dụng. v1.6: User chỉ hủy, thử lại job mình tạo, ghi nhật ký khi tải output thô |
+| 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-05 | v1.8: Admin xem danh sách tài khoản rút gọn |
 | 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🔵 Chờ duyệt | 2026-11-04 | v1.6: xóa log ứng dụng để xóa dấu vết. v1.5: chối đã tải output thô |
-| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-04 | v1.7: header `X-Request-ID` |
+| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-05 | v1.8: tham số lọc theo program, domain. Trường tính và response tổng hợp |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🔵 Chờ duyệt | 2026-11-04 | v1.2: request ID từ `X-Request-ID`. v1.1: WebSocket áp dụng ngay khi đổi vai trò |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
@@ -38,13 +38,13 @@
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-05 | Mockup lệch tài liệu áp quy tắc mặc định của frontend/CLAUDE.md, không dừng hỏi |
-| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v3.1: nợ 38: hai tài liệu trỏ tới file worker chưa có (`workers/worker/client.py`, `config.py`) |
+| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-05 | v3.2: nợ 39 ô tìm theo chuỗi. Sửa hướng xử lý nợ 8, 36 |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.9: phần A lớp vỏ frontend đã merge vào `dev` |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-05 | Thêm bảng quy tắc mặc định M1 đến M7 cho mockup lệch tài liệu, ghi sổ quyết định của đợt |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
-| 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.5: `active_user_session_count` là trường tính, không phải cột; điều kiện phiên đang hoạt động |
+| 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-05 | v1.6: số đếm của program, domain là trường tính |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |
 | 38 | `.claude/rules/doc-sync.md`                | -       | 2, 29                | 🟢 Xong         | 2026-11-04 | v1.3: thêm dòng kích hoạt cho bảng token của design system |
 | 39 | `docs/documentation-map.html`              | -       | 29, 38               | 🔵 Chờ duyệt | 2026-11-04 | Đổi mô tả logging.md. Quy ước vẽ: mục 9 của documentation.md |

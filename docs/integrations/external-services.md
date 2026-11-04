@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.2 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md)
 
@@ -125,7 +125,7 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 | `sqlmap` | Khai thác | Gói nén thư mục output của sqlmap | Finding |
 | `dalfox` | Khai thác | File JSON kết quả | Finding |
 
-- gowitness ghi JSONL, không dùng CSDL riêng của gowitness. URL chụp lỗi không có dòng trong JSONL.
+- gowitness ghi JSONL, không dùng CSDL riêng của gowitness. Runner cấu hình gowitness ghi cả URL chụp lỗi vào JSONL. Parser tạo screenshot có `is_failed` cho URL đó.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
 
 ### Gọi engine
