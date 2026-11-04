@@ -56,7 +56,10 @@ export function LoginForm() {
   const message = describeError(login.error);
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full flex-col gap-space-xl">
+    // method="post" is the fallback when the handler never runs (submit before
+    // hydration, broken bundle, no JavaScript): the default GET would put the
+    // credentials in the URL, history, access logs and Referer.
+    <form method="post" onSubmit={onSubmit} className="flex w-full flex-col gap-space-xl">
       <div className="flex flex-col gap-space-xs">
         <label
           htmlFor="username"

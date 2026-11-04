@@ -126,4 +126,10 @@ describe('LoginForm', () => {
     expect(alert).toHaveTextContent(/không đăng nhập được/i);
     expect(alert).not.toHaveTextContent(/kết nối/i);
   });
+
+  it('declares method post so an unhydrated submit cannot put credentials in a URL', () => {
+    // A native submit defaults to GET, which writes the fields into the address bar and logs.
+    const { container } = wrap(<LoginForm />);
+    expect(container.querySelector('form')).toHaveAttribute('method', 'post');
+  });
 });
