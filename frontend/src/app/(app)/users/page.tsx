@@ -27,6 +27,17 @@ export default function UsersPage(): ReactElement {
   // An edit form belongs to one selected account; any move away from it closes the form.
   const closeEdit = () => setFormMode((mode) => (mode === 'edit' ? null : mode));
 
+  // A filter the reader cannot see must not stay applied. Once the selected row leaves
+  // the visible page, paged away or deleted, nothing on screen names the account, yet
+  // the audit log would still be narrowed to it under a heading that claims the whole
+  // log. Dropping the selection widens the log back to every account.
+  // Render phase on purpose: an effect would paint one frame of the audit log still
+  // filtered to an account that is no longer on screen.
+  if (selectedId !== null && selectedUser === null) {
+    setSelectedId(null);
+    closeEdit();
+  }
+
   const cardsSettled = !users.isPending && !sessionCount.isPending;
 
   return (

@@ -23,8 +23,8 @@ function list(items: unknown[], next: string | null, total = 2) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe('UsersPage edit form', () => {
-  it('closes the edit form when the reader pages away, so no PATCH can target an empty id', async () => {
+describe('UsersPage selection while paging', () => {
+  it('drops a selection that left the page, so no PATCH and no hidden audit filter survive', async () => {
     const fetchMock = vi.fn((...[path]: [string, RequestInit?]) => {
       if (path === '/api/v1/users')
         return Promise.resolve(Response.json(list([row('2', 'analyst')], 'c1')));
@@ -58,9 +58,15 @@ describe('UsersPage edit form', () => {
       </QueryClientProvider>,
     );
 
+    const auditCalls = () =>
+      fetchMock.mock.calls
+        .map(([path]) => path)
+        .filter((path) => path.startsWith('/api/v1/audit-logs'));
+
     await userEvent.click(await screen.findByRole('button', { name: 'analyst' }));
     await userEvent.click(screen.getByRole('button', { name: 'Sửa' }));
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeInTheDocument();
+    await vi.waitFor(() => expect(auditCalls().at(-1)).toBe('/api/v1/audit-logs?user_id=2'));
 
     const pager = screen.getByRole('navigation', { name: 'Phân trang danh sách tài khoản' });
     await userEvent.click(within(pager).getByRole('button', { name: /^Sau/ }));
@@ -69,6 +75,10 @@ describe('UsersPage edit form', () => {
     expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument();
     const patches = fetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH');
     expect(patches).toHaveLength(0);
+
+    // Nothing on screen names the account any more, so the log must be the whole log.
+    expect(screen.queryByRole('region', { name: 'Chi tiết tài khoản' })).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(auditCalls().at(-1)).toBe('/api/v1/audit-logs'));
   });
 });
 
