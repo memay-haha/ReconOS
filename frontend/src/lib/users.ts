@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
+import { sessionKeys } from './sessions';
 import type { CurrentUser } from './auth';
 
 export interface UserRow {
@@ -50,13 +51,19 @@ export interface UserUpdateBody {
   readonly role?: UserRow['role'];
 }
 
-function useUserMutation<TBody>(send: (body: TBody) => Promise<unknown>) {
+function useUserMutation<TBody>(
+  send: (body: TBody) => Promise<unknown>,
+  alsoInvalidate: readonly (readonly string[])[] = [],
+) {
   const client = useQueryClient();
   return useMutation({
     // A create body carries a password. gcTime 0 drops the variables once the call settles.
     gcTime: 0,
     mutationFn: send,
-    onSuccess: () => client.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () =>
+      Promise.all(
+        [userKeys.all, ...alsoInvalidate].map((queryKey) => client.invalidateQueries({ queryKey })),
+      ),
   });
 }
 
@@ -73,8 +80,11 @@ export function useUpdateUser(userId: string) {
 }
 
 export function useLockUser() {
-  return useUserMutation((userId: string) =>
-    apiRequest<void>(`/users/${userId}/lock`, { method: 'POST' }),
+  // Locking cancels every session of the account, so the session counts go stale too.
+  // The sessionKeys.all prefix covers the active count and the per-account lists.
+  return useUserMutation(
+    (userId: string) => apiRequest<void>(`/users/${userId}/lock`, { method: 'POST' }),
+    [sessionKeys.all],
   );
 }
 

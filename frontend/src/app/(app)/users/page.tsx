@@ -23,6 +23,9 @@ export default function UsersPage(): ReactElement {
   const me = useMe();
   const selectedUser = users.data?.items.find((row) => row.id === selectedId) ?? null;
 
+  // An edit form belongs to one selected account; any move away from it closes the form.
+  const closeEdit = () => setFormMode((mode) => (mode === 'edit' ? null : mode));
+
   const cardsSettled = !users.isPending && !sessionCount.isPending;
 
   return (
@@ -38,11 +41,13 @@ export default function UsersPage(): ReactElement {
         </button>
       </div>
 
-      {formMode !== null && (
+      {formMode === 'create' && <UserForm mode="create" onDone={() => setFormMode(null)} />}
+      {/* Edit needs a real account: when the selection clears (paged away, row gone), no form. */}
+      {formMode === 'edit' && selectedUser !== null && (
         <UserForm
-          key={formMode === 'edit' ? `edit-${selectedUser?.id ?? ''}` : 'create'}
-          mode={formMode}
-          user={formMode === 'edit' ? (selectedUser ?? undefined) : undefined}
+          key={selectedUser.id}
+          mode="edit"
+          user={selectedUser}
           onDone={() => setFormMode(null)}
         />
       )}
@@ -66,7 +71,14 @@ export default function UsersPage(): ReactElement {
       )}
       {users.data !== undefined && (
         <>
-          <UserTable users={users.data.items} selectedId={selectedId} onSelect={setSelectedId} />
+          <UserTable
+            users={users.data.items}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              setSelectedId(id);
+              closeEdit();
+            }}
+          />
           {selectedUser !== null && (
             <section
               aria-label="Chi tiết tài khoản"
@@ -98,8 +110,14 @@ export default function UsersPage(): ReactElement {
               nextCursor: users.data.next_cursor,
             }}
             canGoBack={canGoBack}
-            onBack={goBack}
-            onNext={() => goNext(users.data.next_cursor)}
+            onBack={() => {
+              goBack();
+              closeEdit();
+            }}
+            onNext={() => {
+              goNext(users.data.next_cursor);
+              closeEdit();
+            }}
           />
         </>
       )}

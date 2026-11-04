@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, type ReactElement, useRef, useState } from 'react';
+import { type FormEvent, type ReactElement, type RefObject, useRef, useState } from 'react';
 
 import { FieldError } from '@/components/field-error';
 import { ApiError, fieldErrorsOf } from '@/lib/api-client';
@@ -25,49 +25,101 @@ function failureText(error: unknown): string {
   return 'Không lưu được tài khoản. Thử lại sau.';
 }
 
-export function UserForm({
-  mode,
-  user,
-  onDone,
-}: {
-  mode: 'create' | 'edit';
-  user?: UserRow;
-  onDone: () => void;
-}): ReactElement {
-  const [username, setUsername] = useState('');
-  const [displayName, setDisplayName] = useState(user?.display_name ?? '');
-  const [role, setRole] = useState<UserRow['role']>(user?.role ?? 'user');
+export type UserFormProps =
+  | { mode: 'create'; user?: never; onDone: () => void }
+  | { mode: 'edit'; user: UserRow; onDone: () => void };
+
+/** Two components, one per mode, so each calls exactly the hook it needs and
+ * edit mode always has a real account id to patch. */
+export function UserForm(props: UserFormProps): ReactElement {
+  return props.mode === 'create' ? (
+    <CreateUserForm onDone={props.onDone} />
+  ) : (
+    <EditUserForm user={props.user} onDone={props.onDone} />
+  );
+}
+
+function CreateUserForm({ onDone }: { onDone: () => void }): ReactElement {
+  const create = useCreateUser();
   // Uncontrolled on purpose: React mirrors a controlled input's value into the
   // DOM `value` attribute, which would put the password into the markup.
   const passwordRef = useRef<HTMLInputElement>(null);
+  return (
+    <FormBody
+      mode="create"
+      initialName=""
+      initialRole="user"
+      passwordRef={passwordRef}
+      mutation={create}
+      onDone={onDone}
+      submit={(v, done) =>
+        create.mutate(
+          {
+            username: v.username,
+            display_name: v.displayName,
+            password: passwordRef.current?.value ?? '',
+            role: v.role,
+          },
+          {
+            onSuccess: () => {
+              if (passwordRef.current !== null) passwordRef.current.value = '';
+              done();
+            },
+          },
+        )
+      }
+    />
+  );
+}
 
-  const create = useCreateUser();
-  // The hook needs an id even in create mode; it is never called there.
-  const update = useUpdateUser(user?.id ?? '');
-  const active = mode === 'create' ? create : update;
+function EditUserForm({ user, onDone }: { user: UserRow; onDone: () => void }): ReactElement {
+  const update = useUpdateUser(user.id);
+  return (
+    <FormBody
+      mode="edit"
+      initialName={user.display_name}
+      initialRole={user.role}
+      mutation={update}
+      onDone={onDone}
+      submit={(v, done) =>
+        update.mutate({ display_name: v.displayName, role: v.role }, { onSuccess: done })
+      }
+    />
+  );
+}
+
+interface FormValues {
+  readonly username: string;
+  readonly displayName: string;
+  readonly role: UserRow['role'];
+}
+
+function FormBody({
+  mode,
+  initialName,
+  initialRole,
+  passwordRef,
+  mutation,
+  onDone,
+  submit,
+}: {
+  mode: 'create' | 'edit';
+  initialName: string;
+  initialRole: UserRow['role'];
+  passwordRef?: RefObject<HTMLInputElement | null>;
+  mutation: { error: unknown; isPending: boolean };
+  onDone: () => void;
+  submit: (values: FormValues, done: () => void) => void;
+}): ReactElement {
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState(initialName);
+  const [role, setRole] = useState<UserRow['role']>(initialRole);
+  const active = mutation;
   const errors = fieldErrorsOf(active.error);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const done = {
-      onSuccess: () => {
-        if (passwordRef.current !== null) passwordRef.current.value = '';
-        onDone();
-      },
-    };
-    if (mode === 'create') {
-      create.mutate(
-        {
-          username,
-          display_name: displayName,
-          password: passwordRef.current?.value ?? '',
-          role,
-        },
-        done,
-      );
-    } else {
-      update.mutate({ display_name: displayName, role }, done);
-    }
+    submit({ username, displayName, role }, onDone);
   };
 
   return (
