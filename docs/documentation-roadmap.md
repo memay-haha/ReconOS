@@ -39,7 +39,7 @@
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-04 | Makefile rút còn 4 lệnh: init, backend, lint, test. `make test` quét thêm bản build xem dữ liệu mẫu có lọt vào không |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v3.1: nợ 38: hai tài liệu trỏ tới file worker chưa có (`workers/worker/client.py`, `config.py`) |
-| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.8: đổi tên nhánh lớp vỏ frontend sang `feat/fe-shell-foundation` |
+| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.9: phần A lớp vỏ frontend đã merge vào `dev` |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Test tương phản đọc cặp màu thẳng từ component, `PAIRS` còn lại là sổ đăng ký; `className` script không đọc được làm test đỏ |

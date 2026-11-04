@@ -1,6 +1,6 @@
 # 🗺️ Lộ trình sản phẩm
 
-> Phiên bản: 2.8 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 2.9 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 26: Đề xuất cải tiến
 > Liên quan: [overview.md](architecture/overview.md), [tech-debt.md](tech-debt.md), [thiết kế thứ tự viết mã](superpowers/specs/2026-11-02-implementation-roadmap-design.md)
 
@@ -8,7 +8,7 @@ Phiên bản đầu chia thành 13 đợt. Mỗi đợt là một lát cắt ch�
 
 | Giai đoạn | Tính năng | Phụ thuộc | Trạng thái |
 |---|---|---|---|
-> Lớp vỏ frontend là nhánh công việc riêng, chạy bằng dữ liệu mẫu, ❌ không đổi thứ tự đợt dưới đây. Mỗi đợt làm xong endpoint nào thì xóa dữ liệu mẫu của endpoint đó: [spec lớp vỏ phần A](superpowers/specs/2026-11-04-fe-shell-a-design.md). Phần A (shell, S01, S12, S13, S14, Component Library) xong trên nhánh `feat/fe-shell-foundation`, chờ duyệt. Phần B đến E chưa bắt đầu.
+> Lớp vỏ frontend là nhánh công việc riêng, chạy bằng dữ liệu mẫu, ❌ không đổi thứ tự đợt dưới đây. Mỗi đợt làm xong endpoint nào thì xóa dữ liệu mẫu của endpoint đó: [spec lớp vỏ phần A](superpowers/specs/2026-11-04-fe-shell-a-design.md). Phần A (shell, S01, S12, S13, S14, Component Library) đã duyệt, merge vào `dev`. Phần B đến E chưa bắt đầu.
 
 | Đợt 1. Nền tảng dự án | uv workspace, frontend Next.js, Docker Compose phát triển, `Makefile` | [tech-stack.md](architecture/tech-stack.md), [directory-structure.md](architecture/directory-structure.md) | 🟢 Xong |
 | Đợt 1. Nền tảng dự án | `core`: cấu hình, kết nối CSDL, ghi log, lớp lỗi, khởi tạo Alembic | [configuration.md](ops/configuration.md), [logging.md](../.claude/rules/logging.md), [error-handling.md](../.claude/rules/error-handling.md) | 🟢 Xong |
