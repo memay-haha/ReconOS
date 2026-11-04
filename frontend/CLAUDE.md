@@ -37,6 +37,8 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Gom sự kiện WebSocket liên tiếp thành một lần làm mới.
 - Với lỗi API dạng RFC 9457: `errors` là mảng `[{field, code}]` chứa mã máy, không chứa câu tiếng Việt. Dịch mã sang tiếng Việt bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu tiếng Việt của màn hình, ❌ không hiển thị `title` tiếng Anh của backend.
 - Chỉ dùng server component cho layout và kiểm tra phiên để chuyển hướng tới S01.
+- Xử lý lỗi `401` ở một chỗ duy nhất trong provider của TanStack Query: xóa cache rồi chuyển về S01. ❌ Không để từng màn hình tự xử lý `401`, vì người dùng sẽ thấy nhiều hộp lỗi rời rạc mà không biết phiên đã hết.
+- Cho S01 hiển thị được cả khi Backend API không trả lời. Màn hình kiểm tra phiên của S01 coi mọi lỗi không phải `401`, `403` là chưa biết, và vẫn dựng form. Layout của nhóm route cần đăng nhập thì ngược lại: chỉ `401`, `403` mới là chưa đăng nhập, lỗi khác phải lộ ra, không được giả vờ là đã đăng xuất.
 
 ## 🛠️ Build và test
 
