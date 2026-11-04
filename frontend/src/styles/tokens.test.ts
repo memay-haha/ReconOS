@@ -70,36 +70,36 @@ describe('token generator', () => {
  * icon straight onto that fill. A pair earns a line here only when a component renders
  * the first token on the second one; a pair that nothing renders proves nothing.
  */
+const TEXT_SURFACES = ['color-bg', 'color-surface', 'color-surface-2', 'color-surface-3'];
+// Text tokens that any screen may set on any of the four surfaces. The mockup hexes of
+// fg-faint, fg-dim and fg-dimmest failed AA, so their values deliberately depart from
+// them (debt 24).
+const TEXT_ON_ANY_SURFACE = [
+  'color-fg-muted',
+  'color-fg-faint',
+  'color-fg-dim',
+  'color-fg-dimmest',
+  'color-crit-strong',
+  'color-status-pink',
+  'color-status-violet',
+  'color-status-queue',
+  'color-status-targets',
+];
+
 const PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ...TEXT_ON_ANY_SURFACE.flatMap((fg) => TEXT_SURFACES.map((bg) => [fg, bg] as const)),
+  // Amber and red strong badges.
+  ['color-warn', 'color-warn-strong-soft'],
+  ['color-crit-strong', 'color-crit-strong-soft'],
+  // Text and icons laid over the capture thumbnail backdrops.
+  ...['good', 'info', 'violet', 'rose', 'warm'].map(
+    (name) => ['color-fg', `color-thumb-${name}`] as const,
+  ),
   // Body text on the application canvas behind every screen.
   ['color-fg', 'color-bg'],
   // Body text inside cards, panels and table rows.
   ['color-fg', 'color-surface'],
   // Secondary text on a card: column headers, timestamps, helper lines.
-  ['color-fg-muted', 'color-surface'],
-  // Placeholder and disabled text on a card. Debt 24: failed AA in the dark theme.
-  ['color-fg-faint', 'color-surface'],
-  ['color-fg-faint', 'color-bg'],
-  // Material role text on a Material role surface, used by the imported role family.
-  ['color-on-surface', 'color-surface'],
-  // Material role supporting text under a list item title.
-  ['color-on-surface-variant', 'color-surface'],
-  // Label of a filled primary button.
-  ['color-on-primary', 'color-primary'],
-  // Label of a tonal primary button and of a selected chip.
-  ['color-on-primary-container', 'color-primary-container'],
-  // Label of a filled destructive button.
-  ['color-on-error', 'color-error'],
-  // Text of an error banner and of a field level error message.
-  ['color-on-error-container', 'color-error-container'],
-  // Status badge: job succeeded, asset alive.
-  ['color-good', 'color-good-soft'],
-  // Status badge: medium severity, job finished with warnings.
-  ['color-warn', 'color-warn-soft'],
-  // Status badge: high severity, job failed.
-  ['color-crit', 'color-crit-soft'],
-  // Status badge: low severity, informational finding.
-  ['color-info', 'color-info-soft'],
 ];
 
 describe.each([['dark'], ['light']] as const)('%s theme contrast', (theme) => {
@@ -121,4 +121,31 @@ it('every colour token has a light value', () => {
     .filter((r) => r.name.startsWith('color-') && r.values.light === '')
     .map((r) => r.name);
   expect(missing).toEqual([]);
+});
+
+describe.each([['dark'], ['light']] as const)('%s theme non-text contrast', (theme) => {
+  const rows = parseTokenTable(designSystem);
+  const value = (name: string): string => {
+    const row = rows.find((r) => r.name === name);
+    if (row === undefined) throw new Error(`unknown token ${name}`);
+    return theme === 'dark' ? row.values.dark : row.values.light || row.values.dark;
+  };
+
+  it.each([
+    ['color-warn-strong-bd', 'color-warn-strong-soft'],
+    ['color-crit-strong-bd', 'color-crit-strong-soft'],
+  ])('%s stays distinguishable from %s', (border, fill) => {
+    expect(contrastRatio(value(border), value(fill))).toBeGreaterThanOrEqual(1.3);
+  });
+});
+
+describe('colour scheme', () => {
+  it('declares dark by default and light in both light override blocks', () => {
+    const css = generateCss(designSystem);
+    const dark = css.slice(0, css.indexOf('@media'));
+    expect(dark).toContain('color-scheme: dark;');
+    const light = css.slice(css.indexOf('@media'));
+    expect(light.match(/color-scheme: light;/g)).toHaveLength(2);
+    expect(light).not.toContain('color-scheme: dark;');
+  });
 });

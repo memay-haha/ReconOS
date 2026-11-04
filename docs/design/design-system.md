@@ -182,7 +182,7 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
 
 Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Khối `@theme` giữ cột `dark` vì các mockup chỉ có theme tối. Cột `light` thành khối ghi đè: dưới `prefers-color-scheme: light` khi `<html>` không có `data-theme="dark"`, và dưới `data-theme="light"`. Cột `light` để trống nghĩa là token không đổi theo theme.
 
-Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `fg-dim`, `fg-dimmest`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. `color-fg-faint` là ngoại lệ: giá trị cũ `#6a7483` chỉ đạt 3,82 trên `color-surface`, nên nâng lên `#7c8696` (4,91). `fg-dim` và `fg-dimmest` giữ hex của mockup và chưa đạt AA ở theme tối; chưa có component nào vẽ chúng, nên chưa nằm trong bộ cặp kiểm tra.
+Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. Ba token chữ `fg-faint`, `fg-dim`, `fg-dimmest` là ngoại lệ có chủ ý: hex của mockup (`#6a7483` 3,82, `#64748b` 3,80, `#475569` 2,39 trên `color-surface`) không đạt WCAG 2.1 AA, mà theme tối là mặc định. Giữ nguyên sắc, chỉ nâng độ sáng thành `#8f9aaa`, `#8a95a6`, `#8590a1`, nằm sau `fg-muted` `#9aa4b2`. Mỗi token chữ mới đạt 4,5 trên cả bốn nền `bg`, `surface`, `surface-2`, `surface-3` ở cả hai theme. Bốn bậc `fg-muted`, `fg-faint`, `fg-dim`, `fg-dimmest` vì thế sát nhau: bậc nào cũng phải đạt 4,5 trên `surface-3`.
 
 Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
 
@@ -249,9 +249,9 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | color-border-strong | #3a4150 | #a0a9ba |
 | color-fg | #e7ebf0 | #171e26 |
 | color-fg-muted | #9aa4b2 | #525e6f |
-| color-fg-faint | #7c8696 | #5f6b7c |
-| color-fg-dim | #64748b | #5b6778 |
-| color-fg-dimmest | #475569 | #616d7f |
+| color-fg-faint | #8f9aaa | #535f71 |
+| color-fg-dim | #8a95a6 | #556173 |
+| color-fg-dimmest | #8590a1 | #566274 |
 | color-accent-hover | #5ee0f2 | #00515c |
 | color-accent-ink | #06222b | #f1fafd |
 | color-accent-soft | #0c2b33 | #e6f5f9 |
@@ -280,12 +280,12 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | color-crit-strong | #f87171 | #b91c1c |
 | color-crit-strong-bd | #991b1b | #e8a9a9 |
 | color-crit-strong-soft | #450a0a | #fdecec |
-| color-warn-strong-bd | #78350f | #e9c8a0 |
+| color-warn-strong-bd | #78350f | #e9bd9f |
 | color-warn-strong-soft | #451a03 | #fdf0e1 |
 | color-status-pink | #f472b6 | #a8286b |
 | color-status-violet | #c4b5fd | #5b45c2 |
-| color-status-queue | #fb923c | #a65a0a |
-| color-status-targets | #f97316 | #b4440a |
+| color-status-queue | #fb923c | #8f4d08 |
+| color-status-targets | #f97316 | #a3400a |
 | color-thumb-good | #15231c | #e3f4ea |
 | color-thumb-info | #0c2438 | #e0eef9 |
 | color-thumb-violet | #1a1726 | #ebe7f7 |

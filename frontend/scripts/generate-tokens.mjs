@@ -13,6 +13,13 @@ const HEADER = `/* Design tokens generated from docs/design/design-system.md. Do
 @import "tailwindcss";
 `;
 
+// Tells the browser the page is dark, so scrollbars, form controls, autofill and the
+// overscroll canvas match. The light blocks below flip it.
+const COLOUR_SCHEME = `:root {
+  color-scheme: dark;
+}
+`;
+
 const BASE_LAYER = `@layer base {
   html,
   body {
@@ -105,11 +112,13 @@ function lightOverrides(rows) {
    media query follows the operating system. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
+    color-scheme: light;
 ${declarations('    ')}
   }
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
 ${declarations('  ')}
 }
 `;
@@ -134,7 +143,7 @@ export function generateCss(markdown) {
     const dark = row.values.dark ?? '';
     lines.push(`  --${row.name}: ${dark === '' ? row.values.light : dark};`);
   }
-  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${BASE_LAYER}\n${lightOverrides(rows)}`;
+  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${COLOUR_SCHEME}\n${BASE_LAYER}\n${lightOverrides(rows)}`;
 }
 
 function main() {
