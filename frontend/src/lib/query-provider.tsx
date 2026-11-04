@@ -5,15 +5,19 @@ import { type ReactNode, useState } from 'react';
 
 import { ApiError } from './api-client';
 
+/** A 4xx is an answer, not a failure to reach the server; everything else gets two retries. */
+export function shouldRetryQuery(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && error.status < 500) return false;
+  return failureCount < 2;
+}
+
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            // A 4xx is an answer, not a failure to reach the server.
-            retry: (failureCount, error) =>
-              error instanceof ApiError && error.status < 500 ? false : failureCount < 2,
+            retry: shouldRetryQuery,
             staleTime: 30_000,
           },
         },

@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { cookies } from 'next/headers';
 
 import type { CurrentUser } from './auth';
@@ -16,6 +18,8 @@ export async function readSession(): Promise<CurrentUser | null> {
     headers: { cookie: cookieHeader },
     cache: 'no-store',
   });
-  if (!response.ok) return null;
+  // 401 and 403 mean no session. Any other failure must surface, not look like a sign-out.
+  if (response.status === 401 || response.status === 403) return null;
+  if (!response.ok) throw new Error(`Session check failed with status ${response.status}`);
   return (await response.json()) as CurrentUser;
 }

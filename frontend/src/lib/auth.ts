@@ -20,7 +20,9 @@ export function useMe() {
 export function useLogin() {
   const client = useQueryClient();
   return useMutation({
-    // Credentials live only in the mutation argument, never in a key or the cache.
+    // Credentials are only the mutation argument, never part of a query key. React Query keeps
+    // mutation variables in the mutation cache until gcTime; 0 drops them once the call settles.
+    gcTime: 0,
     mutationFn: (body: { username: string; password: string }) =>
       apiRequest<void>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => client.invalidateQueries({ queryKey: authKeys.me }),

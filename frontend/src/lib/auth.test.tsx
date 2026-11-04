@@ -36,14 +36,22 @@ describe('useMe', () => {
 });
 
 describe('useLogin', () => {
-  it('posts the credentials and never puts them in the query cache', async () => {
+  it('posts the credentials and leaves no password in the mutation cache', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
-    const { result } = renderHook(() => useLogin(), { wrapper });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const own = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result, unmount } = renderHook(() => useLogin(), { wrapper: own });
     result.current.mutate({ username: 'rootadmin', password: 'secret value here' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(path).toBe('/api/v1/auth/login');
     expect(init.method).toBe('POST');
+    // The mounted hook still observes the mutation; once it unmounts, gcTime 0 evicts it.
+    unmount();
+    await waitFor(() => expect(client.getMutationCache().getAll()).toHaveLength(0));
+    expect(JSON.stringify(client.getMutationCache().getAll())).not.toContain('secret value here');
   });
 });
