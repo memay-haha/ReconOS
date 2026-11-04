@@ -20,7 +20,10 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
 - Viết và cập nhật tài liệu, ADR: theo [.claude/rules/documentation.md](.claude/rules/documentation.md).
 - Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, tách từ `dev`.
-- Đặt tên nhánh bằng tiếng Anh, kebab-case, theo mẫu `choro/<phần>-<chủ đề>`. `<phần>`: `be`, `fe`, `workers`, `docs`, `infra`. Ví dụ: `choro/be-job-queue`, `choro/fe-shell-foundation`.
+- Đặt tên nhánh bằng tiếng Anh, chữ thường, kebab-case, theo mẫu `<loại>/<phần>-<chủ đề>`. Ví dụ: `feat/be-job-queue`, `fix/fe-login-redirect`, `chore/infra-compose-update`.
+  - `<loại>`: `feat` tính năng mới, `fix` sửa lỗi, `hotfix` sửa gấp trên bản đang chạy, `refactor` đổi cấu trúc không đổi hành vi, `perf` hiệu năng, `test` thêm hoặc sửa test, `docs` tài liệu, `chore` việc phụ trợ như cấu hình, thư viện, skill, `ci` pipeline, `build` đóng gói, `release` chuẩn bị phát hành.
+  - `<phần>`: `be`, `fe`, `workers`, `contracts`, `docs`, `infra`.
+  - Chỉ dùng `a-z`, `0-9`, `-`, một dấu `/` sau loại. ❌ Không dấu tiếng Việt, khoảng trắng, chữ hoa, `_`.
 - Tạo nhánh trước khi bắt đầu bất cứ việc gì của một đợt, kể cả thảo luận, viết spec, sửa tài liệu. ❌ Không sửa file khi đang đứng ở `dev`.
 - Commit mọi thay đổi của đợt trên nhánh của đợt đó.
 - Xong một đợt: merge nhánh đó vào `dev`, push `dev`, rồi lưu memory theo [agentmemory.md](.claude/rules/agentmemory.md).
