@@ -1,6 +1,6 @@
 # 📋 Nợ kỹ thuật
 
-> Phiên bản: 3.0 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 3.1 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 25: Nợ kỹ thuật
 
 | # | Nợ | Lý do chấp nhận | Ảnh hưởng | Hướng xử lý | Trạng thái |
@@ -42,3 +42,4 @@
 | 35 | Mỗi lần tải trang trong `(app)`, sidebar gửi ba request đếm badge: `/domains`, `/findings?triage_status=new`, `/jobs?status=queued`. Cả ba hiện do MSW trả dữ liệu mẫu. | Badge cần số đếm ngay từ phần A, backend chưa có endpoint đếm riêng. Ngày 2026-11-04. | Ba request thêm vào mỗi lần tải trang, `staleTime` 30 giây chỉ giảm khi chuyển trang trong cùng phiên. | Khi backend có endpoint số đếm tổng hợp, thay ba request bằng một. | 🔴 Chưa làm |
 | 36 | Cột Actor của nhật ký thao tác (S14) hiển thị `user_id` dạng uuid thô, vì đổi sang tên đăng nhập cần `GET /users`, chỉ dành cho Superadmin. S14 tách khỏi S12 chính là để Admin dùng được, nên Admin là người đọc duy nhất không đổi được uuid thành tên. | Backend chưa có endpoint tra tên tài khoản cho Admin. Ngày 2026-11-04. | Cột Actor không đọc được với đối tượng chính của màn hình. Admin phải đối chiếu uuid bằng tay. | Thêm endpoint cho phép Admin tra tên tài khoản theo `user_id`, rồi để S14 hiển thị tên. | 🔴 Chưa làm |
 | 37 | Nút đổi theme trong `theme-toggle.tsx` dùng `bg-surface-2` trong khi `s01-login.html` ghi `bg-surface`. | Trên topbar vốn màu `surface`, `bg-surface` làm nút biến mất. Cố ý lệch mockup. Ngày 2026-11-04. | Một chỗ lệch mockup có chủ ý trên đợt có mục tiêu khớp mockup. Hai cặp màu của nút đã có trong `PAIRS`, nên tương phản được giữ. | Thêm token nền nút dùng được trên cả hai nền, hoặc sửa mockup cho khớp. | 🔴 Chưa làm |
+| 38 | [authentication.md](security/authentication.md) nhắc `workers/worker/client.py`, [configuration.md](ops/configuration.md) nhắc `workers/worker/config.py`. Cả hai file chưa có trong repo. | Chưa tới đợt dựng worker. Phát hiện khi dựng lại đồ thị Understand Anything, ngày 2026-11-04. | Chưa rõ đây là file sẽ viết ở đợt worker hay tài liệu đã lệch so với mã. Người đọc tài liệu tìm không thấy file. | Khi bắt đầu đợt worker: nếu đặt tên file khác, sửa hai tài liệu theo [doc-sync.md](../.claude/rules/doc-sync.md). | 🔴 Chưa làm |
