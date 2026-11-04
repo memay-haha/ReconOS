@@ -19,11 +19,14 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 - Khi có quyết định mới hoặc quyết định thay đổi, kể cả thuật ngữ: sửa tài liệu theo [.claude/rules/doc-sync.md](.claude/rules/doc-sync.md) trong cùng lượt.
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
 - Viết và cập nhật tài liệu, ADR: theo [.claude/rules/documentation.md](.claude/rules/documentation.md).
-- Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, đặt tên `dot-<số>-<chủ đề>`, tách từ `dev`.
+- Mỗi đợt trong [roadmap.md](docs/roadmap.md) làm trên một nhánh riêng, tách từ `dev`.
+- Đặt tên nhánh bằng tiếng Anh, kebab-case, theo mẫu `choro/<phần>-<chủ đề>`. `<phần>`: `be`, `fe`, `workers`, `docs`, `infra`. Ví dụ: `choro/be-job-queue`, `choro/fe-shell-foundation`.
 - Tạo nhánh trước khi bắt đầu bất cứ việc gì của một đợt, kể cả thảo luận, viết spec, sửa tài liệu. ❌ Không sửa file khi đang đứng ở `dev`.
 - Commit mọi thay đổi của đợt trên nhánh của đợt đó.
 - Xong một đợt: merge nhánh đó vào `dev`, push `dev`, rồi lưu memory theo [agentmemory.md](.claude/rules/agentmemory.md).
 - ❌ Không merge vào `main`. Chỉ người dùng merge `dev` vào `main`.
+- Thiết kế kiến trúc và mã thành cơ chế chung áp dụng cho mọi trường hợp. ❌ Không tạo ngoại lệ, nhánh đặc biệt cho một trường hợp riêng.
+- Trả lời ngắn gọn, chỉ nêu ý chính và việc cần người dùng quyết.
 
 ## 📚 Chỉ mục tài liệu
 
