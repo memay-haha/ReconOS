@@ -31,7 +31,7 @@ function describeError(error: unknown): string | null {
 }
 
 const FIELD =
-  'h-10 w-full rounded-sm bg-surface-2 pl-9 text-fg font-body-code text-body-code ' +
+  'h-9 w-full rounded-sm bg-surface-2 pl-9 text-fg font-body-code text-body-code ' +
   'placeholder:text-fg-faint focus:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring';
 const LABEL = 'font-label-caps text-label-caps uppercase tracking-wider text-fg-muted';
 const FIELD_ICON =
@@ -65,8 +65,8 @@ export function LoginForm() {
     // method="post" is the fallback when the handler never runs (submit before
     // hydration, broken bundle, no JavaScript): the default GET would put the
     // credentials in the URL, history, access logs and Referer.
-    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-space-xl">
-      <div className="flex flex-col gap-space-sm">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-space-lg">
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label htmlFor="username" className={LABEL}>
             Username
@@ -88,7 +88,7 @@ export function LoginForm() {
           />
         </div>
       </div>
-      <div className="flex flex-col gap-space-sm">
+      <div className="mt-1 flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label htmlFor="password" className={LABEL}>
             Password
@@ -109,10 +109,10 @@ export function LoginForm() {
           />
           <button
             type="button"
-            aria-label={revealed ? 'Hide characters' : 'Show characters'}
+            aria-label="Show characters"
             aria-pressed={revealed}
             onClick={() => setRevealed((r) => !r)}
-            className="absolute right-space-sm flex items-center justify-center p-space-xs text-fg-faint transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+            className="absolute right-2.5 flex items-center justify-center p-1 text-fg-faint transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <span aria-hidden="true" className="material-symbols-outlined text-icon">
               {revealed ? 'visibility_off' : 'visibility'}
@@ -131,7 +131,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="mt-space-sm flex h-10 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        className="mt-2 flex h-10.5 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
         {login.isPending ? 'Signing in…' : 'Sign In'}
       </button>

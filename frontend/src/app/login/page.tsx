@@ -24,7 +24,7 @@ export default async function LoginPage() {
       <main className="relative flex min-h-dvh w-full items-center justify-center px-margin-mobile pt-14 sm:px-margin">
         <div className="relative mx-auto w-full max-w-sm py-space-xl">
           <div className="h-1 w-full rounded-t-xl bg-gradient-to-r from-transparent via-primary to-transparent opacity-80" />
-          <div className="flex flex-col rounded-b-xl bg-surface p-space-xl shadow-2xl sm:p-margin">
+          <div className="flex flex-col rounded-b-xl bg-surface p-7 shadow-2xl sm:p-8">
             <div className="mb-space-xl">
               <h1 className="mb-space-xs font-headline-lg text-headline-lg tracking-tight text-fg">
                 Sign In
@@ -39,7 +39,6 @@ export default async function LoginPage() {
       </main>
       <footer className="fixed bottom-0 left-0 right-0 z-20 flex h-10 items-center justify-between px-margin font-body-code text-caption text-fg-faint">
         <span>&copy; ReconOS Security Systems</span>
-        <span>All connections encrypted</span>
       </footer>
     </>
   );

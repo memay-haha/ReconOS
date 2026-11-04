@@ -139,10 +139,18 @@ describe('LoginForm', () => {
     wrap(<LoginForm />);
     const field = screen.getByLabelText(/^password$/i);
     await userEvent.type(field, 'hunter2hunter2');
-    await userEvent.click(screen.getByRole('button', { name: /show characters/i }));
+    const reveal = screen.getByRole('button', { name: 'Show characters' });
+    expect(reveal).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(reveal);
     expect(field).toHaveAttribute('type', 'text');
     expect(field).not.toHaveAttribute('value');
-    await userEvent.click(screen.getByRole('button', { name: /hide characters/i }));
+    expect(field).toHaveValue('hunter2hunter2');
+    // One label, one state: the name never flips, so a screen reader says it once.
+    expect(screen.getByRole('button', { name: 'Show characters' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await userEvent.click(reveal);
     expect(field).toHaveAttribute('type', 'password');
   });
 });
