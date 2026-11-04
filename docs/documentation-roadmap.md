@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 32/40 · 🔵 8 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 31/40 · 🔵 9 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-04 | Makefile rút còn 4 lệnh: init, backend, lint, test |
-| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong       | 2026-11-04 | v2.4: đóng nợ 4, 11, 17; thêm nợ 24 đến 31 từ review đợt 2b |
+| 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v2.5: nợ 24 tăng mức ảnh hưởng vì theme tối thành mặc định |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.6: ghi nhánh lớp vỏ frontend chạy bằng dữ liệu mẫu |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
