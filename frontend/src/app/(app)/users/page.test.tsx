@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -62,11 +62,120 @@ describe('UsersPage edit form', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sửa' }));
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    // The account list's pager comes first in the DOM; the audit panel has its own.
+    await userEvent.click(screen.getAllByRole('button', { name: 'Sau' })[0] as HTMLElement);
     await screen.findByRole('button', { name: 'other' });
 
     expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument();
     const patches = fetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH');
     expect(patches).toHaveLength(0);
+  });
+});
+
+const EMPTY = { items: [], next_cursor: null, total: 0, total_is_estimate: false };
+const ME = { id: '1', username: 'rootadmin', display_name: 'Gốc', role: 'superadmin' };
+
+type Handler = (path: string) => Response | Promise<Response>;
+
+function renderPage(handler: Handler) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((...[path]: [string, RequestInit?]) => Promise.resolve(handler(path))),
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <UsersPage />
+    </QueryClientProvider>,
+  );
+}
+
+function ok(path: string): Response | null {
+  if (path === '/api/v1/auth/me') return Response.json(ME);
+  if (path.startsWith('/api/v1/audit-logs')) {
+    return Response.json({
+      items: [
+        {
+          id: 'a1',
+          user_id: '1',
+          action: 'user_created',
+          resource_type: 'user',
+          resource_id: '2',
+          detail: null,
+          ip_address: '203.0.113.9',
+          created_at: '2026-11-04T09:00:00Z',
+        },
+      ],
+      next_cursor: null,
+      total: 1,
+      total_is_estimate: false,
+    });
+  }
+  return null;
+}
+
+describe('UsersPage list states', () => {
+  it('shows loading while the users request is pending', () => {
+    renderPage((path) => {
+      if (path === '/api/v1/users') return new Promise<Response>(() => undefined) as never;
+      return ok(path) ?? Response.json(EMPTY);
+    });
+    expect(screen.getByText('Đang tải danh sách tài khoản…')).toBeInTheDocument();
+    expect(screen.queryByText(/không có tài khoản/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Không tải được danh sách tài khoản.')).not.toBeInTheDocument();
+  });
+
+  it('shows the empty list as its own sentence, not as an error or loading', async () => {
+    renderPage((path) =>
+      path === '/api/v1/users' ? Response.json(EMPTY) : (ok(path) ?? Response.json(EMPTY)),
+    );
+    expect(await screen.findByText('Chưa có tài khoản nào.')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Đang tải danh sách tài khoản…')).not.toBeInTheDocument();
+    expect(screen.queryByText('Không tải được danh sách tài khoản.')).not.toBeInTheDocument();
+  });
+
+  it('never renders a failed users request as an empty list', async () => {
+    renderPage((path) =>
+      path === '/api/v1/users'
+        ? Response.json({ title: 'Boom' }, { status: 500 })
+        : (ok(path) ?? Response.json(EMPTY)),
+    );
+    expect(await screen.findByText('Không tải được danh sách tài khoản.')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Đang tải danh sách tài khoản…')).not.toBeInTheDocument();
+    expect(screen.queryByText('Boom')).not.toBeInTheDocument();
+  });
+});
+
+describe('UsersPage session card', () => {
+  it('keeps the table and marks the session card unavailable on a 403', async () => {
+    renderPage((path) => {
+      if (path === '/api/v1/users') return Response.json(list([row('2', 'analyst')], null));
+      if (path === '/api/v1/user-sessions')
+        return Response.json({ title: 'Forbidden' }, { status: 403 });
+      return ok(path) ?? Response.json(EMPTY);
+    });
+    expect(await screen.findByRole('button', { name: 'analyst' })).toBeInTheDocument();
+    const card = (await screen.findByText('Phiên đang hoạt động')).parentElement as HTMLElement;
+    expect(within(card).getByText('Không khả dụng')).toBeInTheDocument();
+    const users = screen.getByText('Tổng tài khoản').parentElement as HTMLElement;
+    expect(within(users).getByText('2')).toBeInTheDocument();
+  });
+});
+
+describe('UsersPage audit panel', () => {
+  it('renders the audit log alongside the rest, and narrows it to the picked account', async () => {
+    const fetchSpy = vi.fn();
+    renderPage((path) => {
+      fetchSpy(path);
+      if (path === '/api/v1/users') return Response.json(list([row('2', 'analyst')], null));
+      return ok(path) ?? Response.json(EMPTY);
+    });
+    expect(await screen.findByRole('heading', { name: 'Nhật ký thao tác' })).toBeInTheDocument();
+    expect(await screen.findByText('user_created')).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenCalledWith('/api/v1/audit-logs');
+    await userEvent.click(await screen.findByRole('button', { name: 'analyst' }));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('/api/v1/audit-logs?user_id=2'));
   });
 });

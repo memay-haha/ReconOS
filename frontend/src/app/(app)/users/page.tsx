@@ -8,6 +8,7 @@ import { useMe } from '@/lib/auth';
 import { useActiveSessionCount } from '@/lib/sessions';
 import { useUsers } from '@/lib/users';
 
+import { AuditPanel } from './audit-panel';
 import { SessionPanel } from './session-panel';
 import { StatCards } from './stat-cards';
 import { UserActions } from './user-actions';
@@ -121,6 +122,9 @@ export default function UsersPage(): ReactElement {
           />
         </>
       )}
+
+      {/* Outside the selected-account block: the whole log until an account is picked. */}
+      <AuditPanel userId={selectedId} />
     </div>
   );
 }
