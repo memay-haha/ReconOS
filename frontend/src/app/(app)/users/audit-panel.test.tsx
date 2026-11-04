@@ -64,7 +64,7 @@ describe('AuditPanel', () => {
     vi.stubGlobal('fetch', fetchMock);
     wrap(<AuditPanel userId={null} />);
     await screen.findByText('user_created');
-    await userEvent.type(screen.getByLabelText(/thao tác/i), 'login_failed');
+    await userEvent.type(screen.getByLabelText(/^thao tác$/i), 'login_failed');
     await userEvent.click(screen.getByRole('button', { name: /lọc/i }));
     await vi.waitFor(() =>
       expect(paths(fetchMock)).toContain('/api/v1/audit-logs?action=login_failed'),
@@ -76,7 +76,7 @@ describe('AuditPanel', () => {
     vi.stubGlobal('fetch', fetchMock);
     wrap(<AuditPanel userId={null} />);
     await screen.findByText('user_created');
-    const field = screen.getByLabelText(/thao tác/i);
+    const field = screen.getByLabelText(/^thao tác$/i);
     await userEvent.type(field, 'login_failed');
     await userEvent.click(screen.getByRole('button', { name: /lọc/i }));
     await userEvent.clear(field);
@@ -119,13 +119,13 @@ describe('AuditPanel', () => {
     vi.stubGlobal('fetch', fetchMock);
     wrap(<AuditPanel userId={null} />);
     await screen.findByText('user_created');
-    await userEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Sau/ }));
     await screen.findByText('user_locked');
-    expect(screen.getByRole('button', { name: 'Trước' })).toBeEnabled();
-    await userEvent.type(screen.getByLabelText(/thao tác/i), 'login_failed');
+    expect(screen.getByRole('button', { name: /^Trước/ })).toBeEnabled();
+    await userEvent.type(screen.getByLabelText(/^thao tác$/i), 'login_failed');
     await userEvent.click(screen.getByRole('button', { name: /lọc/i }));
     await screen.findByText('login_failed', { selector: 'span' });
-    expect(screen.getByRole('button', { name: 'Trước' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Trước/ })).toBeDisabled();
     expect(paths(fetchMock as unknown as ReturnType<typeof vi.fn>)).toContain(
       '/api/v1/audit-logs?action=login_failed',
     );
@@ -148,10 +148,10 @@ describe('AuditPanel', () => {
     );
     const view = render(tree(null));
     await screen.findByText('user_created');
-    await userEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Sau/ }));
     await screen.findByText('user_locked');
     view.rerender(tree('1'));
     await screen.findByText('login_ok');
-    expect(screen.getByRole('button', { name: 'Trước' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Trước/ })).toBeDisabled();
   });
 });

@@ -14,10 +14,11 @@ describe('Pagination', () => {
         canGoBack={false}
         onBack={noop}
         onNext={noop}
+        label="Phân trang thử"
       />,
     );
-    expect(screen.getByRole('button', { name: 'Trước' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Sau' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Trước/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Sau/ })).toBeEnabled();
   });
 
   it('disables Sau on the last page', () => {
@@ -27,10 +28,11 @@ describe('Pagination', () => {
         canGoBack
         onBack={noop}
         onNext={noop}
+        label="Phân trang thử"
       />,
     );
-    expect(screen.getByRole('button', { name: 'Sau' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Trước' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Sau/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Trước/ })).toBeEnabled();
   });
 
   it('says the total is an estimate when the backend says so', () => {
@@ -40,6 +42,7 @@ describe('Pagination', () => {
         canGoBack={false}
         onBack={noop}
         onNext={noop}
+        label="Phân trang thử"
       />,
     );
     expect(screen.getByText(/khoảng 1\.000/i)).toBeInTheDocument();
@@ -52,6 +55,7 @@ describe('Pagination', () => {
         canGoBack={false}
         onBack={noop}
         onNext={noop}
+        label="Phân trang thử"
       />,
     );
     expect(screen.getByText(/1\.234/)).toBeInTheDocument();
@@ -67,12 +71,36 @@ describe('Pagination', () => {
         canGoBack
         onBack={onBack}
         onNext={onNext}
+        label="Phân trang thử"
       />,
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Sau' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Trước' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Sau/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Trước/ }));
     expect(onNext).toHaveBeenCalledOnce();
     expect(onBack).toHaveBeenCalledOnce();
+  });
+});
+
+describe('Pagination labelling', () => {
+  it('names the pager and keeps the visible word first in each button name', () => {
+    render(
+      <Pagination
+        page={{ total: 42, totalIsEstimate: false, nextCursor: 'c1' }}
+        canGoBack
+        onBack={noop}
+        onNext={noop}
+        label="Phân trang nhật ký thao tác"
+      />,
+    );
+    expect(
+      screen.getByRole('navigation', { name: 'Phân trang nhật ký thao tác' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Sau, phân trang nhật ký thao tác' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Trước, phân trang nhật ký thao tác' }),
+    ).toBeInTheDocument();
   });
 });
 

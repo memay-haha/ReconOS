@@ -13,6 +13,7 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
   const { cursor, canGoBack, goNext, goBack, reset } = useCursorStack();
   const logs = useAuditLogs({ userId, action }, cursor);
 
+  // Render-phase on purpose: an effect would paint one frame of the new filter with the old cursor.
   // A new account means a new result set: the cursors collected so far point into the old one.
   if (seenUserId !== userId) {
     setSeenUserId(userId);
@@ -92,6 +93,7 @@ export function AuditPanel({ userId }: { userId: string | null }): ReactElement 
             </ul>
           )}
           <Pagination
+            label="Phân trang nhật ký thao tác"
             page={{
               total: logs.data.total,
               totalIsEstimate: logs.data.total_is_estimate,

@@ -105,6 +105,7 @@ export default function UsersPage(): ReactElement {
             </section>
           )}
           <Pagination
+            label="Phân trang danh sách tài khoản"
             page={{
               total: users.data.total,
               totalIsEstimate: users.data.total_is_estimate,

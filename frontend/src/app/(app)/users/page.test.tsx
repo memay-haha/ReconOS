@@ -17,8 +17,8 @@ function row(id: string, username: string) {
   };
 }
 
-function list(items: unknown[], next: string | null) {
-  return { items, next_cursor: next, total: 2, total_is_estimate: false };
+function list(items: unknown[], next: string | null, total = 2) {
+  return { items, next_cursor: next, total, total_is_estimate: false };
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -62,8 +62,8 @@ describe('UsersPage edit form', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sửa' }));
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeInTheDocument();
 
-    // The account list's pager comes first in the DOM; the audit panel has its own.
-    await userEvent.click(screen.getAllByRole('button', { name: 'Sau' })[0] as HTMLElement);
+    const pager = screen.getByRole('navigation', { name: 'Phân trang danh sách tài khoản' });
+    await userEvent.click(within(pager).getByRole('button', { name: /^Sau/ }));
     await screen.findByRole('button', { name: 'other' });
 
     expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument();
@@ -121,7 +121,7 @@ describe('UsersPage list states', () => {
       return ok(path) ?? Response.json(EMPTY);
     });
     expect(screen.getByText('Đang tải danh sách tài khoản…')).toBeInTheDocument();
-    expect(screen.queryByText(/không có tài khoản/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/chưa có tài khoản/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Không tải được danh sách tài khoản.')).not.toBeInTheDocument();
   });
 
@@ -142,6 +142,7 @@ describe('UsersPage list states', () => {
         : (ok(path) ?? Response.json(EMPTY)),
     );
     expect(await screen.findByText('Không tải được danh sách tài khoản.')).toBeInTheDocument();
+    expect(screen.queryByText('Chưa có tài khoản nào.')).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByText('Đang tải danh sách tài khoản…')).not.toBeInTheDocument();
     expect(screen.queryByText('Boom')).not.toBeInTheDocument();
@@ -151,7 +152,7 @@ describe('UsersPage list states', () => {
 describe('UsersPage session card', () => {
   it('keeps the table and marks the session card unavailable on a 403', async () => {
     renderPage((path) => {
-      if (path === '/api/v1/users') return Response.json(list([row('2', 'analyst')], null));
+      if (path === '/api/v1/users') return Response.json(list([row('2', 'analyst')], null, 37));
       if (path === '/api/v1/user-sessions')
         return Response.json({ title: 'Forbidden' }, { status: 403 });
       return ok(path) ?? Response.json(EMPTY);
@@ -160,7 +161,7 @@ describe('UsersPage session card', () => {
     const card = (await screen.findByText('Phiên đang hoạt động')).parentElement as HTMLElement;
     expect(within(card).getByText('Không khả dụng')).toBeInTheDocument();
     const users = screen.getByText('Tổng tài khoản').parentElement as HTMLElement;
-    expect(within(users).getByText('2')).toBeInTheDocument();
+    expect(within(users).getByText('37')).toBeInTheDocument();
   });
 });
 

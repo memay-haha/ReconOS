@@ -51,24 +51,39 @@ export function Pagination({
   canGoBack,
   onBack,
   onNext,
+  label,
 }: {
+  /** Required so that a page with several lists never has two pagers a screen reader cannot tell apart. */
+  label: string;
   page: PageInfo;
   canGoBack: boolean;
   onBack: () => void;
   onNext: () => void;
 }): ReactElement {
   const total = COUNT.format(page.total);
+  // The visible word comes first in the accessible name (WCAG 2.5.3 label in name).
+  const named = (word: string) => `${word}, ${label.toLowerCase()}`;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-gutter py-space-md">
+    <nav
+      aria-label={label}
+      className="flex flex-wrap items-center justify-between gap-gutter py-space-md"
+    >
       <span className="text-body-default text-fg-muted">
         {page.totalIsEstimate ? `Khoảng ${total} dòng` : `${total} dòng`}
       </span>
       <span className="flex gap-space-sm">
-        <button type="button" onClick={onBack} disabled={!canGoBack} className={BUTTON}>
+        <button
+          type="button"
+          aria-label={named('Trước')}
+          onClick={onBack}
+          disabled={!canGoBack}
+          className={BUTTON}
+        >
           Trước
         </button>
         <button
           type="button"
+          aria-label={named('Sau')}
           onClick={onNext}
           disabled={page.nextCursor === null}
           className={BUTTON}
@@ -76,6 +91,6 @@ export function Pagination({
           Sau
         </button>
       </span>
-    </div>
+    </nav>
   );
 }
