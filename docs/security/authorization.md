@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
 
@@ -65,6 +65,7 @@
 | Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
 | Xem nhật ký thao tác trên S14 | ✅ | ✅ | ❌ |
 | Xem log ứng dụng | ✅ | ✅ | ✅ log của job thuộc program được gán |
+| Xóa log ứng dụng trên S15 | ✅ | ❌ | ❌ |
 | Xem dashboard | ✅ | ✅ | ✅ số liệu của program được gán |
 
 - Token worker không mang vai trò. Token chỉ gọi được endpoint của contract worker: [authentication.md](authentication.md).
@@ -94,5 +95,6 @@ Backend luôn ghi nhật ký thao tác cho các thao tác sau (G7):
 - Tạo, duyệt, từ chối, hủy job.
 - Đổi trạng thái triage.
 - Tải nội dung output thô.
+- Xóa log ứng dụng.
 - Tạo, thu hồi token worker. Sửa cấu hình tool module, engine, hệ thống.
 - Yêu cầu bị từ chối vì thiếu quyền, chỉ với phương thức thay đổi dữ liệu `POST`, `PUT`, `PATCH`, `DELETE`. Yêu cầu đọc bị từ chối không ghi dòng nào: nhật ký chỉ thêm dòng và chưa có thời hạn giữ.

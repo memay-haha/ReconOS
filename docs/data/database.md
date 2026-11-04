@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md)
 
@@ -135,6 +135,7 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 - Worker không truy cập CSDL, gửi log theo lô qua `POST /api/v1/worker/logs`, Backend API ghi vào `reconos_log`: [external-services.md](../integrations/external-services.md).
 - Thời hạn giữ: `log_retention_days`.
 - `app_log` phân vùng theo ngày. Tiến trình nền tạo phân vùng trước và xóa phân vùng quá thời hạn giữ: [configuration.md](../ops/configuration.md).
+- Superadmin xóa log trên S15 theo ngày: xóa mọi phân vùng `app_log` của các ngày trước ngày chọn. Không xóa phân vùng của ngày hiện tại. Nhật ký thao tác ghi người xóa và ngày chọn.
 - Sao lưu `reconos_log` riêng, tách khỏi CSDL chính.
 
 ### Index chính

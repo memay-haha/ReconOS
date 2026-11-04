@@ -1,6 +1,6 @@
 # ReconOS: Thuật ngữ
 
-> Phiên bản: 1.11 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 27: Phụ lục
 > Liên quan: [overview.md](../architecture/overview.md), [documentation.md](../../.claude/rules/documentation.md)
 
@@ -105,6 +105,8 @@ Nguồn duy nhất cho các thay thế thuật ngữ đã chốt. Gặp từ ở
 | Không dùng | Viết thay | Phạm vi |
 |---|---|---|
 | bí mật | thông tin xác thực | API key, token, mật khẩu, URL proxy có tài khoản |
+| che dữ liệu | ẩn thông tin xác thực | Processor thay giá trị bằng `***` trước khi ghi log |
+| hàng đợi lô | bộ đệm log | Vùng nhớ trong tiến trình giữ bản ghi log chờ ghi theo lô. Khác queue Celery |
 | khóa khử trùng lặp | chuỗi khử trùng lặp | `dedup_key` |
 | khóa cho đối tượng không phải khóa mã hóa hay khóa CSDL | khóa object, tên thiết lập, key cache, giá trị băm | Giữ "khóa" cho: khóa mã hóa, khóa chính, khóa ngoại, khóa tự nhiên, khóa phân vùng |
 | primary key, foreign key, natural key | khóa chính, khóa ngoại, khóa tự nhiên | Câu văn. Tên cột, câu SQL giữ nguyên |

@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -39,6 +39,7 @@
 | Thời gian | ISO 8601, UTC |
 | Định dạng | JSON. Lỗi: `application/problem+json` |
 | Sửa một phần | `PATCH`, chỉ gửi trường cần đổi |
+| Request ID | Header `X-Request-ID` dạng UUID. Client gửi kèm thì backend dùng lại, thiếu hoặc sai dạng thì sinh mới. Mọi response trả header này: [logging.md](../../.claude/rules/logging.md) |
 
 - `GET` không đổi dữ liệu.
 - Trường tính từ bảng khác (số đếm, tổng hợp) chỉ có ở endpoint đọc nó, không thêm vào response ghi. Ví dụ: `active_user_session_count` có ở `GET /users` và `GET /users/{user_id}`, không có ở `POST /users`, `PATCH /users/{user_id}`, `GET /auth/me`. Định nghĩa: [glossary.md](../appendix/glossary.md).

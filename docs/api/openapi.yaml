@@ -1021,6 +1021,15 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [system]
+      summary: "Xóa log ứng dụng của các ngày trước ngày chọn"
+      x-roles: [superadmin]
+      parameters:
+        - {name: before, in: query, required: true, schema: {type: string, format: date}, description: "Không được sau ngày hiện tại theo UTC"}
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}/logs:
     parameters:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}

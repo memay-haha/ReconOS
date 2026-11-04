@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -62,6 +62,7 @@
 
 - Mỗi container Uvicorn chạy một tiến trình. Thêm bản bằng `docker compose up --scale api=N`: [scalability.md](scalability.md).
 - `api` có healthcheck `GET /api/v1/health`, không cần đăng nhập, chỉ trả trạng thái tiến trình còn chạy.
+- Mọi service trong cả ba file compose dùng logging driver `json-file` với `max-size: 50m`, `max-file: 5`, để log stdout không làm đầy đĩa.
 
 ### Mạng
 
