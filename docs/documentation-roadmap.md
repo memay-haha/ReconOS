@@ -42,7 +42,7 @@
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong   | 2026-11-03 | v2.3: đợt 2 thêm bảng ngưỡng vận hành |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | Thêm `audit.py` vào mã dùng chung, ghi nhật ký qua `core` |
-| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme |
+| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme, tên mục điều hướng tiếng Anh |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.4: `core` sở hữu bảng `audit_log` |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |

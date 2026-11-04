@@ -23,6 +23,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Hiển thị đúng từ chiều rộng 390 px.
 - Đạt WCAG 2.1 AA.
 - Hiển thị nhãn, trạng thái theo [glossary](../docs/appendix/glossary.md) và giá trị liệt kê trong [schema.md](../docs/data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
+- Đặt tên 16 mục điều hướng trên sidebar bằng tên màn hình tiếng Anh trong [index.json](../docs/design/screens/index.json), bỏ tiền tố số `S..`. Chú thích đợt, nút thao tác, thông báo vẫn viết tiếng Việt.
 
 **Dữ liệu:**
 

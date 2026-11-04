@@ -21,6 +21,7 @@
 - Component trong `src/components/` chỉ nhận dữ liệu qua props, không gọi API.
 - Chỉ dùng server component cho layout và kiểm tra phiên để chuyển hướng tới S01.
 - Hiển thị nhãn và trạng thái theo [glossary](../../appendix/glossary.md) và giá trị liệt kê trong [schema.md](../../data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
+- Tên 16 mục điều hướng trên sidebar viết tiếng Anh theo [index.json](../../design/screens/index.json), bỏ tiền tố `S..`. Chữ còn lại trên giao diện viết tiếng Việt.
 - Vai trò chỉ có Superadmin, Admin, User.
 - Phân trang danh sách bằng cursor với nút Trước và Sau. ❌ Không nhảy tới trang số N.
 - Lỗi API theo RFC 9457. `errors` là mảng `[{field, code}]` chứa mã máy, không chứa câu tiếng Việt: [api/architecture.md](../../api/architecture.md). Dịch mã sang tiếng Việt bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu tiếng Việt của màn hình, không hiển thị `title` tiếng Anh của backend.
