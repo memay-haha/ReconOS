@@ -27,6 +27,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Đạt WCAG 2.1 AA.
 - Hiển thị nhãn, trạng thái theo [glossary](../docs/appendix/glossary.md) và giá trị liệt kê trong [schema.md](../docs/data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
 - Viết mọi chữ hiển thị cho người dùng bằng tiếng Anh: nhãn nút, nhãn ô nhập, tiêu đề, chữ trạng thái, thông báo lỗi, chữ khi danh sách rỗng. Đặt `lang="en"` trên `<html>`. Tài liệu vẫn viết tiếng Việt theo [vietnamese-writing.md](../.claude/rules/vietnamese-writing.md).
+- Số hàng nghìn viết theo kiểu tiếng Anh, `1,234`, cho khớp giao diện tiếng Anh. Ngày giờ vẫn `dd/mm/yyyy` và đồng hồ 24 giờ, múi giờ ghim `Asia/Ho_Chi_Minh` vì người vận hành ở Việt Nam.
 - Dựng sidebar theo mockup: hai nhóm, mục chính và nhóm System, kèm icon Material Symbols và badge số đếm. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
 
 **Dữ liệu:**
