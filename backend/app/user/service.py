@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 
-from sqlalchemy import delete, func, select, text, tuple_
+from sqlalchemy import ColumnElement, and_, delete, func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -342,26 +342,31 @@ async def list_users(
     )
 
 
-async def list_sessions_for_user(
-    session: AsyncSession, *, user_id: uuid.UUID, limit: int, cursor: str | None
-) -> Page[UserSessionResponse]:
-    await get_user(session, user_id)
-    size = _clamp(limit)
-    stmt = (
-        select(UserSession)
-        .where(UserSession.user_id == user_id)
-        .order_by(UserSession.created_at.desc(), UserSession.id.desc())
+async def _live_session_filter(session: AsyncSession) -> ColumnElement[bool]:
+    """A session is live while both clocks still allow it.
+
+    The same two rules load_current_user applies: the absolute lifetime in
+    expires_at, and the idle window counted from last_seen_at.
+    """
+    idle_minutes = await get_int_setting(session, "session_idle_timeout_minutes")
+    now = datetime.now(UTC)
+    return and_(
+        UserSession.expires_at > now,
+        UserSession.last_seen_at > now - timedelta(minutes=idle_minutes),
     )
+
+
+async def _live_sessions_page(
+    session: AsyncSession, *, where: ColumnElement[bool], limit: int, cursor: str | None
+) -> Page[UserSessionResponse]:
+    size = _clamp(limit)
+    stmt = select(UserSession).where(where)
+    stmt = stmt.order_by(UserSession.created_at.desc(), UserSession.id.desc())
     if cursor is not None:
         seen_at, seen_id = decode_time_cursor(cursor)
         stmt = stmt.where(tuple_(UserSession.created_at, UserSession.id) < (seen_at, seen_id))
     rows = list((await session.execute(stmt.limit(size + 1))).scalars().all())
-    total = (
-        await session.scalar(
-            select(func.count()).select_from(UserSession).where(UserSession.user_id == user_id)
-        )
-        or 0
-    )
+    total = await session.scalar(select(func.count()).select_from(UserSession).where(where)) or 0
     page_rows = rows[:size]
     next_cursor = (
         encode_cursor(page_rows[-1].created_at.isoformat(), page_rows[-1].id)
@@ -373,6 +378,23 @@ async def list_sessions_for_user(
         next_cursor=next_cursor,
         total=total,
     )
+
+
+async def list_sessions_for_user(
+    session: AsyncSession, *, user_id: uuid.UUID, limit: int, cursor: str | None
+) -> Page[UserSessionResponse]:
+    await get_user(session, user_id)
+    live = await _live_session_filter(session)
+    return await _live_sessions_page(
+        session, where=and_(UserSession.user_id == user_id, live), limit=limit, cursor=cursor
+    )
+
+
+async def list_active_sessions(
+    session: AsyncSession, *, limit: int, cursor: str | None
+) -> Page[UserSessionResponse]:
+    live = await _live_session_filter(session)
+    return await _live_sessions_page(session, where=live, limit=limit, cursor=cursor)
 
 
 async def revoke_session(session: AsyncSession, *, actor: User, user_session_id: uuid.UUID) -> None:

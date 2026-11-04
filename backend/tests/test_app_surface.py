@@ -42,6 +42,7 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("POST", "/users/{user_id}/lock"),
     ("POST", "/users/{user_id}/unlock"),
     ("GET", "/users/{user_id}/sessions"),
+    ("GET", "/user-sessions"),
     ("DELETE", "/user-sessions/{user_session_id}"),
     ("GET", "/audit-logs"),
     ("GET", "/health"),

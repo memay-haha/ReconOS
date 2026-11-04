@@ -332,3 +332,87 @@ async def test_changing_an_account_moves_updated_at(
     await db_session.flush()
     await db_session.refresh(target)
     assert target.updated_at > after_patch
+
+
+async def _session_row(
+    db_session: AsyncSession,
+    user: User,
+    *,
+    expires_in: timedelta = timedelta(hours=1),
+    idle_for: timedelta = timedelta(0),
+) -> UserSession:
+    from app.core.security import hash_session_id, new_session_id
+
+    now = datetime.now(UTC)
+    row = UserSession(
+        user_id=user.id,
+        session_hash=hash_session_id(new_session_id()),
+        expires_at=now + expires_in,
+        last_seen_at=now - idle_for,
+    )
+    db_session.add(row)
+    await db_session.flush()
+    return row
+
+
+@pytest.mark.parametrize(("role", "expected"), ROLE_CASES)
+async def test_all_sessions_by_role(
+    client: AsyncClient, logged_in: LoggedIn, role: UserRole, expected: int
+) -> None:
+    await logged_in(role=role)
+    assert (await client.get("/api/v1/user-sessions")).status_code == expected
+
+
+async def test_all_sessions_without_a_session(client: AsyncClient) -> None:
+    assert (await client.get("/api/v1/user-sessions")).status_code == 401
+
+
+async def test_all_sessions_counts_only_live_ones(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    victim = await user_factory(role=UserRole.USER)
+    await _session_row(db_session, victim, expires_in=-timedelta(hours=1))
+    await _session_row(db_session, victim, idle_for=timedelta(days=30))
+    live = await _session_row(db_session, victim)
+    body = (await client.get("/api/v1/user-sessions")).json()
+    # The Superadmin's own session and the one live session of the victim.
+    assert body["total"] == 2
+    assert str(live.id) in {item["id"] for item in body["items"]}
+
+
+async def test_per_user_sessions_hide_dead_ones(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    victim = await user_factory(role=UserRole.USER)
+    await _session_row(db_session, victim, expires_in=-timedelta(hours=1))
+    await _session_row(db_session, victim, idle_for=timedelta(days=30))
+    body = (await client.get(f"/api/v1/users/{victim.id}/sessions")).json()
+    assert body["total"] == 0
+    assert body["items"] == []
+
+
+async def test_all_sessions_paginates(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    victim = await user_factory(role=UserRole.USER)
+    await _session_row(db_session, victim)
+    first = (await client.get("/api/v1/user-sessions", params={"limit": 1})).json()
+    assert len(first["items"]) == 1
+    assert first["total"] == 2
+    assert first["next_cursor"] is not None
+    second = (
+        await client.get(
+            "/api/v1/user-sessions", params={"limit": 1, "cursor": first["next_cursor"]}
+        )
+    ).json()
+    assert len(second["items"]) == 1
+    assert second["next_cursor"] is None
+    assert second["items"][0]["id"] != first["items"][0]["id"]
+
+
+async def test_all_sessions_rejects_a_bad_cursor(client: AsyncClient, logged_in: LoggedIn) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    assert (await client.get("/api/v1/user-sessions?cursor=not-a-cursor")).status_code == 400

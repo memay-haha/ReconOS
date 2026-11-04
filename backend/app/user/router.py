@@ -162,6 +162,13 @@ async def list_user_sessions(
     )
 
 
+@router.get("/user-sessions", response_model=Page[UserSessionResponse], tags=["user"])
+async def list_all_sessions(
+    actor: Superadmin, session: DbDep, limit: int = DEFAULT_LIMIT, cursor: str | None = None
+) -> Page[UserSessionResponse]:
+    return await service.list_active_sessions(session, limit=limit, cursor=cursor)
+
+
 @router.delete("/user-sessions/{user_session_id}", status_code=204, tags=["user"])
 async def revoke_session(user_session_id: uuid.UUID, actor: Superadmin, session: DbDep) -> None:
     await service.revoke_session(session, actor=actor, user_session_id=user_session_id)
