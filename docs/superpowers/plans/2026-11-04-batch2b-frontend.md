@@ -23,7 +23,7 @@
 - Hiển thị nhãn và trạng thái theo [glossary](../../appendix/glossary.md) và giá trị liệt kê trong [schema.md](../../data/schema.md), không theo chữ trên mockup khi hai bên khác nhau.
 - Vai trò chỉ có Superadmin, Admin, User.
 - Phân trang danh sách bằng cursor với nút Trước và Sau. ❌ Không nhảy tới trang số N.
-- Lỗi API theo RFC 9457: hiển thị `title`, lỗi từng trường theo `errors`.
+- Lỗi API theo RFC 9457. `errors` là mảng `[{field, code}]` chứa mã máy, không chứa câu tiếng Việt: [api/architecture.md](../../api/architecture.md). Dịch mã sang tiếng Việt bằng `fieldErrorText` trong `src/lib/field-error-text.ts`. Lỗi không gắn trường nào thì hiển thị câu tiếng Việt của màn hình, không hiển thị `title` tiếng Anh của backend.
 - Hiển thị đúng từ chiều rộng 390 px. Đạt WCAG 2.1 AA ở cả hai theme.
 - ❌ Không sửa tay khối `@theme` của `src/styles/globals.css`. Sửa bảng token rồi chạy lại script.
 - Chỉ dùng tên lớp Tailwind suy ra được từ token đã có trong `@theme`: màu `--color-*`, khoảng cách `--spacing-*`, bo góc `--radius-*`, font `--font-*`, cỡ chữ `--text-*`. Khoảng cách tên là `space-xs` đến `space-xl`, `gutter`, `margin`, nên lớp là `p-space-sm`, không có `p-sm`. Vai trò chữ chỉ có `headline-lg`, `headline-lg-mobile`, `panel-title`, `stat-lg`, `label-caps`, `body-default`, `body-code`, `body-code-bold`, `caption`. ❌ Không bịa tên lớp. Cần token mới: thêm dòng vào bảng Token Table rồi chạy `pnpm --dir frontend tokens`.
@@ -1645,6 +1645,8 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `frontend/src/components/pagination.test.tsx`
 - Create: `frontend/src/components/field-error.tsx`
 - Create: `frontend/src/components/field-error.test.tsx`
+- Create: `frontend/src/lib/field-error-text.ts`
+- Create: `frontend/src/lib/field-error-text.test.ts`
 
 **Interfaces:**
 - Consumes: không có. Người gọi truyền sẵn dữ liệu qua props.
@@ -1653,6 +1655,9 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `function Pagination(props: { page: PageInfo; canGoBack: boolean; onBack: () => void; onNext: () => void }): ReactElement`
   - `function useCursorStack(): { cursor: string | null; canGoBack: boolean; goNext: (next: string | null) => void; goBack: () => void; reset: () => void }`
   - `function FieldError(props: { errors: Record<string, string>; field: string }): ReactElement | null`
+  - Trong `field-error-text.ts`: `function fieldErrorText(code: string): string`
+
+⚠️ Backend trả mã máy, không trả câu tiếng Việt. Theo [api/architecture.md](../../api/architecture.md), `errors` là mảng `[{field, code}]`, và `fieldErrorsOf` của Task 4 trả `Record<field, code>`. Màn hình phải dịch mã sang tiếng Việt. Mã có thật: `password_too_short`, `password_too_long`, `password_too_weak` từ `core/security.py`, cộng mã của Pydantic như `missing`, `string_too_short`, `string_too_long`, `enum`. Trùng tên đăng nhập trả `409 conflict` không kèm `errors`, nên form hiển thị thông báo chung chứ không gắn vào ô nào.
 
 Cursor không cho nhảy tới trang số N, nên nút Trước cần nhớ cursor đã đi qua. `useCursorStack` giữ ngăn xếp đó.
 
@@ -1868,15 +1873,20 @@ describe('FieldError', () => {
   });
 
   it('shows only the message for its own field', () => {
-    render(<FieldError errors={{ username: 'Đã có tài khoản này.' }} field="username" />);
-    expect(screen.getByText('Đã có tài khoản này.')).toBeInTheDocument();
+    render(<FieldError errors={{ username: 'missing' }} field="username" />);
+    expect(screen.getByText('Chưa nhập trường này.')).toBeInTheDocument();
   });
 
-  it('ignores a message belonging to another field', () => {
+  it('ignores a code belonging to another field', () => {
     const { container } = render(
-      <FieldError errors={{ new_password: 'Mật khẩu quá yếu.' }} field="username" />,
+      <FieldError errors={{ password: 'password_too_weak' }} field="username" />,
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('still says something for a code it does not know', () => {
+    render(<FieldError errors={{ username: 'some_future_code' }} field="username" />);
+    expect(screen.getByText('Giá trị không hợp lệ.')).toBeInTheDocument();
   });
 });
 ```
@@ -1885,13 +1895,60 @@ describe('FieldError', () => {
 
 Tạo `frontend/src/components/field-error.tsx`:
 
+Tạo `frontend/src/lib/field-error-text.ts`:
+
+```ts
+/** The backend reports which field failed and why, as a machine code:
+ * docs/api/architecture.md. The Vietnamese wording lives here, in one place,
+ * so every form says the same thing about the same failure. */
+const TEXT: Record<string, string> = {
+  // Raised by backend/app/core/security.py
+  password_too_short: 'Mật khẩu quá ngắn.',
+  password_too_long: 'Mật khẩu quá dài.',
+  password_too_weak: 'Mật khẩu dễ đoán. Dùng mật khẩu dài hơn và ít quy luật hơn.',
+  // Pydantic reports these as the failure type
+  missing: 'Chưa nhập trường này.',
+  string_too_short: 'Giá trị quá ngắn.',
+  string_too_long: 'Giá trị quá dài.',
+  enum: 'Giá trị không nằm trong danh sách cho phép.',
+};
+
+const FALLBACK = 'Giá trị không hợp lệ.';
+
+export function fieldErrorText(code: string): string {
+  return TEXT[code] ?? FALLBACK;
+}
+```
+
+Tạo `frontend/src/lib/field-error-text.test.ts`:
+
+```ts
+import { describe, expect, it } from 'vitest';
+
+import { fieldErrorText } from './field-error-text';
+
+describe('fieldErrorText', () => {
+  it('writes the password rules in Vietnamese', () => {
+    expect(fieldErrorText('password_too_weak')).toMatch(/dễ đoán/);
+  });
+
+  it('falls back instead of showing the raw code to the reader', () => {
+    expect(fieldErrorText('a_code_added_next_year')).toBe('Giá trị không hợp lệ.');
+  });
+});
+```
+
+Tạo `frontend/src/components/field-error.tsx`:
+
 ```tsx
+import { fieldErrorText } from '@/lib/field-error-text';
+
 export function FieldError({ errors, field }: { errors: Record<string, string>; field: string }) {
-  const message = errors[field];
-  if (message === undefined) return null;
+  const code = errors[field];
+  if (code === undefined) return null;
   return (
     <span role="alert" className="text-crit">
-      {message}
+      {fieldErrorText(code)}
     </span>
   );
 }
@@ -2469,18 +2526,37 @@ describe('UserForm in create mode', () => {
     });
   });
 
-  it('puts a field error from RFC 9457 next to its own input', async () => {
+  it('puts a field error next to its own input', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            title: 'Dữ liệu không hợp lệ',
+            title: 'Validation error',
             status: 422,
             code: 'validation_error',
-            errors: { username: 'Tên đăng nhập đã có người dùng.' },
+            errors: [{ field: 'password', code: 'password_too_weak' }],
           }),
           { status: 422, headers: { 'content-type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    wrap(<UserForm mode="create" onDone={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText(/tên đăng nhập/i), 'analyst');
+    await userEvent.type(screen.getByLabelText(/tên hiển thị/i), 'Người phân tích');
+    await userEvent.type(screen.getByLabelText(/mật khẩu/i), 'password1');
+    await userEvent.click(screen.getByRole('button', { name: /lưu/i }));
+
+    expect(await screen.findByText(/dễ đoán/i)).toBeInTheDocument();
+  });
+
+  it('shows a duplicate username as a general message, because 409 carries no field', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ title: 'Conflict', status: 409, code: 'conflict' }),
+          { status: 409, headers: { 'content-type': 'application/problem+json' } },
         ),
       ),
     );
@@ -2490,7 +2566,7 @@ describe('UserForm in create mode', () => {
     await userEvent.type(screen.getByLabelText(/mật khẩu/i), 'troutmoonlit7Ladder');
     await userEvent.click(screen.getByRole('button', { name: /lưu/i }));
 
-    expect(await screen.findByText('Tên đăng nhập đã có người dùng.')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/tên đăng nhập này đã có người dùng/i);
   });
 });
 
@@ -2535,7 +2611,7 @@ Tạo `frontend/src/app/(app)/users/user-form.tsx`:
 import { type FormEvent, useState } from 'react';
 
 import { FieldError } from '@/components/field-error';
-import { fieldErrorsOf } from '@/lib/api-client';
+import { ApiError, fieldErrorsOf } from '@/lib/api-client';
 import { useCreateUser, type UserRow, useUpdateUser } from '@/lib/users';
 
 const ROLES: readonly { value: UserRow['role']; label: string }[] = [
@@ -2633,7 +2709,9 @@ export function UserForm({
 
       {active.error !== null && Object.keys(errors).length === 0 && (
         <p role="alert" className="rounded-md bg-crit-soft px-3 py-2 text-crit">
-          Không lưu được tài khoản.
+          {active.error instanceof ApiError && active.error.status === 409
+            ? 'Tên đăng nhập này đã có người dùng.'
+            : 'Không lưu được tài khoản.'}
         </p>
       )}
 
