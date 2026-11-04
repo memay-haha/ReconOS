@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { FieldError } from '@/components/field-error';
 import { contrastRatio } from '@/styles/contrast';
 import { PAIRS } from '@/styles/contrast-pairs';
+import { typeRoles, typeSizes } from '@/styles/type-roles';
 import { TOKEN_ROWS } from '@/styles/token-table.generated';
 import type { TokenRow } from '@/styles/token-table.generated';
 import { PaginationDemo } from './pagination-demo';
@@ -95,9 +96,8 @@ export default async function ComponentsPage(): Promise<ReactElement> {
   };
   const colours = table.filter((row) => row.group === 'Colors');
   const bg = need('color-bg');
-  const roles = table
-    .filter((row) => /^text-[a-z]+(-[a-z]+)*$/.test(row.name))
-    .map((row) => row.name.replace('text-', ''));
+  const roles = typeRoles(table);
+  const sizes = typeSizes(table);
 
   return (
     <div className="flex flex-col gap-space-xl">
@@ -165,6 +165,27 @@ export default async function ComponentsPage(): Promise<ReactElement> {
             >
               <span className="text-fg">{role}</span>
               <span className="block text-fg-muted">Scan 10.0.0.1:443 finished in 12 s</span>
+            </li>
+          ))}
+        </ul>
+        <h3 className="font-panel-title text-panel-title text-fg">Sizes</h3>
+        <ul className="flex flex-col gap-space-sm">
+          {sizes.map((size) => (
+            <li
+              key={size}
+              data-testid="type-size"
+              data-size={size}
+              className="flex items-center gap-space-md rounded-md border border-border bg-surface p-space-md"
+            >
+              <span
+                aria-hidden="true"
+                className="text-fg"
+                style={{ fontSize: `var(--text-${size})`, lineHeight: 1 }}
+              >
+                Aa
+              </span>
+              <span className="font-body-code text-body-code text-fg">{`text-${size}`}</span>
+              <span className="text-caption text-fg-muted">A size only, not a type role.</span>
             </li>
           ))}
         </ul>

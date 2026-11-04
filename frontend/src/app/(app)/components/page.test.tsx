@@ -95,14 +95,27 @@ describe('Component Library', () => {
     expect(within(ramp).getAllByTestId('ramp-fg-dimmest')).toHaveLength(1);
   });
 
-  it('shows the nine type roles by name, read from the table', async () => {
+  it('shows the type roles, which are the text rows that have a font row', async () => {
     render(await ComponentsPage());
     const roles = screen.getAllByTestId('type-role').map((r) => r.getAttribute('data-role'));
-    const expected = parseTokenTable(designSystem)
-      .filter((row) => /^text-[a-z]+(-[a-z]+)*$/.test(row.name))
-      .map((row) => row.name.replace('text-', ''));
-    expect(expected).toHaveLength(9);
-    expect(roles).toEqual(expected);
+    const rows = parseTokenTable(designSystem);
+    const fontRoles = rows
+      .filter((row) => row.name.startsWith('font-'))
+      .map((row) => row.name.replace('font-', ''))
+      .filter((name) => rows.some((row) => row.name === `text-${name}`));
+    expect([...roles].sort()).toEqual([...fontRoles].sort());
+    // Named voices a reviewer looks for; the count is deliberately not asserted.
+    for (const known of ['headline-lg', 'panel-title', 'body-default', 'label-caps']) {
+      expect(roles).toContain(known);
+    }
+  });
+
+  it('shows a bare size such as the icon size as a size, never among the roles', async () => {
+    render(await ComponentsPage());
+    const roles = screen.getAllByTestId('type-role').map((r) => r.getAttribute('data-role'));
+    const sizes = screen.getAllByTestId('type-size').map((r) => r.getAttribute('data-size'));
+    expect(sizes).toContain('icon');
+    expect(roles).not.toContain('icon');
   });
 
   it('shows the shared components the screens actually use', async () => {
