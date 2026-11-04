@@ -10,3 +10,4 @@ CLAUDE.md
 next-env.d.ts
 tsconfig.json
 public/mockServiceWorker.js
+src/styles/token-table.generated.ts

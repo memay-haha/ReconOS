@@ -6,17 +6,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseTokenTable } from '../../../../scripts/generate-tokens.mjs';
 import { contrastRatio } from '@/styles/contrast';
+import { PAIRS } from '@/styles/contrast-pairs';
 
-// The page reads the design system through node:fs. The tests swap the markdown it
-// sees, which is the only way to prove the list of tokens is not a copy in the source.
-const fake = vi.hoisted(() => ({ markdown: null as string | null }));
-vi.mock('node:fs', async (importOriginal) => {
-  const real = await importOriginal<typeof import('node:fs')>();
-  const readFileSync = ((...args: Parameters<typeof real.readFileSync>) =>
-    fake.markdown !== null && String(args[0]).endsWith('design-system.md')
-      ? fake.markdown
-      : real.readFileSync(...args)) as typeof real.readFileSync;
-  return { ...real, default: { ...real, readFileSync }, readFileSync };
+// The page imports the generated token module. The tests swap its rows, which is the only
+// way to prove the list of tokens is not a copy in the page source. A separate drift test in
+// tokens.test.ts proves the module itself matches the Token Table.
+const fake = vi.hoisted(() => ({ rows: null as unknown[] | null }));
+vi.mock('@/styles/token-table.generated', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/styles/token-table.generated')>();
+  return {
+    get TOKEN_ROWS() {
+      return fake.rows ?? real.TOKEN_ROWS;
+    },
+  };
 });
 
 import ComponentsPage from './page';
@@ -28,7 +30,7 @@ const designSystem = readFileSync(
 const colourRows = parseTokenTable(designSystem).filter((row) => row.group === 'Colors');
 
 beforeEach(() => {
-  fake.markdown = null;
+  fake.rows = null;
 });
 
 describe('Component Library', () => {
@@ -52,15 +54,17 @@ describe('Component Library', () => {
   });
 
   it('follows the table: a token added to the markdown appears, one removed disappears', async () => {
-    const removed = colourRows[colourRows.length - 1].name;
-    fake.markdown = designSystem
-      .split('\n')
-      .filter((line) => !line.startsWith(`| ${removed} |`))
-      .join('\n')
-      .replace(
-        '| **Radius** | | |',
-        '| color-zz-invented | #123456 | #654321 |\n| **Radius** | | |',
-      );
+    const paired = new Set(PAIRS.flat());
+    // A token no contrast pair uses, so the page can lose it and still render.
+    const removed = colourRows.findLast((row) => !paired.has(row.name))!.name;
+    const rows = parseTokenTable(designSystem).filter((row) => row.name !== removed);
+    const at = rows.findIndex((row) => row.group === 'Radius');
+    rows.splice(at, 0, {
+      group: 'Colors',
+      name: 'color-zz-invented',
+      values: { dark: '#123456', light: '#654321' },
+    });
+    fake.rows = rows;
     render(await ComponentsPage());
     const names = screen.getAllByTestId('swatch').map((s) => s.getAttribute('data-token'));
     expect(names).toContain('color-zz-invented');
@@ -108,5 +112,12 @@ describe('Component Library', () => {
     expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toBeInTheDocument();
+    // The button is the one users/user-form.tsx renders, not a page-local lookalike.
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('bg-primary');
+  });
+
+  it('touches no file at runtime: the production image carries no docs/', () => {
+    const source = readFileSync(join(process.cwd(), 'src/app/(app)/components/page.tsx'), 'utf8');
+    expect(source).not.toMatch(/node:fs|from 'fs'|process\.cwd|docs\//);
   });
 });

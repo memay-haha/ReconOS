@@ -1,26 +1,21 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
 import type { ReactElement } from 'react';
 
 import { FieldError } from '@/components/field-error';
 import { contrastRatio } from '@/styles/contrast';
-
-import { parseTokenTable } from '../../../../scripts/generate-tokens.mjs';
+import { PAIRS } from '@/styles/contrast-pairs';
+import { TOKEN_ROWS } from '@/styles/token-table.generated';
+import type { TokenRow } from '@/styles/token-table.generated';
 import { PaginationDemo } from './pagination-demo';
 
-type Row = ReturnType<typeof parseTokenTable>[number];
+type Row = TokenRow;
 type Theme = 'dark' | 'light';
 
-// The grey text ramp and the surfaces each step is held to 4.5:1 on, by the design
-// system's own account. Only token names live here; every value comes from the table.
-const RAMP: ReadonlyArray<readonly [string, readonly string[]]> = [
-  ['fg', ['bg', 'surface', 'surface-2', 'surface-3']],
-  ['fg-muted', ['bg', 'surface', 'surface-2', 'surface-3']],
-  ['fg-faint', ['bg', 'surface', 'surface-2', 'surface-3']],
-  ['fg-dim', ['bg', 'surface-dim', 'surface-container-low', 'surface-container']],
-  ['fg-dimmest', ['bg']],
-];
+// The grey text ramp: each step on the surfaces the contrast test holds it to.
+const RAMP_TOKENS = ['fg', 'fg-muted', 'fg-faint', 'fg-dim', 'fg-dimmest'] as const;
+const RAMP: ReadonlyArray<readonly [string, readonly string[]]> = RAMP_TOKENS.map((token) => [
+  token,
+  PAIRS.filter(([fg]) => fg === `color-${token}`).map(([, bg]) => bg.replace('color-', '')),
+]);
 
 /** A blank light cell means the token does not change with the theme. */
 function valueIn(row: Row, theme: Theme): string {
@@ -42,7 +37,7 @@ function Swatch({ row, bg }: { row: Row; bg: Row }): ReactElement {
     <li
       data-testid="swatch"
       data-token={row.name}
-      className="flex items-center gap-space-md rounded-md border border-border bg-surface p-space-md"
+      className="flex items-center gap-space-md rounded-md border border-border bg-bg p-space-md"
     >
       <span
         aria-hidden="true"
@@ -79,16 +74,19 @@ function RampCell({ token, surface }: { token: Row; surface: Row }): ReactElemen
   );
 }
 
-const BUTTON_BASE =
-  'rounded-md px-space-md py-space-sm text-body-default font-semibold disabled:opacity-60';
+// Class strings copied from users/user-form.tsx, the screen that renders them.
+const LABEL = 'text-label-caps uppercase text-fg-muted';
+const FIELD =
+  'h-10 w-full rounded-sm border border-border bg-surface-2 px-space-md text-body-default text-fg ' +
+  'focus:outline-none focus:ring-2 focus:ring-ring';
+const PRIMARY =
+  'h-10 rounded-sm bg-primary px-space-xl text-panel-title text-on-primary focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60';
+const SECONDARY =
+  'h-10 rounded-sm border border-border px-space-xl text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring';
 
 export default async function ComponentsPage(): Promise<ReactElement> {
-  // The design system is the single source: this page renders it, never a copy of it.
-  const markdown = readFileSync(
-    join(/* turbopackIgnore: true */ process.cwd(), '..', 'docs', 'design', 'design-system.md'),
-    'utf8',
-  );
-  const table = parseTokenTable(markdown);
+  // Rows come from the generated module, itself reproduced from the Token Table by a test.
+  const table = TOKEN_ROWS;
   const byName = new Map(table.map((row) => [row.name, row]));
   const need = (name: string): Row => {
     const row = byName.get(name);
@@ -178,36 +176,22 @@ export default async function ComponentsPage(): Promise<ReactElement> {
         </h2>
 
         <div className="flex flex-wrap gap-space-sm">
-          <button type="button" className={`${BUTTON_BASE} bg-accent text-accent-ink`}>
-            Primary
+          <button type="button" className={PRIMARY}>
+            Save
           </button>
-          <button
-            type="button"
-            className={`${BUTTON_BASE} border border-border-strong bg-surface text-fg`}
-          >
-            Secondary
+          <button type="button" disabled className={PRIMARY}>
+            Save (disabled)
           </button>
-          <button
-            type="button"
-            className={`${BUTTON_BASE} border border-crit-bd bg-crit-soft text-crit`}
-          >
-            Destructive
-          </button>
-          <button type="button" disabled className={`${BUTTON_BASE} bg-accent text-accent-ink`}>
-            Disabled
+          <button type="button" className={SECONDARY}>
+            Cancel
           </button>
         </div>
 
         <div className="flex max-w-sm flex-col gap-space-xs">
-          <label htmlFor="sample-input" className="text-label-caps text-fg-muted uppercase">
+          <label htmlFor="sample-input" className={LABEL}>
             Username
           </label>
-          <input
-            id="sample-input"
-            type="text"
-            placeholder="analyst"
-            className="rounded-md border border-border-strong bg-surface px-space-md py-space-sm text-body-default text-fg placeholder:text-fg-faint"
-          />
+          <input id="sample-input" type="text" className={FIELD} />
           <FieldError errors={{ username: 'missing' }} field="username" />
         </div>
 

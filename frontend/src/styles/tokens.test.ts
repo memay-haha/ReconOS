@@ -4,18 +4,33 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { generateCss, parseTokenTable } from '../../scripts/generate-tokens.mjs';
+import {
+  generateCss,
+  generateTokenModule,
+  parseTokenTable,
+} from '../../scripts/generate-tokens.mjs';
 import { deltaE } from '../../scripts/colour-audit.mjs';
 import { contrastRatio } from './contrast';
+import { PAIRS } from './contrast-pairs';
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const designSystem = readFileSync(`${repoRoot}/docs/design/design-system.md`, 'utf8');
 const committedCss = readFileSync(`${repoRoot}/frontend/src/styles/globals.css`, 'utf8');
+const committedModule = readFileSync(
+  `${repoRoot}/frontend/src/styles/token-table.generated.ts`,
+  'utf8',
+);
 
 describe('token generator', () => {
   it('reproduces the committed stylesheet exactly', () => {
     // A hand edit to globals.css, or a token table that drifts from it, fails here.
     expect(generateCss(designSystem)).toBe(committedCss);
+  });
+
+  it('reproduces the committed token module exactly', () => {
+    // The Component Library imports this module; an edit to the table without
+    // `pnpm tokens` fails here, as it does for the stylesheet.
+    expect(generateTokenModule(designSystem)).toBe(committedModule);
   });
 
   it('emits every token from the table', () => {
@@ -65,51 +80,6 @@ describe('token generator', () => {
     expect(rows.some((r) => r.name === 'token' || r.name.includes('*'))).toBe(false);
   });
 });
-
-/**
- * Foreground token on background token, one entry per place the screens paint text or an
- * icon straight onto that fill. A pair earns a line here only when a component renders
- * the first token on the second one; a pair that nothing renders proves nothing.
- */
-const TEXT_SURFACES = ['color-bg', 'color-surface', 'color-surface-2', 'color-surface-3'];
-// Text tokens that any screen may set on any of the four surfaces.
-const TEXT_ON_ANY_SURFACE = [
-  'color-fg-muted',
-  'color-fg-faint',
-  'color-crit-strong',
-  'color-status-pink',
-  'color-status-violet',
-  'color-status-queue',
-  'color-status-targets',
-];
-// fg-dim and fg-dimmest are scoped to the backgrounds the mockups really set them on
-// (traced per text element): constraining them to the worst case flattened the grey ramp.
-// The mockup hexes of fg-faint, fg-dim and fg-dimmest failed AA, so their values
-// deliberately depart from them (debt 24).
-const DIM_BACKGROUNDS = [
-  'color-bg',
-  'color-surface-dim',
-  'color-surface-container-low',
-  'color-surface-container',
-];
-
-const PAIRS: ReadonlyArray<readonly [string, string]> = [
-  ...TEXT_ON_ANY_SURFACE.flatMap((fg) => TEXT_SURFACES.map((bg) => [fg, bg] as const)),
-  ...DIM_BACKGROUNDS.map((bg) => ['color-fg-dim', bg] as const),
-  ['color-fg-dimmest', 'color-bg'],
-  // Amber and red strong badges.
-  ['color-warn', 'color-warn-strong-soft'],
-  ['color-crit-strong', 'color-crit-strong-soft'],
-  // Text and icons laid over the capture thumbnail backdrops.
-  ...['good', 'info', 'violet', 'rose', 'warm'].map(
-    (name) => ['color-fg', `color-thumb-${name}`] as const,
-  ),
-  // Body text on the application canvas behind every screen.
-  ['color-fg', 'color-bg'],
-  // Body text inside cards, panels and table rows.
-  ['color-fg', 'color-surface'],
-  // Secondary text on a card: column headers, timestamps, helper lines.
-];
 
 describe.each([['dark'], ['light']] as const)('%s theme contrast', (theme) => {
   const rows = parseTokenTable(designSystem);

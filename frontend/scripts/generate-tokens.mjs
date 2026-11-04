@@ -146,10 +146,35 @@ export function generateCss(markdown) {
   return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${COLOUR_SCHEME}\n${BASE_LAYER}\n${lightOverrides(rows)}`;
 }
 
+/**
+ * The parsed Token Table as a TypeScript module, so the Component Library page imports its
+ * rows instead of reading docs/ at runtime (the production image carries no docs/).
+ * @param {string} markdown
+ * @returns {string}
+ */
+export function generateTokenModule(markdown) {
+  const rows = parseTokenTable(markdown);
+  return `// Token Table rows generated from docs/design/design-system.md. Do not hand-edit:
+// change the design system first, then run \`pnpm tokens\`.
+export interface TokenRow {
+  readonly group: string | null;
+  readonly name: string;
+  readonly values: Readonly<Record<string, string>>;
+}
+
+export const TOKEN_ROWS: readonly TokenRow[] = ${JSON.stringify(rows, null, 2)};
+`;
+}
+
 function main() {
   const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
   const markdown = readFileSync(`${repoRoot}/docs/design/design-system.md`, 'utf8');
   writeFileSync(`${repoRoot}/frontend/src/styles/globals.css`, generateCss(markdown), 'utf8');
+  writeFileSync(
+    `${repoRoot}/frontend/src/styles/token-table.generated.ts`,
+    generateTokenModule(markdown),
+    'utf8',
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();
