@@ -8,6 +8,7 @@ import { useMe } from '@/lib/auth';
 import { useActiveSessionCount } from '@/lib/sessions';
 import { useUsers } from '@/lib/users';
 
+import { SessionPanel } from './session-panel';
 import { StatCards } from './stat-cards';
 import { UserActions } from './user-actions';
 import { UserForm } from './user-form';
@@ -86,6 +87,8 @@ export default function UsersPage(): ReactElement {
                   isSelf={selectedUser.id === me.data?.id}
                 />
               </div>
+              <h2 className="text-panel-title text-fg">Phiên đăng nhập</h2>
+              <SessionPanel key={selectedUser.id} userId={selectedUser.id} />
             </section>
           )}
           <Pagination

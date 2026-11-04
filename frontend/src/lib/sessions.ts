@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
 
@@ -33,5 +33,25 @@ export function useActiveSessionCount() {
     queryKey: sessionKeys.active,
     queryFn: () => apiRequest<SessionPage>('/user-sessions'),
     select: (page) => page.total,
+  });
+}
+
+/** A null userId (no account selected) disables the query, so no request is sent. */
+export function useUserSessions(userId: string | null) {
+  return useQuery({
+    queryKey: sessionKeys.ofUser(userId ?? ''),
+    queryFn: () => apiRequest<SessionPage>(`/users/${userId as string}/sessions`),
+    enabled: userId !== null,
+  });
+}
+
+/** Superadmin only: a refusal surfaces as the mutation error. */
+export function useRevokeSession() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) =>
+      apiRequest<void>(`/user-sessions/${sessionId}`, { method: 'DELETE' }),
+    // The prefix covers both the per-account list and the active-session count.
+    onSuccess: () => client.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }
