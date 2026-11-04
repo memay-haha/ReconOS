@@ -38,6 +38,15 @@
 
 ## 🔄 Token và theme
 
+Đo trên 17 file trong `docs/design/screens/`:
+
+| Nhóm | Số hex | Lần dùng |
+|---|---|---|
+| Trùng y hệt token đã có | 11 | 246 |
+| Ánh xạ được sang token cùng vai trò, ΔE ≤ 5 | 15 | 427 |
+| Cần token mới, ΔE > 5 | 26 | 300 |
+| **Tổng** | **52** | **973** |
+
 - Thêm 41 màu mockup đang viết thẳng mà bảng token chưa có vào bảng Token Table của [design-system.md](../../design/design-system.md), đặt tên theo vai trò chứ không theo giá trị.
 - Gộp cặp lệch một chữ số, ví dụ `#161d2b` và `#161d2a`, thành một token.
 - 11 màu trùng token sẵn có thì dùng tên token, ❌ không thêm token mới.
