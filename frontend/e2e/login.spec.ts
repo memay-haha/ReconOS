@@ -17,9 +17,9 @@ test.beforeAll(() => {
 async function signIn(page: Page, secret: string, settled: () => Promise<void>): Promise<void> {
   await expect(async () => {
     await page.goto('/login');
-    await page.getByLabel('Tên đăng nhập').fill(username);
-    await page.getByLabel('Mật khẩu').fill(secret);
-    await page.getByRole('button', { name: 'Đăng nhập' }).click();
+    await page.getByLabel('Username').fill(username);
+    await page.getByLabel('Password').fill(secret);
+    await page.getByRole('button', { name: 'Sign in' }).click();
     await settled();
   }).toPass({ timeout: 20_000 });
 }
@@ -39,9 +39,9 @@ test('sends an anonymous visitor from the users screen to the sign in screen', a
 
 test('signs in, lands on the users screen and signs out again', async ({ page }) => {
   await signIn(page, password, () => expect(page).toHaveURL(/\/users$/));
-  await expect(page.getByRole('heading', { name: 'Tài khoản và phân quyền' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Users & Access Control' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Đăng xuất' }).click();
+  await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);
 
   // The cookie is gone, so the guarded screen refuses again.
@@ -60,9 +60,9 @@ test('the sign in form posts, and an unhydrated submit leaves the credentials ou
   const page = await context.newPage();
   await page.goto('/login');
   await expect(page.locator('form')).toHaveAttribute('method', 'post');
-  await page.getByLabel('Tên đăng nhập').fill('e2e-unhydrated-user');
-  await page.getByLabel('Mật khẩu').fill(WRONG_PASSWORD);
-  await page.getByRole('button', { name: 'Đăng nhập' }).click();
+  await page.getByLabel('Username').fill('e2e-unhydrated-user');
+  await page.getByLabel('Password').fill(WRONG_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForLoadState('load');
   expect(page.url()).not.toContain('username=');
   expect(page.url()).not.toContain('password=');
@@ -73,7 +73,7 @@ test('rejects a wrong password with the shared message', async ({ page }) => {
   // Next adds its own route announcer with role=alert, so match on the sentence.
   await signIn(page, WRONG_PASSWORD, () =>
     expect(
-      page.getByRole('alert').filter({ hasText: 'Tên đăng nhập hoặc mật khẩu không đúng' }),
+      page.getByRole('alert').filter({ hasText: 'Incorrect username or password' }),
     ).toBeVisible(),
   );
   await expect(page).toHaveURL(/\/login$/);

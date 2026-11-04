@@ -61,6 +61,7 @@ export function Pagination({
   onNext: () => void;
 }): ReactElement {
   const total = COUNT.format(page.total);
+  const rows = page.total === 1 ? 'row' : 'rows';
   // The visible word comes first in the accessible name (WCAG 2.5.3 label in name).
   const named = (word: string) => `${word}, ${label.toLowerCase()}`;
   return (
@@ -69,7 +70,7 @@ export function Pagination({
       className="flex flex-wrap items-center justify-between gap-gutter py-space-md"
     >
       <span className="text-body-default text-fg-muted">
-        {page.totalIsEstimate ? `About ${total} rows` : `${total} rows`}
+        {page.totalIsEstimate ? `About ${total} ${rows}` : `${total} ${rows}`}
       </span>
       <span className="flex gap-space-sm">
         <button

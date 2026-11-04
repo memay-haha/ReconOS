@@ -14,7 +14,8 @@ const UNREACHABLE = 'Cannot reach the server. Check your connection and try agai
 const UNEXPECTED = 'Could not sign in. Try again later.';
 
 function lockoutMessage(seconds: number | undefined): string {
-  if (seconds === undefined) return 'Too many failed attempts.';
+  if (seconds === undefined)
+    return 'Too many failed attempts. This account is temporarily blocked.';
   const minutes = Math.max(1, Math.ceil(seconds / 60));
   return `Too many failed attempts. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
 }

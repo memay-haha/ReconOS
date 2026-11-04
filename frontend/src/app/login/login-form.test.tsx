@@ -70,8 +70,10 @@ describe('LoginForm', () => {
     wrap(<LoginForm />);
     await submit('rootadmin', 'wrong password here');
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/too many failed attempts/i);
-    expect(alert).not.toHaveTextContent(/minutes/i);
+    expect(alert).toHaveTextContent(
+      /too many failed attempts. this account is temporarily blocked/i,
+    );
+    expect(alert).not.toHaveTextContent(/minute/i);
   });
 
   it('says the server could not be reached on a network failure', async () => {

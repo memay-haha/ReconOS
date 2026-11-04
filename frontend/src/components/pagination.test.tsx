@@ -7,6 +7,23 @@ import { Pagination, useCursorStack } from './pagination';
 const noop = () => undefined;
 
 describe('Pagination', () => {
+  it.each([
+    [0, '0 rows'],
+    [1, '1 row'],
+    [2, '2 rows'],
+  ])('writes a total of %i as "%s"', (total, text) => {
+    render(
+      <Pagination
+        page={{ total, totalIsEstimate: false, nextCursor: null }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+      />,
+    );
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
   it('disables Previous on the first page', () => {
     render(
       <Pagination
