@@ -182,7 +182,7 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
 
 Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Khối `@theme` giữ cột `dark` vì các mockup chỉ có theme tối. Cột `light` thành khối ghi đè: dưới `prefers-color-scheme: light` khi `<html>` không có `data-theme="dark"`, và dưới `data-theme="light"`. Cột `light` để trống nghĩa là token không đổi theo theme.
 
-Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. Ba token chữ `fg-faint`, `fg-dim`, `fg-dimmest` là ngoại lệ có chủ ý: hex của mockup (`#6a7483` 3,82, `#64748b` 3,80, `#475569` 2,39 trên `color-surface`) không đạt WCAG 2.1 AA, mà theme tối là mặc định. Giữ nguyên sắc, chỉ nâng độ sáng thành `#8f9aaa`, `#8a95a6`, `#8590a1`, nằm sau `fg-muted` `#9aa4b2`. Mỗi token chữ mới đạt 4,5 trên cả bốn nền `bg`, `surface`, `surface-2`, `surface-3` ở cả hai theme. Bốn bậc `fg-muted`, `fg-faint`, `fg-dim`, `fg-dimmest` vì thế sát nhau: bậc nào cũng phải đạt 4,5 trên `surface-3`.
+Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. Ba token chữ `fg-faint`, `fg-dim`, `fg-dimmest` là ngoại lệ có chủ ý: hex của mockup (`#6a7483` 3,82, `#64748b` 3,80, `#475569` 2,39 trên `color-surface`) không đạt WCAG 2.1 AA, mà theme tối là mặc định. Giữ nguyên sắc, chỉ nâng độ sáng. Mỗi token đạt 4,5 trên các nền mockup thật sự đặt nó lên: `fg-faint` (947 lần dùng, có mặt trên `surface-3`) đạt trên `bg`, `surface`, `surface-2`, `surface-3`; `fg-dim` trên `bg`, `surface-dim`, `surface-container-low`, `surface-container`; `fg-dimmest` (37/37 lần trên nền `bg`) chỉ trên `bg`. Nhờ vậy bốn bậc `fg-muted`, `fg-faint`, `fg-dim`, `fg-dimmest` ở theme tối cách nhau ΔE 8,34, 5,12 và 4,80, đều trên ngưỡng 2,3 mà mắt phân biệt được.
 
 Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
 
@@ -248,10 +248,10 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền 
 | color-border | #282d38 | #d2d6df |
 | color-border-strong | #3a4150 | #a0a9ba |
 | color-fg | #e7ebf0 | #171e26 |
-| color-fg-muted | #9aa4b2 | #525e6f |
-| color-fg-faint | #8f9aaa | #535f71 |
-| color-fg-dim | #8a95a6 | #556173 |
-| color-fg-dimmest | #8590a1 | #566274 |
+| color-fg-muted | #9aa4b2 | #3f4a5a |
+| color-fg-faint | #868e9a | #4c5869 |
+| color-fg-dim | #7d8a9e | #566274 |
+| color-fg-dimmest | #75808f | #667286 |
 | color-accent-hover | #5ee0f2 | #00515c |
 | color-accent-ink | #06222b | #f1fafd |
 | color-accent-soft | #0c2b33 | #e6f5f9 |
