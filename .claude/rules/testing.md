@@ -7,7 +7,7 @@ paths:
 ---
 # Kiểm thử
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 21: Kiểm thử
 
 ## ✅ Bắt buộc

@@ -1,6 +1,6 @@
 # Đồng bộ tài liệu khi quyết định thay đổi
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
 
 Áp dụng khi có quyết định mới hoặc quyết định thay đổi: người dùng chốt trong hội thoại, ADR mới, thay đổi mã làm đổi hành vi hệ thống.
 

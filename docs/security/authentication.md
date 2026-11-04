@@ -1,6 +1,6 @@
 # Xác thực
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
 > Mục 7: Xác thực
 > Liên quan: [system.md](../architecture/system.md), [authorization.md](authorization.md), [modules.md](../architecture/modules.md)
 
