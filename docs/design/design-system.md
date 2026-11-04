@@ -145,6 +145,8 @@ spacing:
   space-xl: 1.5rem
 ---
 
+> Khối `colors` trong frontmatter là bản xuất của Stitch, giữ nguyên để nạp lại được vào công cụ. Nguồn màu duy nhất của mã là bảng Token Table ở mục Color Strategy & Roles: chỉ bảng đó sinh ra `frontend/src/styles/globals.css`. Hai nơi khác nhau thì bảng Token Table đúng.
+
 ## Brand & Style
 
 This design system delivers a hyper-focused, mission-critical workspace engineered specifically for security analysts, incident responders, and reconnaissance operators. Built on the principles of **technical utilitarianism** and **high-density ergonomics**, the interface discards decorative marketing tropes—such as neon glows, aggressive glassmorphism, or gratuitous gradients—in favor of structural clarity, high data fidelity, and uninterrupted visual stamina during prolonged operations.
@@ -183,7 +185,7 @@ Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `fro
 Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
 
 - Nền và chữ đổi chiều cho nhau: `bg`, `surface*`, `*-soft` chuyển sang gần trắng, `fg*`, `on-*` chuyển sang tối.
-- Màu accent `#22d3ee`, 5 màu trạng thái và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng.
+- Màu accent `#22d3ee`, 4 màu trạng thái `good`, `warn`, `crit`, `info` và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng. Màu `neutral` không có sắc nên chỉ đổi độ sáng.
 - Nhóm `*-fixed*` của Material 3 không đổi theo theme nên hai cột bằng nhau.
 
 Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
