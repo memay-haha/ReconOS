@@ -134,4 +134,15 @@ describe('LoginForm', () => {
     const { container } = wrap(<LoginForm />);
     expect(container.querySelector('form')).toHaveAttribute('method', 'post');
   });
+
+  it('reveals and hides the password without copying it into the markup', async () => {
+    wrap(<LoginForm />);
+    const field = screen.getByLabelText(/^password$/i);
+    await userEvent.type(field, 'hunter2hunter2');
+    await userEvent.click(screen.getByRole('button', { name: /show characters/i }));
+    expect(field).toHaveAttribute('type', 'text');
+    expect(field).not.toHaveAttribute('value');
+    await userEvent.click(screen.getByRole('button', { name: /hide characters/i }));
+    expect(field).toHaveAttribute('type', 'password');
+  });
 });
