@@ -14,10 +14,11 @@ function remember(theme: Theme): void {
   }
 }
 
-function prefersDark(): boolean {
+// Dark is the stylesheet default, so the system shows light only when it asks for light.
+function prefersLight(): boolean {
   return (
     typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
+    window.matchMedia('(prefers-color-scheme: light)').matches
   );
 }
 
@@ -28,9 +29,9 @@ function current(): Theme | null {
 
 export function ThemeToggle() {
   // The document attribute is the state, set before paint by public/theme-init.js.
-  // No attribute means "follow the operating system".
+  // No attribute means "follow the operating system", which is dark unless it asks for light.
   const toggle = () => {
-    const shown = current() ?? (prefersDark() ? 'dark' : 'light');
+    const shown = current() ?? (prefersLight() ? 'light' : 'dark');
     const next: Theme = shown === 'dark' ? 'light' : 'dark';
     remember(next);
     document.documentElement.setAttribute('data-theme', next);

@@ -26,34 +26,37 @@ describe('token generator', () => {
     }
   });
 
-  it('overrides every theme dependent token under data-theme dark', () => {
+  it('puts the dark value in @theme, because the mockups are dark', () => {
     const css = generateCss(designSystem);
-    const dark = css.split('[data-theme="dark"]')[1];
-    expect(dark).toBeDefined();
+    const theme = css.slice(css.indexOf('@theme'), css.indexOf('@media'));
     for (const row of parseTokenTable(designSystem)) {
-      if (row.values.light === '' || row.values.light === row.values.dark) continue;
-      expect(dark).toContain(`--${row.name}: ${row.values.dark};`);
+      if (row.values.dark === '') continue;
+      expect(theme).toContain(`--${row.name}: ${row.values.dark};`);
     }
   });
 
-  it('keeps theme invariant tokens out of the override blocks', () => {
+  it('overrides only the tokens whose light value differs', () => {
     const css = generateCss(designSystem);
-    const overrides = css.slice(css.indexOf('@media (prefers-color-scheme: dark)'));
-    expect(overrides).toContain(':root[data-theme="dark"]');
+    const override = css.slice(css.indexOf(':root[data-theme="light"]'));
     for (const row of parseTokenTable(designSystem)) {
-      if (row.values.light === '' || row.values.light === row.values.dark) {
-        expect(overrides).not.toContain(`--${row.name}:`);
-      }
+      const differs = row.values.light !== '' && row.values.light !== row.values.dark;
+      if (differs) expect(override).toContain(`--${row.name}: ${row.values.light};`);
+      else expect(override).not.toContain(`--${row.name}:`);
     }
   });
 
   it('declares the same overrides for the media query and the attribute', () => {
     const css = generateCss(designSystem);
     const declarations = (block: string) => block.match(/--[\w-]+: [^;]+;/g);
-    const media = css.split('@media (prefers-color-scheme: dark)')[1].split('\n}\n')[0];
-    const attribute = css.split(':root[data-theme="dark"]')[1].split('\n}\n')[0];
+    const media = css.split('@media (prefers-color-scheme: light)')[1].split('\n}\n')[0];
+    const attribute = css.split(':root[data-theme="light"]')[1].split('\n}\n')[0];
     expect(declarations(media)).toEqual(declarations(attribute));
     expect(declarations(media)?.length).toBeGreaterThan(0);
+  });
+
+  it('lets the operating system pick light only when the reader has not chosen dark', () => {
+    const css = generateCss(designSystem);
+    expect(css).toContain(':root:not([data-theme="dark"])');
   });
 
   it('skips group rows and the header row', () => {
@@ -74,6 +77,9 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['color-fg', 'color-surface'],
   // Secondary text on a card: column headers, timestamps, helper lines.
   ['color-fg-muted', 'color-surface'],
+  // Placeholder and disabled text on a card. Debt 24: failed AA in the dark theme.
+  ['color-fg-faint', 'color-surface'],
+  ['color-fg-faint', 'color-bg'],
   // Material role text on a Material role surface, used by the imported role family.
   ['color-on-surface', 'color-surface'],
   // Material role supporting text under a list item title.

@@ -180,7 +180,9 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
 
 ### Token Table
 
-Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Cột `light` để trống nghĩa là token không đổi theo theme.
+Script `frontend/scripts/generate-tokens.mjs` đọc bảng này để sinh `frontend/src/styles/globals.css`. Mỗi dòng một token. Khối `@theme` giữ cột `dark` vì các mockup chỉ có theme tối. Cột `light` thành khối ghi đè: dưới `prefers-color-scheme: light` khi `<html>` không có `data-theme="dark"`, và dưới `data-theme="light"`. Cột `light` để trống nghĩa là token không đổi theo theme.
+
+Cột `dark` của các token mới (`*-strong*`, `border-subtle`, `border-raised`, `fg-dim`, `fg-dimmest`, `status-*`, `thumb-*`) lấy đúng hex của mockup, nên theme tối khớp từng pixel. `color-fg-faint` là ngoại lệ: giá trị cũ `#6a7483` chỉ đạt 3,82 trên `color-surface`, nên nâng lên `#7c8696` (4,91). `fg-dim` và `fg-dimmest` giữ hex của mockup và chưa đạt AA ở theme tối; chưa có component nào vẽ chúng, nên chưa nằm trong bộ cặp kiểm tra.
 
 Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi độ sáng, độ bão hòa:
 
@@ -188,7 +190,7 @@ Cột `light` suy từ cột `dark`, giữ nguyên sắc màu và chỉ đổi �
 - Màu accent `#22d3ee`, 4 màu trạng thái `good`, `warn`, `crit`, `info` và 4 màu `asset-*` giữ sắc, hạ độ sáng đủ để đạt WCAG 2.1 AA trên nền sáng. Màu `neutral` không có sắc nên chỉ đổi độ sáng.
 - Nhóm `*-fixed*` của Material 3 không đổi theo theme nên hai cột bằng nhau.
 
-Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
+Test `frontend/src/styles/tokens.test.ts` kiểm tra 15 cặp chữ trên nền của cả hai theme đạt tỉ lệ tương phản tối thiểu 4,5.
 
 | token | dark | light |
 |---|---|---|
@@ -247,7 +249,9 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền 
 | color-border-strong | #3a4150 | #a0a9ba |
 | color-fg | #e7ebf0 | #171e26 |
 | color-fg-muted | #9aa4b2 | #525e6f |
-| color-fg-faint | #6a7483 | #5f6b7c |
+| color-fg-faint | #7c8696 | #5f6b7c |
+| color-fg-dim | #64748b | #5b6778 |
+| color-fg-dimmest | #475569 | #616d7f |
 | color-accent-hover | #5ee0f2 | #00515c |
 | color-accent-ink | #06222b | #f1fafd |
 | color-accent-soft | #0c2b33 | #e6f5f9 |
@@ -271,6 +275,22 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra 13 cặp chữ trên nền 
 | color-asset-url | #3b82f6 | #1056c6 |
 | color-asset-ip | #d97706 | #a45904 |
 | color-asset-service | #db2777 | #b3195e |
+| color-border-subtle | #1e2738 | #dde1e8 |
+| color-border-raised | #26354d | #b8c0cd |
+| color-crit-strong | #f87171 | #b91c1c |
+| color-crit-strong-bd | #991b1b | #e8a9a9 |
+| color-crit-strong-soft | #450a0a | #fdecec |
+| color-warn-strong-bd | #78350f | #e9c8a0 |
+| color-warn-strong-soft | #451a03 | #fdf0e1 |
+| color-status-pink | #f472b6 | #a8286b |
+| color-status-violet | #c4b5fd | #5b45c2 |
+| color-status-queue | #fb923c | #a65a0a |
+| color-status-targets | #f97316 | #b4440a |
+| color-thumb-good | #15231c | #e3f4ea |
+| color-thumb-info | #0c2438 | #e0eef9 |
+| color-thumb-violet | #1a1726 | #ebe7f7 |
+| color-thumb-rose | #221820 | #f7e6ec |
+| color-thumb-warm | #241a14 | #f7ece2 |
 | **Radius** | | |
 | radius-sm | 0.25rem |  |
 | radius | 0.5rem |  |

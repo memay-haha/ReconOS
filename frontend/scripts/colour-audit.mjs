@@ -77,11 +77,12 @@ export function collectMockupColours(dir) {
   return found;
 }
 
-/** Read `{tokenName: darkValue}` from the `:root[data-theme="dark"]` block of
- * globals.css. Names lose the `color-` prefix; an alpha channel is dropped. */
+/** Read `{tokenName: darkValue}` from the `@theme` block of globals.css, which carries
+ * the dark values because dark is the default theme. Names lose the `color-` prefix; an
+ * alpha channel is dropped. */
 export function darkTokenValues(css) {
-  const start = css.indexOf(':root[data-theme="dark"]');
-  if (start < 0) throw new Error('no dark theme block in the stylesheet');
+  const start = css.indexOf('@theme');
+  if (start < 0) throw new Error('no @theme block in the stylesheet');
   const block = css.slice(start, css.indexOf('}', start));
   const out = {};
   for (const m of block.matchAll(/--color-([\w-]+):\s*(#[0-9a-fA-F]{6})[0-9a-fA-F]{0,2};/g)) {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { collectMockupColours, darkTokenValues, deltaE, nearestToken } from './colour-audit.mjs';
+import { collectMockupColours, deltaE, nearestToken } from './colour-audit.mjs';
 
 describe('deltaE', () => {
   it('is zero for a colour against itself', () => {
@@ -87,12 +87,11 @@ describe('colour-map.json', () => {
   });
 
   it('names new tokens by role, never by appearance', () => {
-    const existing = darkTokenValues(
-      readFileSync(`${repoRoot}frontend/src/styles/globals.css`, 'utf8'),
-    );
+    // Two Material role names predate this rule and are exempt.
+    const existing = new Set(['surface-2', 'surface-bright']);
     const appearance = new Set(['mid', 'bright', 'dark', 'light', 'pale', 'deep']);
     for (const token of new Set(Object.values(map))) {
-      if (token in existing) continue;
+      if (existing.has(token)) continue;
       expect(
         token.split('-').filter((part) => appearance.has(part)),
         token,
