@@ -34,6 +34,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 
 - Đặt client gọi API và hook TanStack Query theo tài nguyên trong `src/lib/`.
 - Endpoint backend chưa làm thì trả dữ liệu mẫu bằng MSW trong `src/mocks/`, chỉ bật ở chế độ phát triển. Màn hình gọi đúng endpoint trong [openapi.yaml](../docs/api/openapi.yaml), ❌ không rẽ nhánh theo cờ thật hay giả. Backend làm xong endpoint nào thì xóa handler của endpoint đó.
+- ❌ Không đọc file ngoài `frontend/` lúc chạy. Image chỉ copy `frontend/`, và `.dockerignore` loại `docs/`, nên đường dẫn kiểu `../docs/...` chạy được khi phát triển nhưng trả lỗi 500 trong container. Cần dữ liệu từ tài liệu thì sinh ra một module trong `frontend/src/` bằng `pnpm --dir frontend tokens`, giống cách `globals.css` được sinh từ bảng Token Table.
 - Cho component trong `src/components/` chỉ nhận dữ liệu qua props.
 - Phân trang danh sách bằng cursor với nút **Trước**, **Sau**: [api/architecture.md](../docs/api/architecture.md).
 - Dùng virtual scroll cho bảng dài.
