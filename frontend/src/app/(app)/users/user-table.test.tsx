@@ -46,10 +46,14 @@ describe('UserTable', () => {
     expect(screen.getByText('Chưa đăng nhập')).toBeInTheDocument();
   });
 
-  it('writes a sign-in moment as dd/mm/yyyy on a 24 hour clock', () => {
-    render(<UserTable users={ROWS} selectedId={null} onSelect={vi.fn()} />);
-    expect(screen.getByText(/^\d{2}\/\d{2}\/2026/)).toBeInTheDocument();
-    expect(screen.queryByText(/[AP]M/)).not.toBeInTheDocument();
+  it.each([
+    ['2026-11-04T01:05:00Z', '04/11/2026 08:05'],
+    ['2026-11-04T08:30:00Z', '04/11/2026 15:30'],
+    ['2026-11-03T17:00:00Z', '04/11/2026 00:00'],
+  ])('writes %s as %s (Asia/Ho_Chi_Minh, 24 hour clock)', (iso, expected) => {
+    const row: UserRow = { ...ROWS[0]!, last_login_at: iso };
+    render(<UserTable users={[row]} selectedId={null} onSelect={vi.fn()} />);
+    expect(screen.getByText(expected)).toBeInTheDocument();
   });
 
   it('reports which row the reader picked', async () => {

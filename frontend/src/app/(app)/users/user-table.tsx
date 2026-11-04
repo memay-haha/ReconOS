@@ -17,6 +17,8 @@ const MOMENT = new Intl.DateTimeFormat('vi-VN', {
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
+  // Pinned so the text does not depend on the machine: the readers are operators in Vietnam.
+  timeZone: 'Asia/Ho_Chi_Minh',
 });
 
 /** The locale puts the clock first; the project writes dd/mm/yyyy HH:mm. */
