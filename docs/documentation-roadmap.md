@@ -25,7 +25,7 @@
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🟢 Xong       | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
 | 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-04 | v1.4: nhật ký thao tác tách thành màn hình S14 |
 | 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🟢 Xong       | 2026-11-04 | v1.4: thêm hai mối đe dọa làm lộ mật khẩu ở frontend |
-| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🟢 Xong       | 2026-11-04 | v1.2: thêm `GET /user-sessions`, `openapi.yaml` có 110 thao tác |
+| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-04 | v1.4: `GET /jobs` lọc theo `status`, `GET /findings` lọc theo `triage_status` (cả `openapi.yaml`) |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🟢 Xong       | 2026-11-01 | v1.0: HTTP, tạo job, WebSocket, request của worker |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |

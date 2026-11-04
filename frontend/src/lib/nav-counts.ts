@@ -18,7 +18,8 @@ export function useNavCounts(): Record<string, number> {
   const results = useQueries({
     queries: ENDPOINTS.map((endpoint) => ({
       queryKey: ['nav-count', endpoint] as const,
-      queryFn: () => apiRequest<{ total: number }>(`${endpoint}?limit=1`),
+      queryFn: () =>
+        apiRequest<{ total: number }>(`${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=1`),
       retry: false,
       staleTime: 30_000,
     })),

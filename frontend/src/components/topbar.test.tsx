@@ -23,7 +23,7 @@ describe('Topbar against the mockup', () => {
   it('is fixed to the top, starts at the right edge of the sidebar and is 14 tall', () => {
     render(<Topbar />);
     const header = screen.getByRole('banner');
-    for (const cls of ['fixed', 'top-0', 'left-sidebar', 'right-0', 'h-14', 'border-b']) {
+    for (const cls of ['fixed', 'top-0', 'md:left-sidebar', 'right-0', 'h-14', 'border-b']) {
       expect(header).toHaveClass(cls);
     }
   });

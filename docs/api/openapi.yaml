@@ -371,6 +371,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: status, in: query, schema: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -823,6 +824,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: triage_status, in: query, schema: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}

@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -89,7 +89,7 @@ Danh sách dùng phân trang cursor theo keyset.
 
 ### Lọc
 
-- Tham số lọc trùng tên cột: `program_id`, `severity`, `triage_status`, `in_scope`.
+- Tham số lọc trùng tên cột: `program_id`, `severity`, `triage_status`, `in_scope`, `status`. `GET /jobs` lọc theo `status`, `GET /findings` lọc theo `triage_status`. Giá trị hợp lệ: [schema.md](../data/schema.md).
 - Nhiều giá trị: lặp tham số, `severity=critical&severity=high`.
 - Khoảng thời gian: hậu tố `_from`, `_to`, ví dụ `last_seen_at_from`.
 - Tìm theo chuỗi: `q`, chỉ trên cột endpoint khai báo.
