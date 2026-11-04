@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 22/40 · 🔵 18 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 21/40 · 🔵 19 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -39,7 +39,7 @@
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt  | 2026-11-03 | Nhánh riêng cho mọi việc của một đợt, kể cả sửa tài liệu. Thêm lệnh `make bootstrap` |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v2.4: đóng nợ 4, 11, 17; thêm nợ 24 đến 31 từ review đợt 2b |
-| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong   | 2026-11-03 | v2.3: đợt 2 thêm bảng ngưỡng vận hành |
+| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.4: đợt 2 chuyển sang 🔵 Chờ duyệt, mã đã merge vào dev |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | Thêm `audit.py` vào mã dùng chung, ghi nhật ký qua `core` |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme, tên mục điều hướng tiếng Anh, `errors` là mã máy |
