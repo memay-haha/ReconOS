@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 26/42 · 🔵 16 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 29/42 · 🔵 13 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -47,7 +47,7 @@
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.5: `active_user_session_count` là trường tính, không phải cột; điều kiện phiên đang hoạt động |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |
 | 38 | `.claude/rules/doc-sync.md`                | -       | 2, 29                | 🟢 Xong         | 2026-11-04 | v1.3: thêm dòng kích hoạt cho bảng token của design system |
-| 39 | `docs/documentation-map.html`              | -       | 29, 38               | 🔵 Chờ duyệt | 2026-11-04 | Sơ đồ nhóm, đồ thị 42 file, thêm `codegraph.md`, `understand-anything.md`. Quy ước vẽ: mục 9 của documentation.md |
+| 39 | `docs/documentation-map.html`              | -       | 29, 38               | 🟢 Xong       | 2026-11-04 | Sơ đồ nhóm, đồ thị 42 file, thêm `codegraph.md`, `understand-anything.md`. Quy ước vẽ: mục 9 của documentation.md |
 | 40 | `docs/system-flows.html`                   | -       | 8, 11, 13, 14, 18    | 🟢 Xong        | 2026-11-02 | Kiến trúc, 3 luồng request, 13 luồng tính năng. Quy ước vẽ: mục 10 của documentation.md |
-| 41 | `.claude/rules/codegraph.md`                | -       | 7                    | 🔵 Chờ duyệt | 2026-11-04 | v1.0: Luôn nạp. sync trước khi tra, impact trước khi sửa symbol, affected chọn test |
-| 42 | `.claude/rules/understand-anything.md`      | -       | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v1.0: Luôn nạp. Chỉ chạy khi người dùng gọi, không bật `autoUpdate`, `docs/` thắng đồ thị |
+| 41 | `.claude/rules/codegraph.md`                | -       | 7                    | 🟢 Xong       | 2026-11-04 | v1.0: Luôn nạp. sync trước khi tra, impact trước khi sửa symbol, affected chọn test |
+| 42 | `.claude/rules/understand-anything.md`      | -       | 1                    | 🟢 Xong       | 2026-11-04 | v1.0: Luôn nạp. Chỉ chạy khi người dùng gọi, không bật `autoUpdate`, `docs/` thắng đồ thị |

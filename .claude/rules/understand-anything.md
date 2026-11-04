@@ -1,6 +1,6 @@
 # Dùng Understand Anything
 
-> Phiên bản: 1.0 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.0 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
 
 Understand Anything dùng subagent LLM phân tích repo thành đồ thị gồm tầng kiến trúc, miền nghiệp vụ và luồng nghiệp vụ, lưu ở `.ua/`. Chi phí token tăng theo số file. Tra quan hệ gọi hàm: [codegraph.md](codegraph.md).
 

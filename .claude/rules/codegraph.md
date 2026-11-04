@@ -1,6 +1,6 @@
 # Dùng CodeGraph
 
-> Phiên bản: 1.0 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.0 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
 
 CodeGraph parse mã trong `backend/`, `frontend/`, `workers/`, `contracts/` thành đồ thị symbol lưu ở `.codegraph/`, không gọi LLM. Dùng để tra quan hệ gọi hàm trước và sau khi sửa mã. Hiểu kiến trúc tổng thể: [understand-anything.md](understand-anything.md).
 
