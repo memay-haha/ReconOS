@@ -1,6 +1,6 @@
 # Luồng request
 
-> Phiên bản: 1.0 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.1 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 6: Luồng request
 > Liên quan: [authentication.md](../security/authentication.md), [authorization.md](../security/authorization.md), [api/architecture.md](../api/architecture.md), [system.md](system.md), [external-services.md](../integrations/external-services.md)
 
@@ -88,7 +88,7 @@ sequenceDiagram
 
 - `Origin` sai hoặc phiên không hợp lệ: đóng kết nối khi bắt tay.
 - Phiên hết hạn hoặc bị thu hồi khi đang mở: server đóng kết nối, trình duyệt chuyển về S01.
-- Program được gán thay đổi: áp dụng cho sự kiện tiếp theo, không cần kết nối lại.
+- Vai trò hoặc program được gán thay đổi: áp dụng cho sự kiện tiếp theo, không cần kết nối lại.
 
 ### Request từ worker
 
