@@ -1,5 +1,7 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
@@ -56,6 +58,27 @@ describe('colour-map.json', () => {
     const found = collectMockupColours(`${repoRoot}docs/design/screens`);
     const missing = [...found.keys()].filter((hex) => !(hex in map));
     expect(missing).toEqual([]);
+  });
+
+  it('has no stale key that no mockup uses any more', () => {
+    // A key nobody writes is a token we would carry forever for nothing.
+    const found = collectMockupColours(`${repoRoot}docs/design/screens`);
+    const stale = Object.keys(map).filter((hex) => !found.has(hex));
+    expect(stale).toEqual([]);
+  });
+
+  it('keeps the three amber badge borders as separate tokens', () => {
+    // Composited over the badge background #451a03 at the alphas the mockups use
+    // (/30 to /50) they are up to dE 13 apart, so they must not share a token.
+    expect(new Set([map['#78350f'], map['#b45309'], map['#d97706']]).size).toBe(3);
+    expect(map['#fb923c']).not.toBe(map['#f97316']);
+  });
+
+  it('collects colours written through divide and accent utilities', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'colours-'));
+    writeFileSync(join(dir, 'x.html'), '<i class="divide-[#abcdef] accent-[#123456]"></i>');
+    const found = collectMockupColours(dir);
+    expect([...found.keys()].sort()).toEqual(['#123456', '#abcdef']);
   });
 
   it('names tokens by role, never by value', () => {

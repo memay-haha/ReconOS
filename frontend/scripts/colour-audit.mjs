@@ -58,9 +58,9 @@ export function collectMockupColours(dir) {
   const found = new Map();
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.html'))) {
     const text = readFileSync(join(dir, file), 'utf8');
-    const re = /\b(bg|text|border|ring)-\[(#[0-9a-fA-F]{6})\]/g;
+    const re = /\b(bg|text|border|ring|divide|accent)-\[(#[0-9a-fA-F]{6})\]/g;
     for (const m of text.matchAll(re)) {
-      const role = m[1] === 'ring' ? 'border' : m[1];
+      const role = ['ring', 'divide'].includes(m[1]) ? 'border' : m[1] === 'accent' ? 'bg' : m[1];
       const hex = m[2].toLowerCase();
       const entry = found.get(hex) ?? { roles: {}, count: 0 };
       entry.roles[role] = (entry.roles[role] ?? 0) + 1;
