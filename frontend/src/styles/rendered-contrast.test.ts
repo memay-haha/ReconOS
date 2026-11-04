@@ -3,7 +3,11 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { scanPaintedForegrounds, scanRenderedPairs } from '../../scripts/scan-contrast-pairs';
+import {
+  scanPaintedForegrounds,
+  scanRenderedPairs,
+  scanUnresolvedClassNames,
+} from '../../scripts/scan-contrast-pairs';
 import type { RenderedPair } from '../../scripts/scan-contrast-pairs';
 import { CONTRAST_EXCEPTIONS, PAIRS } from './contrast-pairs';
 import { contrastRatio } from './contrast';
@@ -52,6 +56,20 @@ describe('colour pairs the screens really paint', () => {
     // A scanner that stops seeing the components would pass every assertion below in
     // silence, so the count is part of the guard.
     expect(RENDERED.length).toBeGreaterThan(30);
+  });
+
+  it('understands every className expression it reads', () => {
+    // An expression the scanner cannot evaluate contributes no pair, so a component built
+    // on it would escape the guard without a sound. Making that loud is the point.
+    const blind = scanUnresolvedClassNames(srcRoot).map(
+      (item) => `${item.where}  ${item.expression}`,
+    );
+    expect(
+      blind,
+      `The contrast scan cannot read these className expressions:\n${blind.join('\n')}\n` +
+        'Write the classes as string literals, template literals, ternaries, module-level ' +
+        'constants or lookup tables, or pass them to cn/clsx/twMerge as literal arguments.',
+    ).toEqual([]);
   });
 
   it.each(THEMES)('reaches WCAG AA in the %s theme', (theme) => {

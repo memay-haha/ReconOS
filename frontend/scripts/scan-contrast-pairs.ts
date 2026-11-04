@@ -11,12 +11,17 @@
  * every `text-*` colour with the `bg-*` colour behind it, walking up the JSX tree when
  * the element itself sets no background.
  *
+ * An expression this module cannot evaluate is never allowed to contribute nothing in
+ * silence: the resolver records the node, and `scanUnresolvedClassNames` hands every one to
+ * the test as a failure naming the file and line. Call arguments of the class helpers
+ * (`cn`, `clsx`, `classnames`, `twMerge`, `twJoin`) are understood; anything else is not.
+ *
  * Known limits, both covered by the hand list in src/styles/contrast-pairs.ts:
  * the walk stops at the top of a file, so a background a *parent component* paints is
  * invisible here, and a colour set through the `style` attribute is not a class at all.
  */
-import { globSync, readFileSync } from 'node:fs';
-import { relative } from 'node:path';
+import { existsSync, globSync, readFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
 
 import ts from 'typescript';
 
@@ -47,6 +52,17 @@ interface Frame {
 // A ternary inside a lookup table inside a template literal multiplies out fast; the
 // screens never need more than a handful of alternatives, so cap it rather than hang.
 const MAX_ALTERNATIVES = 64;
+
+/** Helpers that join their arguments into one class string, so the arguments are the classes. */
+const CLASS_HELPERS = new Set(['cn', 'clsx', 'classnames', 'classNames', 'twMerge', 'twJoin']);
+
+/** A `className` piece the resolver could not evaluate, with where it sits. */
+export interface UnresolvedClassName {
+  /** `file:line` of the expression. */
+  readonly where: string;
+  /** The source text of the expression the resolver gave up on. */
+  readonly expression: string;
+}
 
 /**
  * Splits `aria-[current=page]:bg-accent-soft` into its variant prefix and the class
@@ -91,19 +107,97 @@ function readClasses(classString: string, isColourToken: (token: string) => bool
   return { foregrounds, backgrounds };
 }
 
+/** What the resolvers of one scan share: the `src` root and one resolver per file read. */
+interface ScanContext {
+  readonly root: string;
+  readonly files: Map<string, Resolver | undefined>;
+}
+
+function newContext(root: string): ScanContext {
+  return { root, files: new Map() };
+}
+
+/** Parses a file once and hands back its resolver, or undefined when it does not exist. */
+function resolverFor(path: string, context: ScanContext): Resolver | undefined {
+  if (context.files.has(path)) return context.files.get(path);
+  context.files.set(path, undefined);
+  if (!existsSync(path)) return undefined;
+  const code = readFileSync(path, 'utf8');
+  const source = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const created = new Resolver(source, context);
+  context.files.set(path, created);
+  return created;
+}
+
 /** Every string a `className` expression can evaluate to. */
 class Resolver {
   private readonly constants = new Map<string, ts.Expression>();
+  /** Local name to the module it is imported from and the name it has there. */
+  private readonly imports = new Map<string, { specifier: string; name: string }>();
+  /** Values that are class names carrying no colour, such as a `next/font` variable. */
+  private readonly inert = new Set<string>();
   private readonly resolving = new Set<string>();
+  /** Nodes `evaluate` could not understand since the last `takeUnresolved`. */
+  private unresolved: ts.Node[] = [];
 
-  constructor(source: ts.SourceFile) {
+  constructor(
+    private readonly source: ts.SourceFile,
+    private readonly context: ScanContext,
+  ) {
+    const fontFactories = new Set<string>();
     const collect = (node: ts.Node): void => {
+      if (
+        ts.isImportDeclaration(node) &&
+        ts.isStringLiteral(node.moduleSpecifier) &&
+        node.importClause?.namedBindings !== undefined &&
+        ts.isNamedImports(node.importClause.namedBindings)
+      ) {
+        const specifier = node.moduleSpecifier.text;
+        for (const element of node.importClause.namedBindings.elements) {
+          const name = (element.propertyName ?? element.name).text;
+          this.imports.set(element.name.text, { specifier, name });
+          if (specifier.startsWith('next/font')) fontFactories.add(element.name.text);
+        }
+      }
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
         this.constants.set(node.name.text, node.initializer);
+        const call = node.initializer;
+        if (
+          ts.isCallExpression(call) &&
+          ts.isIdentifier(call.expression) &&
+          fontFactories.has(call.expression.text)
+        ) {
+          this.inert.add(node.name.text);
+        }
       }
       ts.forEachChild(node, collect);
     };
     collect(source);
+  }
+
+  /** The file an import specifier points at, for the project's own modules only. */
+  private pathOf(specifier: string): string | undefined {
+    const base = specifier.startsWith('@/')
+      ? resolve(this.context.root, specifier.slice(2))
+      : specifier.startsWith('.')
+        ? resolve(dirname(this.source.fileName), specifier)
+        : undefined;
+    if (base === undefined) return undefined;
+    return ['.ts', '.tsx', '/index.ts', '/index.tsx']
+      .map((suffix) => base + suffix)
+      .find((candidate) => existsSync(candidate));
+  }
+
+  /** What a constant imported from another project file evaluates to. */
+  private imported(name: string, at: ts.Node): string[] {
+    const from = this.imports.get(name);
+    const path = from === undefined ? undefined : this.pathOf(from.specifier);
+    const other = path === undefined ? undefined : resolverFor(path, this.context);
+    if (from === undefined || other === undefined) return this.giveUp(at);
+    const values = other.lookup(from.name, at);
+    // Nodes in the other file cannot be named here, so report the use site instead.
+    if (other.takeUnresolved().length > 0) return this.giveUp(at);
+    return values;
   }
 
   /** The alternatives an expression can produce, deduplicated and capped. */
@@ -112,7 +206,30 @@ class Resolver {
     return [...new Set(this.evaluate(node))].slice(0, MAX_ALTERNATIVES);
   }
 
+  /** The nodes that evaluated to nothing for lack of understanding, then forgets them. */
+  takeUnresolved(): ts.Node[] {
+    const taken = this.unresolved;
+    this.unresolved = [];
+    return taken;
+  }
+
+  /** Records a node as not understood and stands in an empty string for it. */
+  private giveUp(node: ts.Node): string[] {
+    this.unresolved.push(node);
+    return [''];
+  }
+
   private evaluate(node: ts.Expression): string[] {
+    // Values that render no class: `cond && 'x'` when cond is false, `null`, numbers.
+    if (
+      node.kind === ts.SyntaxKind.NullKeyword ||
+      node.kind === ts.SyntaxKind.FalseKeyword ||
+      node.kind === ts.SyntaxKind.TrueKeyword ||
+      ts.isNumericLiteral(node) ||
+      (ts.isIdentifier(node) && node.text === 'undefined')
+    ) {
+      return [''];
+    }
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [node.text];
     if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) {
       return this.evaluate(node.expression);
@@ -132,40 +249,88 @@ class Resolver {
         return this.join(this.evaluate(node.left), this.evaluate(node.right));
       }
       // `A ?? B` and `A || B` both render one side or the other.
-      if (
-        kind === ts.SyntaxKind.QuestionQuestionToken ||
-        kind === ts.SyntaxKind.BarBarToken ||
-        kind === ts.SyntaxKind.AmpersandAmpersandToken
-      ) {
+      if (kind === ts.SyntaxKind.QuestionQuestionToken || kind === ts.SyntaxKind.BarBarToken) {
         return [...this.evaluate(node.left), ...this.evaluate(node.right)];
       }
-      return [''];
+      // `A && B` renders B or nothing: the left side is a condition, not a class.
+      if (kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+        return ['', ...this.evaluate(node.right)];
+      }
+      return this.giveUp(node);
+    }
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      if (CLASS_HELPERS.has(node.expression.text)) return this.helperArguments(node.arguments);
     }
     if (ts.isConditionalExpression(node)) {
       return [...this.evaluate(node.whenTrue), ...this.evaluate(node.whenFalse)];
     }
-    if (ts.isIdentifier(node)) return this.lookup(node.text);
+    if (ts.isIdentifier(node)) return this.lookup(node.text, node);
     if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
-      return this.evaluate(node.expression).length > 0 ? this.members(node.expression) : [''];
+      return this.members(node);
     }
     if (ts.isObjectLiteralExpression(node)) {
       // A lookup table of class strings: any entry can be the one that renders.
       return node.properties.flatMap((property) =>
-        ts.isPropertyAssignment(property) ? this.evaluate(property.initializer) : [''],
+        ts.isPropertyAssignment(property)
+          ? this.evaluate(property.initializer)
+          : this.giveUp(property),
       );
     }
-    return [''];
+    return this.giveUp(node);
+  }
+
+  /** Arguments of `cn(...)`: strings, conditions, arrays and `{ 'class': condition }` objects. */
+  private helperArguments(args: readonly ts.Expression[]): string[] {
+    let out = [''];
+    for (const arg of args)
+      out = this.join(
+        out,
+        this.helperArgument(arg).map((a) => ` ${a}`),
+      );
+    return out;
+  }
+
+  private helperArgument(arg: ts.Expression): string[] {
+    if (ts.isParenthesizedExpression(arg)) return this.helperArgument(arg.expression);
+    if (ts.isArrayLiteralExpression(arg)) return this.helperArguments(arg.elements);
+    if (ts.isObjectLiteralExpression(arg)) {
+      // In a helper the keys are the classes and the values are conditions.
+      let out = [''];
+      for (const property of arg.properties) {
+        const name = ts.isPropertyAssignment(property) ? property.name : undefined;
+        const key =
+          name !== undefined && (ts.isIdentifier(name) || ts.isStringLiteral(name))
+            ? name.text
+            : undefined;
+        const alternatives = key === undefined ? this.giveUp(property) : ['', ` ${key}`];
+        out = this.join(out, alternatives);
+      }
+      return out;
+    }
+    if (ts.isConditionalExpression(arg)) {
+      return [...this.helperArgument(arg.whenTrue), ...this.helperArgument(arg.whenFalse)];
+    }
+    if (
+      ts.isBinaryExpression(arg) &&
+      arg.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+    ) {
+      return ['', ...this.helperArgument(arg.right)];
+    }
+    return this.evaluate(arg);
   }
 
   /** Alternatives of a lookup table reached through `TABLE[key]` or `TABLE.key`. */
-  private members(target: ts.Expression): string[] {
-    if (!ts.isIdentifier(target)) return [''];
-    return this.lookup(target.text);
+  private members(node: ts.PropertyAccessExpression | ts.ElementAccessExpression): string[] {
+    const target = node.expression;
+    if (!ts.isIdentifier(target)) return this.giveUp(node);
+    return this.lookup(target.text, node);
   }
 
-  private lookup(name: string): string[] {
+  lookup(name: string, at: ts.Node): string[] {
+    if (this.inert.has(name)) return [''];
     const initializer = this.constants.get(name);
-    if (initializer === undefined || this.resolving.has(name)) return [''];
+    if (initializer === undefined && this.imports.has(name)) return this.imported(name, at);
+    if (initializer === undefined || this.resolving.has(name)) return this.giveUp(at);
     this.resolving.add(name);
     try {
       return this.evaluate(initializer);
@@ -245,10 +410,11 @@ function scanFile(
   path: string,
   label: string,
   isColourToken: (token: string) => boolean,
+  context: ScanContext,
 ): RenderedPair[] {
   const code = readFileSync(path, 'utf8');
   const source = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const resolver = new Resolver(source);
+  const resolver = new Resolver(source, context);
   const pairs: RenderedPair[] = [];
 
   const frameFor = (element: ts.JsxOpeningElement | ts.JsxSelfClosingElement): Frame[] => {
@@ -286,10 +452,11 @@ function scanFileForegrounds(
   path: string,
   label: string,
   isColourToken: (token: string) => boolean,
+  context: ScanContext,
 ): Map<string, string> {
   const code = readFileSync(path, 'utf8');
   const source = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const resolver = new Resolver(source);
+  const resolver = new Resolver(source, context);
   const found = new Map<string, string>();
   const visit = (node: ts.Node): void => {
     if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
@@ -304,6 +471,29 @@ function scanFileForegrounds(
   };
   visit(source);
   return found;
+}
+
+/** Every `className` piece under `root` the resolver could not evaluate, in file order. */
+export function scanUnresolvedClassNames(root: string): UnresolvedClassName[] {
+  const out: UnresolvedClassName[] = [];
+  for (const file of screenFiles(root)) {
+    const path = `${root}/${file}`;
+    const code = readFileSync(path, 'utf8');
+    const source = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const resolver = new Resolver(source, newContext(root));
+    const visit = (node: ts.Node): void => {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        resolver.resolve(classNameExpression(node));
+        for (const bad of resolver.takeUnresolved()) {
+          const line = source.getLineAndCharacterOfPosition(bad.getStart(source)).line + 1;
+          out.push({ where: `${relative(root, path)}:${line}`, expression: bad.getText(source) });
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+  return out;
 }
 
 /** The `.tsx` files that make up the interface: generated modules and tests are not screens. */
@@ -321,9 +511,10 @@ export function scanRenderedPairs(root: string, colourTokens: readonly string[])
   const known = new Set(colourTokens);
   const isColourToken = (token: string): boolean => known.has(token);
   const seen = new Map<string, RenderedPair>();
+  const context = newContext(root);
   for (const file of screenFiles(root)) {
     const path = `${root}/${file}`;
-    for (const pair of scanFile(path, relative(root, path), isColourToken)) {
+    for (const pair of scanFile(path, relative(root, path), isColourToken, context)) {
       const key = `${pair.foreground}|${pair.background}|${pair.state}`;
       if (!seen.has(key)) seen.set(key, pair);
     }
@@ -347,9 +538,15 @@ export function scanPaintedForegrounds(
   const known = new Set(colourTokens);
   const isColourToken = (token: string): boolean => known.has(token);
   const found = new Map<string, string>();
+  const context = newContext(root);
   for (const file of screenFiles(root)) {
     const path = `${root}/${file}`;
-    for (const [token, where] of scanFileForegrounds(path, relative(root, path), isColourToken)) {
+    for (const [token, where] of scanFileForegrounds(
+      path,
+      relative(root, path),
+      isColourToken,
+      context,
+    )) {
       if (!found.has(token)) found.set(token, where);
     }
   }
