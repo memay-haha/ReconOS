@@ -1041,6 +1041,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
   },
   {
     "group": "Typography",
+    "name": "text-icon",
+    "values": {
+      "dark": "17px",
+      "light": ""
+    }
+  },
+  {
+    "group": "Typography",
     "name": "text-body-default",
     "values": {
       "dark": "13px",
