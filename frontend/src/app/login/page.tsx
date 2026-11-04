@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation';
 
-import { readSession } from '@/lib/session';
+import { readSessionForSignInScreen } from '@/lib/session';
 
 import { LoginForm } from './login-form';
 
 export default async function LoginPage() {
-  // Someone who already has a session has no business on the sign in screen.
-  if ((await readSession()) !== null) redirect('/users');
+  // Someone who already has a session has no business on the sign in screen. A backend
+  // outage leaves this unknown, and the tolerant read then shows the form anyway.
+  if ((await readSessionForSignInScreen()) !== null) redirect('/users');
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-margin-mobile py-space-xl sm:px-margin">

@@ -3,12 +3,12 @@ import type { ReactNode } from 'react';
 
 import { Sidebar } from '@/components/sidebar';
 import { Topbar } from '@/components/topbar';
-import { readSession } from '@/lib/session';
+import { readSessionForGuardedScreen } from '@/lib/session';
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // The only authorization decision the frontend makes is "is there a session".
   // Everything finer is the backend's: docs/security/authorization.md.
-  const user = await readSession();
+  const user = await readSessionForGuardedScreen();
   if (user === null) redirect('/login');
 
   return (
