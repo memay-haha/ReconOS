@@ -448,7 +448,7 @@ paths:
       - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [engine]
-      summary: "Kiểm tra kết nối engine"
+      summary: "Kiểm tra kết nối engine, response version theo api/architecture.md"
       x-roles: [superadmin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -872,7 +872,7 @@ paths:
   /findings/bulk-triage:
     post:
       tags: [finding]
-      summary: "Triage hàng loạt"
+      summary: "Triage hàng loạt, body ids và triage_status theo api/architecture.md"
       x-roles: [superadmin, admin, user]
       responses:
         '204': {description: Thành công}

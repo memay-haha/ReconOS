@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.9 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -118,6 +118,7 @@ Response tổng hợp:
 |---|---|
 | `GET /dashboard/summary` | `programs`: số program xem được. `assets`: số `domain`, `ip`, `url`, `service`. `findings_by_severity`: như `finding_counts`. `jobs_by_status`: đủ 7 trạng thái job |
 | `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: số job `queued` theo từng nhóm |
+| `POST /engines/{engine_id}/test` | `version`: phiên bản engine trả về, `NULL` khi engine không báo. Engine không trả lời thì trả lỗi |
 | `GET /system/health` | `components[]`: `name`, `status` (`ok`, `degraded`, `down`), `latency_ms`, `checked_at`. Thêm `queue_length`, `workers_online` |
 
 - `components[].name` theo thành phần trong [system.md](../architecture/system.md): `api`, `dispatcher`, `background`, `beat`, `postgres`, `reconos_log`, `redis`, `minio`, `osmedeus`, `vigolium`.
@@ -161,7 +162,7 @@ Response tổng hợp:
 
 | Loại | Quy ước |
 |---|---|
-| Hàng loạt | `POST /<tài nguyên>/bulk-<thao tác>`, tối đa 500 ID. Tất cả thành công, hoặc không dòng nào thay đổi |
+| Hàng loạt | `POST /<tài nguyên>/bulk-<thao tác>`, tối đa 500 ID. Tất cả thành công, hoặc không dòng nào thay đổi. Body gồm `ids` và trường của thao tác, ví dụ `POST /findings/bulk-triage` nhận `ids`, `triage_status` |
 | Xuất dữ liệu | `GET /<tài nguyên>/export?format=csv\|jsonl\|md`, cùng tham số lọc như danh sách, trả dạng stream |
 | Tải output thô | `GET /raw-outputs/{raw_output_id}/content`, luôn `Content-Disposition: attachment` |
 | Ảnh screenshot | `GET /screenshots/{screenshot_id}/image`, kèm header `X-Content-Type-Options: nosniff` |
