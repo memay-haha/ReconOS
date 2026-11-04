@@ -3,7 +3,6 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import { QueryProvider } from '@/lib/query-provider';
-import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script';
 import '@/styles/globals.css';
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -31,7 +30,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Blocking classic script on purpose: it must set data-theme before the first
+            paint, so async, defer and type="module" are all wrong here. The file is
+            static; .claude/rules/security.md forbids inlining it. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-init.js"></script>
       </head>
       <body className="bg-bg text-fg font-body-default text-body-default antialiased">
         <QueryProvider>{children}</QueryProvider>

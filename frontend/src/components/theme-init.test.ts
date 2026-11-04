@@ -1,10 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { THEME_INIT_SCRIPT } from './theme-init-script';
+import { THEME_STORAGE_KEY } from './theme-toggle';
 
-const run = () => new Function(THEME_INIT_SCRIPT)();
+// public/ is served as is, so the test reads the file that ships rather than a copy of it.
+// Resolved from the Vitest root (frontend/), because import.meta.url is not a file URL
+// once the jsdom environment has transformed the module.
+const SOURCE = readFileSync(resolve(process.cwd(), 'public/theme-init.js'), 'utf8');
 
-describe('THEME_INIT_SCRIPT', () => {
+const run = () => new Function(SOURCE)();
+
+describe('public/theme-init.js', () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
@@ -14,8 +21,12 @@ describe('THEME_INIT_SCRIPT', () => {
     vi.restoreAllMocks();
   });
 
+  it('reads the key the toggle writes', () => {
+    expect(SOURCE).toContain(`'${THEME_STORAGE_KEY}'`);
+  });
+
   it('applies the remembered choice', () => {
-    localStorage.setItem('reconos-theme', 'dark');
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     run();
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
@@ -26,7 +37,7 @@ describe('THEME_INIT_SCRIPT', () => {
   });
 
   it('ignores a stored value that is neither light nor dark', () => {
-    localStorage.setItem('reconos-theme', 'purple');
+    localStorage.setItem(THEME_STORAGE_KEY, 'purple');
     run();
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });

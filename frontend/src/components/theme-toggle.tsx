@@ -1,12 +1,14 @@
 'use client';
 
-const STORAGE_KEY = 'reconos-theme';
+/** Where the chosen theme is remembered. public/theme-init.js reads the same key
+ * before first paint; src/components/theme-init.test.ts keeps the two in step. */
+export const THEME_STORAGE_KEY = 'reconos-theme';
 type Theme = 'light' | 'dark';
 
 // Storage can throw (private window, blocked site data): the page must still work.
 function remember(theme: Theme): void {
   try {
-    localStorage.setItem(STORAGE_KEY, theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
     // The choice still applies to the current page.
   }
@@ -25,7 +27,7 @@ function current(): Theme | null {
 }
 
 export function ThemeToggle() {
-  // The document attribute is the state, set before paint by the script in layout.tsx.
+  // The document attribute is the state, set before paint by public/theme-init.js.
   // No attribute means "follow the operating system".
   const toggle = () => {
     const shown = current() ?? (prefersDark() ? 'dark' : 'light');
