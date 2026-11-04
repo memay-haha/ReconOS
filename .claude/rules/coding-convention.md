@@ -7,7 +7,7 @@ paths:
 ---
 # Quy ước viết mã
 
-> Phiên bản: 1.1 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 22: Quy ước viết mã
 
 ## ✅ Bắt buộc
@@ -83,4 +83,4 @@ pnpm --dir frontend exec prettier --check .
 pnpm --dir frontend exec tsc --noEmit
 ```
 
-- Gom các lệnh trên vào `Makefile` khi bắt đầu viết mã. Lệnh build, test: `CLAUDE.md`.
+- `make lint` chạy đủ các lệnh trên: [CLAUDE.md](../../CLAUDE.md).

@@ -5,7 +5,7 @@
 
 **Trạng thái:** 🔴 Chưa làm · 🟠 Có khung · 🟡 Đang làm · 🔵 Chờ duyệt · 🟢 Xong
 
-**Tiến độ:** 🟢 40/40 · 🔵 0 · 🟡 0 · 🟠 0 · 🔴 0
+**Tiến độ:** 🟢 35/40 · 🔵 5 · 🟡 0 · 🟠 0 · 🔴 0
 
 | #  | Tài liệu                                   | Mục    | Phụ thuộc          | Trạng thái  | Cập nhật | Ghi chú                                                                   |
 | -- | -------------------------------------------- | ------- | -------------------- | ------------- | ---------- | -------------------------------------------------------------------------- |
@@ -27,22 +27,22 @@
 | 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🟢 Xong       | 2026-11-04 | v1.4: thêm hai mối đe dọa làm lộ mật khẩu ở frontend |
 | 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🟢 Xong       | 2026-11-04 | v1.2: thêm `GET /user-sessions`, `openapi.yaml` có 110 thao tác |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🟢 Xong       | 2026-11-01 | v1.0: HTTP, tạo job, WebSocket, request của worker |
-| 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🟢 Xong       | 2026-11-03 | v1.1: bỏ qua kiểu cho thư viện không có `py.typed` khai báo trong `pyproject.toml` |
+| 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
 | 21 | `.claude/rules/error-handling.md`          | 16      | 17                   | 🟢 Xong       | 2026-11-01 | v1.1: bảng thử lại chuyển sang system.md, external-services.md |
 | 22 | `.claude/rules/logging.md`                 | 15      | 16                   | 🟢 Xong       | 2026-11-01 | v1.1: nơi ghi log chuyển sang database.md |
-| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🟢 Xong       | 2026-11-03 | v1.2: lệnh đo độ phủ dùng tên module, dạng đường dẫn không gom được dữ liệu |
+| 23 | `.claude/rules/testing.md`                 | 21      | 16                   | 🔵 Chờ duyệt | 2026-11-04 | v1.3: Makefile chỉ giữ lint và test |
 | 24 | `.claude/rules/security.md`                | 17      | 16                   | 🟢 Xong       | 2026-11-04 | v1.3: method post, ô mật khẩu không kiểm soát, gcTime 0 |
 | 25 | `docs/ops/configuration.md`                | 14      | 13                   | 🟢 Xong       | 2026-11-04 | v1.6: RECONOS_API_URL bắt buộc ở mọi môi trường, thiếu thì hỏng màn hình sau đăng nhập |
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🟢 Xong   | 2026-11-03 | v1.2: service `bootstrap` chạy lần triển khai đầu |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
-| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🟢 Xong        | 2026-11-03 | Nhánh riêng cho mọi việc của một đợt, kể cả sửa tài liệu. Thêm lệnh `make bootstrap` |
+| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-04 | Makefile rút còn 4 lệnh: init, backend, lint, test |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🟢 Xong       | 2026-11-04 | v2.4: đóng nợ 4, 11, 17; thêm nợ 24 đến 31 từ review đợt 2b |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🟢 Xong       | 2026-11-04 | v2.5: đợt 2 🟢 Xong, mã đã merge vào dev |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
-| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🟢 Xong       | 2026-11-04 | Thêm `audit.py` vào mã dùng chung, ghi nhật ký qua `core` |
-| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🟢 Xong       | 2026-11-04 | Script sinh token, một bộ tên token cho hai theme, tên mục điều hướng tiếng Anh, `errors` là mã máy |
+| 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
+| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🟢 Xong       | 2026-11-04 | v1.4: `core` sở hữu bảng `audit_log` |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |

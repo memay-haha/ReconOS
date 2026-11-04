@@ -7,7 +7,7 @@ paths:
 ---
 # Kiểm thử
 
-> Phiên bản: 1.2 · Ngày: 2026-11-03 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 21: Kiểm thử
 
 ## ✅ Bắt buộc
@@ -95,4 +95,4 @@ pnpm --dir frontend test
 pnpm --dir frontend exec playwright test
 ```
 
-- Gom các lệnh vào `Makefile` khi bắt đầu viết mã.
+- `Makefile` chỉ giữ `make lint` và `make test`: [CLAUDE.md](../../CLAUDE.md). Lệnh độ phủ và Playwright gọi thẳng như trên.

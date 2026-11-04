@@ -50,7 +50,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 ## 🛠️ Build và test
 
-Chạy từ gốc repo sau `make dev-up`:
+Chạy từ gốc repo sau `make init`:
 
 | Lệnh | Việc |
 |---|---|
