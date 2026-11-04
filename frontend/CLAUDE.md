@@ -36,6 +36,22 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Test bố cục màn hình bằng cách so khung DOM: `src/test/dom-shape.ts` rút khung từ mockup và từ cây đã render, so thứ tự vùng, số cột bảng, vai trò ARIA. ❌ Không so class hay màu. Màn hình có mockup thì có test `*-shape.test.tsx`.
 - Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
 
+**Mockup lệch tài liệu:**
+
+Gặp chỗ mockup lệch tài liệu thì áp quy tắc đầu tiên khớp, ghi một dòng vào sổ quyết định của đợt trong `docs/superpowers/specs/`, rồi dựng tiếp. Người dùng duyệt sổ sau khi xong đợt.
+
+| # | Trường hợp | Làm |
+|---|---|---|
+| M1 | Phần tử thuộc mục Cấm ở trên hoặc nợ mockup trong [tech-debt.md](../docs/tech-debt.md) | Làm theo hướng xử lý của nợ. Nợ không có hướng xử lý thì bỏ phần tử |
+| M2 | Nhãn, trạng thái, vai trò, số liệu khác glossary, `schema.md`, `authorization.md` | Theo tài liệu |
+| M3 | Phần tử cần dữ liệu hoặc thao tác không có endpoint trong [openapi.yaml](../docs/api/openapi.yaml) | Bỏ phần tử. ❌ Không tự thêm endpoint |
+| M4 | Endpoint có trong `openapi.yaml` nhưng backend chưa làm | Dựng, trả dữ liệu mẫu bằng MSW |
+| M5 | Chú thích, chữ mô tả hành vi trái tài liệu | Viết lại theo tài liệu |
+| M6 | Tài liệu yêu cầu mà mockup thiếu: trạng thái rỗng, lỗi, quyền | Thêm bằng component sẵn có trong `src/components/` |
+| M7 | Bố cục, icon, khoảng cách, thứ tự vùng tài liệu không nói tới | Theo mockup |
+
+- Vẫn dừng hỏi khi: tài liệu mâu thuẫn nhau, không quy tắc nào khớp, hoặc cách làm chạm mục 🚫 Cấm của `CLAUDE.md`. Gom mọi câu hỏi của đợt vào một lượt.
+
 **Dữ liệu:**
 
 - Đặt client gọi API và hook TanStack Query theo tài nguyên trong `src/lib/`.

@@ -37,12 +37,12 @@
 | 26 | `docs/ops/deployment.md`                   | 20      | 8, 25                | 🔵 Chờ duyệt | 2026-11-04 | v1.3: giới hạn log stdout của container |
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
-| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-04 | Makefile rút còn 4 lệnh: init, backend, lint, test. `make test` quét thêm bản build xem dữ liệu mẫu có lọt vào không |
+| 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-05 | Mockup lệch tài liệu áp quy tắc mặc định của frontend/CLAUDE.md, không dừng hỏi |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-04 | v3.1: nợ 38: hai tài liệu trỏ tới file worker chưa có (`workers/worker/client.py`, `config.py`) |
 | 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.9: phần A lớp vỏ frontend đã merge vào `dev` |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
-| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-04 | Test tương phản đọc cặp màu thẳng từ component, `PAIRS` còn lại là sổ đăng ký; `className` script không đọc được làm test đỏ |
+| 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-05 | Thêm bảng quy tắc mặc định M1 đến M7 cho mockup lệch tài liệu, ghi sổ quyết định của đợt |
 | 35 | `workers/CLAUDE.md`                        | -       | 13, 19 đến 24      | 🟢 Xong       | 2026-11-01 | Contract, runner, lệnh |
 | 36 | `docs/data/schema.md`                      | 9       | 11                   | 🔵 Chờ duyệt | 2026-11-04 | v1.5: `active_user_session_count` là trường tính, không phải cột; điều kiện phiên đang hoạt động |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |

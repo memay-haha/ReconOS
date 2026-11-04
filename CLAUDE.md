@@ -14,7 +14,7 @@ Nền tảng điều phối công cụ bảo mật và lưu trữ output tập t
 
 ## 📐 Quy ước
 
-- Coi tài liệu trong `docs/` là đặc tả. Khi mã cần quyết định chưa có trong tài liệu, hoặc tài liệu mâu thuẫn nhau: dừng, hỏi người dùng, rồi đồng bộ theo doc-sync.md. Không tự chọn.
+- Coi tài liệu trong `docs/` là đặc tả. Khi mã cần quyết định chưa có trong tài liệu, hoặc tài liệu mâu thuẫn nhau: dừng, hỏi người dùng, rồi đồng bộ theo doc-sync.md. Không tự chọn. Riêng mockup lệch tài liệu: áp quy tắc mặc định trong mục Mockup lệch tài liệu của `frontend/CLAUDE.md`, không dừng hỏi.
 - Dùng đúng thuật ngữ trong [docs/appendix/glossary.md](docs/appendix/glossary.md) khi đặt tên bảng, biến, endpoint và viết tài liệu.
 - Khi có quyết định mới hoặc quyết định thay đổi, kể cả thuật ngữ: sửa tài liệu theo [.claude/rules/doc-sync.md](.claude/rules/doc-sync.md) trong cùng lượt.
 - Quy tắc viết mã, viết tài liệu và quy trình nằm ở [.claude/rules/](.claude/rules/). Quy ước riêng từng phần: `backend/CLAUDE.md`, `frontend/CLAUDE.md`, `workers/CLAUDE.md`.
