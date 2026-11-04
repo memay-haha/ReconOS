@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { collectMockupColours, deltaE, nearestToken } from './colour-audit.mjs';
+import { collectMockupColours, darkTokenValues, deltaE, nearestToken } from './colour-audit.mjs';
 
 describe('deltaE', () => {
   it('is zero for a colour against itself', () => {
@@ -67,10 +67,15 @@ describe('colour-map.json', () => {
     expect(stale).toEqual([]);
   });
 
-  it('keeps the three amber badge borders as separate tokens', () => {
-    // Composited over the badge background #451a03 at the alphas the mockups use
-    // (/30 to /50) they are up to dE 13 apart, so they must not share a token.
-    expect(new Set([map['#78350f'], map['#b45309'], map['#d97706']]).size).toBe(3);
+  it('draws the amber warning badge border with one token', () => {
+    // One design element drawn at three base hexes in the mockups. It collapses
+    // to the most used value (#78350f), a deliberate normalisation.
+    expect(map['#78350f']).toBe('warn-strong-bd');
+    expect(map['#b45309']).toBe('warn-strong-bd');
+    expect(map['#d97706']).toBe('warn-strong-bd');
+  });
+
+  it('keeps two different status icons as two tokens', () => {
     expect(map['#fb923c']).not.toBe(map['#f97316']);
   });
 
@@ -79,6 +84,21 @@ describe('colour-map.json', () => {
     writeFileSync(join(dir, 'x.html'), '<i class="divide-[#abcdef] accent-[#123456]"></i>');
     const found = collectMockupColours(dir);
     expect([...found.keys()].sort()).toEqual(['#123456', '#abcdef']);
+  });
+
+  it('names new tokens by role, never by appearance', () => {
+    const existing = darkTokenValues(
+      readFileSync(`${repoRoot}frontend/src/styles/globals.css`, 'utf8'),
+    );
+    const appearance = new Set(['mid', 'bright', 'dark', 'light', 'pale', 'deep']);
+    for (const token of new Set(Object.values(map))) {
+      if (token in existing) continue;
+      expect(
+        token.split('-').filter((part) => appearance.has(part)),
+        token,
+      ).toEqual([]);
+      expect(token, token).not.toMatch(/\d$/);
+    }
   });
 
   it('names tokens by role, never by value', () => {

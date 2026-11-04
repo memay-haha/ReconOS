@@ -9,9 +9,12 @@ const ROLE_OF_TOKEN = {
     n.startsWith('fg') ||
     n.startsWith('on-') ||
     n.startsWith('asset-') ||
+    n.startsWith('status-') ||
+    /^(crit|warn)-strong$/.test(n) ||
     ['primary', 'good', 'warn', 'crit', 'info', 'error', 'accent-ink'].includes(n),
   bg: (n) =>
     n.startsWith('bg') ||
+    n.startsWith('thumb-') ||
     n.startsWith('surface') ||
     n.endsWith('-soft') ||
     n.endsWith('-container'),
