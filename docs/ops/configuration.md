@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -75,7 +75,7 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 | `RECONOS_API_URL` | | URL Backend API, bắt buộc ở mọi môi trường. Server Next.js chuyển tiếp `/api/*` của trình duyệt tới địa chỉ này, và tự gọi Backend API ở mỗi request để kiểm tra phiên. ❌ Không kết thúc giá trị bằng `/`, vì Next ghép thành `//api` |
 
 - Trình duyệt chỉ gọi origin của Next.js, không gọi thẳng Backend API. Nhờ vậy `Origin` luôn khớp `RECONOS_PUBLIC_ORIGIN` và cookie `SameSite=Lax` gửi kèm.
-- Production định tuyến `/api/` của trình duyệt ở Nginx: [deployment.md](deployment.md). Server Next.js vẫn cần `RECONOS_API_URL`, vì server component kiểm tra phiên gọi thẳng Backend API ở mỗi request, không đi qua Nginx. Thiếu biến, Next gọi giá trị mặc định `http://127.0.0.1:8000`, tức chính container frontend, và mọi trang hỏng.
+- Production định tuyến `/api/` của trình duyệt ở Nginx: [deployment.md](deployment.md). Server Next.js vẫn cần `RECONOS_API_URL`, vì server component kiểm tra phiên gọi thẳng Backend API ở mỗi request, không đi qua Nginx. Thiếu biến, Next gọi giá trị mặc định `http://127.0.0.1:8000`, tức chính container frontend. S01 vẫn dựng được form đăng nhập, nhưng mọi màn hình sau khi đăng nhập đều hỏng.
 
 ### Biến môi trường của worker
 
