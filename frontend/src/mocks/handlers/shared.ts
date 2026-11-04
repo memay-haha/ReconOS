@@ -21,6 +21,26 @@ export const sharedRoutes: readonly MockRoute[] = [
       : HttpResponse.json(found);
   }),
   route('GET /tool-modules', () => HttpResponse.json(page(toolModules))),
+  route('GET /workers', () =>
+    HttpResponse.json(
+      page([
+        {
+          id: '0190c000-0000-7000-8000-000000000001',
+          name: 'worker-recon-01',
+          tool_modules: ['osmedeus-domain-lite', 'gowitness', 'nuclei'],
+          last_heartbeat_at: new Date().toISOString(),
+          created_at: '2026-10-01T00:00:00Z',
+        },
+        {
+          id: '0190c000-0000-7000-8000-000000000002',
+          name: 'worker-exploit-01',
+          tool_modules: ['sqlmap', 'dalfox'],
+          last_heartbeat_at: '2026-11-04T01:00:00Z',
+          created_at: '2026-10-01T00:00:00Z',
+        },
+      ]),
+    ),
+  ),
   route('POST /jobs', async ({ request }) => {
     const body = (await request.json()) as {
       program_id: string;
