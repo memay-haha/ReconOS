@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.8 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -107,6 +107,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | `GET /programs`, `GET /programs/{program_id}` | `in_scope_rule_count`, `out_of_scope_rule_count`, `domain_count`, `ip_count`, `url_count`, `service_count`, `finding_counts` |
 | `GET /domains`, `GET /domains/{domain_id}` | `ips`: danh sách địa chỉ IP, `url_count`, `service_count`, `finding_counts`. Riêng `GET /domains/{domain_id}` có thêm `tags` |
 | `GET /asset-events` | `asset_type`, `asset_name`, `program_name` |
+| `GET /urls/{url_id}` | `technologies`: danh sách `technology_id`, `name`, `category`, `version` lấy từ `url_technology` và `technology` |
 | `GET /users` gọi bởi Admin | Chỉ `id`, `username`, `role` |
 
 - `finding_counts` là object theo 5 mức severity, đếm finding có `triage_status` khác `false_positive`, `duplicate`, `resolved`.

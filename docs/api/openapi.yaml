@@ -683,7 +683,7 @@ paths:
       - {name: url_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [asset]
-      summary: "Chi tiết URL kèm công nghệ"
+      summary: "Chi tiết URL kèm công nghệ, trường technologies theo api/architecture.md"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}

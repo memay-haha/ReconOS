@@ -1,6 +1,6 @@
 # 📋 Nợ kỹ thuật
 
-> Phiên bản: 3.2 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 3.3 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 25: Nợ kỹ thuật
 
 | # | Nợ | Lý do chấp nhận | Ảnh hưởng | Hướng xử lý | Trạng thái |
@@ -44,3 +44,4 @@
 | 37 | Nút đổi theme trong `theme-toggle.tsx` dùng `bg-surface-2` trong khi `s01-login.html` ghi `bg-surface`. | Trên topbar vốn màu `surface`, `bg-surface` làm nút biến mất. Cố ý lệch mockup. Ngày 2026-11-04. | Một chỗ lệch mockup có chủ ý trên đợt có mục tiêu khớp mockup. Hai cặp màu của nút đã có trong `PAIRS`, nên tương phản được giữ. | Thêm token nền nút dùng được trên cả hai nền, hoặc sửa mockup cho khớp. | 🔴 Chưa làm |
 | 38 | [authentication.md](security/authentication.md) nhắc `workers/worker/client.py`, [configuration.md](ops/configuration.md) nhắc `workers/worker/config.py`. Cả hai file chưa có trong repo. | Chưa tới đợt dựng worker. Phát hiện khi dựng lại đồ thị Understand Anything, ngày 2026-11-04. | Chưa rõ đây là file sẽ viết ở đợt worker hay tài liệu đã lệch so với mã. Người đọc tài liệu tìm không thấy file. | Khi bắt đầu đợt worker: nếu đặt tên file khác, sửa hai tài liệu theo [doc-sync.md](../.claude/rules/doc-sync.md). | 🔴 Chưa làm |
 | 39 | Mockup s03, s04, s06, s08, s10, s11, s20 có ô tìm theo chuỗi, nhưng chưa endpoint nào khai báo `q`. | Chưa chốt cột tìm cho từng endpoint. Quyết định bỏ ô tìm khi dựng các màn hình này, ngày 2026-11-05. | Người dùng chỉ lọc được theo tham số có sẵn, không tìm theo tên, URL, tiêu đề. | Chốt cột tìm cho từng endpoint, khai báo `q` trong [openapi.yaml](api/openapi.yaml), rồi dựng lại ô tìm. | 🔴 Chưa làm |
+| 40 | Frontend chưa có client WebSocket. Màn hình phần B đến E chỉ làm mới khi tải lại query hoặc bấm Refresh, chưa làm mới theo sự kiện `job.status_changed`, `finding.created`, `asset.discovered` như [api/architecture.md](api/architecture.md). | Backend chưa có endpoint `/ws`, dựng client trước thì không có gì để kết nối. Ngày 2026-11-05. | Hàng đợi job, finding mới, tài sản mới không tự cập nhật trên màn hình đang mở. | Dựng client WebSocket một chỗ trong provider của TanStack Query, làm mới query theo `type` của sự kiện, gom sự kiện liên tiếp, khi backend có `/ws`. | 🔴 Chưa làm |
