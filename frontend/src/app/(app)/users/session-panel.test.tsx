@@ -25,7 +25,10 @@ function page(items: unknown[]) {
 function wrap(node: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const invalidate = vi.spyOn(client, 'invalidateQueries');
-  return { invalidate, ...render(<QueryClientProvider client={client}>{node}</QueryClientProvider>) };
+  return {
+    invalidate,
+    ...render(<QueryClientProvider client={client}>{node}</QueryClientProvider>),
+  };
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -58,18 +61,14 @@ describe('SessionPanel', () => {
     const [path, init] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(path).toBe('/api/v1/user-sessions/s1');
     expect(init.method).toBe('DELETE');
-    await vi.waitFor(() =>
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['sessions'] }),
-    );
+    await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['sessions'] }));
   });
 
   it('shows a Vietnamese message when the revoke is refused', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json(page([ROW])))
-      .mockResolvedValue(
-        Response.json({ title: 'Forbidden', status: 403 }, { status: 403 }),
-      );
+      .mockResolvedValue(Response.json({ title: 'Forbidden', status: 403 }, { status: 403 }));
     vi.stubGlobal('fetch', fetchMock);
     wrap(<SessionPanel userId="2" />);
     await userEvent.click(await screen.findByRole('button', { name: /thu hồi/i }));
@@ -107,7 +106,9 @@ describe('useUserSessions', () => {
     vi.stubGlobal('fetch', fetchMock);
     const client = new QueryClient();
     renderHook(() => useUserSessions(null), {
-      wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
