@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { shapeOf } from '@/test/dom-shape';
@@ -44,6 +44,12 @@ const DROPPED_COLUMNS: { label: string; reason: string }[] = [
   { label: 'MFA Policy', reason: 'frontend/CLAUDE.md bans MFA on S12; authentication.md has none' },
 ];
 
+/** Stat tiles the screen does not build, matched by the label the tile shows. */
+const DROPPED_TILES: { label: string; reason: string }[] = [
+  { label: 'API Tokens', reason: 'frontend/CLAUDE.md bans API Tokens on S12' },
+  { label: 'Security Policy', reason: 'frontend/CLAUDE.md bans MFA Enforced on S12' },
+];
+
 interface Mockup {
   /** `main > div` of the mockup, pruned to what the product builds. */
   root: Element;
@@ -59,13 +65,19 @@ function prunedMockup(): Mockup {
   const doc = new DOMParser().parseFromString(readFileSync(mockupFile, 'utf8'), 'text/html');
   const root = doc.querySelector('main > div') as Element;
 
-  // frontend/CLAUDE.md: no API Tokens, no Security Policy (MFA Enforced, NIST) on S12.
+  // Cut by label, never by position: a reordered or inserted tile must not move the cut.
   const grid = root.querySelector('div.grid') as Element;
   const tilesBefore = grid.children.length;
-  cutByText(grid, ':scope > div', textOf(grid.children[2] as Element), 'API Tokens tile');
-  cutByText(grid, ':scope > div', textOf(grid.children[2] as Element), 'Security Policy tile');
+  for (const { label, reason } of DROPPED_TILES) {
+    const tile = Array.from(grid.children).find(
+      (t) =>
+        t.querySelector('span') !== null && textOf(t.querySelector('span') as Element) === label,
+    );
+    if (tile === undefined) throw new Error(`Dropped tile not in the mockup (${reason}): ${label}`);
+    tile.remove();
+  }
   const tileCount = grid.children.length;
-  expect(tileCount).toBe(tilesBefore - 2);
+  expect(tileCount).toBe(tilesBefore - DROPPED_TILES.length);
 
   // frontend/CLAUDE.md bans API keys and the Active Directory SSO line; no endpoint for the
   // Role Matrix. With those gone the tab bar holds one tab, so the bar goes.
@@ -223,7 +235,12 @@ describe('S12 against its mockup', () => {
     expect(container.querySelector('input[type=search], input[type=text]')).toBeNull();
     expect(container.querySelector('select')).toBeNull();
     expect(screen.queryAllByRole('tab')).toHaveLength(0);
-    const words = textOf(container);
+    // Visible text and every accessible-name attribute: an icon-only button is named by
+    // aria-label or title, which textContent never sees.
+    const names = Array.from(container.querySelectorAll('*'))
+      .flatMap((e) => ['aria-label', 'title', 'aria-description'].map((a) => e.getAttribute(a)))
+      .filter((v): v is string => v !== null);
+    const words = [textOf(container), ...names].join(' ');
     for (const banned of [
       'MFA',
       'FIDO2',
@@ -235,9 +252,24 @@ describe('S12 against its mockup', () => {
       'Security Policy',
       'Role Matrix',
       'RBAC v3.1',
-      'Delete',
     ]) {
       expect(words).not.toContain(banned);
     }
+  });
+
+  it('offers no delete or remove control in the table, whatever names it', async () => {
+    renderScreen(3);
+    const table = await screen.findByRole('table');
+    // The accessible name, as assistive technology computes it. Scoped to the table so a
+    // confirmation dialog elsewhere on the page may use the word.
+    const controls = Array.from(table.querySelectorAll('button, a, [role=menuitem]'));
+    const deleting = controls.filter((c) => {
+      const name = c.getAttribute('aria-label') ?? c.getAttribute('title') ?? textOf(c);
+      return /\b(delete|remove)\b/i.test(name);
+    });
+    // The scan must have looked at something, or an empty result proves nothing.
+    expect(controls.length).toBeGreaterThan(0);
+    expect(deleting.map((c) => c.outerHTML)).toEqual([]);
+    expect(within(table).queryAllByRole('button', { name: /delete|remove/i })).toHaveLength(0);
   });
 });
