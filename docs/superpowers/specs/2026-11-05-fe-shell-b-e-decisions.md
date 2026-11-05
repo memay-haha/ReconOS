@@ -231,3 +231,4 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S02 | Viền trên, màu icon thẻ KPI theo loại tài sản | M7 | Theo mockup |
 | S02 | Chân panel Findings by Severity | M3 | Giữ "Total: N", bỏ "CVEs verified in past 24h" |
 | S02 | Chân panel Staging Snapshot: Worker instances, Throughput | M3 | Bỏ |
+| Sidebar | Component Library | Người dùng chốt 2026-11-05 | Bỏ trang `/components` và mục sidebar. Soát design system bằng test trong `src/styles/` |

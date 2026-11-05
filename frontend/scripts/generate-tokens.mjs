@@ -174,8 +174,8 @@ export function generateCss(markdown) {
 }
 
 /**
- * The parsed Token Table as a TypeScript module, so the Component Library page imports its
- * rows instead of reading docs/ at runtime (the production image carries no docs/).
+ * The parsed Token Table as a TypeScript module, so tests import its rows
+ * instead of parsing docs/ again.
  * @param {string} markdown
  * @returns {string}
  */

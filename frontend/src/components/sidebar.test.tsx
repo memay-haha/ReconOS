@@ -60,6 +60,9 @@ function mockupLabel(text: string): string {
   return RENAMED[label] ?? label;
 }
 
+// The mockup draws a Component Library page; the user dropped it, so it is left out.
+const DROPPED: readonly string[] = ['Component Library'];
+
 describe('Sidebar against the mockup', () => {
   it('is an aside holding a nav, then the account card, as the mockup is', () => {
     wrap(USER);
@@ -94,9 +97,11 @@ describe('Sidebar against the mockup', () => {
   it('puts every mockup item in the mockup group, in order, and nothing else there', () => {
     const fromMockup = Array.from(mockupDoc().querySelectorAll('aside nav > div')).map((group) => ({
       heading: (group.firstElementChild?.textContent ?? '').trim().replace(/\s*ROOT$/, ''),
-      labels: Array.from(group.querySelectorAll('a')).map((a) =>
-        mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
-      ),
+      labels: Array.from(group.querySelectorAll('a'))
+        .map((a) =>
+          mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
+        )
+        .filter((l) => !DROPPED.includes(l)),
     }));
     // Raw Outputs and Audit Log have no mockup; they are asserted on their own below.
     const mine = NAV_GROUPS.map((g) => ({
@@ -118,11 +123,10 @@ describe('Sidebar against the mockup', () => {
       group: 'Operations',
       item: { icon: 'description', href: null },
     });
-    // Audit Log follows Users in Admin; Component Library keeps the mockup's last place.
+    // Audit Log follows Users in Admin.
     expect(NAV_GROUPS.find((g) => g.heading === 'Admin')?.items.map((i) => i.label)).toEqual([
       'Users',
       'Audit Log',
-      'Component Library',
     ]);
     expect(find('Audit Log')).toMatchObject({
       group: 'Admin',
@@ -149,7 +153,10 @@ describe('Sidebar against the mockup', () => {
       a.querySelector('.material-symbols-outlined')?.textContent,
     ]);
     const mine = new Map(NAV_GROUPS.flatMap((g) => g.items.map((i) => [i.label, i.icon])));
-    for (const [label, icon] of fromMockup) expect(mine.get(label as string)).toBe(icon);
+    for (const [label, icon] of fromMockup) {
+      if (DROPPED.includes(label as string)) continue;
+      expect(mine.get(label as string)).toBe(icon);
+    }
   });
 });
 

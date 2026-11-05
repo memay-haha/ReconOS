@@ -57,7 +57,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { label: 'Users', href: '/users', icon: 'group', part: 'Part A' },
       { label: 'Audit Log', href: '/audit-log', icon: 'history', part: 'Part A' },
-      { label: 'Component Library', href: '/components', icon: 'widgets', part: 'Part A' },
     ],
   },
   {

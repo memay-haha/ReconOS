@@ -39,7 +39,7 @@
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-05 | Mockup lệch tài liệu áp quy tắc mặc định của frontend/CLAUDE.md, không dừng hỏi |
 | 30 | `docs/tech-debt.md`                        | 25      | -                    | 🔵 Chờ duyệt | 2026-11-05 | v3.4: nợ 41 virtual scroll. v3.3: nợ 40 WebSocket. v3.2: nợ 39, sửa nợ 8, 36 |
-| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-04 | v2.9: phần A lớp vỏ frontend đã merge vào `dev` |
+| 31 | `docs/roadmap.md`                          | 26      | 1                    | 🔵 Chờ duyệt | 2026-11-05 | v2.10: bỏ Component Library khỏi phần A |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md`                        | -       | 12, 17, 19 đến 24  | 🔵 Chờ duyệt | 2026-11-04 | lệnh chạy sau `make init` |
 | 34 | `frontend/CLAUDE.md`                       | -       | 17, 19 đến 24      | 🔵 Chờ duyệt | 2026-11-05 | Thêm bảng quy tắc mặc định M1 đến M7 cho mockup lệch tài liệu, ghi sổ quyết định của đợt |
