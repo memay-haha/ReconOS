@@ -51,6 +51,14 @@ function mockupDoc(): Document {
   return new DOMParser().parseFromString(readFileSync(MOCKUP, 'utf8'), 'text/html');
 }
 
+/** Mockup labels the glossary renames (M2, decision log part B): staging is "queue". */
+const RENAMED: Readonly<Record<string, string>> = { 'Staging Queue': 'Queue' };
+
+function mockupLabel(text: string): string {
+  const label = text.trim();
+  return RENAMED[label] ?? label;
+}
+
 describe('Sidebar against the mockup', () => {
   it('is an aside holding a nav, then the account card, as the mockup is', () => {
     wrap(USER);
@@ -86,7 +94,7 @@ describe('Sidebar against the mockup', () => {
     const fromMockup = Array.from(mockupDoc().querySelectorAll('aside nav > div')).map((group) => ({
       heading: (group.firstElementChild?.textContent ?? '').trim().replace(/\s*ROOT$/, ''),
       labels: Array.from(group.querySelectorAll('a')).map((a) =>
-        (a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? '').trim(),
+        mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
       ),
     }));
     // Raw Outputs and Audit Log have no mockup; they are asserted on their own below.
@@ -104,11 +112,7 @@ describe('Sidebar against the mockup', () => {
       );
     const operations = NAV_GROUPS.find((g) => g.heading === 'Operations');
     // Pinned after the mockup's two Operations items.
-    expect(operations?.items.map((i) => i.label)).toEqual([
-      'Staging Queue',
-      'Manage',
-      'Raw Outputs',
-    ]);
+    expect(operations?.items.map((i) => i.label)).toEqual(['Queue', 'Manage', 'Raw Outputs']);
     expect(find('Raw Outputs')).toMatchObject({
       group: 'Operations',
       item: { icon: 'description', href: null },
@@ -140,7 +144,7 @@ describe('Sidebar against the mockup', () => {
 
   it('draws each icon with the ligature the mockup uses', () => {
     const fromMockup = Array.from(mockupDoc().querySelectorAll('aside nav a')).map((a) => [
-      (a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? '').trim(),
+      mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
       a.querySelector('.material-symbols-outlined')?.textContent,
     ]);
     const mine = new Map(NAV_GROUPS.flatMap((g) => g.items.map((i) => [i.label, i.icon])));
@@ -158,7 +162,14 @@ describe('Sidebar behaviour', () => {
   it('lets the reader reach only the screens part A builds', () => {
     wrap();
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs.sort()).toEqual(['/audit-log', '/components', '/users']);
+    expect(hrefs.sort()).toEqual([
+      '/audit-log',
+      '/components',
+      '/manage',
+      '/programs',
+      '/queue',
+      '/users',
+    ]);
   });
 
   it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {
