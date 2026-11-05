@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
-import { type Page, withQuery } from './page';
+import { type Page, type Poll, withQuery } from './page';
 
 export type AssetType = 'domain' | 'ip' | 'url' | 'service';
 
@@ -45,8 +45,13 @@ export const assetEventKeys = {
     ] as const,
 };
 
-export function useAssetEvents(filter: AssetEventFilter = {}, cursor: string | null = null) {
+export function useAssetEvents(
+  filter: AssetEventFilter = {},
+  cursor: string | null = null,
+  poll: Poll = {},
+) {
   return useQuery({
+    ...poll,
     queryKey: assetEventKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<AssetEvent>>(

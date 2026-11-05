@@ -23,3 +23,9 @@ export function withQuery(path: string, params: Readonly<Record<string, QueryVal
   const query = search.toString();
   return query === '' ? path : `${path}?${query}`;
 }
+
+/** How often a screen re-reads a list on its own, as S02 does every 30 seconds. `false`
+ * stops it, as the paused feed does. */
+export interface Poll {
+  readonly refetchInterval?: number | false;
+}

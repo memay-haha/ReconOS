@@ -971,6 +971,8 @@ paths:
       tags: [dashboard]
       summary: "Số liệu tổng hợp S02, trường theo api/architecture.md"
       x-roles: [superadmin, admin, user]
+      parameters:
+        - {name: window, in: query, schema: {type: string, enum: [24h, 7d, 30d], default: 24h}, description: "Khoảng thời gian cho programs_new, assets_new"}
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}

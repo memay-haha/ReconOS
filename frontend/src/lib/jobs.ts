@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
 import { dispatcherKeys } from './dispatcher';
-import { type Page, withQuery } from './page';
+import { type Page, type Poll, withQuery } from './page';
 
 export const JOB_STATUSES = [
   'pending_approval',
@@ -84,8 +84,9 @@ export const jobKeys = {
   detail: (jobId: string) => ['jobs', 'detail', jobId] as const,
 };
 
-export function useJobs(filter: JobFilter = {}, cursor: string | null = null) {
+export function useJobs(filter: JobFilter = {}, cursor: string | null = null, poll: Poll = {}) {
   return useQuery({
+    ...poll,
     queryKey: jobKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<Job>>(

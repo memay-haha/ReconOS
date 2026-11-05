@@ -45,7 +45,7 @@ Gặp chỗ mockup lệch tài liệu thì áp quy tắc đầu tiên khớp, gh
 |---|---|---|
 | M1 | Phần tử thuộc mục Cấm ở trên hoặc nợ mockup trong [tech-debt.md](../docs/tech-debt.md) | Làm theo hướng xử lý của nợ. Nợ không có hướng xử lý thì bỏ phần tử |
 | M2 | Nhãn, trạng thái, vai trò, số liệu khác glossary, `schema.md`, `authorization.md` | Theo tài liệu |
-| M3 | Phần tử cần dữ liệu hoặc thao tác không có endpoint trong [openapi.yaml](../docs/api/openapi.yaml) | Bỏ phần tử. ❌ Không tự thêm endpoint |
+| M3 | Phần tử cần dữ liệu hoặc thao tác không có endpoint, tham số hay trường trong [openapi.yaml](../docs/api/openapi.yaml) | Thêm endpoint, tham số hoặc trường vào [api/architecture.md](../docs/api/architecture.md) và `openapi.yaml` theo [doc-sync.md](../.claude/rules/doc-sync.md), dựng phần tử, trả dữ liệu mẫu bằng MSW. Chỉ số chưa có định nghĩa: dừng hỏi. ❌ Không bỏ phần tử của mockup chỉ vì API chưa có |
 | M4 | Endpoint có trong `openapi.yaml` nhưng backend chưa làm | Dựng, trả dữ liệu mẫu bằng MSW |
 | M5 | Chú thích, chữ mô tả hành vi trái tài liệu | Viết lại theo tài liệu |
 | M6 | Tài liệu yêu cầu mà mockup thiếu: trạng thái rỗng, lỗi, quyền | Thêm bằng component sẵn có trong `src/components/` |

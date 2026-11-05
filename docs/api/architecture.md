@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.13 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -116,7 +116,7 @@ Response tổng hợp:
 
 | Endpoint | Trường |
 |---|---|
-| `GET /dashboard/summary` | `programs`: số program xem được. `assets`: số `domain`, `ip`, `url`, `service`. `findings_by_severity`: như `finding_counts`. `jobs_by_status`: đủ 7 trạng thái job |
+| `GET /dashboard/summary` | Tham số `window`: `24h` mặc định, `7d`, `30d`. `programs`: số program xem được. `programs_active`: số program `active`. `programs_new`: số program tạo trong `window`. `assets`: số `domain`, `ip`, `url`, `service`. `assets_new`: cùng 4 khóa, đếm tài sản có `first_seen_at` trong `window`. `new_assets_daily`: 14 phần tử `date`, `domain`, `url`, `ip`, cũ trước, phần tử cuối là hôm nay. `top_programs`: tối đa 5 phần tử `id`, `name`, `domain_count`, giảm dần. `scope_coverage`: tỉ lệ domain `in_scope` trên tổng domain, `NULL` khi chưa có domain. `top_ports`: tối đa 5 phần tử `port`, `transport`, `name`, `count`, giảm dần theo số service. `top_service_name`: `name`, `ratio` của tên dịch vụ nhiều nhất, `NULL` khi chưa có service. `findings_by_severity`: như `finding_counts`. `confirmed_cve_findings_24h`. `jobs_by_status`: đủ 7 trạng thái job. `jobs_per_minute`. `workers_online` |
 | `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: object có khóa là ID tool module hoặc ID program, giá trị là số job `queued` |
 | `POST /engines/{engine_id}/test` | `version`: phiên bản engine trả về, `NULL` khi engine không báo. Engine không trả lời thì trả lỗi |
 | `GET /system/health` | `components[]`: `name`, `status` (`ok`, `degraded`, `down`), `latency_ms`, `checked_at`. Thêm `queue_length`, `workers_online` |
@@ -124,6 +124,11 @@ Response tổng hợp:
 - `components[].name` theo thành phần trong [system.md](../architecture/system.md): `api`, `dispatcher`, `background`, `beat`, `postgres`, `reconos_log`, `redis`, `minio`, `osmedeus`, `vigolium`.
 - Backend tính `status` và `workers_online`. Frontend chỉ hiển thị. ❌ Không trả PID, đường dẫn, địa chỉ IP nội bộ.
 - Số liệu chỉ tính trên program tài khoản xem được.
+- `new_assets_daily` chia ngày theo múi giờ `Asia/Ho_Chi_Minh`, không phụ thuộc `window`.
+- `top_ports[].name`: tên dịch vụ gặp nhiều nhất trên cổng đó, `NULL` khi chưa nhận diện được.
+- `confirmed_cve_findings_24h`: số finding có `cve` không rỗng, `triage_status` là `confirmed`, `triaged_at` trong 24 giờ qua.
+- `jobs_per_minute`: số job chuyển sang `completed` trong 60 phút qua chia 60.
+- `workers_online`: tính như trong `GET /system/health`.
 
 ### Lỗi
 

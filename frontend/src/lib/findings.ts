@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
-import { type Page, withQuery } from './page';
+import { type Page, type Poll, withQuery } from './page';
 import type { Severity } from './programs';
 
 export const TRIAGE_STATUSES = [
@@ -83,8 +83,13 @@ export const findingKeys = {
     ] as const,
 };
 
-export function useFindings(filter: FindingFilter = {}, cursor: string | null = null) {
+export function useFindings(
+  filter: FindingFilter = {},
+  cursor: string | null = null,
+  poll: Poll = {},
+) {
   return useQuery({
+    ...poll,
     queryKey: findingKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<Finding>>(

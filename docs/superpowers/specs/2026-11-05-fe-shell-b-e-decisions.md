@@ -232,3 +232,22 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S02 | Chân panel Findings by Severity | M3 | Giữ "Total: N", bỏ "CVEs verified in past 24h" |
 | S02 | Chân panel Staging Snapshot: Worker instances, Throughput | M3 | Bỏ |
 | Sidebar | Component Library | Người dùng chốt 2026-11-05 | Bỏ trang `/components` và mục sidebar. Soát design system bằng test trong `src/styles/` |
+
+## Dựng lại S02 theo thiết kế Stitch ngày 2026-11-05
+
+Người dùng chốt: S02 giống thiết kế Stitch, thiếu API thì mở rộng API. Các dòng S02 ghi bỏ ở phần D và phần chỉnh lớp vỏ bị thay bởi bảng này.
+
+| Màn hình | Phần tử | Quy tắc | Xử lý |
+|---|---|---|---|
+| S02 | SYNCED, "Auto-refreshes every 30s" | Người dùng chốt | Giữ. Summary và feed làm mới mỗi 30 giây. SYNCED khi lần tải gần nhất thành công |
+| S02 | Nút 24H, 7D, 30D, số tăng trên thẻ KPI | M3 | Tham số `window`, trường `programs_new`, `assets_new` |
+| S02 | Biểu đồ New Assets Discovered (14 Days) | M3 | Trường `new_assets_daily`. Số lớn là số của hôm nay, Peak 14d là ngày cao nhất |
+| S02 | Top Programs by Domains, Active targets, Scope coverage | M3, người dùng chốt | `top_programs`, `programs_active`, `scope_coverage`: tỉ lệ domain In-Scope |
+| S02 | Top Open Ports, Active services, Top protocol | M3 | `top_ports`, `top_service_name` |
+| S02 | "CVEs verified in past 24h" | Người dùng chốt | `confirmed_cve_findings_24h`: finding có CVE chuyển sang `confirmed` trong 24 giờ |
+| S02 | Worker instances, Throughput | Người dùng chốt | `workers_online`, `jobs_per_minute`: job `completed` trong 60 phút chia 60 |
+| S02 | Staging Snapshot | M2 | Tên panel "Queue Snapshot" theo glossary. Hai hàng như mockup: Total jobs, Pending approval, Queued, rồi Dispatched, Running, Completed, Failed, Cancelled. Nhãn theo glossary |
+| S02 | Thẻ Services "-74 closed" | M2 | Chưa có khái niệm service đóng. Hiện `assets_new.service` như các thẻ khác |
+| S02 | Recent Activity | Người dùng chốt | Gộp `GET /asset-events`, finding mới, job `completed`, xếp theo thời gian. Giờ dạng "12s ago", di chuột thấy dd/mm/yyyy |
+| S02 | "(Live WebSocket)", `stream::recon.events`, Auto-scroll, Pause | M5 | Frontend chưa có kênh WebSocket: tiêu đề "Recent Activity", nhãn "auto-refresh 30s", nút Pause dừng làm mới feed |
+| Quy tắc | M3 | Người dùng chốt | Thiếu API thì mở rộng `openapi.yaml`, không bỏ phần tử |
