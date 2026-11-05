@@ -24,8 +24,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     heading: 'Recon',
     items: [
       { label: 'Dashboard', href: null, icon: 'grid_view', part: 'Part D' },
-      { label: 'Monitor', href: null, icon: 'show_chart', part: 'Part C' },
-      { label: 'Domains', href: null, icon: 'language', part: 'Part C', badge: '/domains' },
+      { label: 'Monitor', href: '/monitor', icon: 'show_chart', part: 'Part C' },
+      { label: 'Domains', href: '/domains', icon: 'language', part: 'Part C', badge: '/domains' },
       { label: 'Screenshots', href: null, icon: 'photo_camera', part: 'Part D' },
       { label: 'Programs', href: null, icon: 'folder', part: 'Part B' },
       {

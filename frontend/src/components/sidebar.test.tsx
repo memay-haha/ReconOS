@@ -155,10 +155,10 @@ describe('Sidebar behaviour', () => {
       expect(labels).not.toContain(name);
   });
 
-  it('lets the reader reach only the screens part A builds', () => {
+  it('lets the reader reach only the screens already built', () => {
     wrap();
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs.sort()).toEqual(['/audit-log', '/components', '/users']);
+    expect(hrefs.sort()).toEqual(['/audit-log', '/components', '/domains', '/monitor', '/users']);
   });
 
   it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {

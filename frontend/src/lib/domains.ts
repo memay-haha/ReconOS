@@ -54,8 +54,13 @@ export const domainKeys = {
     ] as const,
 };
 
-export function useDomains(filter: DomainFilter = {}, cursor: string | null = null) {
+export function useDomains(
+  filter: DomainFilter = {},
+  cursor: string | null = null,
+  options: { readonly enabled?: boolean } = {},
+) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryKey: domainKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<DomainRow>>(
@@ -69,4 +74,42 @@ export function useDomains(filter: DomainFilter = {}, cursor: string | null = nu
         }),
       ),
   });
+}
+
+/** One tag on a domain, as `GET /domains/{domain_id}` lists it. `id` is the asset_tag row,
+ * the handle `DELETE /asset-tags/{asset_tag_id}` takes; `tag_id` is the catalogue entry. */
+export interface DomainTag {
+  readonly id: string;
+  readonly tag_id: string;
+  readonly key: string;
+  readonly value: string;
+}
+
+/** `GET /domains/{domain_id}`: the list row plus `tags`. */
+export interface DomainDetail extends DomainRow {
+  readonly tags: readonly DomainTag[];
+}
+
+export const domainDetailKeys = {
+  all: ['domains', 'detail'] as const,
+  detail: (domainId: string) => ['domains', 'detail', domainId] as const,
+};
+
+export function useDomain(domainId: string) {
+  return useQuery({
+    queryKey: domainDetailKeys.detail(domainId),
+    queryFn: () => apiRequest<DomainDetail>(`/domains/${encodeURIComponent(domainId)}`),
+  });
+}
+
+/** The export streams a file, so the browser downloads it through a plain link rather than
+ * a query. Same filters as the list: docs/api/architecture.md. The prefix is the one
+ * api-client.ts sends every request through. */
+export function domainExportHref(filter: DomainFilter): string {
+  return `/api/v1${withQuery('/domains/export', {
+    format: 'csv',
+    program_id: filter.programId,
+    dns_status: filter.dnsStatus,
+    in_scope: filter.inScope,
+  })}`;
 }

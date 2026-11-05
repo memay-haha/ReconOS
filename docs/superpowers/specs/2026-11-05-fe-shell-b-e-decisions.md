@@ -91,6 +91,30 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S05 | Độ phân giải ảnh, Previous 3 / 64 Next | M3 | Bỏ |
 | S05 | Modal chọn nhiều công cụ, Priority, Estimated | M2, M3 | Chọn một tool module. Bỏ Priority, Estimated |
 | S05 | "Execute Autonomous Scan", "Dispatch Job" | M5 | "Run Scan", "Create job" |
+| S03 | Nút **Filters** | M7 | Giữ, bật tắt hàng lọc |
+| S03 | Số đếm trên cả 4 tab | M7 | Chỉ tab đang mở hiện `total`. Tab khác không gửi request |
+| S03 | Sync Realtime | M3 | Bỏ. Làm mới theo WebSocket khi có |
+| S03 | Tab dạng link | M6 | `tablist` và `tab`, phím mũi tên chuyển tab |
+| S03 | `dns_status`, `in_scope` trên tab IPs, URLs, Services | M3 | Chỉ hiện ở tab Domains. `/ips`, `/urls`, `/services` chỉ nhận `program_id` |
+| S03 | Cột ASN / ORG ở tab Domains | M3 | Bỏ: hàng domain không có ASN. ASN hiện ở tab IPs |
+| S03 | Ô chọn ở tab Services | M3 | Bỏ: service không có chuỗi mục tiêu riêng để tạo job |
+| S03 | Copy Names | M7 | Giữ, chép vào clipboard |
+| S03, S04 | Customize columns, Column Display, Density Settings | M3 | Bỏ |
+| S03, S04 | Select Density "25 / page" | M7 | "Rows per page" theo tham số `limit` |
+| S04 | Nút dropdown Program | M7 | Select program có nhãn |
+| S04 | Checkbox Findings only | M3 | Bỏ: không có tham số lọc. Thay bằng select `in_scope` theo Q1 |
+| S04 | Tile "New in 24h", số `%` | M3 | Bỏ. Unresolved là tổng `total` của `nxdomain` và `timeout` |
+| S04 | Refresh Telemetry | M2 | "Refresh", gọi lại `GET /domains` |
+| S04 | **Add Scope** trỏ tới S11 | M7 | Tạm dùng route `/manage`. Phần B chốt route S11 thì sửa |
+| S05 | Tab URLs, Services | M3 | Bỏ: `/urls`, `/services` không lọc theo domain |
+| S05 | Dạng `tags` của `GET /domains/{domain_id}` | M4 | openapi chưa định nghĩa. Frontend dùng `id` của `asset_tag`, `tag_id`, `key`, `value`. Backend cần chốt |
+| S05 | Thêm tag | M6 | Chỉ chọn tag có sẵn từ `GET /tags`. Chưa dựng tạo tag mới bằng `POST /tags` |
+| S05 | Chip "bbrf: synced" | M1 | Bỏ |
+| S05 | Delete, Auto-reconciled, Confidence | M3 | Bỏ |
+| S05 | Ô "Low / Info" | M2 | 5 mức severity riêng |
+| S05 | Discovery Source | M2 | `asset_event` cũ nhất của domain (`sort=created_at&limit=1`), rồi `GET /jobs/{job_id}` lấy tool module |
+| S05 | Link Program, Inspect, View in Findings | M7 | Tạm dùng `/programs/{id}`, `/screenshots/{id}`, `/findings?domain_id=`. Phần B, D, E chốt route thì sửa |
+| S05 | Asset events không phân trang | M6 | 10 dòng mỗi trang, nút **Previous**, **Next** |
 
 ## Phần D: S02, S06, S07
 
