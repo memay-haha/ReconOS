@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
 import { type Page, withQuery } from './page';
@@ -99,4 +99,59 @@ export function useFindings(filter: FindingFilter = {}, cursor: string | null = 
         }),
       ),
   });
+}
+
+export const findingDetailKey = (findingId: string) => ['findings', 'detail', findingId] as const;
+
+export function useFinding(findingId: string | null) {
+  return useQuery({
+    queryKey: findingDetailKey(findingId ?? ''),
+    queryFn: () => apiRequest<Finding>(`/findings/${findingId ?? ''}`),
+    enabled: findingId !== null,
+  });
+}
+
+export interface FindingTriageBody {
+  readonly triage_status: TriageStatus;
+  /** Required by the backend when `triage_status` is `duplicate`, null otherwise. */
+  readonly duplicate_of_id?: string | null;
+}
+
+export function usePatchFinding() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ findingId, body }: { findingId: string; body: FindingTriageBody }) =>
+      apiRequest<Finding>(`/findings/${findingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: findingKeys.all }),
+  });
+}
+
+/** docs/api/architecture.md: a bulk call takes at most 500 IDs, and either all change or none. */
+export const BULK_TRIAGE_MAX = 500;
+
+export function useBulkTriage() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { readonly ids: readonly string[]; readonly triage_status: TriageStatus }) =>
+      apiRequest<void>('/findings/bulk-triage', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: findingKeys.all }),
+  });
+}
+
+export const EXPORT_FORMATS = ['csv', 'jsonl', 'md'] as const;
+export type ExportFormat = (typeof EXPORT_FORMATS)[number];
+
+/** The browser downloads the stream itself, so this is a URL for a link, not a query. It takes
+ * the same filters as the list: docs/api/architecture.md. */
+export function findingExportHref(filter: FindingFilter, format: ExportFormat): string {
+  return `/api/v1${withQuery('/findings/export', {
+    format,
+    program_id: filter.programId,
+    domain_id: filter.domainId,
+    severity: filter.severity ?? undefined,
+    triage_status: filter.triageStatus,
+  })}`;
 }

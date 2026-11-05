@@ -30,7 +30,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Programs', href: null, icon: 'folder', part: 'Part B' },
       {
         label: 'Findings',
-        href: null,
+        href: '/findings',
         icon: 'pest_control',
         part: 'Part E',
         badge: '/findings?triage_status=new',
@@ -63,10 +63,10 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     heading: 'System',
     tag: 'ROOT',
     items: [
-      { label: 'Health & Tools', href: null, icon: 'show_chart', part: 'Part E' },
-      { label: 'Osmedeus', href: null, icon: 'target', part: 'Part E' },
-      { label: 'Vigolium', href: null, icon: 'security', part: 'Part E' },
-      { label: 'Modules', href: null, icon: 'extension', part: 'Part E' },
+      { label: 'Health & Tools', href: '/system', icon: 'show_chart', part: 'Part E' },
+      { label: 'Osmedeus', href: '/osmedeus', icon: 'target', part: 'Part E' },
+      { label: 'Vigolium', href: '/vigolium', icon: 'security', part: 'Part E' },
+      { label: 'Modules', href: '/modules', icon: 'extension', part: 'Part E' },
     ],
   },
 ];

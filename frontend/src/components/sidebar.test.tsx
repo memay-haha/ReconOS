@@ -162,8 +162,18 @@ describe('Sidebar behaviour', () => {
       '/audit-log',
       '/components',
       '/dashboard',
+      '/domains',
+      '/findings',
+      '/manage',
+      '/modules',
+      '/monitor',
+      '/osmedeus',
+      '/programs',
+      '/queue',
       '/screenshots',
+      '/system',
       '/users',
+      '/vigolium',
     ]);
   });
 

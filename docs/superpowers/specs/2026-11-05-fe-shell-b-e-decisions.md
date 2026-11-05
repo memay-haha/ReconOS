@@ -162,3 +162,15 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S20 | Select program, pill severity | M2 | `program_id`, `severity` |
 | S20 | Drawer thiếu link output thô | M6 | Thêm link theo `raw_output_id` |
 | S20 | Chọn Duplicate | M6 | Bắt buộc chọn finding gốc `duplicate_of_id` |
+| S15 | Thẻ số Tools: installed, outdated | M1 nợ 9 | Bỏ. Giữ 3 thẻ Services, Workers, Queue length từ `GET /system/health` |
+| S15 | Badge TICK 30s, dải Last diagnostic, View Diagnostics Log, "auto-refreshes every 30s" | M3, M5 | Bỏ |
+| S15 | Ngày chọn khi xóa log | M6 | Chọn muộn nhất là hôm qua theo UTC, form tự báo "Pick a day before today.", bấm **Delete logs** hai lần để xác nhận |
+| S16 | Khối Cluster Resource Overhead | M3 | Bỏ |
+| S16, S17 | Tìm engine | M7 | Lấy dòng có `name` là `osmedeus`, `vigolium` trong `GET /engines`. Không có dòng: báo engine không tồn tại |
+| S16 | Giá trị biến engine | M6 | Luôn hiện mặt nạ cố định. Nút **Replace**, **Delete**, ô giá trị chỉ để ghi |
+| S18 | Cột Output Contract | M3 | Bỏ: `GET /tool-modules` không trả loại tài sản tool module tạo ra |
+| S18 | Sửa `default_params` | M3 | Bỏ: schema tham số nằm trong mã, API không trả. Form Configure chỉ sửa `max_concurrency`, `rate_limit_per_minute`, `timeout_minutes` |
+| S18 | Cột Concurrency, Rate limit, Timeout | M6 | Thêm theo cột `tool_module` |
+| S18 | Drawer Dispatch Capability | M7 | Bấm **Run**: hộp chọn program, rồi RunScanDialog dùng chung với một tool module và ô mục tiêu tự nhập |
+| S20 | Cột Matcher / Match, select số dòng mỗi trang, checkbox Hide False Positives | M3, M1, M2 | Bỏ. Lọc `triage_status` bằng select Status |
+| S20 | Body `POST /findings/bulk-triage`, response `POST /engines/{id}/test` | M4 | openapi.yaml chưa ghi trường. Frontend gửi `{ids, triage_status}`, đọc `version` nếu có. Cần chốt khi backend làm |
