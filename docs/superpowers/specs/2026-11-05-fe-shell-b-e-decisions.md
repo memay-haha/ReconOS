@@ -112,6 +112,21 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S07 | Khung HTML giả lập, viewport, Requests, Logs, Cookies, PID, TLS, HTML source, HAR | M3 | Bỏ. Ảnh là `<img>` từ `/image` |
 | S07 | Security Headers Check | M3 | Bỏ chấm điểm, giữ bảng header |
 | S07 | Detected Technologies | M2 | Từ `GET /urls/{url_id}`, bỏ "Wappalyzer" |
+| S02 | Nút Refresh | M7 | Giữ, gọi lại `GET /dashboard/summary` và `GET /asset-events` |
+| S02 | Nút Pause Stream, "Auto-scroll: ON" | M3 | Bỏ. Frontend chưa có kênh WebSocket, feed làm mới qua query |
+| S02 | Thẻ Total Jobs | M3 | Bỏ: `jobs_by_status` không có tổng |
+| S02 | Link View all | M7 | Chỉ hiện khi màn hình đích đã có `href` trong `nav-items.ts` |
+| S02 | Feed Recent Activity | M7 | 8 sự kiện mới nhất, `sort=-created_at`, không phân trang như mockup |
+| S06 | Clear Filters | M7 | Giữ, đặt lại program và Group by Similar |
+| S06 | Toggle Show Failed | M3 | Bỏ: `GET /screenshots` không có tham số lọc `is_failed` |
+| S06 | Prev, Next trên thanh lọc | M7 | Bỏ. Một bộ phân trang ở chân trang |
+| S06 | Retry pending, Force Dispatch trên thẻ lỗi | M3 | Bỏ |
+| S06 | Density 12, 24, 48, 96 | M7 | Giữ, gửi thành `limit`, mặc định 24 |
+| S06 | "2h ago" | M2 | `captured_at` dạng `dd/mm/yyyy HH:mm` |
+| S07 | Download PNG, PNG | M7 | Link `download` tới `GET /screenshots/{id}/image` |
+| S07 | Tiêu đề h1 "Summary" | M2 | "Screenshot Detail" |
+| S07 | Ô Requests, Console, DOM, Layers, Cookies, "Probed by worker", PID, "2.48 seconds" | M3 | Bỏ. Hiện `final_url`, `status_code`, `content_length`, `captured_at` |
+| S07 | Dạng công nghệ trong `GET /urls/{url_id}` | Chưa có tài liệu | Giả định mảng `technologies` gồm `technology_id`, `name`, `category`, `version`, ghép `url_technology` với `technology`. Cần ghi vào bảng trường tính của api/architecture.md |
 
 ## Phần E: S15, S16, S17, S18, S20
 
