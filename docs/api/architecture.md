@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.11 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -117,7 +117,7 @@ Response tổng hợp:
 | Endpoint | Trường |
 |---|---|
 | `GET /dashboard/summary` | `programs`: số program xem được. `assets`: số `domain`, `ip`, `url`, `service`. `findings_by_severity`: như `finding_counts`. `jobs_by_status`: đủ 7 trạng thái job |
-| `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: số job `queued` theo từng nhóm |
+| `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: object có khóa là ID tool module hoặc ID program, giá trị là số job `queued` |
 | `POST /engines/{engine_id}/test` | `version`: phiên bản engine trả về, `NULL` khi engine không báo. Engine không trả lời thì trả lỗi |
 | `GET /system/health` | `components[]`: `name`, `status` (`ok`, `degraded`, `down`), `latency_ms`, `checked_at`. Thêm `queue_length`, `workers_online` |
 

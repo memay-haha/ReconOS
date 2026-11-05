@@ -171,18 +171,18 @@ describe('S15 system health', () => {
     await vi.waitFor(() => expect(paths(calls, 'DELETE')).toEqual(['/logs?before=2026-10-01']));
   });
 
-  it('refuses today as the day to delete before', async () => {
+  it('refuses a day after today as the day to delete before', async () => {
     const calls = open('superadmin');
     await userEvent.click(await screen.findByRole('button', { name: /delete logs/i }));
     const dialog = screen.getByRole('dialog');
-    const today = new Date().toISOString().slice(0, 10);
-    await userEvent.type(within(dialog).getByLabelText(/delete every day before/i), today);
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    await userEvent.type(within(dialog).getByLabelText(/delete every day before/i), tomorrow);
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete logs' }));
-    expect(within(dialog).getByText('Pick a day before today.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Pick today or an earlier day.')).toBeInTheDocument();
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
   });
 
-  it('picks yesterday in UTC as the latest day', () => {
-    expect(latestDeleteDay(new Date('2026-11-05T00:30:00Z'))).toBe('2026-11-04');
+  it('picks today in UTC as the latest day', () => {
+    expect(latestDeleteDay(new Date('2026-11-05T00:30:00Z'))).toBe('2026-11-05');
   });
 });

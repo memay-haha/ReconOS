@@ -43,10 +43,11 @@ function dayBoundary(day: string, end: boolean): string | null {
   return Number.isNaN(instant.getTime()) ? null : instant.toISOString();
 }
 
-/** The latest day a Superadmin may pick: yesterday in UTC, the zone the backend checks
- * `before` in. Picking today would be allowed by the contract but deletes nothing more. */
+/** The latest day a Superadmin may pick: today in UTC, the zone the backend checks `before`
+ * in. `before` is exclusive, so picking today deletes up to yesterday and never today's log:
+ * docs/data/database.md. */
 export function latestDeleteDay(now: Date = new Date()): string {
-  return new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
+  return now.toISOString().slice(0, 10);
 }
 
 function dayText(day: string): string {
@@ -100,7 +101,7 @@ function DeleteLogs({ onClose }: { onClose: () => void }): ReactElement {
         </p>
         {tooLate && (
           <p role="alert" className="text-body-default text-crit">
-            Pick a day before today.
+            Pick today or an earlier day.
           </p>
         )}
         {confirming && (

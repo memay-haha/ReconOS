@@ -159,8 +159,7 @@ describe('Sidebar behaviour', () => {
       expect(labels).not.toContain(name);
   });
 
-  it('lets the reader reach only the screens that are built', () => {
-  });
+  it('lets the reader reach only the screens that are built', () => {});
 
   it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {
     wrap();
