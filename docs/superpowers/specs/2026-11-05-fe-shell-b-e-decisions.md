@@ -78,7 +78,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S09 | Tab Users | M6 | Chỉ đề xuất tài khoản vai trò User chưa gán, vì Superadmin, Admin không cần dòng gán |
 | S10 | Tiêu đề trang là `span` | M6 | Thêm `h1` "Queue" cho WCAG 1.3.1 |
 | S10 | Cột Worker, nút Pause auto-refresh | M2, M7 | Bỏ. Làm mới theo WebSocket |
-| S10 | `queued_by_tool_module`, `queued_by_program` | M2 | Đọc là object khóa theo `tool_module_id`, `program_id`, giá trị là số job. Tên lấy từ `GET /tool-modules`, `GET /programs`, không có tên thì hiện uuid rút gọn. Tài liệu chưa ghi rõ dạng: cần xác nhận khi backend làm |
+| S10 | `queued_by_tool_module`, `queued_by_program` | M2 | Đọc là object khóa theo `tool_module_id`, `program_id`, giá trị là số job. Tên lấy từ `GET /tool-modules`, `GET /programs`, không có tên thì hiện uuid rút gọn. Dạng đã ghi trong api/architecture.md |
 | S10 | Raw outputs, Logs | M6 | Mở panel dưới bảng: `GET /jobs/{id}/raw-outputs` kèm link tải `/content`, `GET /jobs/{id}/logs`. Log hiện dạng chữ |
 | S10 | Cancel ở `pending_approval` | M2 | Không hiện: theo business-flow.md, job chờ duyệt chỉ ra khỏi hàng đợi bằng **Reject** |
 | S11 | Thẻ Missing Scope, pill No Scope, checkbox Unmapped only | M3 | Bỏ |
@@ -122,7 +122,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S04 | Refresh Telemetry | M2 | "Refresh", gọi lại `GET /domains` |
 | S04 | **Add Scope** trỏ tới S11 | M7 | Tạm dùng route `/manage`. Phần B chốt route S11 thì sửa |
 | S05 | Tab URLs, Services | M3 | Bỏ: `/urls`, `/services` không lọc theo domain |
-| S05 | Dạng `tags` của `GET /domains/{domain_id}` | M4 | openapi chưa định nghĩa. Frontend dùng `id` của `asset_tag`, `tag_id`, `key`, `value`. Backend cần chốt |
+| S05 | Dạng `tags` của `GET /domains/{domain_id}` | M2 | Theo api/architecture.md, đã chốt ngày 2026-11-05 |
 | S05 | Thêm tag | M6 | Chỉ chọn tag có sẵn từ `GET /tags`. Chưa dựng tạo tag mới bằng `POST /tags` |
 | S05 | Chip "bbrf: synced" | M1 | Bỏ |
 | S05 | Delete, Auto-reconciled, Confidence | M3 | Bỏ |
@@ -165,7 +165,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S07 | Download PNG, PNG | M7 | Link `download` tới `GET /screenshots/{id}/image` |
 | S07 | Tiêu đề h1 "Summary" | M2 | "Screenshot Detail" |
 | S07 | Ô Requests, Console, DOM, Layers, Cookies, "Probed by worker", PID, "2.48 seconds" | M3 | Bỏ. Hiện `final_url`, `status_code`, `content_length`, `captured_at` |
-| S07 | Dạng công nghệ trong `GET /urls/{url_id}` | Chưa có tài liệu | Giả định mảng `technologies` gồm `technology_id`, `name`, `category`, `version`, ghép `url_technology` với `technology`. Cần ghi vào bảng trường tính của api/architecture.md |
+| S07 | Dạng công nghệ trong `GET /urls/{url_id}` | M2 | `technologies` theo api/architecture.md, đã chốt ngày 2026-11-05 |
 
 ## Phần E: S15, S16, S17, S18, S20
 
@@ -203,7 +203,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S20 | Chọn Duplicate | M6 | Bắt buộc chọn finding gốc `duplicate_of_id` |
 | S15 | Thẻ số Tools: installed, outdated | M1 nợ 9 | Bỏ. Giữ 3 thẻ Services, Workers, Queue length từ `GET /system/health` |
 | S15 | Badge TICK 30s, dải Last diagnostic, View Diagnostics Log, "auto-refreshes every 30s" | M3, M5 | Bỏ |
-| S15 | Ngày chọn khi xóa log | M6 | Chọn muộn nhất là hôm qua theo UTC, form tự báo "Pick a day before today.", bấm **Delete logs** hai lần để xác nhận |
+| S15 | Ngày chọn khi xóa log | M2 | Chọn muộn nhất là hôm nay theo UTC. `before` loại trừ ngày chọn nên log hôm nay không bị xóa. Bấm **Delete logs** hai lần để xác nhận |
 | S16 | Khối Cluster Resource Overhead | M3 | Bỏ |
 | S16, S17 | Tìm engine | M7 | Lấy dòng có `name` là `osmedeus`, `vigolium` trong `GET /engines`. Không có dòng: báo engine không tồn tại |
 | S16 | Giá trị biến engine | M6 | Luôn hiện mặt nạ cố định. Nút **Replace**, **Delete**, ô giá trị chỉ để ghi |
@@ -212,4 +212,4 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S18 | Cột Concurrency, Rate limit, Timeout | M6 | Thêm theo cột `tool_module` |
 | S18 | Drawer Dispatch Capability | M7 | Bấm **Run**: hộp chọn program, rồi RunScanDialog dùng chung với một tool module và ô mục tiêu tự nhập |
 | S20 | Cột Matcher / Match, select số dòng mỗi trang, checkbox Hide False Positives | M3, M1, M2 | Bỏ. Lọc `triage_status` bằng select Status |
-| S20 | Body `POST /findings/bulk-triage`, response `POST /engines/{id}/test` | M4 | openapi.yaml chưa ghi trường. Frontend gửi `{ids, triage_status}`, đọc `version` nếu có. Cần chốt khi backend làm |
+| S20 | Body `POST /findings/bulk-triage`, response `POST /engines/{id}/test` | M4 | Theo api/architecture.md, đã chốt ngày 2026-11-05 |
