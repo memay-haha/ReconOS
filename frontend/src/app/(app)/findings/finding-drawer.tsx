@@ -20,7 +20,7 @@ import { loadErrorText, saveErrorText } from '../system/states';
 import { BADGE, SEVERITY_TONE } from './tones';
 
 const PRE =
-  'max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-border bg-surface-2 p-space-sm text-body-code text-fg';
+  'max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-border bg-surface-2 p-space-sm font-body-code text-body-code text-fg';
 
 function Triage({ finding }: { finding: Finding }): ReactElement {
   const [status, setStatus] = useState<TriageStatus>(finding.triage_status);
@@ -74,7 +74,7 @@ function Triage({ finding }: { finding: Finding }): ReactElement {
               required
               value={original}
               onChange={(e) => setOriginal(e.target.value)}
-              className={`${FIELD} text-body-code`}
+              className={`${FIELD} font-body-code text-body-code`}
             />
           </label>
           <FieldError errors={fields} field="duplicate_of_id" />
@@ -103,7 +103,7 @@ function Fact({ term, children }: { term: string; children: ReactElement | strin
   return (
     <div className="flex flex-col gap-space-xs">
       <dt className="text-label-caps uppercase text-fg-muted">{term}</dt>
-      <dd className="break-all text-body-code text-fg">{children}</dd>
+      <dd className="break-all font-body-code text-body-code text-fg">{children}</dd>
     </div>
   );
 }
@@ -145,7 +145,7 @@ export function FindingDrawer({
             <span className={`${BADGE} ${SEVERITY_TONE[f.severity]}`}>
               {SEVERITY_LABEL[f.severity]}
             </span>
-            <span className="text-body-code text-fg-muted">{f.id}</span>
+            <span className="font-body-code text-body-code text-fg-muted">{f.id}</span>
           </div>
           <Triage key={`${f.id}:${f.triage_status}`} finding={f} />
           <h3 className="text-label-caps uppercase text-fg-muted">Summary</h3>

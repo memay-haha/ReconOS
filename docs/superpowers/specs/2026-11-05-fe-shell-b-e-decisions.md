@@ -214,3 +214,20 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S18 | Drawer Dispatch Capability | M7 | Bấm **Run**: hộp chọn program, rồi RunScanDialog dùng chung với một tool module và ô mục tiêu tự nhập |
 | S20 | Cột Matcher / Match, select số dòng mỗi trang, checkbox Hide False Positives | M3, M1, M2 | Bỏ. Lọc `triage_status` bằng select Status |
 | S20 | Body `POST /findings/bulk-triage`, response `POST /engines/{id}/test` | M4 | Theo api/architecture.md, đã chốt ngày 2026-11-05 |
+| S18 | Chế độ Grid, Table | M7 | Mặc định Grid, mỗi thẻ một tool module. Table dựng khi bấm **Table**, giữ đủ cột |
+| S20 | Badge Critical nền đặc | M6 | Giữ nền nhạt `crit-strong-soft`: chữ `accent-ink` trên `crit` dưới 4,5:1 ở theme sáng |
+
+## Chỉnh lớp vỏ, S01, S02 theo mockup ngày 2026-11-05
+
+| Màn hình | Phần tử | Quy tắc | Cách làm |
+|---|---|---|---|
+| Shell | Mục sidebar chưa có màn hình (Raw Outputs) kèm chữ "Part B" | M7 | Ẩn mục có `href` là `null`, giữ dòng trong `nav-items.ts`. Thay quyết định "làm mờ kèm tên phần" của spec phần A |
+| Shell | Icon Material Symbols to hơn mockup | M7 | Stylesheet của font đặt `font-size: 24px` ngoài cascade layer nên thắng mọi utility. `globals.css` trả các thuộc tính đó về layer bằng `revert-layer` |
+| Shell | Topbar: nút menu, breadcrumb, ô tìm, Dispatcher online, chuông, theme, avatar | M7, M3 | Giữ nút menu (ẩn, hiện sidebar), breadcrumb `ReconOS > nhóm > màn hình` theo `nav-items.ts`, theme, avatar chữ viết tắt. Pill dispatcher lấy dòng `dispatcher` của `GET /system/health`, chỉ Superadmin, Admin. Bỏ ô tìm (nợ 39) và chuông (không có endpoint) |
+| Shell | Đệm vùng nội dung | M7 | `main` chỉ chừa chiều cao topbar. Mỗi route đệm theo mockup của mình qua `ScreenFrame`: `gutter` cho S03, S11, S12, S14 đến S18, `margin` cho S02, S04, S08, S10, S20. Màn hình chi tiết S05, S07, S09 tự đặt |
+| Shell | Màu `asset-service` theme tối, `asset-domain`, `asset-ip` theme sáng | M7 | Chỉnh giá trị token để icon màu tài sản đạt 4,5:1 trên `surface`, `surface-2` |
+| S01 | Version tag, DISPATCHER ONLINE, NODE 01-PROD, "All connections encrypted" | M3, M5 | Bỏ: chưa đăng nhập thì không gọi được endpoint nào, câu mã hóa không đúng ở môi trường phát triển |
+| S01 | Quầng sáng nền, khoảng cách form | M7 | Theo mockup |
+| S02 | Viền trên, màu icon thẻ KPI theo loại tài sản | M7 | Theo mockup |
+| S02 | Chân panel Findings by Severity | M3 | Giữ "Total: N", bỏ "CVEs verified in past 24h" |
+| S02 | Chân panel Staging Snapshot: Worker instances, Throughput | M3 | Bỏ |

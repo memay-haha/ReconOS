@@ -17,7 +17,7 @@ import {
 } from '@/lib/findings';
 import { type Severity, SEVERITIES, usePrograms } from '@/lib/programs';
 
-import { ALERT_TEXT, BUTTON_PRIMARY, FIELD, LABEL, PANEL, STATE_TEXT } from '../system/modal';
+import { ALERT_TEXT, PANEL, STATE_TEXT } from '../system/modal';
 import { loadErrorText, PageHeader, saveErrorText } from '../system/states';
 import { FindingDrawer } from './finding-drawer';
 import { FindingTable } from './finding-table';
@@ -30,9 +30,19 @@ const EXPORT_LABEL: Readonly<Record<(typeof EXPORT_FORMATS)[number], string>> = 
   md: 'Markdown',
 };
 
-const PILL = 'h-8 rounded-sm border px-space-sm text-body-code';
-const PILL_ON = `${PILL} border-accent-soft-bd bg-accent-soft text-primary`;
-const PILL_OFF = `${PILL} border-border bg-surface text-fg-muted hover:text-fg`;
+const SELECT =
+  'h-8 rounded-sm border border-border bg-surface px-2.5 text-caption text-fg focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-ring';
+const SEG = 'whitespace-nowrap rounded-sm px-2.5 py-1 font-body-code text-caption';
+const SEG_OFF = `${SEG} text-fg-muted hover:text-fg`;
+const SEG_ALL_ON = `${SEG} bg-surface-3 font-semibold text-primary`;
+/** A pressed severity takes its own tint, as the mockup's Critical tab does. */
+const SEG_ON: Readonly<Record<Severity, string>> = {
+  critical: `${SEG} bg-crit-strong-soft font-semibold text-crit`,
+  high: `${SEG} bg-crit-soft font-semibold text-crit`,
+  medium: `${SEG} bg-warn-soft font-semibold text-warn`,
+  low: `${SEG} bg-info-soft font-semibold text-info`,
+  info: `${SEG} bg-neutral-soft font-semibold text-fg`,
+};
 
 /** S20. Every role triages, on the programs it can see; the backend enforces that. */
 export default function FindingsPage(): ReactElement {
@@ -103,8 +113,6 @@ export default function FindingsPage(): ReactElement {
   return (
     <div className="flex w-full flex-col gap-space-lg">
       <PageHeader
-        section="Recon"
-        current="Findings"
         title="Findings"
         description="Findings from every program you can see. Triage them, or export the current filter."
       >
@@ -114,7 +122,7 @@ export default function FindingsPage(): ReactElement {
               key={format}
               href={findingExportHref(filter, format)}
               download
-              className="inline-flex h-9 items-center gap-space-xs rounded-sm border border-border-strong bg-surface px-space-md text-body-default text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-border-strong bg-surface px-3 text-panel-title text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <span
                 aria-hidden="true"
@@ -128,73 +136,31 @@ export default function FindingsPage(): ReactElement {
         </div>
       </PageHeader>
 
-      <div className="flex flex-col gap-space-sm rounded-sm border border-border bg-surface p-space-md">
-        <div className="flex flex-wrap items-end gap-space-sm">
-          <label htmlFor="finding-program" className={LABEL}>
-            Program
-            <select
-              id="finding-program"
-              value={programId}
-              onChange={(e) => {
-                setProgramId(e.target.value);
-                refilter();
-              }}
-              className={FIELD}
-            >
-              <option value="">All programs</option>
-              {(programs.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor="finding-triage" className={LABEL}>
-            Status
-            <select
-              id="finding-triage"
-              value={triage}
-              onChange={(e) => {
-                setTriage(e.target.value as TriageStatus | '');
-                refilter();
-              }}
-              className={FIELD}
-            >
-              <option value="">All statuses</option>
-              {TRIAGE_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {TRIAGE_LABEL[s]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div role="group" aria-label="Severity" className="flex flex-wrap gap-space-xs">
-          {SEVERITIES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-pressed={severity.includes(s)}
-              onClick={() => toggleSeverity(s)}
-              className={severity.includes(s) ? PILL_ON : PILL_OFF}
-            >
-              {SEVERITY_LABEL[s]}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-space-sm rounded-sm border border-accent-soft-bd bg-accent-soft px-space-md py-space-sm">
-          <span className="text-body-default text-fg">{COUNT.format(selected.size)} selected</span>
-          <button
-            type="button"
-            onClick={markConfirmed}
-            disabled={bulk.isPending || selected.size > BULK_TRIAGE_MAX}
-            className={BUTTON_PRIMARY}
-          >
-            {bulk.isPending ? 'Saving…' : 'Mark confirmed'}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-space-sm rounded-sm border border-border-strong bg-surface-3 p-2.5">
+          <div className="flex items-center gap-2 font-body-code text-body-default">
+            <span className="font-semibold text-fg">{COUNT.format(selected.size)} selected</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={markConfirmed}
+              disabled={bulk.isPending || selected.size > BULK_TRIAGE_MAX}
+              className="inline-flex h-7 items-center gap-1 rounded-sm border border-border bg-surface px-2.5 text-caption font-semibold text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-icon text-info">
+                verified
+              </span>
+              {bulk.isPending ? 'Saving…' : 'Mark confirmed'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="h-7 rounded-sm px-2 font-body-code text-caption text-fg-muted hover:bg-crit-soft hover:text-crit focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              Deselect
+            </button>
+          </div>
         </div>
       )}
       {bulkDone !== null && (
@@ -210,6 +176,77 @@ export default function FindingsPage(): ReactElement {
 
       <div className="flex w-full flex-col items-start gap-space-md xl:flex-row">
         <div className={PANEL}>
+          {/* Filters sit on top of the table, in the same panel, as the mockup draws them. */}
+          <div className="flex flex-col-reverse gap-space-sm md:flex-row-reverse md:items-center md:justify-between border-b border-border bg-surface-2/40 p-space-md">
+            <div className="flex flex-wrap items-center justify-end gap-space-sm">
+              <label htmlFor="finding-program" className="sr-only">
+                Program
+              </label>
+              <select
+                id="finding-program"
+                value={programId}
+                onChange={(e) => {
+                  setProgramId(e.target.value);
+                  refilter();
+                }}
+                className={SELECT}
+              >
+                <option value="">All programs</option>
+                {(programs.data?.items ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="finding-triage" className="sr-only">
+                Status
+              </label>
+              <select
+                id="finding-triage"
+                value={triage}
+                onChange={(e) => {
+                  setTriage(e.target.value as TriageStatus | '');
+                  refilter();
+                }}
+                className={SELECT}
+              >
+                <option value="">All statuses</option>
+                {TRIAGE_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {TRIAGE_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div
+              role="group"
+              aria-label="Severity"
+              className="flex max-w-full items-center overflow-x-auto rounded-sm border border-border bg-surface-2 p-0.5"
+            >
+              <button
+                type="button"
+                aria-pressed={severity.length === 0}
+                onClick={() => {
+                  setSeverity([]);
+                  refilter();
+                }}
+                className={severity.length === 0 ? SEG_ALL_ON : SEG_OFF}
+              >
+                All
+              </button>
+              {SEVERITIES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={severity.includes(s)}
+                  onClick={() => toggleSeverity(s)}
+                  className={severity.includes(s) ? SEG_ON[s] : SEG_OFF}
+                >
+                  {SEVERITY_LABEL[s]}
+                </button>
+              ))}
+            </div>
+          </div>
           {findings.isPending && <p className={STATE_TEXT}>Loading the findings…</p>}
           {findings.isError && (
             <p role="alert" className={ALERT_TEXT}>

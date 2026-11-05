@@ -31,8 +31,9 @@ function roleBreakdown(rows: readonly UserRow[]): string | null {
   return parts.length === 0 ? null : parts.join(' · ');
 }
 
+// Header buttons as the mockup draws them (M7): h-9, tight side padding, a small shadow.
 const HEADER_BUTTON =
-  'inline-flex h-9 items-center gap-space-sm rounded-sm px-space-lg text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
+  'inline-flex h-9 items-center gap-2 rounded-sm px-3.5 font-body-default text-body-default shadow-sm focus:outline-none focus:ring-2 focus:ring-ring';
 
 export default function UsersPage(): ReactElement {
   const { cursor, canGoBack, goNext, goBack } = useCursorStack();
@@ -58,15 +59,17 @@ export default function UsersPage(): ReactElement {
   return (
     <div className="flex w-full flex-col gap-space-lg">
       <div className="flex flex-col justify-between gap-space-md pt-space-xs md:flex-row md:items-end">
-        <div className="flex flex-col gap-space-xs">
-          <div className="flex items-center gap-space-sm text-caption text-fg-faint">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 font-caption text-caption text-fg-faint">
             <span>ReconOS</span>
             <span aria-hidden="true">/</span>
             <span>Admin</span>
             <span aria-hidden="true">/</span>
-            <span className="text-body-code text-primary">Users &amp; Access</span>
+            <span className="font-body-code text-primary">Users &amp; Access</span>
           </div>
-          <h1 className="text-headline-lg text-fg">Users &amp; Access Control</h1>
+          <h1 className="font-headline-lg text-headline-lg tracking-tight text-fg">
+            Users &amp; Access Control
+          </h1>
           <p className="max-w-2xl text-body-default text-fg-muted">
             Accounts, roles, locks and login sessions.
           </p>
@@ -76,7 +79,10 @@ export default function UsersPage(): ReactElement {
             href="/audit-log"
             className={`${HEADER_BUTTON} border border-border-strong bg-surface text-fg hover:bg-surface-2`}
           >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon text-fg-muted">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-[17px] text-fg-muted"
+            >
               history_toggle_off
             </span>
             Audit Logs
@@ -86,7 +92,7 @@ export default function UsersPage(): ReactElement {
             onClick={() => setFormMode('create')}
             className={`${HEADER_BUTTON} bg-primary-container font-semibold text-accent-ink hover:bg-accent-hover`}
           >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon">
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
               person_add
             </span>
             Add account

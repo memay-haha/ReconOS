@@ -53,7 +53,7 @@ function EditSetting({
     <Modal title="Edit threshold" busy={patch.isPending} onClose={onClose}>
       <form onSubmit={submit} className="flex flex-col gap-gutter">
         <label htmlFor="setting-value" className={LABEL}>
-          <span className="text-body-code text-fg-muted">{setting.key}</span>
+          <span className="font-body-code text-body-code text-fg-muted">{setting.key}</span>
           <input
             id="setting-value"
             type="number"
@@ -126,9 +126,9 @@ export function SettingsPanel(): ReactElement {
             <tbody>
               {settings.data.items.map((s) => (
                 <tr key={s.key} className={ROW}>
-                  <td className={`${CELL} text-body-code`}>{s.key}</td>
-                  <td className={`${CELL} text-body-code`}>{shown(s.value)}</td>
-                  <td className={`${CELL} text-body-code text-fg-muted`}>
+                  <td className={`${CELL} font-body-code text-body-code`}>{s.key}</td>
+                  <td className={`${CELL} font-body-code text-body-code`}>{shown(s.value)}</td>
+                  <td className={`${CELL} font-body-code text-body-code text-fg-muted`}>
                     {formatMoment(s.updated_at)}
                   </td>
                   <td className={CELL}>

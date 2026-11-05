@@ -6,7 +6,6 @@ import { Pagination, useCursorStack } from '@/components/pagination';
 import { useMe } from '@/lib/auth';
 import {
   TOOL_GROUPS,
-  type ToolGroup,
   type ToolModule,
   usePatchToolModule,
   useToolModules,
@@ -14,23 +13,22 @@ import {
 
 import { ALERT_TEXT, CELL, HEAD, HEAD_ROW, PANEL, ROW, STATE_TEXT } from '../system/modal';
 import { loadErrorText, PageHeader, saveErrorText } from '../system/states';
+import { ModuleCards } from './module-cards';
 import { ModuleForm } from './module-form';
 import { RunModule } from './run-module';
+import { GROUP_LABEL, GROUP_TONE, SWITCH_INPUT } from './tones';
 
 const COUNT = new Intl.NumberFormat('en-US');
 
-/** Recon, Scan, Exploit: docs/appendix/glossary.md. */
-const GROUP_LABEL: Readonly<Record<ToolGroup, string>> = {
-  recon: 'Recon',
-  scan: 'Scan',
-  exploit: 'Exploit',
-};
+type View = 'grid' | 'table';
 
-const GROUP_TONE: Readonly<Record<ToolGroup, string>> = {
-  recon: 'bg-info-soft text-info border-info-bd',
-  scan: 'bg-accent-soft text-primary border-accent-soft-bd',
-  exploit: 'bg-warn-soft text-warn border-warn-bd',
-};
+const GRID_WRAP = 'w-full';
+const PAGER_TABLE = 'border-t border-border bg-surface-2 px-space-md';
+const PAGER_GRID = 'rounded-sm border border-border bg-surface-2 px-space-md';
+
+const SWITCH = 'flex items-center gap-1 rounded-sm px-2.5 py-1 text-body-code font-semibold';
+const SWITCH_ON = `${SWITCH} border border-border-strong bg-surface text-primary`;
+const SWITCH_OFF = `${SWITCH} border border-transparent text-fg-muted hover:bg-surface-3 hover:text-fg`;
 
 const ROW_BUTTON =
   'rounded-sm border border-border px-space-sm py-space-xs text-body-default text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60';
@@ -53,15 +51,44 @@ export default function ModulesPage(): ReactElement {
   const toggle = usePatchToolModule();
   const [open, setOpen] = useState<Open>(null);
   const [created, setCreated] = useState<string | null>(null);
+  const [view, setView] = useState<View>('grid');
+  const run = (m: ToolModule) => {
+    setCreated(null);
+    setOpen({ mode: 'run', module: m });
+  };
 
   return (
     <div className="flex w-full flex-col gap-space-lg">
       <PageHeader
-        section="System"
-        current="Modules"
         title="Modules"
         description="One row per tool module. A job runs one tool module; Exploit jobs wait for approval by an Admin who did not create them."
-      />
+      >
+        <div
+          role="group"
+          aria-label="View"
+          className="flex items-center rounded-sm border border-border bg-surface-2 p-0.5"
+        >
+          {(
+            [
+              ['grid', 'grid_view', 'Grid'],
+              ['table', 'table_rows', 'Table'],
+            ] as const
+          ).map(([value, icon, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={view === value}
+              onClick={() => setView(value)}
+              className={view === value ? SWITCH_ON : SWITCH_OFF}
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                {icon}
+              </span>
+              {label}
+            </button>
+          ))}
+        </div>
+      </PageHeader>
 
       {created !== null && (
         <p role="status" className="text-body-default text-good">
@@ -74,7 +101,8 @@ export default function ModulesPage(): ReactElement {
         </p>
       )}
 
-      <div className={PANEL}>
+      {/* The grid draws its own cards; only the table sits in a panel. */}
+      <div className={view === 'grid' ? GRID_WRAP : PANEL}>
         {modules.isPending && <p className={STATE_TEXT}>Loading the tool modules…</p>}
         {modules.isError && (
           <p role="alert" className={ALERT_TEXT}>
@@ -85,6 +113,19 @@ export default function ModulesPage(): ReactElement {
           <>
             {modules.data.items.length === 0 ? (
               <p className={STATE_TEXT}>No tool module is registered.</p>
+            ) : view === 'grid' ? (
+              <div className="pb-space-md">
+                <ModuleCards
+                  modules={byGroup(modules.data.items)}
+                  isSuperadmin={isSuperadmin}
+                  busy={toggle.isPending}
+                  onToggle={(m) =>
+                    toggle.mutate({ toolModuleId: m.id, body: { is_enabled: !m.is_enabled } })
+                  }
+                  onConfigure={(m) => setOpen({ mode: 'configure', module: m })}
+                  onRun={run}
+                />
+              </div>
             ) : (
               <div className="w-full overflow-x-auto" tabIndex={0}>
                 <table className="w-full border-collapse text-left">
@@ -131,35 +172,35 @@ export default function ModulesPage(): ReactElement {
                                   })
                                 }
                                 aria-label={`Enable ${m.name}`}
-                                className="h-4 w-4 accent-primary"
+                                className={SWITCH_INPUT}
                               />
-                              <span className="text-body-code text-fg-muted">
+                              <span className="font-body-code text-body-code text-fg-muted">
                                 {m.is_enabled ? 'Enabled' : 'Disabled'}
                               </span>
                             </label>
                           ) : (
-                            <span className="text-body-code text-fg-muted">
+                            <span className="font-body-code text-body-code text-fg-muted">
                               {m.is_enabled ? 'Enabled' : 'Disabled'}
                             </span>
                           )}
                         </td>
-                        <td className={`${CELL} text-body-code`}>{m.name}</td>
+                        <td className={`${CELL} font-body-code text-body-code`}>{m.name}</td>
                         <td className={CELL}>
                           <span
-                            className={`rounded-sm border px-space-xs text-body-code ${GROUP_TONE[m.group]}`}
+                            className={`rounded-sm border px-space-xs font-body-code text-body-code ${GROUP_TONE[m.group]}`}
                           >
                             {GROUP_LABEL[m.group]}
                           </span>
                         </td>
-                        <td className={`${CELL} text-body-code`}>
+                        <td className={`${CELL} font-body-code text-body-code`}>
                           {COUNT.format(m.max_concurrency)}
                         </td>
-                        <td className={`${CELL} text-body-code`}>
+                        <td className={`${CELL} font-body-code text-body-code`}>
                           {m.rate_limit_per_minute === null
                             ? 'No limit'
                             : `${COUNT.format(m.rate_limit_per_minute)} / min`}
                         </td>
-                        <td className={`${CELL} text-body-code`}>
+                        <td className={`${CELL} font-body-code text-body-code`}>
                           {COUNT.format(m.timeout_minutes)} min
                         </td>
                         <td className={CELL}>
@@ -178,10 +219,7 @@ export default function ModulesPage(): ReactElement {
                               type="button"
                               aria-label={`Run ${m.name}`}
                               disabled={!m.is_enabled}
-                              onClick={() => {
-                                setCreated(null);
-                                setOpen({ mode: 'run', module: m });
-                              }}
+                              onClick={() => run(m)}
                               className={ROW_BUTTON}
                             >
                               Run
@@ -194,7 +232,7 @@ export default function ModulesPage(): ReactElement {
                 </table>
               </div>
             )}
-            <div className="border-t border-border bg-surface-2 px-space-md">
+            <div className={view === 'grid' ? PAGER_GRID : PAGER_TABLE}>
               <Pagination
                 label="Tool module pagination"
                 page={{

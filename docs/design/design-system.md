@@ -78,7 +78,7 @@ colors:
   asset-domain: '#0ea371'
   asset-url: '#3b82f6'
   asset-ip: '#d97706'
-  asset-service: '#db2777'
+  asset-service: '#ec4899'
 typography:
   stat-lg:
     fontFamily: IBM Plex Mono
@@ -170,7 +170,7 @@ The palette establishes an authoritarian dark environment (`#0a0c10`) punctuated
   - `asset-domain` (`#0ea371`): Domain nodes and root zone records.
   - `asset-url` (`#3b82f6`): HTTP/HTTPS routes and web endpoints.
   - `asset-ip` (`#d97706`): IPv4/IPv6 targets, CIDRs, and routing hops.
-  - `asset-service` (`#db2777`): Listening ports, daemons, and fingerprint definitions.
+  - `asset-service` (`#ec4899`, raised from the mockup's #db2777 to reach 4.5:1 on surface-2): Listening ports, daemons, and fingerprint definitions.
 - **Severity Treatment:** 
   - `Critical`: Solid `crit` fill with `surface` text to create unavoidable cognitive urgency.
   - `High`: `crit-soft` fill with `crit` text.
@@ -271,10 +271,10 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra mọi cặp chữ trên n�
 | color-info-bd | #1f3a63 | #a5c0e9 |
 | color-neutral-soft | #1c2028 | #eaecf0 |
 | color-neutral-bd | #333a46 | #c4cad4 |
-| color-asset-domain | #0ea371 | #0b7f58 |
+| color-asset-domain | #0ea371 | #0a7451 |
 | color-asset-url | #3b82f6 | #1056c6 |
-| color-asset-ip | #d97706 | #a45904 |
-| color-asset-service | #db2777 | #b3195e |
+| color-asset-ip | #d97706 | #975203 |
+| color-asset-service | #ec4899 | #b3195e |
 | color-border-subtle | #1e2738 | #dde1e8 |
 | color-border-raised | #26354d | #b8c0cd |
 | color-crit-strong | #f87171 | #b91c1c |
@@ -354,6 +354,8 @@ Test `frontend/src/styles/tokens.test.ts` kiểm tra mọi cặp chữ trên n�
 | text-caption--line-height | 14px |  |
 | text-caption--font-weight | 400 |  |
 | text-icon | 17px |  |
+| text-micro | 10px |  |
+| text-micro--line-height | 14px |  |
 
 ## Typography
 

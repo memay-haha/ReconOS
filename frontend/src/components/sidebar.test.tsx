@@ -31,12 +31,13 @@ const USER: CurrentUser = {
 function wrap(
   user: CurrentUser | null = null,
   counts: Record<string, number> = {},
-  props: { onSignOut?: () => void; signOutFailed?: boolean } = {},
+  props: { onSignOut?: () => void; signOutFailed?: boolean; toggled?: boolean } = {},
 ) {
   return render(
     <Sidebar
       user={user}
       counts={counts}
+      toggled={props.toggled ?? false}
       onSignOut={props.onSignOut ?? (() => undefined)}
       signOutFailed={props.signOutFailed ?? false}
     />,
@@ -78,7 +79,7 @@ describe('Sidebar against the mockup', () => {
   it('is fixed to the left edge, the full height, one sidebar wide, with a right border', () => {
     wrap(USER);
     const aside = document.querySelector('aside') as HTMLElement;
-    for (const cls of ['fixed', 'left-0', 'top-0', 'h-screen', 'w-sidebar', 'border-r']) {
+    for (const cls of ['fixed', 'left-0', 'md:top-0', 'md:h-screen', 'w-sidebar', 'border-r']) {
       expect(aside).toHaveClass(cls);
     }
   });
@@ -161,17 +162,24 @@ describe('Sidebar behaviour', () => {
 
   it('lets the reader reach only the screens that are built', () => {});
 
-  it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {
+  it('hides a screen no part has built yet: no dead entry, no placeholder text', () => {
     wrap();
     // Any screen still unbuilt will do: each part fills in its own hrefs.
     const unbuilt = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.href === null);
     if (unbuilt === undefined) return;
-    const pending = screen.getByText(unbuilt.label).closest('li') as HTMLElement;
-    expect(within(pending).queryByRole('link')).toBeNull();
-    expect(within(pending).queryByRole('button')).toBeNull();
-    expect(
-      within(pending).getByText(new RegExp(`available in ${unbuilt.part}`, 'i')),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(unbuilt.label)).toBeNull();
+    expect(screen.queryByText(unbuilt.part)).toBeNull();
+  });
+
+  it('shows every built screen as a link', () => {
+    wrap();
+    for (const item of NAV_GROUPS.flatMap((g) => g.items)) {
+      if (item.href === null) continue;
+      expect(screen.getByRole('link', { name: new RegExp(`^${item.label}`) })).toHaveAttribute(
+        'href',
+        item.href,
+      );
+    }
   });
 
   it('marks the current screen, by whole path segment', () => {
@@ -236,29 +244,29 @@ describe('Sidebar account card', () => {
   });
 });
 
-describe('Sidebar on a narrow screen', () => {
-  it('is folded behind a Menu button until the reader opens it', async () => {
+describe('Sidebar and the topbar menu button', () => {
+  it('is folded away below md and the column from md up by default', () => {
     wrap(USER);
-    const button = screen.getByRole('button', { name: 'Menu' });
     const aside = document.querySelector('aside') as HTMLElement;
-    expect(button).toHaveAttribute('aria-controls', aside.id);
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(aside).toHaveClass('hidden');
-    await userEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(aside).not.toHaveClass('hidden');
+    expect(aside.id).toBe('sidebar');
+    expect(aside).toHaveClass('hidden', 'md:flex');
   });
 
-  it('is the full column from md up whatever the menu state', () => {
-    wrap(USER);
-    expect(document.querySelector('aside')).toHaveClass('md:flex');
-    expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass('md:hidden');
+  it('flips both once the menu button toggles it', () => {
+    wrap(USER, {}, { toggled: true });
+    expect(document.querySelector('aside')).toHaveClass('flex', 'md:hidden');
   });
 
   it('opens the change-password dialog from the account card', async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <Sidebar user={USER} counts={{}} onSignOut={() => undefined} signOutFailed={false} />
+        <Sidebar
+          user={USER}
+          counts={{}}
+          toggled={false}
+          onSignOut={() => undefined}
+          signOutFailed={false}
+        />
       </QueryClientProvider>,
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

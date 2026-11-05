@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { toolModule } from '../system/fixtures';
@@ -63,6 +64,8 @@ describe('S18 against its mockup', () => {
   it('has the headings, table and columns of the mockup, minus the dropped parts', async () => {
     const { container } = render();
     await screen.findByText('gowitness');
+    // The mockup keeps its table in the DOM behind the Table switch; the screen renders it on demand.
+    await userEvent.click(screen.getByRole('button', { name: 'Table' }));
     expect(outline(container.firstElementChild as Element)).toEqual(expected());
   });
 

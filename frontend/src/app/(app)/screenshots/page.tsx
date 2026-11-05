@@ -17,7 +17,9 @@ const SIMILAR = 'perception_hash';
 const COUNT = new Intl.NumberFormat('en-US');
 
 const FIELD =
-  'h-8 rounded-sm border border-border-strong bg-surface-2 px-space-sm text-body-default text-fg focus:outline-none focus:ring-2 focus:ring-ring';
+  'h-8 rounded-sm border border-border-strong bg-surface-2 px-2.5 text-body-default font-medium text-fg hover:border-primary-container focus:outline-none focus:ring-2 focus:ring-ring';
+const DENSITY_FIELD =
+  'h-7 rounded-sm border border-border-strong bg-surface-2 px-2 font-body-code text-caption text-fg focus:outline-none focus:ring-2 focus:ring-ring';
 
 export default function ScreenshotsPage(): ReactElement {
   const [programId, setProgramId] = useState<string | null>(null);
@@ -42,10 +44,10 @@ export default function ScreenshotsPage(): ReactElement {
   const filtered = programId !== null || similar || !showFailed;
 
   return (
-    <div className="flex w-full flex-col">
-      <div className="flex flex-col justify-between gap-space-md border-b border-border bg-surface px-space-lg pb-space-lg pt-space-xl md:flex-row md:items-end">
-        <div className="flex flex-col gap-space-xs">
-          <h1 className="text-headline-lg text-fg">Screenshot Gallery</h1>
+    <div className="flex min-h-full w-full flex-col bg-bg">
+      <div className="flex shrink-0 flex-col justify-between gap-space-lg border-b border-border bg-surface px-margin pb-space-lg pt-space-xl md:flex-row md:items-end">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-headline-lg tracking-tight text-fg">Screenshot Gallery</h1>
           <p className="text-body-default text-fg-muted">
             {shots.data === undefined
               ? 'Screenshots taken by gowitness.'
@@ -65,15 +67,21 @@ export default function ScreenshotsPage(): ReactElement {
                 setShowFailed(true);
               })
             }
-            className="h-9 rounded-sm border border-border-strong bg-surface-2 px-space-md text-body-default text-fg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-9 items-center gap-1.5 rounded-sm border border-border-strong bg-surface-2 px-space-md text-body-default font-medium text-fg transition-colors hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Clear Filters
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-[17px] text-fg-muted"
+            >
+              filter_alt_off
+            </span>
+            <span>Clear Filters</span>
           </button>
         </div>
       </div>
 
-      <div className="border-b border-border bg-surface px-space-lg py-space-sm">
-        <div className="flex flex-wrap items-center gap-space-sm">
+      <div className="z-30 shrink-0 border-b border-border bg-surface px-margin py-2.5 shadow-md">
+        <div className="flex flex-wrap items-center gap-2">
           <label
             htmlFor="screenshot-program"
             className="flex items-center gap-space-sm text-body-default text-fg-muted"
@@ -95,41 +103,54 @@ export default function ScreenshotsPage(): ReactElement {
               ))}
             </select>
           </label>
+          <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border" />
           <button
             type="button"
             aria-pressed={similar}
             onClick={() => change(() => setSimilar((on) => !on))}
-            className={`flex h-8 items-center gap-space-xs rounded-sm border px-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring ${
+            className={`flex h-8 items-center gap-1.5 rounded-sm border px-2.5 text-body-default font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${
               similar
-                ? 'border-accent-soft-bd bg-accent-soft text-primary'
-                : 'border-border-strong bg-surface-2 text-fg'
+                ? 'border-accent-soft-bd bg-accent-soft text-primary shadow-sm ring-1 ring-ring'
+                : 'border-border-strong bg-surface-2 text-fg hover:bg-surface-3'
             }`}
           >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon">
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
               grain
             </span>
             <span>Group by Similar</span>
           </button>
           <label
             htmlFor="screenshot-show-failed"
-            className="flex items-center gap-space-xs text-body-default text-fg"
+            className="flex cursor-pointer select-none items-center gap-2 pl-1"
           >
-            <input
-              id="screenshot-show-failed"
-              type="checkbox"
-              checked={showFailed}
-              onChange={(e) => {
-                const on = e.target.checked;
-                change(() => setShowFailed(on));
-              }}
-              className="h-4 w-4 accent-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            Show Failed
+            {/* A native checkbox drawn as the mockup's switch: keyboard and screen readers
+                still get a checkbox. */}
+            <span className="relative flex">
+              <input
+                id="screenshot-show-failed"
+                type="checkbox"
+                checked={showFailed}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  change(() => setShowFailed(on));
+                }}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className="h-[18px] w-8 rounded-full border border-border-strong bg-surface-2 transition-colors peer-checked:border-primary-container peer-checked:bg-primary-container peer-focus-visible:ring-2 peer-focus-visible:ring-ring"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-fg transition-transform peer-checked:translate-x-3.5 peer-checked:bg-accent-ink"
+              />
+            </span>
+            <span className="text-caption text-fg-muted">Show Failed</span>
           </label>
         </div>
       </div>
 
-      <div className="px-space-lg py-space-md">
+      <div className="flex-1 px-margin py-gutter">
         {shots.isPending && (
           <p className="text-body-default text-fg-muted">Loading the screenshots…</p>
         )}
@@ -145,7 +166,7 @@ export default function ScreenshotsPage(): ReactElement {
           </p>
         )}
         {shots.data !== undefined && shots.data.items.length > 0 && (
-          <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-gutter [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
             {shots.data.items.map((shot) => (
               <ScreenshotCard key={shot.id} shot={shot} />
             ))}
@@ -153,7 +174,7 @@ export default function ScreenshotsPage(): ReactElement {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-space-md border-t border-border bg-surface px-space-lg">
+      <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-space-md border-t border-border bg-surface px-margin font-body-code text-caption text-fg-muted">
         {shots.data !== undefined && (
           <Pagination
             label="Screenshot pagination"
@@ -169,14 +190,14 @@ export default function ScreenshotsPage(): ReactElement {
         )}
         <label
           htmlFor="screenshot-density"
-          className="flex items-center gap-space-sm text-body-default text-fg-muted"
+          className="flex items-center gap-2 font-body-code text-caption text-fg-muted"
         >
           Density
           <select
             id="screenshot-density"
             value={limit}
             onChange={(e) => change(() => setLimit(Number(e.target.value)))}
-            className={FIELD}
+            className={DENSITY_FIELD}
           >
             {DENSITIES.map((d) => (
               <option key={d} value={d}>

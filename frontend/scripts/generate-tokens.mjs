@@ -20,7 +20,34 @@ const COLOUR_SCHEME = `:root {
 }
 `;
 
+// The icon font's own stylesheet (a <link> in the root layout) sets font-size: 24px,
+// display: inline-block and the like on .material-symbols-outlined. It is unlayered, so it
+// beats every Tailwind utility, which live in cascade layers: text-icon, hidden and the
+// other classes the mockups put on icons never applied. The unlayered rule below, more
+// specific than the font's, hands those properties back to the layers (revert-layer); the
+// font's defaults are restated in the base layer, so an icon with no class keeps them.
+const ICON_FONT = `.material-symbols-outlined.material-symbols-outlined {
+  display: revert-layer;
+  font-size: revert-layer;
+  font-weight: revert-layer;
+  letter-spacing: revert-layer;
+  line-height: revert-layer;
+  text-transform: revert-layer;
+  white-space: revert-layer;
+}
+`;
+
 const BASE_LAYER = `@layer base {
+  .material-symbols-outlined {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: normal;
+    letter-spacing: normal;
+    line-height: 1;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
   html,
   body {
     margin: 0;
@@ -143,7 +170,7 @@ export function generateCss(markdown) {
     const dark = row.values.dark ?? '';
     lines.push(`  --${row.name}: ${dark === '' ? row.values.light : dark};`);
   }
-  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${COLOUR_SCHEME}\n${BASE_LAYER}\n${lightOverrides(rows)}`;
+  return `${HEADER}\n@theme {\n${lines.join('\n')}\n}\n\n${COLOUR_SCHEME}\n${BASE_LAYER}\n${ICON_FONT}\n${lightOverrides(rows)}`;
 }
 
 /**

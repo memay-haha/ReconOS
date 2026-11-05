@@ -31,7 +31,7 @@ export function UserActions({ user, isSelf }: { user: UserRow; isSelf: boolean }
           aria-label="You cannot lock your own account"
           className={ICON_BUTTON + ' cursor-not-allowed text-fg-faint'}
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-icon">
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
             lock
           </span>
         </button>
@@ -50,7 +50,7 @@ export function UserActions({ user, isSelf }: { user: UserRow; isSelf: boolean }
             ' text-fg-muted hover:bg-surface-2 hover:text-warn focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60'
           }
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-icon">
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
             {user.is_locked ? 'lock_open' : 'lock'}
           </span>
         </button>

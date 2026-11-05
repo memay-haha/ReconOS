@@ -13,7 +13,7 @@ import { SEVERITIES } from '@/lib/programs';
 import { useToolModules } from '@/lib/tool-modules';
 
 import { DnsBadge } from '../asset-bits';
-import { BUTTON, copyText, COUNT } from '../asset-ui';
+import { copyText, COUNT } from '../asset-ui';
 import { RunScanButton } from '../run-scan-button';
 import { useProgramOptions } from '../use-program-options';
 import { CopyButton } from './copy-button';
@@ -30,36 +30,64 @@ import {
 type TabId = 'overview' | 'dns' | 'urls' | 'services' | 'screenshots' | 'findings' | 'history';
 
 const TAB =
-  'flex items-center gap-space-xs border-b-2 px-space-sm py-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
-const TAB_ON = TAB + ' border-primary text-fg';
+  'flex shrink-0 items-center border-b-2 px-space-md py-3 text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
+const TAB_ON = TAB + ' border-primary-container font-medium text-primary';
 const TAB_OFF = TAB + ' border-transparent text-fg-muted hover:text-fg';
+
+/** Header chips: program link and discovery tool, as in the mockup. */
+const CHIP =
+  'inline-flex items-center gap-1 rounded-sm bg-surface-2 px-2 py-0.5 font-body-code text-caption';
+
+// Stat tiles carry the colour of their asset class on the icon; findings turn red when critical.
+const TILE_TONE = {
+  ip: 'text-asset-ip',
+  url: 'text-asset-url',
+  service: 'text-primary',
+  shot: 'text-tertiary',
+  crit: 'text-crit',
+} as const;
 
 function Tile({
   label,
   icon,
+  tone,
   value,
+  alarm = false,
   note,
 }: {
   label: string;
   icon: string;
+  tone: keyof typeof TILE_TONE;
   value: number | undefined;
+  alarm?: boolean;
   note?: string;
 }): ReactElement {
   return (
     <div
       data-stat-tile
-      className="flex flex-col gap-space-xs rounded-sm border border-border bg-surface p-space-md"
+      className="flex flex-col rounded-lg border border-border bg-surface p-space-md shadow-sm"
     >
-      <div className="flex items-start justify-between">
-        <span className="text-label-caps uppercase text-fg-faint">{label}</span>
-        <span aria-hidden="true" className="material-symbols-outlined text-icon text-fg-muted">
+      <div className="mb-space-xs flex items-center justify-between text-fg-muted">
+        <span className="text-label-caps uppercase tracking-wider">{label}</span>
+        <span
+          aria-hidden="true"
+          className={`material-symbols-outlined text-[16px] ${TILE_TONE[tone]}`}
+        >
           {icon}
         </span>
       </div>
-      <div className="text-stat-lg text-fg">
+      <div
+        className={`font-body-code text-stat-lg tracking-tight ${alarm ? 'text-crit' : 'text-fg'}`}
+      >
         {value === undefined ? 'Loading…' : COUNT.format(value)}
       </div>
-      {note !== undefined && <div className="text-caption text-fg-muted">{note}</div>}
+      {note !== undefined && (
+        <div
+          className={`mt-space-xs font-body-code text-caption font-medium ${alarm ? 'text-crit' : 'text-fg-muted'}`}
+        >
+          {note}
+        </div>
+      )}
     </div>
   );
 }
@@ -76,21 +104,21 @@ export default function DomainDetailPage(): ReactElement {
   const [tab, setTab] = useState<TabId>('overview');
 
   const crumbs = (name: string) => (
-    <div className="flex items-center justify-between gap-space-sm">
-      <div className="flex min-w-0 items-center gap-space-xs text-body-default">
+    <div className="flex items-center justify-between gap-space-sm rounded-lg bg-surface-container-low px-space-md py-space-sm shadow-sm">
+      <div className="flex min-w-0 items-center gap-space-md">
         <Link
           href="/domains"
-          className="flex items-center gap-space-xs text-fg-muted hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+          className="inline-flex items-center gap-1.5 rounded-sm bg-surface px-space-sm py-1 text-caption text-fg-muted hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-icon">
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px]">
             arrow_back
           </span>
           <span>Domains</span>
         </Link>
-        <span aria-hidden="true" className="text-fg-faint">
+        <span aria-hidden="true" className="text-caption text-fg-faint">
           /
         </span>
-        <span className="truncate text-body-code text-fg">{name}</span>
+        <span className="truncate font-body-code text-caption text-primary">{name}</span>
       </div>
     </div>
   );
@@ -100,7 +128,7 @@ export default function DomainDetailPage(): ReactElement {
     return (
       <div className="flex w-full flex-col gap-space-lg">
         {crumbs('Unknown domain')}
-        <p role="alert" className="text-body-default text-crit">
+        <p role="alert" className="px-margin text-body-default text-crit">
           {missing
             ? 'This domain does not exist, or you cannot see it.'
             : 'Could not load the domain.'}
@@ -112,7 +140,7 @@ export default function DomainDetailPage(): ReactElement {
     return (
       <div className="flex w-full flex-col gap-space-lg">
         {crumbs('Loading…')}
-        <p className="text-body-default text-fg-muted">Loading the domain…</p>
+        <p className="px-margin text-body-default text-fg-muted">Loading the domain…</p>
       </div>
     );
   }
@@ -152,46 +180,61 @@ export default function DomainDetailPage(): ReactElement {
   return (
     <div className="flex w-full flex-col gap-space-lg">
       {crumbs(d.name)}
-      <div className="flex flex-col gap-space-lg">
-        <div className="flex flex-col justify-between gap-space-md lg:flex-row lg:items-center">
-          <div className="flex min-w-0 flex-col gap-space-sm">
+      <div className="flex flex-col gap-space-lg px-margin pb-margin">
+        <div className="flex flex-col justify-between gap-space-lg rounded-lg border border-border bg-surface p-space-lg shadow-sm lg:flex-row lg:items-center">
+          <div className="flex min-w-0 flex-col gap-space-xs">
             <div className="flex flex-wrap items-center gap-space-sm">
-              <h1 className="flex min-w-0 items-center gap-space-xs break-all text-headline-lg text-fg">
+              <h1 className="flex min-w-0 items-center gap-space-xs break-all font-body-code text-headline-lg tracking-tight text-fg">
                 {d.name}
                 <CopyButton value={d.name} label="Copy domain" />
               </h1>
               <DnsBadge status={d.dns_status} />
               <Link
                 href={`/programs/${encodeURIComponent(d.program_id)}`}
-                className="inline-flex items-center gap-space-xs rounded-sm border border-border px-space-sm text-body-code text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring"
+                className={`${CHIP} text-primary hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring`}
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                <span aria-hidden="true" className="material-symbols-outlined text-[13px]">
                   adjust
                 </span>
                 {programName}
               </Link>
               {toolName !== null && (
-                <span className="inline-flex items-center gap-space-xs rounded-sm border border-border px-space-sm text-body-code text-fg-muted">
-                  <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                <span className={`${CHIP} text-fg-muted`}>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[13px]">
                     terminal
                   </span>
                   {toolName}
                 </span>
               )}
             </div>
-            <p className="flex flex-wrap items-center gap-space-xs text-body-default text-fg-muted">
+            <p className="flex flex-wrap items-center gap-1.5 text-caption text-fg-muted">
               <span>
                 {`First seen ${formatMoment(d.first_seen_at)}`}
-                {toolName !== null && <span className="text-fg">{` via ${toolName}`}</span>}
+                {toolName !== null && (
+                  <>
+                    {' via '}
+                    <span className="font-body-code text-fg">{toolName}</span>
+                  </>
+                )}
               </span>
-              <span aria-hidden="true">·</span>
-              <span>{`Last seen ${formatMoment(d.last_seen_at)}`}</span>
+              <span aria-hidden="true" className="text-fg-faint">
+                ·
+              </span>
+              <span>
+                {'Last seen '}
+                <span className="text-fg">{formatMoment(d.last_seen_at)}</span>
+              </span>
               {d.ips.length > 0 && (
                 <>
-                  <span aria-hidden="true">·</span>
+                  <span aria-hidden="true" className="text-fg-faint">
+                    ·
+                  </span>
                   <span>Resolves to</span>
                   {d.ips.map((ip) => (
-                    <span key={ip} className="text-body-code text-fg">
+                    <span
+                      key={ip}
+                      className="rounded-sm bg-surface-2 px-1.5 font-body-code text-primary"
+                    >
                       {ip}
                     </span>
                   ))}
@@ -199,13 +242,13 @@ export default function DomainDetailPage(): ReactElement {
               )}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-space-sm">
+          <div className="flex shrink-0 flex-wrap items-center gap-space-xs">
             <button
               type="button"
               onClick={() => void copyText(d.name).catch(() => undefined)}
-              className={BUTTON}
+              className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-surface-2 px-space-md text-body-default text-fg shadow-sm hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                 content_copy
               </span>
               <span>Copy Name</span>
@@ -213,28 +256,35 @@ export default function DomainDetailPage(): ReactElement {
             <RunScanButton
               assets={[{ target: d.name, programId: d.program_id }]}
               programName={nameOf}
+              icon="radar"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-space-md md:grid-cols-3 xl:grid-cols-5">
-          <Tile label="Assigned IPs" icon="router" value={d.ips.length} />
-          <Tile label="URLs" icon="link" value={d.url_count} />
-          <Tile label="Services" icon="lan" value={d.service_count} />
-          <Tile label="Screenshots" icon="photo_camera" value={shotTotal} />
+          <Tile label="Assigned IPs" icon="router" tone="ip" value={d.ips.length} />
+          <Tile label="URLs" icon="link" tone="url" value={d.url_count} />
+          <Tile label="Services" icon="lan" tone="service" value={d.service_count} />
+          <Tile label="Screenshots" icon="photo_camera" tone="shot" value={shotTotal} />
           <Tile
             label="Findings"
             icon="warning"
+            tone="crit"
             value={findingTotal}
-            note={highest === undefined ? undefined : `Highest: ${SEVERITY_LABEL[highest]}`}
+            alarm={highest === 'critical'}
+            note={
+              highest === undefined
+                ? undefined
+                : `highest: ${SEVERITY_LABEL[highest].toLowerCase()}`
+            }
           />
         </div>
 
-        <div className="flex flex-col gap-space-md">
+        <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
           <div
             role="tablist"
             aria-label="Domain sections"
-            className="flex items-center gap-space-sm overflow-x-auto border-b border-border"
+            className="flex items-center gap-space-xs overflow-x-auto bg-surface-2 px-space-md"
           >
             {tabs.map((t, index) => (
               <button
@@ -251,7 +301,11 @@ export default function DomainDetailPage(): ReactElement {
               >
                 {t.label}
                 {t.count !== undefined && (
-                  <span className="text-caption text-fg-muted">{`(${COUNT.format(t.count)})`}</span>
+                  <span
+                    className={`ml-1 font-body-code text-caption ${t.id === 'findings' && t.count > 0 ? 'font-medium text-crit' : 'text-fg-faint'}`}
+                  >
+                    {`(${COUNT.format(t.count)})`}
+                  </span>
                 )}
               </button>
             ))}
@@ -260,7 +314,7 @@ export default function DomainDetailPage(): ReactElement {
             id="domain-panel"
             role="tabpanel"
             aria-labelledby={`domain-tab-${tab}`}
-            className="grid grid-cols-1 gap-space-md lg:grid-cols-12"
+            className="grid grid-cols-1 gap-space-lg p-space-lg lg:grid-cols-12"
           >
             {tab === 'overview' && (
               <>

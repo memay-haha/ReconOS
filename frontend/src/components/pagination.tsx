@@ -42,9 +42,12 @@ export function useCursorStack(): {
 
 const COUNT = new Intl.NumberFormat('en-US');
 
+// The mockups' table footers: a mono caption count on the left, small bordered buttons on
+// the right (s04, s12).
 const BUTTON =
-  'rounded-sm border border-border px-space-md py-space-sm text-body-default text-fg ' +
-  'disabled:cursor-not-allowed disabled:opacity-60';
+  'h-7 rounded-sm border border-border bg-surface-2 px-2 font-body-code text-caption ' +
+  'text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg ' +
+  'disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-surface-2';
 
 export function Pagination({
   page,
@@ -52,6 +55,7 @@ export function Pagination({
   onBack,
   onNext,
   label,
+  shown,
 }: {
   /** Required so that a page with several lists never has two pagers a screen reader cannot tell apart. */
   label: string;
@@ -59,6 +63,8 @@ export function Pagination({
   canGoBack: boolean;
   onBack: () => void;
   onNext: () => void;
+  /** Rows on this page. Given, the count reads "Showing 24 of 1,234" as the mockups do. */
+  shown?: number;
 }): ReactElement {
   const total = COUNT.format(page.total);
   const rows = page.total === 1 ? 'row' : 'rows';
@@ -67,10 +73,14 @@ export function Pagination({
   return (
     <nav
       aria-label={label}
-      className="flex flex-wrap items-center justify-between gap-gutter py-space-md"
+      className="flex flex-wrap items-center justify-between gap-gutter py-space-sm"
     >
-      <span className="text-body-default text-fg-muted">
-        {page.totalIsEstimate ? `About ${total} ${rows}` : `${total} ${rows}`}
+      <span className="font-body-code text-caption text-fg-faint">
+        {shown === undefined
+          ? page.totalIsEstimate
+            ? `About ${total} ${rows}`
+            : `${total} ${rows}`
+          : `Showing ${COUNT.format(shown)} of ${page.totalIsEstimate ? 'about ' : ''}${total}`}
       </span>
       <span className="flex gap-space-sm">
         <button

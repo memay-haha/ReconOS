@@ -24,6 +24,23 @@ describe('Pagination', () => {
     expect(screen.getByText(text)).toBeInTheDocument();
   });
 
+  it.each([
+    [false, 'Showing 24 of 1,234'],
+    [true, 'Showing 24 of about 1,234'],
+  ])('writes the mockup footer count when the page size is given (estimate %s)', (est, text) => {
+    render(
+      <Pagination
+        page={{ total: 1234, totalIsEstimate: est, nextCursor: 'c' }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+        shown={24}
+      />,
+    );
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
   it('disables Previous on the first page', () => {
     render(
       <Pagination

@@ -6,7 +6,15 @@ import type { CurrentUser } from '@/lib/auth';
 import { type Job, type JobAction, type JobStatus, useJobAction } from '@/lib/jobs';
 
 import { errorText } from '../programs/error-text';
-import { DANGER_BUTTON, ROW_BUTTON } from '../programs/ui';
+
+// Row buttons as the mockup draws them (M7): caption text on surface-2, the stopping
+// actions in the soft critical colour.
+const ROW_BUTTON =
+  'inline-flex items-center rounded-sm border border-border bg-surface-2 px-2 py-1 font-body-default text-caption text-fg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
+const DANGER_BUTTON =
+  'inline-flex items-center rounded-sm border border-crit-bd bg-crit-soft px-2 py-1 font-body-default text-caption text-crit hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
+const APPROVE_BUTTON =
+  'inline-flex items-center rounded-sm border border-accent-soft-bd bg-accent-soft px-2 py-1 font-body-default text-caption text-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
 
 /** Which actions a row offers, from the job lifecycle in docs/architecture/business-flow.md
  * and the matrix in docs/security/authorization.md. Hiding is for convenience only: the
@@ -49,15 +57,21 @@ export function JobActions({
   const mutation = useJobAction();
   const actions = allowedActions(job, me);
   return (
-    <span className="flex flex-col gap-space-xs">
-      <span className="flex flex-wrap gap-space-xs">
+    <span className="flex flex-col items-end gap-space-xs">
+      <span className="flex justify-end gap-1 whitespace-nowrap">
         {actions.map((action) => (
           <button
             key={action}
             type="button"
             disabled={mutation.isPending}
             onClick={() => mutation.mutate({ jobId: job.id, action })}
-            className={action === 'reject' || action === 'cancel' ? DANGER_BUTTON : ROW_BUTTON}
+            className={
+              action === 'reject' || action === 'cancel'
+                ? DANGER_BUTTON
+                : action === 'approve'
+                  ? APPROVE_BUTTON
+                  : ROW_BUTTON
+            }
           >
             {LABEL[action]}
           </button>

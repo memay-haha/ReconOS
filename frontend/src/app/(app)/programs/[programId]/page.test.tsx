@@ -145,7 +145,7 @@ describe('S09 program detail', () => {
       '/jobs?program_id=p1&sort=-created_at': page([
         jobRow(1, { created_by: null }),
         jobRow(2, { created_by: ME_ADMIN.id }),
-        jobRow(3, { created_by: 'abcdef12-3456' }),
+        jobRow(3, { created_by: '0190a000-0000-7000-8000-0000abcdef12' }),
       ]),
     });
     renderWithClient(<ProgramDetailPage />);

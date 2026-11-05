@@ -5,8 +5,11 @@ import type { ReactElement } from 'react';
 import type { AuditLogRow } from '@/lib/audit-logs';
 import { formatMoment } from '@/lib/format-moment';
 
-const HEAD = 'px-space-md py-space-sm';
-const CELL = 'px-space-md py-space-sm whitespace-nowrap';
+// Same density as the S12 account table (M7 of S12, no mockup of its own).
+const HEAD = 'px-3 py-2 font-label-caps text-label-caps uppercase text-fg-muted';
+const HEAD_FIRST = 'px-4 py-2 font-label-caps text-label-caps uppercase text-fg-muted';
+const CELL = 'px-3 py-2.5 whitespace-nowrap';
+const CELL_FIRST = 'px-4 py-2.5 whitespace-nowrap font-body-code text-[11px] text-fg';
 
 /** A row with neither a user nor a worker was written by the system itself. */
 function Actor({ row }: { row: AuditLogRow }): ReactElement {
@@ -14,7 +17,7 @@ function Actor({ row }: { row: AuditLogRow }): ReactElement {
     return (
       <>
         <span className="text-fg-muted">User </span>
-        <span className="text-body-code">{row.user_id}</span>
+        <span className="font-body-code text-body-code">{row.user_id}</span>
       </>
     );
   }
@@ -22,7 +25,7 @@ function Actor({ row }: { row: AuditLogRow }): ReactElement {
     return (
       <>
         <span className="text-fg-muted">Worker </span>
-        <span className="text-body-code">{row.worker_id}</span>
+        <span className="font-body-code text-body-code">{row.worker_id}</span>
       </>
     );
   }
@@ -49,8 +52,8 @@ export function AuditTable({ rows }: { rows: readonly AuditLogRow[] }): ReactEle
       <table className="w-full border-collapse text-left text-body-default text-fg">
         <caption className="sr-only">Audit log entries, newest first</caption>
         <thead>
-          <tr className="h-8 border-b border-border bg-surface-2 text-label-caps uppercase text-fg-muted">
-            <th scope="col" className={HEAD}>
+          <tr className="h-10 border-b border-border bg-surface-2">
+            <th scope="col" className={HEAD_FIRST}>
               When
             </th>
             <th scope="col" className={HEAD}>
@@ -69,14 +72,23 @@ export function AuditTable({ rows }: { rows: readonly AuditLogRow[] }): ReactEle
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-border last:border-b-0">
-              <td className={CELL}>{formatMoment(row.created_at)}</td>
+            <tr
+              key={row.id}
+              className="border-b border-border transition-colors last:border-b-0 hover:bg-surface-3"
+            >
+              <td className={CELL_FIRST}>{formatMoment(row.created_at)}</td>
               <td className={CELL}>
                 <Actor row={row} />
               </td>
-              <td className={`${CELL} text-body-code`}>{row.action}</td>
-              <td className={CELL}>{resource(row)}</td>
-              <td className={CELL}>{row.ip_address ?? 'Address unknown'}</td>
+              <td className={CELL}>
+                <span className="rounded-sm border border-neutral-bd bg-neutral-soft px-2 py-0.5 font-body-code text-[11px] font-semibold text-fg-muted">
+                  {row.action}
+                </span>
+              </td>
+              <td className={`${CELL} text-fg-muted`}>{resource(row)}</td>
+              <td className={`${CELL} font-body-code text-[11px] text-fg-muted`}>
+                {row.ip_address ?? 'Address unknown'}
+              </td>
             </tr>
           ))}
         </tbody>

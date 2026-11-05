@@ -10,7 +10,20 @@ import type { Service } from '@/lib/services';
 import type { UrlRow } from '@/lib/urls';
 
 import { DnsBadge, InScopeBadge } from '../domains/asset-bits';
-import { CELL, COUNT, HEAD, HEAD_ROW } from '../domains/asset-ui';
+import {
+  CELL,
+  CHECKBOX,
+  COUNT,
+  HEAD,
+  HEAD_ROW,
+  MONO,
+  MONO_FAINT,
+  MONO_MUTED,
+  PROGRAM_TAG,
+  ROW,
+  ROW_SELECTED,
+  TBODY,
+} from '../domains/asset-ui';
 
 /** Columns per tab. Domains follows the mockup minus ASN / Org, which a domain row does not
  * carry (M3); IPs, URLs and Services follow the columns of their tables (M7). */
@@ -30,6 +43,9 @@ export const COLUMNS = {
   services: ['Port', 'Transport', 'Name', 'Product', 'Version', 'Program', 'Scope', 'Last seen'],
 } as const;
 
+/** Headers of count columns, aligned right like their cells. */
+const RIGHT: ReadonlySet<string> = new Set(['URLs', 'Services']);
+
 export interface Selectable<T> {
   readonly rows: readonly T[];
   readonly selected: ReadonlySet<string>;
@@ -38,8 +54,11 @@ export interface Selectable<T> {
   readonly onToggleAll: (select: boolean) => void;
 }
 
-const MUTED = CELL + ' text-body-code text-fg-muted';
-const CODE = CELL + ' text-body-code text-fg';
+const MUTED = CELL + ' ' + MONO_MUTED;
+const CODE = CELL + ' ' + MONO;
+const FAINT = CELL + ' ' + MONO_FAINT;
+// Count columns line up on the right, as in the mockup.
+const NUMBER = CELL + ' text-right ' + MONO;
 
 function Frame({
   label,
@@ -61,31 +80,28 @@ function Frame({
         <thead>
           <tr className={HEAD_ROW}>
             {onToggleAll !== null && (
-              <th scope="col" className={HEAD}>
+              <th scope="col" className={HEAD + ' w-10 text-center'}>
                 <input
                   type="checkbox"
                   aria-label={`Select every ${label ?? 'row'} on this page`}
                   checked={allSelected}
                   onChange={(e) => onToggleAll(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
+                  className={CHECKBOX}
                 />
               </th>
             )}
             {columns.map((c) => (
-              <th key={c} scope="col" className={HEAD}>
+              <th key={c} scope="col" className={RIGHT.has(c) ? HEAD + ' text-right' : HEAD}>
                 {c}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-border text-body-default">{children}</tbody>
+        <tbody className={TBODY}>{children}</tbody>
       </table>
     </div>
   );
 }
-
-const ROW = 'text-fg hover:bg-surface-3';
-const ROW_SELECTED = 'text-fg hover:bg-surface-3 bg-accent-soft';
 
 function Check({
   name,
@@ -97,13 +113,13 @@ function Check({
   onChange: () => void;
 }): ReactElement {
   return (
-    <td className={CELL}>
+    <td className={CELL + ' text-center'}>
       <input
         type="checkbox"
         aria-label={`Select ${name}`}
         checked={checked}
         onChange={onChange}
-        className="h-4 w-4 accent-primary"
+        className={CHECKBOX}
       />
     </td>
   );
@@ -129,43 +145,46 @@ export function DomainsTable(props: Selectable<DomainRow>): ReactElement {
             <div className="flex items-center gap-space-sm">
               <span
                 aria-hidden="true"
-                className="material-symbols-outlined text-icon text-fg-muted"
+                className="material-symbols-outlined text-[15px] text-asset-domain"
               >
                 language
               </span>
-              <span title={row.name} className="max-w-xs truncate text-body-code text-fg">
+              <span
+                title={row.name}
+                className="max-w-72 truncate font-body-code text-body-default text-fg"
+              >
                 {row.name}
               </span>
             </div>
           </td>
           <td className={CELL}>
-            <span className="text-body-code text-fg-muted">{programName(row.program_id)}</span>
+            <span className={PROGRAM_TAG}>{programName(row.program_id)}</span>
           </td>
           <td className={CELL}>
             <DnsBadge status={row.dns_status} />
           </td>
-          <td className={CELL}>
+          <td className={CODE}>
             {row.ips[0] === undefined ? (
-              <span className="text-body-code text-fg-muted">None</span>
+              <span className="text-fg-faint">None</span>
             ) : (
               <>
-                <span className="text-body-code text-fg">{row.ips[0]}</span>
+                <span>{row.ips[0]}</span>
                 {row.ips.length > 1 && (
-                  <span className="ml-space-xs text-caption text-fg-muted">
+                  <span className="ml-1 text-[11px] text-fg-faint">
                     {`(${COUNT.format(row.ips.length)} IPs)`}
                   </span>
                 )}
               </>
             )}
           </td>
-          <td className={CODE}>{COUNT.format(row.url_count)}</td>
-          <td className={CODE}>{COUNT.format(row.service_count)}</td>
-          <td className={MUTED}>{formatMoment(row.last_seen_at)}</td>
-          <td className={CELL}>
+          <td className={NUMBER}>{COUNT.format(row.url_count)}</td>
+          <td className={NUMBER}>{COUNT.format(row.service_count)}</td>
+          <td className={FAINT}>{formatMoment(row.last_seen_at)}</td>
+          <td className={CELL + ' text-right'}>
             <Link
               href={`/domains/${encodeURIComponent(row.id)}`}
               aria-label={`View detail of ${row.name}`}
-              className="text-body-default text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring"
+              className="rounded-sm border border-border bg-surface-2 px-2 py-1 text-[11px] text-fg hover:bg-surface-3 hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring"
             >
               View Detail
             </Link>
@@ -201,7 +220,7 @@ export function IpsTable(props: Selectable<Ip>): ReactElement {
           <td className={CELL}>
             <InScopeBadge inScope={row.in_scope} />
           </td>
-          <td className={MUTED}>{formatMoment(row.last_seen_at)}</td>
+          <td className={FAINT}>{formatMoment(row.last_seen_at)}</td>
         </tr>
       ))}
     </Frame>
@@ -238,7 +257,7 @@ export function UrlsTable(props: Selectable<UrlRow>): ReactElement {
           <td className={CELL}>
             <InScopeBadge inScope={row.in_scope} />
           </td>
-          <td className={MUTED}>{formatMoment(row.last_seen_at)}</td>
+          <td className={FAINT}>{formatMoment(row.last_seen_at)}</td>
         </tr>
       ))}
     </Frame>
@@ -266,7 +285,7 @@ export function ServicesTable({
           <td className={CELL}>
             <InScopeBadge inScope={row.in_scope} />
           </td>
-          <td className={MUTED}>{formatMoment(row.last_seen_at)}</td>
+          <td className={FAINT}>{formatMoment(row.last_seen_at)}</td>
         </tr>
       ))}
     </Frame>

@@ -21,21 +21,21 @@ import {
   CELL,
   FIELD,
   HEAD,
-  HEAD_ROW,
   LABEL,
   Modal,
-  PANEL,
-  ROW,
   STATE_TEXT,
 } from '../system/modal';
 import { loadErrorText, saveErrorText } from '../system/states';
+import { PanelTitle } from './panel-title';
 
 /** Engine variables are credentials: the value is never returned, so the cell always shows
  * the same mask, whatever is stored. */
 const MASK = '••••••••';
 
-const ROW_BUTTON =
-  'rounded-sm border border-border px-space-sm py-space-xs text-body-default text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring';
+const ICON_BUTTON =
+  'inline-flex h-7 w-7 items-center justify-center rounded-sm text-fg-faint focus:outline-none focus:ring-2 focus:ring-ring';
+const ICON_BUTTON_EDIT = `${ICON_BUTTON} hover:text-primary`;
+const ICON_BUTTON_DELETE = `${ICON_BUTTON} hover:text-crit`;
 
 function VariableForm({
   engineId,
@@ -83,7 +83,7 @@ function VariableForm({
             readOnly={existing !== null}
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            className={`${FIELD} text-body-code`}
+            className={`${FIELD} font-body-code text-body-code`}
           />
         </label>
         <FieldError errors={fields} field="key" />
@@ -95,7 +95,7 @@ function VariableForm({
             type="password"
             required
             autoComplete="off"
-            className={`${FIELD} text-body-code`}
+            className={`${FIELD} font-body-code text-body-code`}
           />
         </label>
         <FieldError errors={fields} field="value" />
@@ -136,8 +136,8 @@ function DeleteVariable({
     <Modal title="Delete engine variable" busy={remove.isPending} onClose={onClose}>
       <div className="flex flex-col gap-gutter">
         <p className="text-body-default text-fg">
-          Delete <code className="text-body-code">{variable.key}</code>? Workflows that read it stop
-          receiving a value.
+          Delete <code className="font-body-code text-body-code">{variable.key}</code>? Workflows
+          that read it stop receiving a value.
         </p>
         {remove.isError && (
           <p role="alert" className="text-body-default text-crit">
@@ -181,16 +181,23 @@ export function VariablesPanel({ engineId }: { engineId: string }): ReactElement
 
   return (
     <div className="flex flex-col gap-space-md">
-      <div className="flex justify-end">
+      <PanelTitle
+        bar="ip"
+        title="Engine Variables"
+        subtitle="Passed to every Osmedeus run. Values are write-only."
+      >
         <button
           type="button"
           onClick={() => setEditing({ mode: 'add' })}
-          className={BUTTON_PRIMARY}
+          className="inline-flex h-8 items-center gap-1 rounded-sm bg-surface-2 px-2.5 text-body-code text-fg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring"
         >
+          <span aria-hidden="true" className="material-symbols-outlined text-icon text-primary">
+            add
+          </span>
           Add variable
         </button>
-      </div>
-      <div className={PANEL}>
+      </PanelTitle>
+      <div className="w-full overflow-hidden rounded-sm bg-surface-2">
         {variables.isPending && <p className={STATE_TEXT}>Loading the engine variables…</p>}
         {variables.isError && (
           <p role="alert" className={ALERT_TEXT}>
@@ -205,7 +212,7 @@ export function VariablesPanel({ engineId }: { engineId: string }): ReactElement
               <div className="w-full overflow-x-auto" tabIndex={0}>
                 <table className="w-full border-collapse text-left">
                   <thead>
-                    <tr className={HEAD_ROW}>
+                    <tr className="h-8 bg-surface-3 text-label-caps uppercase text-fg-muted">
                       <th scope="col" className={HEAD}>
                         Key
                       </th>
@@ -215,38 +222,54 @@ export function VariablesPanel({ engineId }: { engineId: string }): ReactElement
                       <th scope="col" className={HEAD}>
                         Last Updated
                       </th>
-                      <th scope="col" className={HEAD}>
+                      <th scope="col" className={`${HEAD} text-right`}>
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {variables.data.items.map((v) => (
-                      <tr key={v.id} className={ROW}>
-                        <td className={`${CELL} text-body-code`}>{v.key}</td>
-                        <td className={`${CELL} text-body-code text-fg-muted`}>
+                      <tr key={v.id} className="text-body-default text-fg hover:bg-surface-3">
+                        <td
+                          className={`${CELL} font-body-code text-body-code font-semibold text-fg`}
+                        >
+                          {v.key}
+                        </td>
+                        <td className={`${CELL} font-body-code text-caption text-fg-faint`}>
                           <span aria-label="Hidden value">{MASK}</span>
                         </td>
-                        <td className={`${CELL} text-body-code text-fg-muted`}>
+                        <td className={`${CELL} font-body-code text-caption text-fg-muted`}>
                           {formatMoment(v.updated_at)}
                         </td>
-                        <td className={CELL}>
-                          <span className="flex gap-space-xs">
+                        <td className={`${CELL} text-right`}>
+                          <span className="inline-flex items-center gap-1">
                             <button
                               type="button"
                               aria-label={`Replace value of ${v.key}`}
                               onClick={() => setEditing({ mode: 'replace', variable: v })}
-                              className={ROW_BUTTON}
+                              title="Replace"
+                              className={ICON_BUTTON_EDIT}
                             >
-                              Replace
+                              <span
+                                aria-hidden="true"
+                                className="material-symbols-outlined text-icon"
+                              >
+                                edit
+                              </span>
                             </button>
                             <button
                               type="button"
                               aria-label={`Delete ${v.key}`}
                               onClick={() => setEditing({ mode: 'delete', variable: v })}
-                              className={ROW_BUTTON}
+                              title="Delete"
+                              className={ICON_BUTTON_DELETE}
                             >
-                              Delete
+                              <span
+                                aria-hidden="true"
+                                className="material-symbols-outlined text-icon"
+                              >
+                                delete
+                              </span>
                             </button>
                           </span>
                         </td>

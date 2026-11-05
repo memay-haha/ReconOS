@@ -6,7 +6,11 @@ import { RunScanDialog, type RunScanRequest } from '@/components/run-scan-dialog
 import { useCreateJob } from '@/lib/jobs';
 import { useToolModules } from '@/lib/tool-modules';
 
-import { PRIMARY_BUTTON } from './asset-ui';
+import { PRIMARY_BUTTON, PRIMARY_ICON } from './asset-ui';
+
+// The compact form sits in a selection bar, beside its small buttons.
+const COMPACT_BUTTON =
+  'inline-flex h-6 items-center gap-1 rounded-sm bg-primary-container px-2.5 text-xs font-semibold text-accent-ink hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
 
 export interface ScanAsset {
   /** The text the job targets: a domain name, an IP address or a URL. */
@@ -26,10 +30,14 @@ export function RunScanButton({
   assets,
   programName,
   label = 'Run Scan',
+  compact = false,
+  icon = 'play_arrow',
 }: {
   assets: readonly ScanAsset[];
   programName: (programId: string) => string;
   label?: string;
+  compact?: boolean;
+  icon?: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [created, setCreated] = useState(false);
@@ -62,10 +70,13 @@ export function RunScanButton({
           setCreated(false);
           setOpen(true);
         }}
-        className={PRIMARY_BUTTON}
+        className={compact ? COMPACT_BUTTON : PRIMARY_BUTTON}
       >
-        <span aria-hidden="true" className="material-symbols-outlined text-icon">
-          play_arrow
+        <span
+          aria-hidden="true"
+          className={compact ? 'material-symbols-outlined text-[13px]' : PRIMARY_ICON}
+        >
+          {icon}
         </span>
         <span>{label}</span>
       </button>

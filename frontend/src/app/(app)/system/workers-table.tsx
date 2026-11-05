@@ -34,7 +34,7 @@ export function WorkersTable({ workers }: { workers: readonly Worker[] }): React
         <tbody>
           {workers.map((w) => (
             <tr key={w.id} className={ROW}>
-              <td className={`${CELL} text-body-code`}>{w.name}</td>
+              <td className={`${CELL} font-body-code text-body-code`}>{w.name}</td>
               <td className="px-space-md py-space-sm">
                 {w.tool_modules.length === 0 ? (
                   <span className="text-fg-muted">None reported</span>
@@ -43,7 +43,7 @@ export function WorkersTable({ workers }: { workers: readonly Worker[] }): React
                     {w.tool_modules.map((m) => (
                       <li
                         key={m}
-                        className="rounded-sm border border-border bg-surface-2 px-space-xs text-body-code text-fg"
+                        className="rounded-sm border border-border bg-surface-2 px-space-xs font-body-code text-body-code text-fg"
                       >
                         {m}
                       </li>
@@ -51,7 +51,7 @@ export function WorkersTable({ workers }: { workers: readonly Worker[] }): React
                   </ul>
                 )}
               </td>
-              <td className={`${CELL} text-body-code`}>
+              <td className={`${CELL} font-body-code text-body-code`}>
                 {w.last_heartbeat_at === null ? 'Never' : formatMoment(w.last_heartbeat_at)}
               </td>
             </tr>

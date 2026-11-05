@@ -81,7 +81,8 @@ describe('S01 against its mockup', () => {
   it('has the mockup header and footer around the content', async () => {
     const { container } = await renderPage();
     const tags = Array.from(container.children).map((c) => c.tagName.toLowerCase());
-    expect(tags).toEqual(['header', 'main', 'footer']);
+    // The leading div is the mockup's fixed radial glow behind everything.
+    expect(tags).toEqual(['div', 'header', 'main', 'footer']);
   });
 
   it('shows the mockup header words except the omitted telemetry', async () => {

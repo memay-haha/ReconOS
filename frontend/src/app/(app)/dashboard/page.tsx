@@ -25,7 +25,7 @@ const SEVERITY_TONE: Readonly<Record<Severity, Tone>> = {
 
 const JOB_TONE: Readonly<Record<JobStatus, Tone>> = {
   pending_approval: 'warn',
-  queued: 'neutral',
+  queued: 'muted',
   dispatched: 'info',
   running: 'warn',
   completed: 'good',
@@ -84,8 +84,10 @@ export default function DashboardPage(): ReactElement {
   return (
     <div className="flex w-full flex-col gap-gutter">
       <div className="flex flex-col justify-between gap-space-md md:flex-row md:items-center">
-        <div className="flex flex-col gap-space-xs">
-          <h1 className="text-headline-lg text-fg">Recon Overview</h1>
+        <div className="space-y-0.5">
+          <h1 className="font-headline-lg text-headline-lg tracking-tight text-fg">
+            Recon Overview
+          </h1>
           <p className="text-body-default text-fg-muted">
             {data === undefined
               ? 'Assets discovered across the programs you can see.'
@@ -98,9 +100,9 @@ export default function DashboardPage(): ReactElement {
           <button
             type="button"
             onClick={refresh}
-            className="flex h-9 items-center gap-space-xs rounded-sm bg-surface-2 px-space-md text-body-default text-fg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex h-8.5 items-center gap-1.5 rounded-sm bg-surface-2 px-space-md font-body-default text-body-default text-fg shadow-sm transition-all hover:bg-surface-3 focus:ring-2 focus:ring-ring focus:outline-none active:scale-95"
           >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon text-primary">
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">
               sync
             </span>
             <span>Refresh</span>
@@ -109,34 +111,49 @@ export default function DashboardPage(): ReactElement {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 lg:grid-cols-5">
-        <StatTile label="Programs" icon="adjust" value={figure(data?.programs)} />
-        <StatTile label="Domains" icon="public" value={figure(data?.assets.domain)} />
-        <StatTile label="URLs" icon="link" value={figure(data?.assets.url)} />
-        <StatTile label="IPs" icon="dns" value={figure(data?.assets.ip)} />
-        <StatTile label="Services" icon="hub" value={figure(data?.assets.service)} />
+        <StatTile label="Programs" icon="adjust" accent="primary" value={figure(data?.programs)} />
+        <StatTile
+          label="Domains"
+          icon="public"
+          accent="domain"
+          value={figure(data?.assets.domain)}
+        />
+        <StatTile label="URLs" icon="link" accent="url" value={figure(data?.assets.url)} />
+        <StatTile label="IPs" icon="dns" accent="ip" value={figure(data?.assets.ip)} />
+        <StatTile
+          label="Services"
+          icon="hub"
+          accent="service"
+          value={figure(data?.assets.service)}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
         <BreakdownPanel
           title="Findings by Severity"
           icon="security"
+          iconTone="crit"
           viewAll={routeOf('Findings')}
           parts={severities}
           state={summaryState}
+          rows={[2, 3]}
+          total={{ label: 'Total', as: 'footer' }}
         />
         <BreakdownPanel
           title="Jobs"
           icon="layers"
+          iconTone="primary"
           viewAll={routeOf('Queue')}
           parts={jobs}
           state={summaryState}
-          totalLabel="Total jobs"
+          rows={[4, 4]}
+          total={{ label: 'Total jobs', as: 'tile' }}
         />
       </div>
 
-      <div className="rounded-sm bg-surface p-space-lg">
-        <div className="mb-space-md flex items-center justify-between">
-          <h2 className="text-panel-title text-fg">Recent Activity</h2>
+      <div className="rounded-sm bg-surface p-space-lg shadow-sm">
+        <div className="mb-gutter flex items-center justify-between">
+          <h2 className="font-panel-title text-panel-title text-fg">Recent Activity</h2>
         </div>
         {events.isPending && <p className="text-body-default text-fg-muted">Loading activity…</p>}
         {events.isError && (
@@ -148,7 +165,7 @@ export default function DashboardPage(): ReactElement {
           <p className="text-body-default text-fg-muted">No asset events yet.</p>
         )}
         {events.data !== undefined && events.data.items.length > 0 && (
-          <div className="flex flex-col gap-space-xs">
+          <div className="space-y-1.5 font-body-default text-body-default">
             {events.data.items.map((event) => (
               <ActivityRow key={event.id} event={event} />
             ))}

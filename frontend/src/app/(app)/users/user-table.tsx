@@ -37,8 +37,13 @@ function sessionText(count: number): string {
   return `${count} ${count === 1 ? 'session' : 'sessions'}`;
 }
 
-const HEAD = 'px-space-md py-space-sm';
-const CELL = 'px-space-md py-space-sm whitespace-nowrap';
+// Density follows the mockup (M7): roomy identity cell, compact mono cells after it.
+const HEAD = 'px-3 py-2 font-label-caps text-label-caps uppercase text-fg-muted';
+const HEAD_FIRST = 'px-4 py-2 font-label-caps text-label-caps uppercase text-fg-muted';
+const HEAD_END = 'px-3 py-2 text-right font-label-caps text-label-caps uppercase text-fg-muted';
+const CELL = 'px-3 py-2.5 whitespace-nowrap';
+const CELL_FIRST = 'px-4 py-3 whitespace-nowrap';
+const CELL_END = 'px-3 py-2.5 whitespace-nowrap text-right';
 
 export function UserTable({
   users,
@@ -65,8 +70,8 @@ export function UserTable({
     <div className="w-full overflow-x-auto" tabIndex={0}>
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="h-8 border-b border-border bg-surface-2 text-label-caps uppercase text-fg-muted">
-            <th scope="col" className={HEAD}>
+          <tr className="h-10 border-b border-border bg-surface-2">
+            <th scope="col" className={HEAD_FIRST}>
               User Identity
             </th>
             <th scope="col" className={HEAD}>
@@ -78,7 +83,7 @@ export function UserTable({
             <th scope="col" className={HEAD}>
               Last Login
             </th>
-            <th scope="col" className={HEAD + ' text-right'}>
+            <th scope="col" className={HEAD_END}>
               Actions
             </th>
           </tr>
@@ -98,9 +103,11 @@ export function UserTable({
                   (selected ? 'bg-accent-soft' : '')
                 }
               >
-                <td className={CELL}>
-                  <div className="flex items-center gap-space-md">
-                    <div className="relative flex h-9 w-9 items-center justify-center rounded-sm border border-accent-soft-bd bg-accent-soft text-body-code-bold text-primary">
+                <td className={CELL_FIRST}>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`relative flex h-9 w-9 items-center justify-center rounded-sm font-body-code-bold text-body-code-bold ${isSelf ? 'bg-primary-container text-accent-ink' : 'border border-border bg-surface-2 text-fg-muted'}`}
+                    >
                       {initials(row)}
                       <span
                         aria-hidden="true"
@@ -111,10 +118,10 @@ export function UserTable({
                       />
                     </div>
                     <div className="flex min-w-0 flex-col">
-                      <span className="flex items-center gap-space-sm text-body-code-bold text-fg">
+                      <span className="flex items-center gap-space-sm font-body-code-bold text-body-code-bold text-fg">
                         {row.username}
                         {isSelf && (
-                          <span className="rounded-sm border border-border bg-surface-2 px-space-xs text-caption text-fg-muted">
+                          <span className="rounded-sm border border-border bg-surface-2 px-space-xs font-body-code text-[9px] text-fg-muted">
                             YOU
                           </span>
                         )}
@@ -124,15 +131,17 @@ export function UserTable({
                           </span>
                         )}
                       </span>
-                      <span className="text-caption text-fg-muted">{row.display_name}</span>
+                      <span className="font-caption text-caption text-fg-muted">
+                        {row.display_name}
+                      </span>
                     </div>
                   </div>
                 </td>
                 <td className={CELL}>
                   <span
-                    className={`inline-flex items-center gap-space-xs rounded-sm border px-space-sm text-body-code ${role.tone}`}
+                    className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 font-body-code text-[11px] font-semibold ${role.tone}`}
                   >
-                    <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                    <span aria-hidden="true" className="material-symbols-outlined text-[13px]">
                       {role.icon}
                     </span>
                     {role.label}
@@ -141,7 +150,7 @@ export function UserTable({
                 <td className={CELL}>
                   <span
                     className={
-                      'text-body-code ' +
+                      'font-body-code text-body-code ' +
                       (row.active_user_session_count > 0 ? 'text-good' : 'text-fg-muted')
                     }
                   >
@@ -149,10 +158,12 @@ export function UserTable({
                   </span>
                 </td>
                 <td className={CELL}>
-                  <span className="text-body-code text-fg">{moment(row.last_login_at)}</span>
+                  <span className="font-body-code text-[11px] text-fg">
+                    {moment(row.last_login_at)}
+                  </span>
                 </td>
-                <td className={CELL + ' text-right'}>
-                  <div className="flex flex-wrap items-center justify-end gap-space-xs">
+                <td className={CELL_END}>
+                  <div className="flex items-center justify-end gap-1 opacity-80 transition-opacity group-hover:opacity-100">
                     <button
                       type="button"
                       aria-label={`Edit ${row.username}`}
@@ -166,7 +177,7 @@ export function UserTable({
                         ' text-fg-muted hover:bg-surface-2 hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring'
                       }
                     >
-                      <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                         edit
                       </span>
                     </button>

@@ -83,7 +83,7 @@
   --color-asset-domain: #0ea371;
   --color-asset-url: #3b82f6;
   --color-asset-ip: #d97706;
-  --color-asset-service: #db2777;
+  --color-asset-service: #ec4899;
   --color-border-subtle: #1e2738;
   --color-border-raised: #26354d;
   --color-crit-strong: #f87171;
@@ -168,6 +168,8 @@
   --text-caption--line-height: 14px;
   --text-caption--font-weight: 400;
   --text-icon: 17px;
+  --text-micro: 10px;
+  --text-micro--line-height: 14px;
 }
 
 :root {
@@ -175,6 +177,16 @@
 }
 
 @layer base {
+  .material-symbols-outlined {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: normal;
+    letter-spacing: normal;
+    line-height: 1;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
   html,
   body {
     margin: 0;
@@ -185,6 +197,16 @@
     background-color: var(--color-bg);
     color: var(--color-fg);
   }
+}
+
+.material-symbols-outlined.material-symbols-outlined {
+  display: revert-layer;
+  font-size: revert-layer;
+  font-weight: revert-layer;
+  letter-spacing: revert-layer;
+  line-height: revert-layer;
+  text-transform: revert-layer;
+  white-space: revert-layer;
 }
 
 /* Light theme. The toggle sets data-theme on <html>; without it the
@@ -256,9 +278,9 @@
     --color-info-bd: #a5c0e9;
     --color-neutral-soft: #eaecf0;
     --color-neutral-bd: #c4cad4;
-    --color-asset-domain: #0b7f58;
+    --color-asset-domain: #0a7451;
     --color-asset-url: #1056c6;
-    --color-asset-ip: #a45904;
+    --color-asset-ip: #975203;
     --color-asset-service: #b3195e;
     --color-border-subtle: #dde1e8;
     --color-border-raised: #b8c0cd;
@@ -346,9 +368,9 @@
   --color-info-bd: #a5c0e9;
   --color-neutral-soft: #eaecf0;
   --color-neutral-bd: #c4cad4;
-  --color-asset-domain: #0b7f58;
+  --color-asset-domain: #0a7451;
   --color-asset-url: #1056c6;
-  --color-asset-ip: #a45904;
+  --color-asset-ip: #975203;
   --color-asset-service: #b3195e;
   --color-border-subtle: #dde1e8;
   --color-border-raised: #b8c0cd;

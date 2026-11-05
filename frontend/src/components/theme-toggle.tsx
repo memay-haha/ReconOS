@@ -42,7 +42,15 @@ function subscribe(notify: () => void): () => void {
 /** The mockup's 32px icon button (s01-login.html). The icon shows the theme on screen;
  * the accessible name says which theme a press switches to. A pseudo-element grows the
  * hit area to 44px without changing the drawn size. */
-export function ThemeToggle() {
+// S01 draws the toggle on a filled square; the app topbar draws it bare, as its other
+// icon buttons are (s02-dashboard.html).
+const LOOK = {
+  filled:
+    'h-8 w-8 rounded-sm bg-surface-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface',
+  bare: 'rounded-sm p-1.5 text-fg-muted hover:bg-surface-2 hover:text-fg',
+} as const;
+
+export function ThemeToggle({ look = 'filled' }: { look?: keyof typeof LOOK }) {
   // The document attribute is the state, set before paint by public/theme-init.js. The
   // server cannot know it, so the server snapshot assumes the dark default.
   const shown = useSyncExternalStore(subscribe, shownTheme, () => 'dark');
@@ -59,7 +67,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={`Switch to ${next} theme`}
-      className="relative flex h-8 w-8 items-center justify-center rounded-sm bg-surface-2 text-on-surface-variant transition-colors after:absolute after:-inset-1.5 after:content-[''] hover:bg-surface-container-high hover:text-on-surface"
+      className={`relative flex items-center justify-center transition-colors after:absolute after:-inset-1.5 after:content-[''] ${LOOK[look]}`}
     >
       <span aria-hidden="true" className="material-symbols-outlined text-icon">
         {shown === 'dark' ? 'dark_mode' : 'light_mode'}

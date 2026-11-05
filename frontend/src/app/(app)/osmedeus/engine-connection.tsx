@@ -7,7 +7,14 @@ import { ApiError, fieldErrorsOf } from '@/lib/api-client';
 import { type Engine, type EnginePatchBody, usePatchEngine, useTestEngine } from '@/lib/engines';
 import { formatMoment } from '@/lib/format-moment';
 
-import { BUTTON_PRIMARY, BUTTON_SECONDARY, FIELD, LABEL } from '../system/modal';
+import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '../system/modal';
+
+const LABEL_CAPS = 'flex flex-col gap-1.5 text-label-caps uppercase text-fg-muted';
+const INPUT_WRAP = 'relative flex items-center';
+const INPUT_ICON =
+  'material-symbols-outlined pointer-events-none absolute left-2.5 text-icon text-fg-faint';
+const INPUT =
+  'h-9 w-full rounded-sm bg-surface-2 pl-9 pr-3 font-body-code text-body-code normal-case tracking-normal text-fg placeholder:text-fg-faint focus:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring';
 import { saveErrorText } from '../system/states';
 
 function testErrorText(error: unknown): string {
@@ -52,32 +59,44 @@ export function EngineConnection({ engine }: { engine: Engine }): ReactElement {
   const version = test.data?.version;
 
   return (
-    <form method="post" onSubmit={submit} className="flex flex-col gap-gutter">
-      <label htmlFor={`${engine.name}-base-url`} className={LABEL}>
-        Base URL
-        <input
-          id={`${engine.name}-base-url`}
-          type="url"
-          required
-          value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          className={`${FIELD} text-body-code`}
-        />
-      </label>
+    <form method="post" onSubmit={submit} className="flex flex-col gap-space-md">
+      <div className={LABEL_CAPS}>
+        <label htmlFor={`${engine.name}-base-url`}>Base URL</label>
+        <span className={INPUT_WRAP}>
+          <span aria-hidden="true" className={INPUT_ICON}>
+            router
+          </span>
+          <input
+            id={`${engine.name}-base-url`}
+            type="url"
+            required
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            className={INPUT}
+          />
+        </span>
+      </div>
       <FieldError errors={fields} field="base_url" />
-      <label htmlFor={`${engine.name}-api-key`} className={LABEL}>
-        API key
-        <input
-          id={`${engine.name}-api-key`}
-          ref={keyRef}
-          type="password"
-          autoComplete="off"
-          placeholder="Leave blank to keep the current key"
-          className={`${FIELD} text-body-code`}
-        />
-      </label>
+      <div className={LABEL_CAPS}>
+        <label htmlFor={`${engine.name}-api-key`}>API key</label>
+        <span className={INPUT_WRAP}>
+          <span aria-hidden="true" className={INPUT_ICON}>
+            shield_lock
+          </span>
+          <input
+            id={`${engine.name}-api-key`}
+            ref={keyRef}
+            type="password"
+            autoComplete="off"
+            placeholder="Leave blank to keep the current key"
+            className={INPUT}
+          />
+        </span>
+      </div>
       <FieldError errors={fields} field="api_key" />
-      <p className="text-caption text-fg-muted">Last changed {formatMoment(engine.updated_at)}.</p>
+      <p className="-mt-space-sm text-caption text-fg-muted">
+        Last changed {formatMoment(engine.updated_at)}.
+      </p>
       {general && (
         <p role="alert" className="text-body-default text-crit">
           {saveErrorText(patch.error)}

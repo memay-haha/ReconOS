@@ -7,7 +7,7 @@ import { useState } from 'react';
 import type { CurrentUser } from '@/lib/auth';
 
 import { ChangePasswordDialog } from './change-password-dialog';
-import { NAV_GROUPS } from './nav-items';
+import { NAV_GROUPS, isCurrent } from './nav-items';
 import type { NavItem } from './nav-items';
 
 const ROLE_LABEL: Record<CurrentUser['role'], string> = {
@@ -25,11 +25,6 @@ const BADGE_TONE: Record<string, string> = {
 const BADGE_NEUTRAL = 'border-border-subtle bg-surface-container-low text-fg-muted';
 
 const ROW = 'flex items-center justify-between rounded-sm px-2.5 py-1.5 text-body-default';
-
-// Segment-aware: /users and /users/42 match /users, /usersfoo does not.
-function isCurrent(pathname: string | null, href: string): boolean {
-  return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
-}
 
 function Icon({ name }: { name: string }) {
   return (
@@ -51,10 +46,12 @@ function Count({ endpoint, value }: { endpoint: string; value: number }) {
 
 function Row({
   item,
+  href,
   current,
   count,
 }: {
   item: NavItem;
+  href: string;
   current: boolean;
   count: number | undefined;
 }) {
@@ -69,35 +66,24 @@ function Row({
     </span>
   );
 
-  // A screen no part has built yet is text, not a control: nothing for the keyboard to land on.
-  if (item.href === null) {
-    return (
-      <span className={`${ROW} text-fg-dim`}>
-        {label}
-        <span className="flex items-center gap-2">
-          {badge}
-          <span aria-hidden="true" className="text-caption">
-            {item.part}
-          </span>
-          <span className="sr-only">, available in {item.part}</span>
-        </span>
-      </span>
-    );
-  }
   return (
     <Link
-      href={item.href}
+      href={href}
       aria-current={current ? 'page' : undefined}
       className={`${ROW} border text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg aria-[current=page]:border-accent-soft-bd aria-[current=page]:bg-accent-soft aria-[current=page]:font-medium aria-[current=page]:text-primary border-transparent`}
     >
       {label}
-      {badge}
-      {current ? (
-        <span
-          aria-hidden="true"
-          className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-container shadow-active-dot"
-        />
-      ) : null}
+      {/* Count and current-screen dot share the right edge, so a counted screen that is
+          current keeps its count at the edge too. */}
+      <span className="ml-auto flex items-center gap-2">
+        {badge}
+        {current ? (
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-1.5 rounded-full bg-primary-container shadow-active-dot"
+          />
+        ) : null}
+      </span>
     </Link>
   );
 }
@@ -128,7 +114,7 @@ function AccountCard({
             <span className="truncate font-body-code text-body-code text-fg">
               {user.display_name}
             </span>
-            <span className="text-caption text-fg-dim">{ROLE_LABEL[user.role]}</span>
+            <span className="text-micro text-fg-dim">{ROLE_LABEL[user.role]}</span>
           </span>
         </div>
         <div className="flex items-center">
@@ -159,38 +145,35 @@ function AccountCard({
   );
 }
 
+/** Screens with an href, by group; a group left with none is dropped. A screen no part has
+ * built yet stays in nav-items.ts as a placeholder but is not shown to the reader. */
+const VISIBLE_GROUPS = NAV_GROUPS.map((group) => ({
+  ...group,
+  items: group.items.flatMap((item) => (item.href === null ? [] : [{ item, href: item.href }])),
+})).filter((group) => group.items.length > 0);
+
 export function Sidebar({
   user,
   counts,
+  toggled,
   onSignOut,
   signOutFailed,
 }: {
   user: CurrentUser | null;
   counts: Record<string, number>;
+  /** The topbar's menu button flipped the default: shown below md, hidden from md up. */
+  toggled: boolean;
   onSignOut: () => void;
   signOutFailed: boolean;
 }) {
   const pathname = usePathname();
-  // Below md the 244 px column would leave a phone about 146 px of content, so it folds
-  // behind a Menu button. From md up it is the column the mockup draws.
-  const [open, setOpen] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   return (
     <>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="sidebar"
-        aria-label="Menu"
-        onClick={() => setOpen((value) => !value)}
-        className="fixed top-0 left-0 z-50 flex h-14 w-14 items-center justify-center text-fg-muted hover:text-fg md:hidden"
-      >
-        <Icon name={open ? 'close' : 'menu'} />
-      </button>
       <aside
         id="sidebar"
-        className={`${open ? 'flex' : 'hidden'} fixed top-0 left-0 z-40 h-screen w-sidebar flex-col justify-between border-r border-border bg-bg p-space-md pt-16 select-none md:flex md:pt-space-md`}
+        className={`${toggled ? 'flex md:hidden' : 'hidden md:flex'} fixed top-14 left-0 z-40 h-[calc(100vh-3.5rem)] w-sidebar flex-col justify-between border-r border-border bg-bg p-space-md select-none md:top-0 md:h-screen`}
       >
         <div className="flex flex-1 flex-col overflow-y-auto">
           <div className="mb-space-md flex items-center justify-between border-b border-border-subtle/60 pb-space-md">
@@ -206,31 +189,32 @@ export function Sidebar({
                 <span className="text-primary">OS</span>
               </span>
             </div>
-            <span className="ml-auto rounded-sm border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-caption text-fg-dim">
+            <span className="ml-auto rounded-sm border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-micro text-fg-dim">
               v2.4
             </span>
           </div>
           <nav aria-label="Main" className="flex-1 space-y-gutter">
-            {NAV_GROUPS.map((group) => (
+            {VISIBLE_GROUPS.map((group) => (
               <div key={group.heading ?? 'main'} className="space-y-space-xs">
                 {group.heading === null ? null : (
                   <div className="flex items-center justify-between px-2 py-1">
-                    <span className="font-label-caps text-label-caps text-fg-dimmest uppercase">
+                    <span className="text-micro font-semibold tracking-wider text-fg-dimmest uppercase">
                       {group.heading}
                     </span>
                     {group.tag === undefined ? null : (
-                      <span className="rounded-sm border border-crit-strong-bd bg-crit-strong-soft px-1 font-body-code text-caption font-bold text-crit-strong">
+                      <span className="rounded-sm border border-crit-strong-bd bg-crit-strong-soft px-1 font-body-code text-micro font-bold text-crit-strong">
                         {group.tag}
                       </span>
                     )}
                   </div>
                 )}
                 <ul className="space-y-space-xs">
-                  {group.items.map((item) => (
+                  {group.items.map(({ item, href }) => (
                     <li key={item.label}>
                       <Row
                         item={item}
-                        current={item.href !== null && isCurrent(pathname, item.href)}
+                        href={href}
+                        current={isCurrent(pathname, href)}
                         count={item.badge === undefined ? undefined : counts[item.badge]}
                       />
                     </li>

@@ -71,3 +71,21 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     ],
   },
 ];
+
+/** Segment-aware: /users and /users/42 match /users, /usersfoo does not. */
+export function isCurrent(pathname: string | null, href: string): boolean {
+  return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+}
+
+/** The built screen the path belongs to, with its group: a detail path such as /domains/42
+ * belongs to its list screen. Null when the path is no sidebar screen. */
+export function currentScreen(
+  pathname: string | null,
+): { readonly group: NavGroup; readonly item: NavItem } | null {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (item.href !== null && isCurrent(pathname, item.href)) return { group, item };
+    }
+  }
+  return null;
+}

@@ -107,6 +107,8 @@ describe('S02 dashboard', () => {
       'medium',
       'low',
       'info',
+      // The mockup leads the job tiles with Total Jobs.
+      'total',
       'pending_approval',
       'queued',
       'dispatched',
@@ -114,12 +116,11 @@ describe('S02 dashboard', () => {
       'completed',
       'failed',
       'cancelled',
-      'total',
     ]);
     // Total jobs is the sum of the seven statuses: 1 + 34 + 12 + 8 + 2,341 + 15 + 2.
-    expect(within(tiles[12] as HTMLElement).getByText('Total jobs')).toBeInTheDocument();
-    expect(within(tiles[12] as HTMLElement).getByText('2,413')).toBeInTheDocument();
-    const pending = tiles[5] as HTMLElement;
+    expect(within(tiles[5] as HTMLElement).getByText('Total jobs')).toBeInTheDocument();
+    expect(within(tiles[5] as HTMLElement).getByText('2,413')).toBeInTheDocument();
+    const pending = tiles[6] as HTMLElement;
     expect(within(pending).getByText('Pending approval')).toBeInTheDocument();
     expect(within(tiles[0] as HTMLElement).getByText('Critical')).toBeInTheDocument();
     expect(within(tiles[4] as HTMLElement).getByText('Info')).toBeInTheDocument();

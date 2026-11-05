@@ -8,7 +8,19 @@ import { type Program, useDeleteProgram, useProgramAction } from '@/lib/programs
 import { ConfirmDialog } from './dialog';
 import { errorText } from './error-text';
 import { ProgramForm } from './program-form';
-import { DANGER_BUTTON, ROW_BUTTON } from './ui';
+
+/** Header look (S09 title bar): the mockup's `h-9 bg-surface-2` buttons with an icon. */
+const HEADER_BUTTON =
+  'inline-flex h-9 items-center gap-1.5 rounded-sm bg-surface-2 px-3 text-panel-title text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
+const HEADER_DANGER =
+  'inline-flex h-9 items-center gap-1.5 rounded-sm bg-crit-soft px-3 text-panel-title text-crit transition-colors hover:bg-crit-strong-soft focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
+/** Compact look (S11 table rows): text-only toggle, ghost Archive, icon-only Delete. */
+const ROW_TEXT =
+  'rounded-sm px-1.5 py-0.5 text-caption text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60';
+const ROW_GHOST =
+  'rounded-sm bg-surface-2 px-1.5 py-0.5 font-body-code text-[11px] text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring';
+const ROW_ICON =
+  'flex rounded-sm p-1 text-fg-muted transition-colors hover:bg-crit-soft hover:text-crit focus:outline-none focus:ring-2 focus:ring-ring';
 
 type Pending = 'archive' | 'delete' | null;
 
@@ -21,12 +33,15 @@ export function ProgramActions({
   program,
   role,
   parts = ALL_PARTS,
+  compact = false,
   onGone,
 }: {
   program: Program;
   role: CurrentUser['role'] | null;
   /** Which controls to draw; S11 puts Pause and Resume in its Status column. */
   parts?: readonly ProgramActionPart[];
+  /** Table-row look for S11; the default is the S09 title-bar look. */
+  compact?: boolean;
   /** Called after the program is archived or deleted, when it leaves the list. */
   onGone?: () => void;
 }): ReactElement | null {
@@ -46,14 +61,19 @@ export function ProgramActions({
   const confirmError = confirming === 'delete' ? remove.error : action.error;
 
   return (
-    <span className="flex flex-wrap items-center gap-space-xs">
+    <span className={`flex flex-wrap items-center ${compact ? 'gap-1' : 'gap-2'}`}>
       {parts.includes('edit') && (
         <button
           type="button"
           onClick={() => setEditing(true)}
           aria-label={`Edit ${program.name}`}
-          className={ROW_BUTTON}
+          className={compact ? ROW_TEXT : HEADER_BUTTON}
         >
+          {!compact && (
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+              edit
+            </span>
+          )}
           Edit
         </button>
       )}
@@ -63,8 +83,13 @@ export function ProgramActions({
           disabled={action.isPending}
           onClick={() => action.mutate({ programId: program.id, action: toggle })}
           aria-label={`${toggle === 'pause' ? 'Pause' : 'Resume'} ${program.name}`}
-          className={ROW_BUTTON}
+          className={compact ? ROW_TEXT : HEADER_BUTTON}
         >
+          {!compact && (
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+              {toggle === 'pause' ? 'pause' : 'play_arrow'}
+            </span>
+          )}
           {toggle === 'pause' ? 'Pause' : 'Resume'}
         </button>
       )}
@@ -73,8 +98,13 @@ export function ProgramActions({
           type="button"
           onClick={() => setConfirming('archive')}
           aria-label={`Archive ${program.name}`}
-          className={ROW_BUTTON}
+          className={compact ? ROW_GHOST : HEADER_BUTTON}
         >
+          {!compact && (
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+              archive
+            </span>
+          )}
           Archive
         </button>
       )}
@@ -83,9 +113,13 @@ export function ProgramActions({
           type="button"
           onClick={() => setConfirming('delete')}
           aria-label={`Delete ${program.name}`}
-          className={DANGER_BUTTON}
+          title={compact ? 'Delete program' : undefined}
+          className={compact ? ROW_ICON : HEADER_DANGER}
         >
-          Delete
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+            delete
+          </span>
+          {!compact && 'Delete'}
         </button>
       )}
       {action.isError && confirming === null && (

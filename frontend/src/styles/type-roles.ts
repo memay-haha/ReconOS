@@ -18,7 +18,7 @@ export function typeRoles(rows: readonly TokenRow[]): string[] {
  * The `text-*` rows that are deliberately bare sizes. A new size is added here on purpose; a
  * role whose `font-*` row is missing is then caught by a test instead of silently dropping out.
  */
-export const KNOWN_SIZES: readonly string[] = ['icon'];
+export const KNOWN_SIZES: readonly string[] = ['icon', 'micro'];
 
 /** `text-*` sizes that are not roles. */
 export function typeSizes(rows: readonly TokenRow[]): string[] {

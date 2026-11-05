@@ -21,9 +21,9 @@ export function CopyButton({ value, label }: { value: string; label: string }): 
       aria-label={name}
       title={name}
       onClick={copy}
-      className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-fg-muted hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-fg-faint hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
     >
-      <span aria-hidden="true" className="material-symbols-outlined text-icon">
+      <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
         {state === 'done' ? 'check' : 'content_copy'}
       </span>
     </button>

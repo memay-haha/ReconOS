@@ -65,7 +65,7 @@ export function LoginForm() {
     // method="post" is the fallback when the handler never runs (submit before
     // hydration, broken bundle, no JavaScript): the default GET would put the
     // credentials in the URL, history, access logs and Referer.
-    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-space-lg">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label htmlFor="username" className={LABEL}>
@@ -123,7 +123,7 @@ export function LoginForm() {
       {message !== null && (
         <p
           role="alert"
-          className="rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm font-body-default text-body-default text-crit"
+          className="mt-space-md rounded-sm border border-crit-bd bg-crit-soft px-space-md py-space-sm font-body-default text-body-default text-crit"
         >
           {message}
         </p>
@@ -131,7 +131,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={login.isPending}
-        className="mt-2 flex h-10.5 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        className="mt-2 flex h-10.5 w-full items-center justify-center gap-space-sm rounded-sm bg-primary-container font-body-code-bold text-body-default tracking-wide text-accent-ink shadow-lg shadow-primary-container/20 transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
       >
         {login.isPending ? 'Signing in…' : 'Sign In'}
       </button>

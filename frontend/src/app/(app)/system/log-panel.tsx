@@ -272,18 +272,20 @@ export function LogPanel({ canDelete }: { canDelete: boolean }): ReactElement {
                   <tbody>
                     {logs.data.items.map((l) => (
                       <tr key={l.id} className={ROW}>
-                        <td className={`${CELL} text-body-code`}>{formatMoment(l.logged_at)}</td>
+                        <td className={`${CELL} font-body-code text-body-code`}>
+                          {formatMoment(l.logged_at)}
+                        </td>
                         <td className={CELL}>
                           <span
-                            className={`rounded-sm border px-space-xs text-body-code ${LEVEL_TONE[l.level]}`}
+                            className={`rounded-sm border px-space-xs font-body-code text-body-code ${LEVEL_TONE[l.level]}`}
                           >
                             {l.level}
                           </span>
                         </td>
-                        <td className={`${CELL} text-body-code`}>{l.service}</td>
-                        <td className={`${CELL} text-body-code`}>{l.event}</td>
+                        <td className={`${CELL} font-body-code text-body-code`}>{l.service}</td>
+                        <td className={`${CELL} font-body-code text-body-code`}>{l.event}</td>
                         <td className="max-w-md px-space-md py-space-sm">
-                          <code className="block truncate text-body-code text-fg-muted">
+                          <code className="block truncate font-body-code text-body-code text-fg-muted">
                             {l.context === null ? '' : JSON.stringify(l.context)}
                           </code>
                         </td>

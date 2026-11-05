@@ -10,20 +10,32 @@ import { useServices } from '@/lib/services';
 import { useUrls } from '@/lib/urls';
 
 import {
+  BAR_BUTTON,
+  BAR_ICON,
   BUTTON,
+  BUTTON_ICON,
   copyText,
   COUNT,
+  COUNT_TAG,
   DNS_LABEL,
   FIELD,
   IN_SCOPE_OPTIONS,
+  LIMIT_FIELD,
+  LIMIT_LABEL,
   PAGE_SIZES,
   parseInScope,
+  SEGMENT_OFF,
+  SEGMENT_ON,
+  SEGMENTS,
+  TABLE_CARD,
+  TABLE_FOOT,
 } from '../domains/asset-ui';
 import { RunScanButton } from '../domains/run-scan-button';
 import { useProgramOptions } from '../domains/use-program-options';
 import { useSelection } from '../domains/use-selection';
 import { DomainsTable, IpsTable, ServicesTable, UrlsTable } from './asset-tables';
 
+// Each asset class keeps its colour from the design system on its tab icon.
 const TABS = [
   { id: 'domains', label: 'Domains', icon: 'language', noun: 'domains' },
   { id: 'ips', label: 'IPs', icon: 'router', noun: 'IPs' },
@@ -31,16 +43,17 @@ const TABS = [
   { id: 'services', label: 'Services', icon: 'dns', noun: 'services' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
+const TAB_TONE: Readonly<Record<TabId, string>> = {
+  domains: 'text-asset-domain',
+  ips: 'text-asset-ip',
+  urls: 'text-asset-url',
+  services: 'text-asset-service',
+};
 
 const TAB =
-  'flex items-center gap-space-xs border-b-2 py-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
-const TAB_ON = TAB + ' border-primary text-fg';
+  'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-0.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring';
+const TAB_ON = TAB + ' border-primary-container font-medium text-primary';
 const TAB_OFF = TAB + ' border-transparent text-fg-muted hover:text-fg';
-
-const SEGMENT =
-  'h-8 rounded-sm px-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
-const SEGMENT_ON = SEGMENT + ' bg-surface-3 text-fg';
-const SEGMENT_OFF = SEGMENT + ' text-fg-muted hover:text-fg';
 
 type AnyPage = Page<unknown>;
 
@@ -72,6 +85,9 @@ export default function MonitorPage(): ReactElement {
     enabled: tab === 'services',
   });
   const current = { domains, ips, urls, services }[tab];
+  // The dot on Filters tells that a filter narrows the list, even with the row hidden.
+  const filtering =
+    programId !== '' || (tab === 'domains' && (dnsStatus !== null || inScope !== ''));
   const data = current.data as AnyPage | undefined;
   const noun = TABS.find((t) => t.id === tab)?.noun ?? 'rows';
 
@@ -105,12 +121,16 @@ export default function MonitorPage(): ReactElement {
   };
 
   return (
-    <div className="flex w-full flex-col gap-space-md">
-      <div className="flex flex-col gap-space-md">
-        <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
-          <div className="flex flex-wrap items-baseline gap-space-sm">
-            <h1 className="text-headline-lg text-fg">Asset Monitor</h1>
-            <span className="text-body-default text-fg-muted">
+    // The mockup's page head sits 12 px under the topbar (px-4 pt-3); the sides come from
+    // the route's ScreenFrame.
+    <div className="flex w-full flex-col gap-space-sm pt-3">
+      <div className="flex flex-col gap-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <h1 className="whitespace-nowrap font-headline-lg text-headline-lg-mobile tracking-tight text-fg">
+              Asset Monitor
+            </h1>
+            <span className="hidden truncate border-l border-border pl-3 text-xs text-fg-faint xl:inline">
               All discovered assets across the programs you can see.
             </span>
           </div>
@@ -122,14 +142,20 @@ export default function MonitorPage(): ReactElement {
               onClick={() => setFiltersOpen((open) => !open)}
               className={BUTTON}
             >
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <span aria-hidden="true" className={BUTTON_ICON}>
                 filter_list
               </span>
               <span>Filters</span>
+              {filtering && (
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 rounded-full bg-primary-container"
+                />
+              )}
             </button>
             {tab === 'domains' && (
               <a href={domainExportHref(domainFilter)} download className={BUTTON}>
-                <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                <span aria-hidden="true" className={BUTTON_ICON}>
                   download
                 </span>
                 <span>Export CSV</span>
@@ -139,7 +165,7 @@ export default function MonitorPage(): ReactElement {
         </div>
 
         <div className="flex items-center justify-between overflow-x-auto border-b border-border">
-          <div role="tablist" aria-label="Asset classes" className="flex items-center gap-space-lg">
+          <div role="tablist" aria-label="Asset classes" className="flex items-center gap-6">
             {TABS.map((t, index) => (
               <button
                 key={t.id}
@@ -153,12 +179,15 @@ export default function MonitorPage(): ReactElement {
                 onKeyDown={(e) => onTabKey(e, index)}
                 className={tab === t.id ? TAB_ON : TAB_OFF}
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-icon">
+                <span
+                  aria-hidden="true"
+                  className={`material-symbols-outlined text-[16px] ${TAB_TONE[t.id]}`}
+                >
                   {t.icon}
                 </span>
                 <span>{t.label}</span>
                 {tab === t.id && data !== undefined && (
-                  <span className="rounded-sm bg-surface-2 px-space-xs text-caption text-fg-muted">
+                  <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 font-body-code text-[11px] font-semibold text-primary">
                     {(data.total_is_estimate ? '~' : '') + COUNT.format(data.total)}
                   </span>
                 )}
@@ -170,9 +199,9 @@ export default function MonitorPage(): ReactElement {
         {filtersOpen && (
           <div
             id="monitor-filters"
-            className="flex flex-wrap items-center justify-between gap-space-sm"
+            className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5"
           >
-            <div className="flex flex-wrap items-center gap-space-sm">
+            <div className="flex flex-wrap items-center gap-2">
               <div>
                 <label htmlFor="monitor-program" className="sr-only">
                   Program
@@ -197,7 +226,7 @@ export default function MonitorPage(): ReactElement {
               {/* dns_status and in_scope filter GET /domains only: docs/api/openapi.yaml. */}
               {tab === 'domains' && (
                 <>
-                  <div className="flex flex-wrap items-center gap-space-xs rounded-sm border border-border bg-surface-2 p-space-xs">
+                  <div className={SEGMENTS}>
                     {[null, ...DNS_STATUSES].map((value) => (
                       <button
                         key={value ?? 'all'}
@@ -213,8 +242,8 @@ export default function MonitorPage(): ReactElement {
                       </button>
                     ))}
                   </div>
-                  <label className="flex items-center gap-space-sm text-body-default text-fg">
-                    <span>Scope</span>
+                  <label className="flex items-center">
+                    <span className="sr-only">Scope</span>
                     <select
                       value={inScope}
                       onChange={(e) => {
@@ -233,9 +262,9 @@ export default function MonitorPage(): ReactElement {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-space-sm">
+            <div className="flex items-center gap-2">
               {data !== undefined && (
-                <span className="text-body-code text-fg-muted">
+                <span className={COUNT_TAG}>
                   {(data.total_is_estimate ? '~' : '') + `${COUNT.format(data.total)} records`}
                 </span>
               )}
@@ -244,27 +273,28 @@ export default function MonitorPage(): ReactElement {
         )}
 
         {selection.ids.size > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-space-sm rounded-sm border border-accent-soft-bd bg-accent-soft px-space-md py-space-sm">
-            <div className="flex flex-wrap items-center gap-space-md">
-              <div className="flex items-center gap-space-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-accent-soft-bd bg-accent-soft px-3 py-1.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5">
                 <span
                   aria-hidden="true"
-                  className="material-symbols-outlined text-icon text-primary"
+                  className="material-symbols-outlined text-[16px] text-primary"
                 >
                   check_circle
                 </span>
-                <span className="text-body-code text-primary">
-                  {`${COUNT.format(selection.ids.size)} selected`}
+                <span className="whitespace-nowrap text-xs font-medium text-primary">
+                  {`${COUNT.format(selection.ids.size)} assets selected`}
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-space-sm">
-                <button type="button" onClick={copyNames} className={BUTTON}>
-                  <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <div aria-hidden="true" className="h-3.5 w-px bg-accent-soft-bd" />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button type="button" onClick={copyNames} className={BAR_BUTTON}>
+                  <span aria-hidden="true" className={BAR_ICON}>
                     content_copy
                   </span>
                   <span>Copy Names</span>
                 </button>
-                <RunScanButton assets={selection.assets} programName={nameOf} />
+                <RunScanButton assets={selection.assets} programName={nameOf} compact />
                 {copied !== null && (
                   <span role="status" className="text-caption text-fg-muted">
                     {copied === 'done' ? 'Copied.' : 'Could not copy.'}
@@ -278,9 +308,9 @@ export default function MonitorPage(): ReactElement {
                 selection.clear();
                 setCopied(null);
               }}
-              className={BUTTON}
+              className="flex items-center gap-1 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-xs text-fg-muted hover:bg-surface hover:text-crit focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
                 close
               </span>
               <span>Clear Selection</span>
@@ -293,7 +323,7 @@ export default function MonitorPage(): ReactElement {
         id="monitor-panel"
         role="tabpanel"
         aria-labelledby={`monitor-tab-${tab}`}
-        className="flex w-full flex-col overflow-hidden rounded-sm border border-border bg-surface"
+        className={TABLE_CARD}
       >
         <div className="w-full">
           {current.isPending && (
@@ -367,7 +397,7 @@ export default function MonitorPage(): ReactElement {
         </div>
 
         {data !== undefined && (
-          <div className="flex flex-wrap items-center justify-between gap-space-sm border-t border-border bg-surface-2 px-space-md">
+          <div className={TABLE_FOOT}>
             <Pagination
               label={`Asset pagination`}
               page={{
@@ -386,7 +416,7 @@ export default function MonitorPage(): ReactElement {
               }}
             />
             <div className="flex items-center gap-space-sm">
-              <label htmlFor="monitor-limit" className="text-body-default text-fg-muted">
+              <label htmlFor="monitor-limit" className={LIMIT_LABEL}>
                 Rows per page
               </label>
               <select
@@ -396,11 +426,11 @@ export default function MonitorPage(): ReactElement {
                   setLimit(Number(e.target.value));
                   restart();
                 }}
-                className={FIELD}
+                className={LIMIT_FIELD}
               >
                 {PAGE_SIZES.map((size) => (
                   <option key={size} value={size}>
-                    {size}
+                    {`${size} / page`}
                   </option>
                 ))}
               </select>

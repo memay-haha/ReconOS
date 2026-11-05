@@ -10,9 +10,10 @@ export function safeHref(value: string | null): string | null {
   }
 }
 
-/** First eight characters of a uuid, for a column that only needs to tell rows apart. */
+/** Last eight characters of a uuid, for a column that only needs to tell rows apart. The
+ * first eight of a UUIDv7 are a timestamp prefix, so rows created close together share them. */
 export function shortId(id: string): string {
-  return id.slice(0, 8);
+  return id.slice(-8);
 }
 
 /** Who created a job: a schedule (`created_by` null), the reader, or another account. */

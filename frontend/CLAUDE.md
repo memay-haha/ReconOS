@@ -34,7 +34,8 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Script chỉ đi ngược cây JSX trong một file, nên không thấy nền do component ở file khác vẽ, cũng không thấy màu đặt bằng thuộc tính `style`. Hai trường hợp này ghi vào `PAIRS` trong `src/styles/contrast-pairs.ts`, cũng là danh sách trang `/components` hiển thị. Màu chữ không rơi vào cặp nào thì test báo ngay.
 - Script không đoán `className` nó không hiểu: biểu thức không đánh giá được (prop, gọi hàm lạ, `props.x`) làm test `understands every className expression it reads` đỏ, kèm `file:dòng`. Viết class bằng chuỗi, template literal, ternary, hằng số hoặc bảng tra, hoặc truyền chuỗi literal vào `cn`, `clsx`, `classnames`, `twMerge`, `twJoin`. Hằng số import từ file `./` hoặc `@/` được đọc theo. ❌ Không dùng `cva` hay `className` truyền qua prop cho tới khi script hỗ trợ.
 - Test bố cục màn hình bằng cách so khung DOM: `src/test/dom-shape.ts` rút khung từ mockup và từ cây đã render, so thứ tự vùng, số cột bảng, vai trò ARIA. ❌ Không so class hay màu. Màn hình có mockup thì có test `*-shape.test.tsx`.
-- Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
+- Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar. Mục chưa có `href` không hiện trên sidebar.
+- Để `main` chỉ chừa chiều cao topbar. Đệm nội dung theo mockup của từng màn hình bằng `ScreenFrame` trong `layout.tsx` của route.
 
 **Mockup lệch tài liệu:**
 

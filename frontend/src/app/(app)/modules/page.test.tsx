@@ -41,9 +41,19 @@ function rowOf(name: string): HTMLElement {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('S18 modules', () => {
+  it('opens on the card grid, in the same order', async () => {
+    open('user');
+    await screen.findByText('gowitness');
+    expect(screen.getByRole('button', { name: 'Grid' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('table')).toBeNull();
+    const names = screen.getAllByRole('listitem').map((c) => c.querySelector('p')?.textContent);
+    expect(names).toEqual(['gowitness', 'nuclei', 'dalfox', 'sqlmap']);
+  });
+
   it('lists one row per tool module, Recon first, then Scan, then Exploit', async () => {
     const calls = open('user');
     await screen.findByText('gowitness');
+    await userEvent.click(screen.getByRole('button', { name: 'Table' }));
     const names = screen
       .getAllByRole('row')
       .slice(1)

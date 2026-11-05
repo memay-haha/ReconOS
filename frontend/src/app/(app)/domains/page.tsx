@@ -15,13 +15,22 @@ import {
 
 import {
   BUTTON,
+  BUTTON_ICON,
   COUNT,
+  COUNT_TAG,
   DNS_LABEL,
   FIELD,
   IN_SCOPE_OPTIONS,
+  LIMIT_FIELD,
+  LIMIT_LABEL,
   PAGE_SIZES,
   PRIMARY_BUTTON,
+  PRIMARY_ICON,
   parseInScope,
+  SEGMENT_OFF,
+  SEGMENT_ON,
+  SEGMENTS,
+  TABLE_FOOT,
 } from './asset-ui';
 import { DomainTable } from './domain-table';
 import { RunScanButton } from './run-scan-button';
@@ -40,7 +49,9 @@ function sum(a: Figure, b: Figure): Figure {
   return { value: a.value + b.value, estimate: a.estimate || b.estimate };
 }
 
-const BAR = { primary: 'bg-primary', good: 'bg-good', crit: 'bg-crit' } as const;
+// Each tile has its accent: the top bar and the label share the colour, as in the mockup.
+const BAR = { primary: 'bg-primary-container', good: 'bg-good', crit: 'bg-crit' } as const;
+const LABEL_TONE = { primary: 'text-fg-faint', good: 'text-good', crit: 'text-crit' } as const;
 
 function Tile({
   label,
@@ -58,35 +69,34 @@ function Tile({
   return (
     <div
       data-stat-tile
-      className="relative flex flex-col gap-space-sm overflow-hidden rounded-sm border border-border bg-surface p-space-md"
+      className="relative flex min-h-26 flex-col justify-start gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4 shadow-sm"
     >
-      <div className={`absolute inset-x-0 top-0 h-0.5 ${BAR[bar]}`} />
-      <div className="flex items-start justify-between">
-        <span className="text-label-caps uppercase text-fg-faint">{label}</span>
-        <span aria-hidden="true" className="material-symbols-outlined text-icon text-fg-muted">
+      <div className={`absolute inset-x-0 top-0 h-[3px] ${BAR[bar]}`} />
+      <div className="flex items-center justify-between gap-1">
+        <span className={`text-[11px] font-semibold uppercase tracking-wider ${LABEL_TONE[bar]}`}>
+          {label}
+        </span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-fg-faint">
           {icon}
         </span>
       </div>
-      <div className="flex items-baseline gap-space-sm">
+      <div className="flex items-baseline justify-between gap-space-sm">
         {figure === undefined ? (
           <span className="text-body-default text-fg-muted">Loading…</span>
         ) : figure === null ? (
           <span className="text-body-default text-fg-muted">Unavailable</span>
         ) : (
-          <span className="text-stat-lg text-fg">
+          <span className="font-body-code text-[26px] font-bold leading-none tracking-tight text-fg">
             {(figure.estimate ? '~' : '') + COUNT.format(figure.value)}
           </span>
         )}
-        {note !== undefined && <span className="text-caption text-fg-muted">{note}</span>}
+        {note !== undefined && (
+          <span className="font-body-code text-[11px] text-fg-faint">{note}</span>
+        )}
       </div>
     </div>
   );
 }
-
-const SEGMENT =
-  'h-8 rounded-sm px-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
-const SEGMENT_ON = SEGMENT + ' bg-surface-3 text-fg';
-const SEGMENT_OFF = SEGMENT + ' text-fg-muted hover:text-fg';
 
 export default function DomainsPage(): ReactElement {
   const me = useMe();
@@ -117,11 +127,11 @@ export default function DomainsPage(): ReactElement {
   const canManageScope = me.data !== undefined && me.data.role !== 'user';
 
   return (
-    <div className="flex w-full flex-col gap-space-lg">
-      <div className="flex flex-col justify-between gap-space-md pt-space-xs md:flex-row md:items-end">
-        <div className="flex flex-col gap-space-xs">
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex flex-col justify-between gap-space-md sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-space-sm">
-            <h1 className="text-headline-lg text-fg">Domains</h1>
+            <h1 className="font-headline-lg text-headline-lg tracking-tight text-fg">Domains</h1>
           </div>
           <p className="max-w-2xl text-body-default text-fg-muted">
             All domains across the programs you can see. Times are Vietnam time.
@@ -129,14 +139,14 @@ export default function DomainsPage(): ReactElement {
         </div>
         <div className="flex flex-wrap items-center gap-space-sm">
           <a href={domainExportHref(filter)} download className={BUTTON}>
-            <span aria-hidden="true" className="material-symbols-outlined text-icon">
+            <span aria-hidden="true" className={BUTTON_ICON}>
               download
             </span>
             <span>Export CSV</span>
           </a>
           {canManageScope && (
             <Link href="/manage" className={PRIMARY_BUTTON}>
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <span aria-hidden="true" className={PRIMARY_ICON}>
                 add_circle
               </span>
               <span>Add Scope</span>
@@ -145,7 +155,7 @@ export default function DomainsPage(): ReactElement {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-space-md sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Tile label="Total domains" icon="domain" bar="primary" figure={figureOf(all.data)} />
         <Tile
           label="Resolved"
@@ -166,8 +176,8 @@ export default function DomainsPage(): ReactElement {
         />
       </div>
 
-      <div className="flex w-full flex-col overflow-hidden rounded-sm border border-border bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-space-sm border-b border-border p-space-md">
+      <div className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-space-sm border-b border-border bg-surface-2 px-4 py-2">
           <div className="flex flex-wrap items-center gap-space-sm">
             <div>
               <label htmlFor="domains-program" className="sr-only">
@@ -190,7 +200,7 @@ export default function DomainsPage(): ReactElement {
                 ))}
               </select>
             </div>
-            <div className="flex flex-wrap items-center gap-space-xs rounded-sm border border-border bg-surface-2 p-space-xs">
+            <div className={SEGMENTS}>
               {[null, ...DNS_STATUSES].map((value) => (
                 <button
                   key={value ?? 'all'}
@@ -206,8 +216,8 @@ export default function DomainsPage(): ReactElement {
                 </button>
               ))}
             </div>
-            <label className="flex items-center gap-space-sm text-body-default text-fg">
-              <span>Scope</span>
+            <label className="flex items-center">
+              <span className="sr-only">Scope</span>
               <select
                 value={inScope}
                 onChange={(e) => {
@@ -224,7 +234,7 @@ export default function DomainsPage(): ReactElement {
               </select>
             </label>
             {domains.data !== undefined && (
-              <span className="text-body-code text-fg-muted">
+              <span className={COUNT_TAG}>
                 {(domains.data.total_is_estimate ? '~' : '') +
                   `${COUNT.format(domains.data.total)} domains`}
               </span>
@@ -236,9 +246,9 @@ export default function DomainsPage(): ReactElement {
               aria-label="Refresh"
               title="Refresh"
               onClick={() => void domains.refetch()}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-fg-muted hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="inline-flex items-center justify-center rounded-sm border border-border bg-surface p-1.5 text-fg-muted hover:bg-surface-3 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
                 refresh
               </span>
             </button>
@@ -246,28 +256,26 @@ export default function DomainsPage(): ReactElement {
         </div>
 
         {selection.ids.size > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-space-sm border-b border-accent-soft-bd bg-accent-soft px-space-md py-space-sm">
+          <div className="flex flex-wrap items-center justify-between gap-space-sm border-b border-accent-soft-bd bg-accent-soft px-4 py-1.5 text-primary">
             <div className="flex flex-wrap items-center gap-space-md">
-              <div className="flex items-center gap-space-xs">
-                <span
-                  aria-hidden="true"
-                  className="material-symbols-outlined text-icon text-primary"
-                >
+              <div className="flex items-center gap-space-xs font-body-code text-caption font-semibold">
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                   check_box
                 </span>
-                <span className="text-body-code text-primary">
-                  {`${COUNT.format(selection.ids.size)} selected`}
-                </span>
+                <span>{`${COUNT.format(selection.ids.size)} items selected`}</span>
               </div>
-              <div className="flex flex-wrap items-center gap-space-sm">
-                <RunScanButton assets={selection.assets} programName={nameOf} />
+              <span aria-hidden="true" className="text-fg-faint">
+                |
+              </span>
+              <div className="flex flex-wrap items-center gap-space-xs">
+                <RunScanButton assets={selection.assets} programName={nameOf} compact />
               </div>
             </div>
             <div>
               <button
                 type="button"
                 onClick={selection.clear}
-                className="text-body-default text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring"
+                className="text-caption text-fg-muted underline hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 Clear selection
               </button>
@@ -310,7 +318,7 @@ export default function DomainsPage(): ReactElement {
         </div>
 
         {domains.data !== undefined && (
-          <div className="flex flex-wrap items-center justify-between gap-space-sm border-t border-border bg-surface-2 px-space-md">
+          <div className={TABLE_FOOT}>
             <Pagination
               label="Domains pagination"
               page={{
@@ -329,7 +337,7 @@ export default function DomainsPage(): ReactElement {
               }}
             />
             <div className="flex items-center gap-space-sm">
-              <label htmlFor="domains-limit" className="text-body-default text-fg-muted">
+              <label htmlFor="domains-limit" className={LIMIT_LABEL}>
                 Rows per page
               </label>
               <select
@@ -339,11 +347,11 @@ export default function DomainsPage(): ReactElement {
                   setLimit(Number(e.target.value));
                   restart();
                 }}
-                className={FIELD}
+                className={LIMIT_FIELD}
               >
                 {PAGE_SIZES.map((size) => (
                   <option key={size} value={size}>
-                    {size}
+                    {`${size} / page`}
                   </option>
                 ))}
               </select>

@@ -16,7 +16,7 @@ import { safeHref } from '../links';
 import { ProgramActions } from '../program-actions';
 import { StatTile } from '../stat-tile';
 import { ProgramStatusBadge } from '../status-badge';
-import { ALERT, COUNT, NOTE, PRIMARY_BUTTON } from '../ui';
+import { ALERT, COUNT, NOTE } from '../ui';
 import { JobsPanel } from './jobs-panel';
 import { ProxiesPanel } from './proxies-panel';
 import { SchedulesPanel } from './schedules-panel';
@@ -34,7 +34,10 @@ const TABS: readonly { id: Tab; label: string; manageOnly: boolean }[] = [
 ];
 
 const TAB =
-  'border-b-2 border-transparent px-space-md py-space-sm text-body-default text-fg-muted hover:text-fg aria-selected:border-primary aria-selected:text-fg focus:outline-none focus:ring-2 focus:ring-ring';
+  'relative px-3 py-2 text-caption text-fg-muted transition-colors hover:text-fg aria-selected:font-semibold aria-selected:text-primary focus:outline-none focus:ring-2 focus:ring-ring';
+
+const RUN_BUTTON =
+  'inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary-container px-4 font-body-code-bold text-caption uppercase tracking-wider text-accent-ink shadow-md transition-all hover:bg-accent-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring active:scale-[0.98]';
 
 const SEVERITY_SHORT = { critical: 'Crit', high: 'High', medium: 'Med', low: 'Low', info: 'Info' };
 
@@ -67,7 +70,7 @@ export default function ProgramDetailPage(): ReactElement {
   if (program.isPending) return <p className={NOTE}>Loading the program…</p>;
   if (program.isError) {
     return (
-      <div className="flex flex-col gap-space-md">
+      <div className="flex flex-col gap-space-md p-margin">
         <Link href="/programs" className="text-body-default text-primary hover:underline">
           Back to Programs
         </Link>
@@ -93,32 +96,42 @@ export default function ProgramDetailPage(): ReactElement {
   };
 
   return (
-    <div className="flex w-full flex-col gap-space-lg">
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-space-xs text-caption text-fg-faint"
-      >
-        <Link href="/programs" className="flex items-center gap-space-xs hover:text-fg">
-          <span aria-hidden="true" className="material-symbols-outlined text-icon">
+    <div className="flex w-full flex-col gap-space-lg p-margin">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-caption text-fg-faint">
+        <Link href="/programs" className="group flex items-center gap-1 hover:text-fg">
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-[14px] transition-transform group-hover:-translate-x-0.5"
+          >
             arrow_back
           </span>
           Programs
         </Link>
-        <span aria-hidden="true" className="material-symbols-outlined text-icon">
+        <span aria-hidden="true" className="material-symbols-outlined text-[12px] opacity-40">
           chevron_right
         </span>
-        <span className="text-fg-muted">{p.name}</span>
+        <span className="font-body-code text-caption font-medium text-fg-muted">{p.name}</span>
       </nav>
 
-      <div className="flex flex-col justify-between gap-space-md md:flex-row md:items-end">
-        <div className="flex flex-col gap-space-xs">
+      <div className="flex flex-col justify-between gap-space-md xl:flex-row xl:items-center">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-space-sm">
-            <h1 className="text-headline-lg text-fg">{p.name}</h1>
+            <h1 className="font-body-code-bold text-headline-lg tracking-tight text-fg">
+              {p.name}
+            </h1>
             <ProgramStatusBadge status={p.status} />
           </div>
-          <div className="flex flex-wrap items-center gap-space-md text-caption text-fg-faint">
+          <div className="flex flex-wrap items-center gap-x-2 text-body-default text-fg-muted">
             <span>Created {formatMoment(p.created_at)}</span>
+            <span aria-hidden="true" className="text-fg-faint">
+              ·
+            </span>
             <span>Updated {formatMoment(p.updated_at)}</span>
+            {p.platform !== null && (
+              <span aria-hidden="true" className="text-fg-faint">
+                ·
+              </span>
+            )}
             {p.platform !== null &&
               (href === null ? (
                 <span>{p.platform}</span>
@@ -137,11 +150,11 @@ export default function ProgramDetailPage(): ReactElement {
             <p className="max-w-2xl text-body-default text-fg-muted">{p.description}</p>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-space-sm">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 self-start xl:self-center">
           <ProgramActions program={p} role={role} onGone={() => router.push('/programs')} />
           {p.status !== 'archived' && (
-            <button type="button" onClick={() => setScanning(true)} className={PRIMARY_BUTTON}>
-              <span aria-hidden="true" className="material-symbols-outlined text-icon">
+            <button type="button" onClick={() => setScanning(true)} className={RUN_BUTTON}>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
                 play_arrow
               </span>
               Run Scan
@@ -150,12 +163,13 @@ export default function ProgramDetailPage(): ReactElement {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-space-md md:grid-cols-3 xl:grid-cols-5">
-        <StatTile label="Domains" icon="public" tone="domain" value={p.domain_count} />
-        <StatTile label="URLs" icon="link" tone="info" value={p.url_count} />
-        <StatTile label="IPs" icon="dns" tone="warn" value={p.ip_count} />
-        <StatTile label="Services" icon="hub" tone="muted" value={p.service_count} />
+      <div className="grid grid-cols-2 gap-space-sm md:grid-cols-3 xl:grid-cols-5">
+        <StatTile dense label="Domains" icon="public" tone="domain" value={p.domain_count} />
+        <StatTile dense label="URLs" icon="link" tone="url" value={p.url_count} />
+        <StatTile dense label="IPs" icon="dns" tone="ip" value={p.ip_count} />
+        <StatTile dense label="Services" icon="hub" tone="service" value={p.service_count} />
         <StatTile
+          dense
           label="Findings"
           icon="bug_report"
           tone="crit"
@@ -167,7 +181,7 @@ export default function ProgramDetailPage(): ReactElement {
       <div
         role="tablist"
         aria-label="Program sections"
-        className="flex flex-wrap border-b border-border"
+        className="flex w-full flex-wrap items-center gap-1 rounded-sm bg-surface-2/60 px-2 pt-1"
       >
         {tabs.map((t, index) => (
           <button
@@ -183,6 +197,12 @@ export default function ProgramDetailPage(): ReactElement {
             className={TAB}
           >
             {t.label}
+            {tab === t.id && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-container"
+              />
+            )}
           </button>
         ))}
       </div>

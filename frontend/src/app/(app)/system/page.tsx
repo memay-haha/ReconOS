@@ -19,13 +19,26 @@ const SEGMENT = 'rounded-sm px-space-md py-space-xs text-label-caps uppercase';
 const SEGMENT_ON = `${SEGMENT} bg-surface-3 text-primary`;
 const SEGMENT_OFF = `${SEGMENT} text-fg-muted hover:text-fg`;
 
-function SectionTitle({ icon, title }: { icon: string; title: string }): ReactElement {
+function SectionTitle({
+  icon,
+  title,
+  aside,
+}: {
+  icon: string;
+  title: string;
+  aside?: string;
+}): ReactElement {
   return (
-    <div className="flex items-center gap-space-sm border-b border-border pb-space-sm">
-      <span aria-hidden="true" className="material-symbols-outlined text-icon text-primary">
-        {icon}
-      </span>
-      <h2 className="text-panel-title text-fg">{title}</h2>
+    <div className="flex items-center justify-between gap-space-sm border-b border-border pb-space-sm">
+      <div className="flex items-center gap-space-sm">
+        <span aria-hidden="true" className="material-symbols-outlined text-icon text-primary">
+          {icon}
+        </span>
+        <h2 className="text-panel-title text-fg">{title}</h2>
+      </div>
+      {aside !== undefined && (
+        <span className="font-body-code text-caption text-fg-faint">{aside}</span>
+      )}
     </div>
   );
 }
@@ -44,8 +57,6 @@ export default function SystemPage(): ReactElement {
   return (
     <div className="flex w-full flex-col gap-space-lg">
       <PageHeader
-        section="System"
-        current="Health & Tools"
         title="System Health"
         description="Status of each stack component, the workers and their tool modules, operating thresholds and the application log."
       >
@@ -93,7 +104,13 @@ export default function SystemPage(): ReactElement {
         hidden={view !== 'services'}
         className="flex flex-col gap-space-md"
       >
-        <SectionTitle icon="hub" title="Core Services" />
+        <SectionTitle
+          icon="hub"
+          title="Core Services"
+          aside={
+            health.data === undefined ? undefined : `${health.data.components.length} monitors`
+          }
+        />
         {health.isPending && <p className={STATE_TEXT}>Checking the components…</p>}
         {health.isError && (
           <p role="alert" className={ALERT_TEXT}>

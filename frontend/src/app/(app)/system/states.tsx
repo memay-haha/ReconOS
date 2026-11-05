@@ -33,8 +33,9 @@ export function PageHeader({
   description,
   children,
 }: {
-  section: string;
-  current: string;
+  /** Only s16 and s17 repeat the breadcrumb inside the page; the rest rely on the topbar's. */
+  section?: string;
+  current?: string;
   title: string;
   description: string;
   children?: ReactNode;
@@ -42,15 +43,17 @@ export function PageHeader({
   return (
     <div className="flex flex-col justify-between gap-space-md pt-space-xs lg:flex-row lg:items-end">
       <div className="flex flex-col gap-space-xs">
-        <div className="flex items-center gap-space-sm text-caption text-fg-faint">
-          <span>ReconOS</span>
-          <span aria-hidden="true">/</span>
-          <span>{section}</span>
-          <span aria-hidden="true">/</span>
-          <span className="text-body-code text-primary">{current}</span>
-        </div>
+        {section !== undefined && current !== undefined && (
+          <div className="flex items-center gap-space-sm text-caption text-fg-faint">
+            <span>ReconOS</span>
+            <span aria-hidden="true">/</span>
+            <span>{section}</span>
+            <span aria-hidden="true">/</span>
+            <span className="font-body-code text-body-code text-primary">{current}</span>
+          </div>
+        )}
         <h1 className="text-headline-lg text-fg">{title}</h1>
-        <p className="max-w-2xl text-body-default text-fg-muted">{description}</p>
+        <p className="max-w-3xl text-body-default text-fg-muted">{description}</p>
       </div>
       {children}
     </div>

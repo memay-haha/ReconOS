@@ -620,7 +620,7 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "color-asset-domain",
     "values": {
       "dark": "#0ea371",
-      "light": "#0b7f58"
+      "light": "#0a7451"
     }
   },
   {
@@ -636,14 +636,14 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "color-asset-ip",
     "values": {
       "dark": "#d97706",
-      "light": "#a45904"
+      "light": "#975203"
     }
   },
   {
     "group": "Colors",
     "name": "color-asset-service",
     "values": {
-      "dark": "#db2777",
+      "dark": "#ec4899",
       "light": "#b3195e"
     }
   },
@@ -1236,6 +1236,22 @@ export const TOKEN_ROWS: readonly TokenRow[] = [
     "name": "text-icon",
     "values": {
       "dark": "17px",
+      "light": ""
+    }
+  },
+  {
+    "group": "Typography",
+    "name": "text-micro",
+    "values": {
+      "dark": "10px",
+      "light": ""
+    }
+  },
+  {
+    "group": "Typography",
+    "name": "text-micro--line-height",
+    "values": {
+      "dark": "14px",
       "light": ""
     }
   }

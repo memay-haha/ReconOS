@@ -64,9 +64,9 @@ describe('S10 queue', () => {
     renderWithClient(<QueuePage />);
     expect(await screen.findByText('04/11/2026 08:05')).toBeInTheDocument();
     expect(await screen.findByText('nuclei')).toBeInTheDocument();
-    expect(screen.getByText('3 jobs')).toBeInTheDocument();
+    expect(screen.getAllByText('3 queued').length).toBeGreaterThan(0);
     expect((await screen.findAllByText('Example Corp')).length).toBeGreaterThan(0);
-    expect(screen.getByText('unknown1')).toBeInTheDocument();
+    expect(screen.getByText('nown1234')).toBeInTheDocument();
   });
 
   it('shows Workers to Admin and never asks for them as User', async () => {
