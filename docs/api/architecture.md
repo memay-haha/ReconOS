@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.12 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.13 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -95,7 +95,7 @@ Danh sách dùng phân trang cursor theo keyset.
 - Nhiều giá trị: lặp tham số, `severity=critical&severity=high`.
 - Khoảng thời gian: hậu tố `_from`, `_to`, ví dụ `last_seen_at_from`.
 - Tìm theo chuỗi: `q`, chỉ trên cột endpoint khai báo. Hiện chưa endpoint nào khai báo `q`: nợ 32, nợ 39 trong [tech-debt.md](../tech-debt.md).
-- Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/asset-events`, `/screenshots`, `/findings`.
+- Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/urls`, `/services`, `/asset-events`, `/screenshots`, `/findings`. Với `/services`: service trên IP mà domain phân giải ra, qua `domain_ip`. `/screenshots` nhận thêm `is_failed`.
 - User chỉ nhận dữ liệu của program được gán, kể cả khi không truyền `program_id`.
 
 ### Trường tính và số liệu tổng hợp

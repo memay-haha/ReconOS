@@ -10,7 +10,9 @@ import { SEVERITY_LABEL, TRIAGE_LABEL, useFindings } from '@/lib/findings';
 import { formatMoment } from '@/lib/format-moment';
 import { JOB_STATUS_LABEL } from '@/lib/jobs';
 import type { Page } from '@/lib/page';
+import { useServices } from '@/lib/services';
 import type { ToolModule } from '@/lib/tool-modules';
+import { useUrls } from '@/lib/urls';
 
 import { CELL, HEAD, HEAD_ROW, SEVERITY_TONE } from '../asset-ui';
 import { CopyButton } from './copy-button';
@@ -95,6 +97,69 @@ export function DnsPanel({ domain }: { domain: DomainDetail }): ReactElement {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function AssetTable({ columns, children }: { columns: readonly string[]; children: ReactNode }) {
+  return (
+    <div className="w-full overflow-x-auto" tabIndex={0}>
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className={HEAD_ROW}>
+            {columns.map((c) => (
+              <th key={c} scope="col" className={HEAD}>
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border text-body-default">{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
+export function UrlsTab({ domainId }: { domainId: string }): ReactElement {
+  const stack = useCursorStack();
+  const urls = useUrls({ domainId, limit: 25 }, stack.cursor);
+  return (
+    <div className={PANEL}>
+      <States query={urls} noun="URLs">
+        <AssetTable columns={['URL', 'Status', 'Title', 'Last seen']}>
+          {urls.data?.items.map((u) => (
+            <tr key={u.id} className="text-fg">
+              <td className={CELL + ' text-body-code'}>{u.url}</td>
+              <td className={MUTED}>{u.status_code ?? ''}</td>
+              <td className={CELL}>{u.title ?? ''}</td>
+              <td className={MUTED}>{formatMoment(u.last_seen_at)}</td>
+            </tr>
+          ))}
+        </AssetTable>
+      </States>
+      <Pager label="URLs pagination" data={urls.data} stack={stack} />
+    </div>
+  );
+}
+
+export function ServicesTab({ domainId }: { domainId: string }): ReactElement {
+  const stack = useCursorStack();
+  const services = useServices({ domainId, limit: 25 }, stack.cursor);
+  return (
+    <div className={PANEL}>
+      <States query={services} noun="services">
+        <AssetTable columns={['Port', 'Service', 'Product', 'Last seen']}>
+          {services.data?.items.map((s) => (
+            <tr key={s.id} className="text-fg">
+              <td className={CELL + ' text-body-code'}>{`${s.port}/${s.transport}`}</td>
+              <td className={CELL}>{s.name ?? ''}</td>
+              <td className={MUTED}>{[s.product, s.version].filter(Boolean).join(' ')}</td>
+              <td className={MUTED}>{formatMoment(s.last_seen_at)}</td>
+            </tr>
+          ))}
+        </AssetTable>
+      </States>
+      <Pager label="Services pagination" data={services.data} stack={stack} />
     </div>
   );
 }

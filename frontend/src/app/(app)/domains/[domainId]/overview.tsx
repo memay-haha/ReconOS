@@ -10,7 +10,7 @@ import type { DomainDetail } from '@/lib/domains';
 import { SEVERITY_LABEL, useFindings } from '@/lib/findings';
 import { formatMoment } from '@/lib/format-moment';
 import { SEVERITIES } from '@/lib/programs';
-import { useTagDomain, useTags, useUntagAsset } from '@/lib/tags';
+import { useCreateTag, useTagDomain, useTags, useUntagAsset } from '@/lib/tags';
 
 import { COUNT, FIELD, SEVERITY_BAR, SEVERITY_TONE } from '../asset-ui';
 import { CopyButton } from './copy-button';
@@ -112,7 +112,10 @@ function TagEditor({ domain }: { domain: DomainDetail }): ReactElement {
   const catalogue = useTags();
   const tag = useTagDomain();
   const untag = useUntagAsset();
+  const create = useCreateTag();
   const [choice, setChoice] = useState('');
+  const [newKey, setNewKey] = useState('');
+  const [newValue, setNewValue] = useState('');
   const onDomain = new Set(domain.tags.map((t) => t.tag_id));
   const free = (catalogue.data?.items ?? []).filter((t) => !onDomain.has(t.id));
 
@@ -120,6 +123,29 @@ function TagEditor({ domain }: { domain: DomainDetail }): ReactElement {
     event.preventDefault();
     if (choice === '') return;
     tag.mutate({ tag_id: choice, domain_id: domain.id }, { onSuccess: () => setChoice('') });
+  };
+
+  // A new tag goes into the catalogue first, then onto this domain.
+  const addNew = (event: FormEvent) => {
+    event.preventDefault();
+    const key = newKey.trim();
+    const value = newValue.trim();
+    if (key === '' || value === '') return;
+    create.mutate(
+      { key, value },
+      {
+        onSuccess: (created) =>
+          tag.mutate(
+            { tag_id: created.id, domain_id: domain.id },
+            {
+              onSuccess: () => {
+                setNewKey('');
+                setNewValue('');
+              },
+            },
+          ),
+      },
+    );
   };
 
   return (
@@ -172,9 +198,44 @@ function TagEditor({ domain }: { domain: DomainDetail }): ReactElement {
           Add tag
         </button>
       </form>
-      {(tag.isError || untag.isError) && (
+      <form onSubmit={addNew} className="flex flex-wrap items-center gap-space-xs">
+        <label htmlFor="domain-tag-key" className="sr-only">
+          New tag key
+        </label>
+        <input
+          id="domain-tag-key"
+          value={newKey}
+          onChange={(e) => setNewKey(e.target.value)}
+          placeholder="key"
+          className={FIELD}
+        />
+        <label htmlFor="domain-tag-value" className="sr-only">
+          New tag value
+        </label>
+        <input
+          id="domain-tag-value"
+          value={newValue}
+          onChange={(e) => setNewValue(e.target.value)}
+          placeholder="value"
+          className={FIELD}
+        />
+        <button
+          type="submit"
+          disabled={
+            newKey.trim() === '' || newValue.trim() === '' || create.isPending || tag.isPending
+          }
+          className="h-9 rounded-sm border border-border bg-surface px-space-md text-body-default text-fg hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+        >
+          Create tag
+        </button>
+      </form>
+      {(tag.isError || untag.isError || create.isError) && (
         <p role="alert" className="text-body-default text-crit">
-          {tag.isError ? 'Could not add the tag.' : 'Could not remove the tag.'}
+          {create.isError
+            ? 'Could not create the tag. It may already exist.'
+            : tag.isError
+              ? 'Could not add the tag.'
+              : 'Could not remove the tag.'}
         </p>
       )}
     </div>

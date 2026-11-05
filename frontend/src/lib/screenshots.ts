@@ -29,6 +29,8 @@ export interface ScreenshotFilter {
   /** `perception_hash` puts look-alike screenshots side by side: openapi.yaml. */
   readonly sort?: string | null;
   readonly limit?: number | null;
+  /** false hides failed captures; null shows every screenshot. */
+  readonly isFailed?: boolean | null;
 }
 
 export const screenshotKeys = {
@@ -42,6 +44,7 @@ export const screenshotKeys = {
       filter.domainId ?? null,
       filter.sort ?? null,
       filter.limit ?? null,
+      filter.isFailed ?? null,
       cursor,
     ] as const,
   detail: (screenshotId: string) => ['screenshots', 'detail', screenshotId] as const,
@@ -57,6 +60,7 @@ export function useScreenshots(filter: ScreenshotFilter = {}, cursor: string | n
           domain_id: filter.domainId,
           sort: filter.sort,
           limit: filter.limit,
+          is_failed: filter.isFailed,
           cursor,
         }),
       ),

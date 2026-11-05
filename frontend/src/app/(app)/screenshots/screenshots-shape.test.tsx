@@ -54,9 +54,8 @@ function prunedMockup(): Element {
   // M3: the Technologies filter has no endpoint; the program select keeps its place.
   const technologies = button('Technologies').closest('div.relative') as Element;
   technologies.replaceWith(labelledSelect(doc));
-  // M3: HTTP status chips and Show Failed have no filter parameter.
+  // M3: HTTP status chips have no filter parameter. Show Failed sends is_failed (05/11/2026).
   button('200').closest('div.inline-flex')?.remove();
-  one(root, 'label', (l) => textOf(l).includes('Show Failed'), 'Show Failed').remove();
   // M3, debt 39: no endpoint takes a search string.
   one(root, 'input[type=text]', () => true, 'search')
     .closest('div.relative')
@@ -145,12 +144,11 @@ describe('S06 against its mockup', () => {
   it('builds none of the dropped controls', async () => {
     const { container } = renderScreen();
     await screen.findByText('Single Sign-On');
-    expect(container.querySelector('input')).toBeNull();
+    expect(container.querySelectorAll('input')).toHaveLength(1);
     const text = textOf(container);
     for (const banned of [
       'Load Scan',
       'Technologies',
-      'Show Failed',
       'Force Dispatch',
       'gowitness_daemon.sock',
       'QUEUED',

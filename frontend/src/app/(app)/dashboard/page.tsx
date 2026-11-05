@@ -127,9 +127,10 @@ export default function DashboardPage(): ReactElement {
         <BreakdownPanel
           title="Jobs"
           icon="layers"
-          viewAll={routeOf('Staging Queue')}
+          viewAll={routeOf('Queue')}
           parts={jobs}
           state={summaryState}
+          totalLabel="Total jobs"
         />
       </div>
 

@@ -45,15 +45,11 @@ function prunedMockup(): Element {
   // Delete has no endpoint (M3).
   findByText(content, 'button', 'Delete').remove();
 
-  // Tabs: URLs and Services cannot be listed per domain, /urls and /services filter by
-  // program only (M3). The bar is a tablist and the grid its panel (M6).
+  // Tabs: the bar is a tablist and the grid its panel (M6). URLs and Services list by
+  // domain_id, settled on 05/11/2026.
   const tabBar = findByText(content, 'div.flex', 'Scan History');
   tabBar.setAttribute('role', 'tablist');
-  for (const tab of Array.from(tabBar.querySelectorAll('button'))) {
-    const label = textOf(tab);
-    if (label.startsWith('URLs') || label.startsWith('Services')) tab.remove();
-    else tab.setAttribute('role', 'tab');
-  }
+  for (const tab of Array.from(tabBar.querySelectorAll('button'))) tab.setAttribute('role', 'tab');
   const panel = tabBar.nextElementSibling as Element;
   panel.setAttribute('role', 'tabpanel');
 
@@ -63,7 +59,19 @@ function prunedMockup(): Element {
   findByText(panel, 'span', 'bbrf: synced').remove();
   const chips = findByText(panel, 'div.flex', 'env: prod');
   for (const chip of Array.from(chips.children)) chip.append(el(doc, 'button'));
-  chips.after(el(doc, 'form', el(doc, 'label'), el(doc, 'select'), el(doc, 'button')));
+  // A second form creates a tag that is not in the catalogue yet (05/11/2026).
+  chips.after(
+    el(doc, 'form', el(doc, 'label'), el(doc, 'select'), el(doc, 'button')),
+    el(
+      doc,
+      'form',
+      el(doc, 'label'),
+      el(doc, 'input'),
+      el(doc, 'label'),
+      el(doc, 'input'),
+      el(doc, 'button'),
+    ),
+  );
   // Reconciliation and confidence have no source (M3).
   findByText(panel, 'div.border-t', 'Auto-reconciled').remove();
   // Inspect opens S07: a link.
@@ -100,6 +108,5 @@ describe('S05 against its mockup', () => {
     const words = textOf(container);
     for (const banned of ['BBRF', 'Delete', 'Vulnerabilities', 'Telemetry', '#DOM', 'Confidence'])
       expect(words).not.toContain(banned);
-    expect(screen.queryByRole('tab', { name: /^urls/i })).toBeNull();
   });
 });

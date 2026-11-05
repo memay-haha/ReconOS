@@ -22,10 +22,16 @@ const FIELD =
 export default function ScreenshotsPage(): ReactElement {
   const [programId, setProgramId] = useState<string | null>(null);
   const [similar, setSimilar] = useState(false);
+  const [showFailed, setShowFailed] = useState(true);
   const [limit, setLimit] = useState<number>(DEFAULT_DENSITY);
   const { cursor, canGoBack, goNext, goBack, reset } = useCursorStack();
   const programs = usePrograms({ limit: 200 });
-  const filter: ScreenshotFilter = { programId, sort: similar ? SIMILAR : null, limit };
+  const filter: ScreenshotFilter = {
+    programId,
+    sort: similar ? SIMILAR : null,
+    limit,
+    isFailed: showFailed ? null : false,
+  };
   const shots = useScreenshots(filter, cursor);
 
   // Every cursor collected so far points into the previous result set.
@@ -33,7 +39,7 @@ export default function ScreenshotsPage(): ReactElement {
     apply();
     reset();
   };
-  const filtered = programId !== null || similar;
+  const filtered = programId !== null || similar || !showFailed;
 
   return (
     <div className="flex w-full flex-col">
@@ -56,6 +62,7 @@ export default function ScreenshotsPage(): ReactElement {
               change(() => {
                 setProgramId(null);
                 setSimilar(false);
+                setShowFailed(true);
               })
             }
             className="h-9 rounded-sm border border-border-strong bg-surface-2 px-space-md text-body-default text-fg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
@@ -103,6 +110,22 @@ export default function ScreenshotsPage(): ReactElement {
             </span>
             <span>Group by Similar</span>
           </button>
+          <label
+            htmlFor="screenshot-show-failed"
+            className="flex items-center gap-space-xs text-body-default text-fg"
+          >
+            <input
+              id="screenshot-show-failed"
+              type="checkbox"
+              checked={showFailed}
+              onChange={(e) => {
+                const on = e.target.checked;
+                change(() => setShowFailed(on));
+              }}
+              className="h-4 w-4 accent-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            Show Failed
+          </label>
         </div>
       </div>
 

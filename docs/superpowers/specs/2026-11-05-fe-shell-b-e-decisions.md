@@ -16,6 +16,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | Q5 | Runner ghi cả URL chụp lỗi vào JSONL, parser tạo screenshot có `is_failed` | external-services.md |
 | Q6 | `GET /screenshots` nhận `sort=perception_hash`. Bỏ badge đếm số ảnh trong nhóm | openapi.yaml |
 | Q7 | S17 chỉ có phần kết nối, không có biến engine | tech-debt.md, nợ 8 |
+| Q8 | Ngày 2026-11-05, sau khi dựng: thêm `domain_id` cho `/urls`, `/services` và `is_failed` cho `/screenshots`. S05 tạo được tag mới. S18 sửa được `default_params`. S02 hiện Total jobs. Giữ bỏ checkbox Findings only trên S04, giữ tab Users trên S09 chỉ gợi ý tài khoản User | openapi.yaml, api/architecture.md |
 
 ## Áp chung cho mọi màn hình
 
@@ -121,9 +122,9 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S04 | Tile "New in 24h", số `%` | M3 | Bỏ. Unresolved là tổng `total` của `nxdomain` và `timeout` |
 | S04 | Refresh Telemetry | M2 | "Refresh", gọi lại `GET /domains` |
 | S04 | **Add Scope** trỏ tới S11 | M7 | Tạm dùng route `/manage`. Phần B chốt route S11 thì sửa |
-| S05 | Tab URLs, Services | M3 | Bỏ: `/urls`, `/services` không lọc theo domain |
+| S05 | Tab URLs, Services | Q8 | Dựng lại. `/urls`, `/services` nhận `domain_id` |
 | S05 | Dạng `tags` của `GET /domains/{domain_id}` | M2 | Theo api/architecture.md, đã chốt ngày 2026-11-05 |
-| S05 | Thêm tag | M6 | Chỉ chọn tag có sẵn từ `GET /tags`. Chưa dựng tạo tag mới bằng `POST /tags` |
+| S05 | Thêm tag | Q8 | Chọn tag có sẵn, hoặc tạo tag mới bằng `POST /tags` rồi gắn |
 | S05 | Chip "bbrf: synced" | M1 | Bỏ |
 | S05 | Delete, Auto-reconciled, Confidence | M3 | Bỏ |
 | S05 | Ô "Low / Info" | M2 | 5 mức severity riêng |
@@ -153,11 +154,11 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S07 | Detected Technologies | M2 | Từ `GET /urls/{url_id}`, bỏ "Wappalyzer" |
 | S02 | Nút Refresh | M7 | Giữ, gọi lại `GET /dashboard/summary` và `GET /asset-events` |
 | S02 | Nút Pause Stream, "Auto-scroll: ON" | M3 | Bỏ. Frontend chưa có kênh WebSocket, feed làm mới qua query |
-| S02 | Thẻ Total Jobs | M3 | Bỏ: `jobs_by_status` không có tổng |
+| S02 | Thẻ Total Jobs | Q8 | Hiện "Total jobs", cộng 7 trạng thái để hiển thị |
 | S02 | Link View all | M7 | Chỉ hiện khi màn hình đích đã có `href` trong `nav-items.ts` |
 | S02 | Feed Recent Activity | M7 | 8 sự kiện mới nhất, `sort=-created_at`, không phân trang như mockup |
 | S06 | Clear Filters | M7 | Giữ, đặt lại program và Group by Similar |
-| S06 | Toggle Show Failed | M3 | Bỏ: `GET /screenshots` không có tham số lọc `is_failed` |
+| S06 | Toggle Show Failed | Q8 | Giữ. Tắt thì gửi `is_failed=false` |
 | S06 | Prev, Next trên thanh lọc | M7 | Bỏ. Một bộ phân trang ở chân trang |
 | S06 | Retry pending, Force Dispatch trên thẻ lỗi | M3 | Bỏ |
 | S06 | Density 12, 24, 48, 96 | M7 | Giữ, gửi thành `limit`, mặc định 24 |
@@ -208,7 +209,7 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S16, S17 | Tìm engine | M7 | Lấy dòng có `name` là `osmedeus`, `vigolium` trong `GET /engines`. Không có dòng: báo engine không tồn tại |
 | S16 | Giá trị biến engine | M6 | Luôn hiện mặt nạ cố định. Nút **Replace**, **Delete**, ô giá trị chỉ để ghi |
 | S18 | Cột Output Contract | M3 | Bỏ: `GET /tool-modules` không trả loại tài sản tool module tạo ra |
-| S18 | Sửa `default_params` | M3 | Bỏ: schema tham số nằm trong mã, API không trả. Form Configure chỉ sửa `max_concurrency`, `rate_limit_per_minute`, `timeout_minutes` |
+| S18 | Sửa `default_params` | Q8 | Form Configure có ô JSON. Frontend chỉ kiểm tra là object JSON, backend kiểm tra allowlist |
 | S18 | Cột Concurrency, Rate limit, Timeout | M6 | Thêm theo cột `tool_module` |
 | S18 | Drawer Dispatch Capability | M7 | Bấm **Run**: hộp chọn program, rồi RunScanDialog dùng chung với một tool module và ô mục tiêu tự nhập |
 | S20 | Cột Matcher / Match, select số dòng mỗi trang, checkbox Hide False Positives | M3, M1, M2 | Bỏ. Lọc `triage_status` bằng select Status |

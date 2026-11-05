@@ -675,6 +675,7 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -698,6 +699,7 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -748,6 +750,7 @@ paths:
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
         - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - {name: is_failed, in: query, schema: {type: boolean}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}

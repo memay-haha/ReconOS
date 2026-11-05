@@ -158,6 +158,19 @@ describe('S06 screenshot gallery', () => {
     expect(shotPaths(fetchMock).at(-1)).toBe('/api/v1/screenshots?limit=24');
   });
 
+  it('hides failed captures with is_failed=false when Show Failed is off', async () => {
+    const fetchMock = stub();
+    wrap();
+    const toggle = await screen.findByLabelText('Show Failed');
+    expect(toggle).toBeChecked();
+    await userEvent.click(toggle);
+    await vi.waitFor(() =>
+      expect(shotPaths(fetchMock).at(-1)).toBe('/api/v1/screenshots?limit=24&is_failed=false'),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+    expect(screen.getByLabelText('Show Failed')).toBeChecked();
+  });
+
   it('sends the chosen density as limit', async () => {
     const fetchMock = stub();
     wrap();

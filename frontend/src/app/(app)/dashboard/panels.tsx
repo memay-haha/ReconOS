@@ -77,6 +77,7 @@ export function BreakdownPanel({
   viewAll,
   parts,
   state,
+  totalLabel,
 }: {
   title: string;
   icon: string;
@@ -84,6 +85,8 @@ export function BreakdownPanel({
   viewAll: string | null;
   parts: readonly Breakdown[] | undefined;
   state: ReactNode;
+  /** Adds a tile with the sum of the parts. Display only: the parts already hold the counts. */
+  totalLabel?: string;
 }): ReactElement {
   const total = (parts ?? []).reduce((sum, p) => sum + p.count, 0);
   return (
@@ -133,6 +136,17 @@ export function BreakdownPanel({
                 <span className="mt-space-xs text-stat-lg text-fg">{COUNT.format(p.count)}</span>
               </div>
             ))}
+            {totalLabel !== undefined && (
+              <div
+                data-breakdown="total"
+                className="flex flex-col items-center rounded-sm bg-surface-2 p-space-sm"
+              >
+                <span className="rounded-sm bg-surface-3 px-space-xs text-label-caps uppercase text-fg-muted">
+                  {totalLabel}
+                </span>
+                <span className="mt-space-xs text-stat-lg text-fg">{COUNT.format(total)}</span>
+              </div>
+            )}
           </div>
         </>
       )}

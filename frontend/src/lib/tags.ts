@@ -38,6 +38,16 @@ export function useTags(cursor: string | null = null) {
   });
 }
 
+/** Adds a tag to the shared catalogue. The backend rejects a key and value pair that exists. */
+export function useCreateTag() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { readonly key: string; readonly value: string }) =>
+      apiRequest<Tag>('/tags', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: tagKeys.all }),
+  });
+}
+
 /** The domain detail carries the tags, so both mutations read it again afterwards. */
 export function useTagDomain() {
   const client = useQueryClient();

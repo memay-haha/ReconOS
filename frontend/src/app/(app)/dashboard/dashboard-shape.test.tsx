@@ -51,7 +51,7 @@ function prunedMockup(): { root: Element; tileCount: number } {
   // A View all link leads to a list screen; while that screen is unbuilt there is no link.
   const panels: [string, string][] = [
     ['Findings by Severity', 'Findings'],
-    ['Staging Snapshot', 'Staging Queue'],
+    ['Staging Snapshot', 'Queue'],
   ];
   for (const [heading, screenLabel] of panels) {
     if (routeOf(screenLabel) !== null) continue;

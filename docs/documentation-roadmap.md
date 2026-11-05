@@ -25,7 +25,7 @@
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🟢 Xong       | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
 | 15 | `docs/security/authorization.md`           | 8       | 9, 14                | 🔵 Chờ duyệt | 2026-11-05 | v1.8: Admin xem danh sách tài khoản rút gọn |
 | 16 | `docs/security/threat-model.md`            | 17      | 8, 12, 15            | 🔵 Chờ duyệt | 2026-11-04 | v1.6: xóa log ứng dụng để xóa dấu vết. v1.5: chối đã tải output thô |
-| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-05 | v1.12: dạng `queued_by_*` của dispatcher. v1.11: dạng `tags` của domain. v1.10: body bulk-triage, `version` của engine test. v1.9: `technologies`. v1.8: tham số lọc, trường tính |
+| 17 | `docs/api/architecture.md`                 | 10      | 12, 15               | 🔵 Chờ duyệt | 2026-11-05 | v1.13: `domain_id` cho `/urls`, `/services`, `is_failed` cho `/screenshots`. v1.12: dạng `queued_by_*`. v1.11: dạng `tags` của domain. v1.10: body bulk-triage, `version` của engine test. v1.9: `technologies`. v1.8: tham số lọc, trường tính |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🔵 Chờ duyệt | 2026-11-04 | v1.2: request ID từ `X-Request-ID`. v1.1: WebSocket áp dụng ngay khi đổi vai trò |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |

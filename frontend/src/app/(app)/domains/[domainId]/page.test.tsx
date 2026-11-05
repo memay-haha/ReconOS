@@ -76,6 +76,38 @@ describe('S05 domain detail', () => {
     );
   });
 
+  it('creates a new tag, then puts it on the domain', async () => {
+    const fetchMock = stubFetch({
+      ...detailRoutes(),
+      '/api/v1/tags': (path: string, init?: RequestInit) =>
+        init?.method === 'POST'
+          ? {
+              id: 'tg9',
+              key: 'team',
+              value: 'red',
+              created_by: null,
+              created_at: '2026-11-05T00:00:00Z',
+            }
+          : page([]),
+      '/api/v1/asset-tags': { id: 'at9' },
+    });
+    renderWithClient(<DomainDetailPage />);
+    await screen.findByRole('heading', { name: /auth\.example\.com/ });
+    await userEvent.type(screen.getByLabelText('New tag key'), 'team');
+    await userEvent.type(screen.getByLabelText('New tag value'), 'red');
+    await userEvent.click(screen.getByRole('button', { name: 'Create tag' }));
+    await vi.waitFor(() => {
+      const post = fetchMock.mock.calls.find(
+        (c) => c[0] === '/api/v1/asset-tags' && c[1]?.method === 'POST',
+      );
+      expect(JSON.parse(String(post?.[1]?.body))).toEqual({ tag_id: 'tg9', domain_id: ID });
+    });
+    const created = fetchMock.mock.calls.find(
+      (c) => c[0] === '/api/v1/tags' && c[1]?.method === 'POST',
+    );
+    expect(JSON.parse(String(created?.[1]?.body))).toEqual({ key: 'team', value: 'red' });
+  });
+
   it('opens the other tabs and reads their lists', async () => {
     const fetchMock = stubFetch(detailRoutes());
     renderWithClient(<DomainDetailPage />);
@@ -90,6 +122,12 @@ describe('S05 domain detail', () => {
     await userEvent.click(screen.getByRole('tab', { name: /^findings/i }));
     expect(await screen.findByText('New')).toBeInTheDocument();
     expect(paths(fetchMock)).toContain(`/api/v1/findings?domain_id=${ID}&limit=25`);
+
+    await userEvent.click(screen.getByRole('tab', { name: /^urls/i }));
+    expect(paths(fetchMock)).toContain(`/api/v1/urls?domain_id=${ID}&limit=25`);
+
+    await userEvent.click(screen.getByRole('tab', { name: /^services/i }));
+    expect(paths(fetchMock)).toContain(`/api/v1/services?domain_id=${ID}&limit=25`);
 
     await userEvent.click(screen.getByRole('tab', { name: /dns/i }));
     expect(screen.getByRole('list')).toHaveTextContent('198.51.100.25');

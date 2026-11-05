@@ -87,9 +87,34 @@ describe('S18 modules', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        default_params: {},
         max_concurrency: 4,
         rate_limit_per_minute: null,
         timeout_minutes: 120,
+      }),
+    );
+  });
+
+  it('sends edited default parameters and refuses text that is not a JSON object', async () => {
+    const calls = open('superadmin', (call) =>
+      call.method === 'PATCH' ? json(MODULES[1]) : standard(call),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Configure nuclei' }));
+    const dialog = screen.getByRole('dialog');
+    const params = within(dialog).getByLabelText(/default parameters/i);
+    await userEvent.clear(params);
+    await userEvent.type(params, '[1]');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(within(dialog).getByText(/as a JSON object/i)).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
+
+    await userEvent.clear(params);
+    // userEvent treats { as a key descriptor, so the brace is escaped by doubling it.
+    await userEvent.type(params, '{{"severity": "high"}');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await vi.waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({
+        default_params: { severity: 'high' },
       }),
     );
   });

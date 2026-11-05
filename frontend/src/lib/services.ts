@@ -26,7 +26,14 @@ export interface Service {
 export const serviceKeys = {
   all: ['services'] as const,
   list: (filter: AssetListFilter, cursor: string | null) =>
-    ['services', 'list', filter.programId ?? null, filter.limit ?? null, cursor] as const,
+    [
+      'services',
+      'list',
+      filter.programId ?? null,
+      filter.domainId ?? null,
+      filter.limit ?? null,
+      cursor,
+    ] as const,
 };
 
 export function useServices(
@@ -39,7 +46,12 @@ export function useServices(
     queryKey: serviceKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<Service>>(
-        withQuery('/services', { program_id: filter.programId, limit: filter.limit, cursor }),
+        withQuery('/services', {
+          program_id: filter.programId,
+          domain_id: filter.domainId,
+          limit: filter.limit,
+          cursor,
+        }),
       ),
   });
 }

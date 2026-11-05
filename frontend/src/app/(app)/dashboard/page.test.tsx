@@ -114,7 +114,11 @@ describe('S02 dashboard', () => {
       'completed',
       'failed',
       'cancelled',
+      'total',
     ]);
+    // Total jobs is the sum of the seven statuses: 1 + 34 + 12 + 8 + 2,341 + 15 + 2.
+    expect(within(tiles[12] as HTMLElement).getByText('Total jobs')).toBeInTheDocument();
+    expect(within(tiles[12] as HTMLElement).getByText('2,413')).toBeInTheDocument();
     const pending = tiles[5] as HTMLElement;
     expect(within(pending).getByText('Pending approval')).toBeInTheDocument();
     expect(within(tiles[0] as HTMLElement).getByText('Critical')).toBeInTheDocument();

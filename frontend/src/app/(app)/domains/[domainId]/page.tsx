@@ -18,9 +18,16 @@ import { RunScanButton } from '../run-scan-button';
 import { useProgramOptions } from '../use-program-options';
 import { CopyButton } from './copy-button';
 import { CapturePanel, EventsPanel, FindingsPanel, TargetPanel } from './overview';
-import { DnsPanel, FindingsTab, HistoryTab, ScreenshotsPanel } from './tab-panels';
+import {
+  DnsPanel,
+  FindingsTab,
+  HistoryTab,
+  ScreenshotsPanel,
+  ServicesTab,
+  UrlsTab,
+} from './tab-panels';
 
-type TabId = 'overview' | 'dns' | 'screenshots' | 'findings' | 'history';
+type TabId = 'overview' | 'dns' | 'urls' | 'services' | 'screenshots' | 'findings' | 'history';
 
 const TAB =
   'flex items-center gap-space-xs border-b-2 px-space-sm py-space-sm text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
@@ -125,6 +132,8 @@ export default function DomainDetailPage(): ReactElement {
   const tabs: { id: TabId; label: string; count: number | undefined }[] = [
     { id: 'overview', label: 'Overview', count: undefined },
     { id: 'dns', label: 'DNS & IPs', count: d.ips.length },
+    { id: 'urls', label: 'URLs', count: d.url_count },
+    { id: 'services', label: 'Services', count: d.service_count },
     { id: 'screenshots', label: 'Screenshots', count: shotTotal },
     { id: 'findings', label: 'Findings', count: findingTotal },
     { id: 'history', label: 'Scan History', count: undefined },
@@ -277,6 +286,16 @@ export default function DomainDetailPage(): ReactElement {
             {tab === 'dns' && (
               <div className="lg:col-span-12">
                 <DnsPanel domain={d} />
+              </div>
+            )}
+            {tab === 'urls' && (
+              <div className="lg:col-span-12">
+                <UrlsTab domainId={d.id} />
+              </div>
+            )}
+            {tab === 'services' && (
+              <div className="lg:col-span-12">
+                <ServicesTab domainId={d.id} />
               </div>
             )}
             {tab === 'screenshots' && (

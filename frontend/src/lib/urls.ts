@@ -32,7 +32,14 @@ export interface UrlRow {
 export const urlKeys = {
   all: ['urls'] as const,
   list: (filter: AssetListFilter, cursor: string | null) =>
-    ['urls', 'list', filter.programId ?? null, filter.limit ?? null, cursor] as const,
+    [
+      'urls',
+      'list',
+      filter.programId ?? null,
+      filter.domainId ?? null,
+      filter.limit ?? null,
+      cursor,
+    ] as const,
 };
 
 export function useUrls(
@@ -45,7 +52,12 @@ export function useUrls(
     queryKey: urlKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<UrlRow>>(
-        withQuery('/urls', { program_id: filter.programId, limit: filter.limit, cursor }),
+        withQuery('/urls', {
+          program_id: filter.programId,
+          domain_id: filter.domainId,
+          limit: filter.limit,
+          cursor,
+        }),
       ),
   });
 }

@@ -62,6 +62,18 @@ export const partCRoutes: readonly MockRoute[] = [
     HttpResponse.json(page(byProgram(services, new URL(request.url)))),
   ),
   route('GET /tags', () => HttpResponse.json(page(tags))),
+  route('POST /tags', async ({ request }) => {
+    const body = (await request.json()) as { key: string; value: string };
+    const created = {
+      id: crypto.randomUUID(),
+      key: body.key,
+      value: body.value,
+      created_by: null,
+      created_at: new Date().toISOString(),
+    };
+    tags.push(created);
+    return HttpResponse.json(created);
+  }),
   route('POST /asset-tags', async ({ request }) => {
     const body = (await request.json()) as { tag_id: string; domain_id: string };
     const index = domains.findIndex((d) => d.id === body.domain_id);

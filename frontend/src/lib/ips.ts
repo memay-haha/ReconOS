@@ -21,9 +21,11 @@ export interface Ip {
   readonly last_seen_at: string;
 }
 
-/** `GET /ips`, `/urls`, `/services` filter by program only: docs/api/openapi.yaml. */
+/** `GET /ips`, `/urls`, `/services` filter by program. `/urls` and `/services` also take
+ * `domain_id`: docs/api/architecture.md. `/ips` ignores it. */
 export interface AssetListFilter {
   readonly programId?: string | null;
+  readonly domainId?: string | null;
   readonly limit?: number | null;
 }
 
