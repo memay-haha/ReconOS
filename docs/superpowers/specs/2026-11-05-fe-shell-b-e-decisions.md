@@ -70,6 +70,21 @@ Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7
 | S11 | Thao tác hàng loạt, checkbox, PROD, **+ Target**, Latency | M3 | Bỏ |
 | S11 | Nút delete | M6 | Chỉ Superadmin. Thêm **Archive** cho Superadmin, Admin |
 | S11 | Chú thích feed Osmedeus, Vigolium | M1 nợ 6 | Bỏ |
+| S08, S11 | KPI Domains, Findings | M4 | Gọi `GET /domains`, `GET /findings` với `limit=1`. Mock của hai endpoint này thuộc phần C, E: trên nhánh phần B riêng, thẻ hiện "Unavailable" |
+| S09 | Tab link Overview, Domains, IPs, URLs, Services, Screenshots, Run Scan (Configure) | M7 | Bỏ. Số tài sản giữ ở thẻ KPI. Tab trong trang: Scope, Schedules, Jobs, Users, Proxies. Run Scan là nút ở đầu trang |
+| S09 | Nút Copy Name, Add Scope ở đầu trang | M7 | Bỏ Copy Name. Add Scope thay bằng form trong tab Scope |
+| S09 | Link Full Log View, "Telemetry retention: 30 days" | M3 | Bỏ |
+| S09 | Proxy | M6 | Danh sách không hiện URL, chỉ hiện `••••••••`. Ô URL kiểu password, không kiểm soát, chỉ gửi khi tạo |
+| S09 | Tab Users | M6 | Chỉ đề xuất tài khoản vai trò User chưa gán, vì Superadmin, Admin không cần dòng gán |
+| S10 | Tiêu đề trang là `span` | M6 | Thêm `h1` "Queue" cho WCAG 1.3.1 |
+| S10 | Cột Worker, nút Pause auto-refresh | M2, M7 | Bỏ. Làm mới theo WebSocket |
+| S10 | `queued_by_tool_module`, `queued_by_program` | M2 | Đọc là object khóa theo `tool_module_id`, `program_id`, giá trị là số job. Tên lấy từ `GET /tool-modules`, `GET /programs`, không có tên thì hiện uuid rút gọn. Tài liệu chưa ghi rõ dạng: cần xác nhận khi backend làm |
+| S10 | Raw outputs, Logs | M6 | Mở panel dưới bảng: `GET /jobs/{id}/raw-outputs` kèm link tải `/content`, `GET /jobs/{id}/logs`. Log hiện dạng chữ |
+| S10 | Cancel ở `pending_approval` | M2 | Không hiện: theo business-flow.md, job chờ duyệt chỉ ra khỏi hàng đợi bằng **Reject** |
+| S11 | Thẻ Missing Scope, pill No Scope, checkbox Unmapped only | M3 | Bỏ |
+| S11 | Thẻ Active Surveillance | M2 | "Active", `total` của `GET /programs?status=active` |
+| S11 | Hàng mở rộng, **+ Scope** | M7 | Mở hàng dùng lại panel Scope của S09. **+ Scope** mở hàng đó |
+| S11 | Cột Scopes "14 wildcards" | M2 | "N in · N out" từ trường tính |
 
 ## Phần C: S03, S04, S05
 

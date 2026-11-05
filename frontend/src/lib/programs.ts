@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
 import { type Page, withQuery } from './page';
@@ -82,4 +82,53 @@ export function useProgram(programId: string) {
     queryKey: programKeys.detail(programId),
     queryFn: () => apiRequest<ProgramRow>(`/programs/${programId}`),
   });
+}
+
+/** Writable fields of `POST /programs` and `PATCH /programs/{id}`: docs/data/schema.md. */
+export interface ProgramBody {
+  readonly name: string;
+  readonly platform: string | null;
+  readonly platform_url: string | null;
+  readonly bounty_type: Program['bounty_type'];
+  readonly description: string | null;
+}
+
+/** Every program write changes the computed rows too, so all program queries refetch. */
+function useProgramMutation<TArg>(send: (arg: TArg) => Promise<unknown>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: send,
+    onSuccess: () => client.invalidateQueries({ queryKey: programKeys.all }),
+  });
+}
+
+export function useCreateProgram() {
+  return useProgramMutation((body: ProgramBody) =>
+    apiRequest<Program>('/programs', { method: 'POST', body: JSON.stringify(body) }),
+  );
+}
+
+export function useUpdateProgram(programId: string) {
+  return useProgramMutation((body: Partial<ProgramBody>) =>
+    apiRequest<Program>(`/programs/${programId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+/** pause, resume and archive are state changes the backend decides; each answers 204. */
+export type ProgramAction = 'pause' | 'resume' | 'archive';
+
+export function useProgramAction() {
+  return useProgramMutation(({ programId, action }: { programId: string; action: ProgramAction }) =>
+    apiRequest<void>(`/programs/${programId}/${action}`, { method: 'POST' }),
+  );
+}
+
+/** Hard delete, Superadmin only: docs/security/authorization.md. */
+export function useDeleteProgram() {
+  return useProgramMutation((programId: string) =>
+    apiRequest<void>(`/programs/${programId}`, { method: 'DELETE' }),
+  );
 }

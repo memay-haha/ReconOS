@@ -1,8 +1,10 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
+import { dispatcherKeys } from './dispatcher';
+import { type Page, withQuery } from './page';
 
 export const JOB_STATUSES = [
   'pending_approval',
@@ -58,9 +60,53 @@ export interface JobCreateBody {
   readonly proxy_id?: string | null;
 }
 
+export interface JobFilter {
+  readonly status?: JobStatus | null;
+  readonly programId?: string | null;
+  readonly target?: string | null;
+  readonly sort?: string | null;
+  readonly limit?: number | null;
+}
+
 export const jobKeys = {
   all: ['jobs'] as const,
+  list: (filter: JobFilter, cursor: string | null) =>
+    [
+      'jobs',
+      'list',
+      filter.status ?? null,
+      filter.programId ?? null,
+      filter.target ?? null,
+      filter.sort ?? null,
+      filter.limit ?? null,
+      cursor,
+    ] as const,
+  detail: (jobId: string) => ['jobs', 'detail', jobId] as const,
 };
+
+export function useJobs(filter: JobFilter = {}, cursor: string | null = null) {
+  return useQuery({
+    queryKey: jobKeys.list(filter, cursor),
+    queryFn: () =>
+      apiRequest<Page<Job>>(
+        withQuery('/jobs', {
+          status: filter.status,
+          program_id: filter.programId,
+          target: filter.target,
+          sort: filter.sort,
+          limit: filter.limit,
+          cursor,
+        }),
+      ),
+  });
+}
+
+export function useJob(jobId: string) {
+  return useQuery({
+    queryKey: jobKeys.detail(jobId),
+    queryFn: () => apiRequest<Job>(`/jobs/${jobId}`),
+  });
+}
 
 /** The backend checks scope and answers 422 target_out_of_scope; the frontend never does. */
 export function useCreateJob() {
@@ -69,5 +115,23 @@ export function useCreateJob() {
     mutationFn: (body: JobCreateBody) =>
       apiRequest<Job>('/jobs', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => client.invalidateQueries({ queryKey: jobKeys.all }),
+  });
+}
+
+/** approve, reject and cancel answer 204; retry answers the new job. The backend decides
+ * whether the move is allowed (409 conflict, 403 self_approval_forbidden). */
+export type JobAction = 'approve' | 'reject' | 'cancel' | 'retry';
+
+export function useJobAction() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ jobId, action }: { jobId: string; action: JobAction }) =>
+      apiRequest<Job | undefined>(`/jobs/${jobId}/${action}`, { method: 'POST' }),
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: jobKeys.all }),
+        client.invalidateQueries({ queryKey: dispatcherKeys.all }),
+      ]);
+    },
   });
 }

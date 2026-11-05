@@ -27,7 +27,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Monitor', href: '/monitor', icon: 'show_chart', part: 'Part C' },
       { label: 'Domains', href: '/domains', icon: 'language', part: 'Part C', badge: '/domains' },
       { label: 'Screenshots', href: '/screenshots', icon: 'photo_camera', part: 'Part D' },
-      { label: 'Programs', href: null, icon: 'folder', part: 'Part B' },
+      { label: 'Programs', href: '/programs', icon: 'folder', part: 'Part B' },
       {
         label: 'Findings',
         href: '/findings',
@@ -41,13 +41,14 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     heading: 'Operations',
     items: [
       {
-        label: 'Staging Queue',
-        href: null,
+        // The mockup says Staging Queue; the glossary says queue (decision log, part B).
+        label: 'Queue',
+        href: '/queue',
         icon: 'dns',
         part: 'Part B',
         badge: '/jobs?status=queued',
       },
-      { label: 'Manage', href: null, icon: 'tune', part: 'Part B' },
+      { label: 'Manage', href: '/manage', icon: 'tune', part: 'Part B' },
       { label: 'Raw Outputs', href: null, icon: 'description', part: 'Part B' },
     ],
   },
