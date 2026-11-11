@@ -1,8 +1,8 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.2 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.3 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
-> Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md)
+> Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
 ## 📌 Đây là gì
 
@@ -113,6 +113,20 @@ stateDiagram-v2
 - Thử lại job `failed` hoặc `cancelled`: tạo job mới liên kết job cũ. Job cũ giữ nguyên trạng thái và output thô. Job mới được kiểm tra lại scope và đi lại luồng duyệt nếu thuộc nhóm khai thác.
 - Ưu tiên, giới hạn đồng thời và tốc độ khi giao: [system.md](system.md).
 
+### Độ ưu tiên và điều khiển hàng đợi
+
+| Thao tác | Màn hình | Kết quả |
+|---|---|---|
+| Chọn độ ưu tiên khi tạo job | S05, S09, S18 | `priority` là `low`, `normal` hoặc `high`. Mặc định `normal`. Job do `schedule` sinh nhận `normal` |
+| Dispatch Now trên một job `queued` | S10 | Nâng `priority` lên `high`, đánh thức dispatcher. Job vẫn qua đủ bước kiểm tra khi giao |
+| Dispatch All | S10 | Đánh thức dispatcher chạy ngay một lượt giao, không đổi `priority` |
+| Cleanup | S10 | Chuyển mọi job `queued` của program `paused` hoặc `archived` sang `cancelled`, `status_reason` ghi lý do dọn hàng đợi |
+| Retry Failed | S10 | Thử lại hàng loạt job `failed`, mỗi job theo quy tắc thử lại ở trên |
+
+- Dispatcher chọn job `priority` cao trước, cùng mức thì job tạo trước giao trước.
+- ❌ Dispatch Now, Dispatch All không bỏ qua duyệt job nhóm khai thác, giới hạn đồng thời, tốc độ, kiểm tra lại scope (G5).
+- Tạo job cho nhiều tool module một lần: mỗi tool module một job, kiểm tra scope từng job. Một job không hợp lệ thì không job nào được tạo.
+
 ### Chống xử lý trùng
 
 - Worker báo nhận job qua Backend API. API chỉ chuyển `dispatched` sang `running`. Job ở trạng thái khác thì worker bỏ task.
@@ -126,6 +140,8 @@ stateDiagram-v2
 - Parser vẫn lưu tài sản không khớp scope và đánh dấu ngoài scope. ❌ Không tạo job trên tài sản ngoài scope.
 - Scope rule thay đổi: tính lại đánh dấu scope của tài sản trong program.
 - Liên kết chéo tài sản, screenshot, finding, output thô: [database.md](../data/database.md).
+- Xóa domain, screenshot là xóa mềm: ẩn khỏi danh sách, output thô, finding, URL liên quan giữ nguyên. Parser gặp lại domain đã xóa thì không hiện lại: [ADR xóa mềm](../decisions/adr-soft-delete.md).
+- Lần quét cổng sau trên một IP không thấy cổng đã có: parser ghi `service.closed_at`. Thấy lại cổng thì xóa giá trị này.
 
 ### Vòng đời finding
 

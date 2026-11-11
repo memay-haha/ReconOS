@@ -21,6 +21,7 @@ Worker nhận task job, chạy công cụ hoặc gọi engine qua runner, gửi 
 - Gọi endpoint claim, heartbeat, upload, finish, gửi log theo [external-services.md](../docs/integrations/external-services.md).
 - Gọi Backend API qua `worker/client.py`, thử lại theo [error-handling.md](../.claude/rules/error-handling.md).
 - Gửi heartbeat job theo `job_heartbeat_seconds`.
+- Gửi heartbeat worker kèm `tool_modules`, `tools` gồm `name`, `version` của công cụ đã cài, `cpu_percent`. Gọi `finish` kèm `tool_version` của công cụ đã chạy job.
 - Khi nhận `cancel`: dừng công cụ, upload phần đã có, gọi `finish`.
 
 **Runner:**

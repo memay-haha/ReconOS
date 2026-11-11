@@ -1,8 +1,8 @@
 # Phân quyền
 
-> Phiên bản: 1.8 · Ngày: 2026-11-05 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
-> Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md)
+> Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
 ## 📌 Đây là gì
 
@@ -45,22 +45,30 @@
 | Thao tác | Superadmin | Admin | User |
 |---|---|---|---|
 | Quản lý tài khoản, đổi vai trò, khóa tài khoản | ✅ trừ vai trò và trạng thái khóa của chính mình | ❌ | ❌ |
-| Xem, thu hồi phiên của tài khoản khác | ✅ | ❌ | ❌ |
+| Xóa mềm tài khoản | ✅ trừ chính mình | ❌ | ❌ |
+| Xem, thu hồi phiên của tài khoản khác. Thu hồi mọi phiên của chính mình trừ phiên đang dùng | ✅ | ❌ | ❌ |
+| Xem ma trận quyền, xuất danh sách tài khoản | ✅ | ❌ | ❌ |
 | Cấu hình tool module, engine trên S16, S17, S18 | ✅ | ❌ | ❌ |
 | Tạo, thu hồi token worker | ✅ | ❌ | ❌ |
 | Sửa cấu hình hệ thống: ngưỡng vận hành trong `system_setting` | ✅ | ❌ | ❌ |
+| Đọc ngưỡng vận hành có cột Đọc công khai trong [configuration.md](../ops/configuration.md) | ✅ | ✅ | ✅ |
+| Chạy chẩn đoán, xem danh sách công cụ trên S15 | ✅ | ✅ | ❌ |
 | Tạo, sửa, tạm dừng, lưu trữ program | ✅ | ✅ | ❌ |
 | Xóa cứng program | ✅ | ❌ | ❌ |
-| Quản lý proxy, lịch quét định kỳ của program | ✅ | ✅ | ❌ |
+| Quản lý proxy, lịch quét định kỳ của program, chạy ngay một lịch | ✅ | ✅ | ❌ |
 | Thêm, sửa, xóa scope rule | ✅ | ✅ | ❌ |
 | Gán, bỏ gán User vào program | ✅ | ✅ | ❌ |
 | Xem danh sách tài khoản rút gọn: `id`, `username`, `role` | ✅ | ✅ | ❌ |
-| Xem program, scope, tài sản, screenshot | ✅ | ✅ | ✅ chỉ program được gán |
+| Xem program, scope, tài sản, screenshot, tìm toàn cục | ✅ | ✅ | ✅ chỉ program được gán |
+| Xóa mềm domain, screenshot | ✅ | ✅ | ❌ |
+| Gắn, gỡ tag tài sản, kể cả hàng loạt | ✅ | ✅ | ✅ chỉ program được gán |
+| Lưu, xóa bộ lọc đã lưu | ✅ chỉ của mình | ✅ chỉ của mình | ✅ chỉ của mình |
 | Tạo job | ✅ | ✅ | ✅ chỉ program được gán |
-| Thử lại job | ✅ | ✅ | ✅ chỉ job mình tạo |
+| Thử lại job, kể cả hàng loạt | ✅ | ✅ | ✅ chỉ job mình tạo |
 | Duyệt, từ chối job nhóm khai thác | ✅ trừ job mình tạo | ✅ trừ job mình tạo | ❌ |
 | Hủy job | ✅ | ✅ | ✅ chỉ job mình tạo |
 | Xem hàng đợi, trạng thái dispatcher | ✅ | ✅ | ✅ job thuộc program được gán |
+| Dispatch Now, Dispatch All, Cleanup hàng đợi | ✅ | ✅ | ❌ |
 | Xem, tải output thô | ✅ | ✅ | ✅ chỉ program được gán |
 | Triage finding | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
@@ -79,7 +87,7 @@
 4. Với tài nguyên ngoài phạm vi của User, backend trả lỗi giống khi tài nguyên không tồn tại, để không lộ tài nguyên đó có tồn tại.
 5. Duyệt job: backend so người duyệt với người tạo job. Trùng thì từ chối, kể cả Superadmin.
 6. Hủy, thử lại job với vai trò User: backend so tài khoản gọi với người tạo job. Khác thì trả `403 forbidden`.
-7. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình và không khóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
+7. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình, không khóa, không xóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
 8. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem. Đổi vai trò, gán hoặc bỏ gán program: áp dụng ngay từ sự kiện tiếp theo trên kết nối đang mở.
 9. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
 
@@ -89,8 +97,11 @@
 
 Backend luôn ghi nhật ký thao tác cho các thao tác sau (G7):
 
-- Tạo, sửa, khóa tài khoản. Đổi vai trò. Thu hồi phiên.
-- Lưu trữ, xóa cứng program.
+- Tạo, sửa, khóa, xóa mềm tài khoản. Đổi vai trò. Thu hồi phiên.
+- Lưu trữ, xóa cứng program, kể cả hàng loạt.
+- Xóa mềm domain, screenshot.
+- Dispatch Now, Dispatch All, Cleanup hàng đợi, chạy ngay một lịch.
+- Tạo lần chẩn đoán.
 - Gán, bỏ gán User vào program.
 - Thêm, sửa, xóa scope rule.
 - Tạo, duyệt, từ chối, hủy job.

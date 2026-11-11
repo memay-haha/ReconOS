@@ -62,6 +62,8 @@ erDiagram
     service |o--o{ asset_tag : "được gắn"
     finding |o--o{ alert : "sinh"
     job |o--o{ alert : "sinh"
+    user ||--o{ saved_filter : "lưu"
+    raw_output |o--o{ screenshot : "chứa HTML"
 
     user {
         uuid id PK
@@ -73,6 +75,7 @@ erDiagram
         timestamptz last_login_at
         timestamptz created_at
         timestamptz updated_at
+        timestamptz deleted_at
     }
     user_session {
         uuid id PK
@@ -94,6 +97,8 @@ erDiagram
         uuid id PK
         text name UK
         text[] tool_modules
+        jsonb tool_versions
+        real cpu_percent
         timestamptz last_heartbeat_at
         timestamptz created_at
     }
@@ -112,6 +117,23 @@ erDiagram
         uuid updated_by FK
         timestamptz updated_at
     }
+    saved_filter {
+        uuid id PK
+        uuid user_id FK
+        text screen
+        text name
+        jsonb params
+        timestamptz created_at
+    }
+    diagnostic_run {
+        uuid id PK
+        text status
+        int exit_code
+        text output
+        uuid created_by FK
+        timestamptz created_at
+        timestamptz finished_at
+    }
     audit_log {
         uuid id PK
         uuid user_id
@@ -129,6 +151,7 @@ erDiagram
         text name UK
         text platform
         text platform_url
+        text platform_handle
         text bounty_type
         text description
         text status
@@ -191,8 +214,14 @@ erDiagram
         text name UK
         text base_url
         bytea api_key_encrypted
+        bytea llm_api_key_encrypted
         bool is_enabled
         jsonb settings
+        text version
+        timestamptz last_tested_at
+        bool last_test_ok
+        timestamptz api_key_updated_at
+        timestamptz ok_since
         uuid updated_by FK
         timestamptz updated_at
     }
@@ -219,6 +248,7 @@ erDiagram
         uuid created_by FK
         uuid approved_by FK
         text status_reason
+        text tool_version
         timestamptz created_at
         timestamptz approved_at
         timestamptz dispatched_at
@@ -250,6 +280,7 @@ erDiagram
         bool in_scope
         timestamptz first_seen_at
         timestamptz last_seen_at
+        timestamptz deleted_at
     }
     ip {
         uuid id PK
@@ -285,6 +316,7 @@ erDiagram
         bool in_scope
         timestamptz first_seen_at
         timestamptz last_seen_at
+        timestamptz closed_at
     }
     url {
         uuid id PK
@@ -303,6 +335,7 @@ erDiagram
         text content_type
         text webserver
         text favicon_hash
+        timestamptz tls_not_after
         bool in_scope
         timestamptz first_seen_at
         timestamptz last_seen_at
@@ -325,14 +358,25 @@ erDiagram
         uuid url_id FK
         uuid job_id FK
         uuid raw_output_id FK
+        uuid html_raw_output_id FK
         text final_url
         int status_code
         text title
         text perception_hash
         jsonb http_headers
+        int width
+        int height
+        real device_scale
+        inet remote_ip
+        int duration_ms
+        jsonb tls
+        jsonb network_log
+        jsonb console_log
+        jsonb cookies
         bool is_failed
         text error_message
         timestamptz captured_at
+        timestamptz deleted_at
     }
     asset_event {
         uuid id PK

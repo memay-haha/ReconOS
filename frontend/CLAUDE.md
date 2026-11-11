@@ -8,7 +8,13 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Gọi `fetch` trực tiếp trong component, gọi API trong `useEffect`: [design-patterns.md](../.claude/rules/design-patterns.md).
 - Dùng `dangerouslySetInnerHTML`, render HTML từ output thô, tài sản, finding: [security.md](../.claude/rules/security.md).
 - Dùng kiểu `any`.
-- Dựng các phần mockup đã ghi trong [tech-debt.md](../docs/tech-debt.md): BBRF, gowitness DB, New Module, Push to Jira, tự sinh job.
+- Dựng phần mockup trong danh sách không làm của [sổ quyết định 2026-11-11](../docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md) và [tech-debt.md](../docs/tech-debt.md):
+  - BBRF, gowitness DB, New Module, Push to Jira, tự sinh job và nút Generate Jobs.
+  - Engine thay thế, Target Engine Override trên S18. Confidence, Auto-reconciled trên S05.
+  - Database & Redis, Scope Defaults, Ingest Proxy, MITM, CA, bridge Burp và Caido, Hardening flags trên S16, S17.
+  - Latest upstream, Outdated, nút Update, đường dẫn, hash integrity của công cụ trên S15. Worker PID trên S07.
+  - Reveal, Copy, Rotate API key, Open Folder, View CA Path, cột Source của biến, TTL khóa trên S16, S17.
+  - Giá trị cookie của mục tiêu trên S07: chỉ hiện tên và cờ (G7).
 - Dựng MFA, FIDO2, WebAuthn, SSO SAML, đồng bộ Active Directory, mTLS, API Tokens trên S12, hoặc vai trò ngoài Superadmin, Admin, User.
 - Dựng phân trang theo số trang. Dùng nút **Trước**, **Sau**.
 
@@ -39,7 +45,7 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 
 **Mockup lệch tài liệu:**
 
-Gặp chỗ mockup lệch tài liệu thì áp quy tắc đầu tiên khớp, ghi một dòng vào sổ quyết định của đợt trong `docs/superpowers/specs/`, rồi dựng tiếp. Người dùng duyệt sổ sau khi xong đợt.
+Mục đã chốt trong [sổ quyết định 2026-11-11](../docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md) làm theo sổ đó, thắng dòng bỏ phần tử trong sổ 2026-11-05. Chỗ lệch khác thì áp quy tắc đầu tiên khớp, ghi một dòng vào sổ quyết định của đợt trong `docs/superpowers/specs/`, rồi dựng tiếp. Người dùng duyệt sổ sau khi xong đợt.
 
 | # | Trường hợp | Làm |
 |---|---|---|
@@ -56,6 +62,7 @@ Gặp chỗ mockup lệch tài liệu thì áp quy tắc đầu tiên khớp, gh
 **Dữ liệu:**
 
 - Đặt client gọi API và hook TanStack Query theo tài nguyên trong `src/lib/`.
+- Lấy phiên bản trên mọi chip phiên bản từ `version` của `package.json`, tên node trên S01 từ `RECONOS_NODE_NAME`, cả hai gắn lúc build: [configuration.md](../docs/ops/configuration.md). ❌ Không gọi Backend API để lấy hai giá trị này.
 - Endpoint backend chưa làm thì trả dữ liệu mẫu bằng MSW trong `src/mocks/`, chỉ bật ở chế độ phát triển. Màn hình gọi đúng endpoint trong [openapi.yaml](../docs/api/openapi.yaml), ❌ không rẽ nhánh theo cờ thật hay giả. Backend làm xong endpoint nào thì xóa handler của endpoint đó.
 - ❌ Không đọc file ngoài `frontend/` lúc chạy. Image chỉ copy `frontend/`, và `.dockerignore` loại `docs/`, nên đường dẫn kiểu `../docs/...` chạy được khi phát triển nhưng trả lỗi 500 trong container. Cần dữ liệu từ tài liệu thì sinh ra một module trong `frontend/src/` bằng `pnpm --dir frontend tokens`, giống cách `globals.css` được sinh từ bảng Token Table.
 - Cho component trong `src/components/` chỉ nhận dữ liệu qua props.

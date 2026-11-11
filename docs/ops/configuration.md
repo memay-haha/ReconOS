@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -73,7 +73,9 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 | Biến | Thông tin xác thực | Ý nghĩa |
 |---|---|---|
 | `RECONOS_API_URL` | | URL Backend API, bắt buộc ở mọi môi trường. Server Next.js chuyển tiếp `/api/*` của trình duyệt tới địa chỉ này, và tự gọi Backend API ở mỗi request để kiểm tra phiên. ❌ Không kết thúc giá trị bằng `/`, vì Next ghép thành `//api` |
+| `RECONOS_NODE_NAME` | | Tên node hiện trên chip của S01, ví dụ `NODE 01-PROD`. Đọc lúc build frontend, gắn cố định vào bản build. Để trống thì S01 không hiện chip node |
 
+- Phiên bản ReconOS trên mọi chip phiên bản lấy từ trường `version` của `frontend/package.json` lúc build. Backend API không trả phiên bản cho người chưa đăng nhập: [threat-model.md](../security/threat-model.md).
 - Trình duyệt chỉ gọi origin của Next.js, không gọi thẳng Backend API. Nhờ vậy `Origin` luôn khớp `RECONOS_PUBLIC_ORIGIN` và cookie `SameSite=Lax` gửi kèm.
 - Production định tuyến `/api/` của trình duyệt ở Nginx: [deployment.md](deployment.md). Server Next.js vẫn cần `RECONOS_API_URL`, vì server component kiểm tra phiên gọi thẳng Backend API ở mỗi request, không đi qua Nginx. Thiếu biến, Next gọi giá trị mặc định `http://127.0.0.1:8000`, tức chính container frontend. S01 vẫn dựng được form đăng nhập, nhưng mọi màn hình sau khi đăng nhập đều hỏng.
 
@@ -118,21 +120,25 @@ Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong mô
 
 ### Ngưỡng vận hành
 
-Lưu trong `system_setting`, Superadmin sửa trên UI. Thiếu tên thiết lập thì dùng giá trị mặc định.
+Lưu trong `system_setting`, Superadmin sửa trên UI. Thiếu tên thiết lập thì dùng giá trị mặc định. Cột Đọc công khai ✅: Admin, User đọc được qua `GET /system-settings/{key}`.
 
-| Tên thiết lập | Mặc định | Ý nghĩa |
-|---|---|---|
-| `session_idle_timeout_minutes` | 30 | Số phút không hoạt động trước khi phiên hết hạn |
-| `session_absolute_timeout_hours` | 12 | Thời hạn tối đa của một phiên |
-| `login_max_failures_per_account` | 5 | Số lần đăng nhập sai theo tài khoản trong khoảng thời gian đếm |
-| `login_max_failures_per_ip` | 20 | Số lần đăng nhập sai theo IP trong khoảng thời gian đếm |
-| `login_failure_window_minutes` | 15 | Khoảng thời gian đếm lần đăng nhập sai, cũng là thời gian từ chối tạm |
-| `dispatcher_poll_seconds` | 30 | Chu kỳ dispatcher quét bù sự kiện bị lỡ |
-| `job_heartbeat_seconds` | 30 | Chu kỳ worker gửi heartbeat job |
-| `job_heartbeat_timeout_minutes` | 5 | Không nhận heartbeat quá ngưỡng thì job chuyển sang `failed` |
-| `upload_max_bytes` | 10 GB | Kích thước tối đa một file output thô |
-| `parser_batch_size` | 1.000 | Số dòng mỗi lô upsert của parser |
-| `log_retention_days` | 30 | Thời hạn giữ log trong CSDL log |
+| Tên thiết lập | Mặc định | Đọc công khai | Ý nghĩa |
+|---|---|---|---|
+| `session_idle_timeout_minutes` | 30 |  | Số phút không hoạt động trước khi phiên hết hạn |
+| `session_absolute_timeout_hours` | 12 |  | Thời hạn tối đa của một phiên |
+| `login_max_failures_per_account` | 5 |  | Số lần đăng nhập sai theo tài khoản trong khoảng thời gian đếm |
+| `login_max_failures_per_ip` | 20 |  | Số lần đăng nhập sai theo IP trong khoảng thời gian đếm |
+| `login_failure_window_minutes` | 15 |  | Khoảng thời gian đếm lần đăng nhập sai, cũng là thời gian từ chối tạm |
+| `dispatcher_poll_seconds` | 30 |  | Chu kỳ dispatcher quét bù sự kiện bị lỡ |
+| `job_heartbeat_seconds` | 30 |  | Chu kỳ worker gửi heartbeat job |
+| `job_heartbeat_timeout_minutes` | 5 |  | Không nhận heartbeat quá ngưỡng thì job chuyển sang `failed` |
+| `upload_max_bytes` | 10 GB |  | Kích thước tối đa một file output thô |
+| `parser_batch_size` | 1.000 |  | Số dòng mỗi lô upsert của parser |
+| `log_retention_days` | 30 | ✅ | Thời hạn giữ log trong CSDL log |
+| `finding_sla_days` | 30 | ✅ | Số ngày xử lý finding `confirmed`, `reported`. Finding có tuổi quá giá trị này trừ 2 ngày tính vào `findings_near_sla` |
+| `queue_capacity` | 1.000 | ✅ | Sức chứa hàng đợi hiển thị trên S10, mẫu số của Queue Depth Pressure. Không chặn tạo job |
+| `user_idle_after_minutes` | 15 | | Phiên còn hiệu lực có `last_seen_at` cũ hơn ngưỡng này hiện trạng thái Idle trên S12 |
+| `cert_expiring_days` | 14 | ✅ | Chứng chỉ TLS của URL hết hạn trong số ngày này thì sinh cảnh báo `cert_expiring` |
 
 - Backend ghi nhật ký thao tác mỗi lần đổi ngưỡng.
 - `upload_max_bytes` cũng phải đặt ở reverse proxy: [deployment.md](deployment.md).

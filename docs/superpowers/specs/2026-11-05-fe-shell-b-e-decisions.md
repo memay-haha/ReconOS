@@ -5,6 +5,8 @@
 
 Mỗi dòng ghi một chỗ mockup lệch tài liệu và quy tắc M1 đến M7 đã áp. Người dùng duyệt sổ sau khi xong đợt.
 
+⚠️ Ngày 2026-11-12: các dòng bỏ phần tử theo M3 hoặc M5 trong sổ này đã bị thay thế bởi [sổ quyết định 2026-11-11](2026-11-11-stitch-fidelity-decisions.md). Phần tử đó dựng theo sổ mới, trừ phần nằm trong danh sách không làm của [frontend/CLAUDE.md](../../../frontend/CLAUDE.md).
+
 ## Câu hỏi đã chốt ngày 2026-11-05
 
 | # | Quyết định | Tài liệu đã sửa |

@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: ReconOS API
   version: 1.0.0
-  description: "Bản thiết kế viết tay. Quy ước: docs/api/architecture.md. Khi có mã, file này sinh từ FastAPI."
+  description: "Bản thiết kế viết tay. Quy ước, trường tính, tham số q: docs/api/architecture.md. Khi có mã, file này sinh từ FastAPI. Bản 2026-11-12: thêm endpoint theo sổ quyết định 2026-11-11."
 servers:
   - url: /api/v1
 security:
@@ -44,11 +44,13 @@ paths:
   /users:
     get:
       tags: [user]
-      summary: "Danh sách tài khoản. Admin chỉ nhận id, username, role"
+      summary: "Danh sách tài khoản. Admin chỉ nhận id, username, role. Superadmin nhận thêm last_session_ip, last_seen_at và khóa tổng hợp role_counts, locked_count"
       x-roles: [superadmin, admin]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/q'
+        - {name: role, in: query, schema: {type: string, enum: [superadmin, admin, user]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -76,6 +78,13 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [user]
+      summary: "Xóa mềm tài khoản, thu hồi mọi phiên. Không xóa chính mình"
+      x-roles: [superadmin]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
   /users/{user_id}/lock:
     parameters:
       - {name: user_id, in: path, required: true, schema: {type: string, format: uuid}}
@@ -96,6 +105,48 @@ paths:
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
+  /users/{user_id}/revoke-sessions:
+    parameters:
+      - {name: user_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [user]
+      summary: "Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi"
+      x-roles: [superadmin]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /users/bulk-revoke-sessions:
+    post:
+      tags: [user]
+      summary: "Thu hồi phiên hàng loạt, body ids"
+      x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /users/export:
+    get:
+      tags: [user]
+      summary: "Xuất danh sách tài khoản, không có cột thông tin xác thực"
+      x-roles: [superadmin]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - $ref: '#/components/parameters/q'
+        - {name: role, in: query, schema: {type: string, enum: [superadmin, admin, user]}}
+      responses:
+        '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /roles/permissions:
+    get:
+      tags: [user]
+      summary: "Ma trận quyền sinh từ khai báo quyền của backend"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
   /users/{user_id}/sessions:
     parameters:
       - {name: user_id, in: path, required: true, schema: {type: string, format: uuid}}
@@ -112,11 +163,12 @@ paths:
   /user-sessions:
     get:
       tags: [user]
-      summary: "Phiên đang hoạt động của mọi tài khoản, không gồm phiên đã hết hạn"
+      summary: "Phiên đang hoạt động của mọi tài khoản, không gồm phiên đã hết hạn. Mỗi dòng thêm username, display_name. Khóa tổng hợp account_count"
       x-roles: [superadmin]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -133,7 +185,7 @@ paths:
   /workers:
     get:
       tags: [worker]
-      summary: "Danh sách worker và heartbeat"
+      summary: "Danh sách worker và heartbeat. Thêm is_online, running_job_count, running_tool_module_ids, cpu_percent, tool_versions"
       x-roles: [superadmin, admin]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -172,13 +224,16 @@ paths:
   /programs:
     get:
       tags: [program]
-      summary: "Danh sách program"
+      summary: "Danh sách program. sort nhận name, -domain_count, -finding_critical_count, -last_job_finished_at"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - {name: status, in: query, schema: {type: string, enum: [active, paused]}}
+        - $ref: '#/components/parameters/q'
+        - {name: has_in_scope_rule, in: query, schema: {type: boolean}}
+        - {name: has_domain, in: query, schema: {type: boolean}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -188,6 +243,50 @@ paths:
       x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /programs/bulk-pause:
+    post:
+      tags: [program]
+      summary: "Tạm dừng nhiều program, body ids"
+      x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /programs/bulk-resume:
+    post:
+      tags: [program]
+      summary: "Tiếp tục nhiều program, body ids"
+      x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /programs/bulk-archive:
+    post:
+      tags: [program]
+      summary: "Lưu trữ nhiều program, body ids"
+      x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /programs/bulk-delete:
+    post:
+      tags: [program]
+      summary: "Xóa cứng nhiều program như DELETE /programs/{program_id}, body ids"
+      x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /programs/{program_id}:
     parameters:
@@ -318,7 +417,7 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [scope]
-      summary: "Danh sách scope rule"
+      summary: "Danh sách scope rule. Mỗi dòng thêm matched_domain_count"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -330,6 +429,16 @@ paths:
     post:
       tags: [scope]
       summary: "Thêm scope rule"
+      x-roles: [superadmin, admin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /programs/{program_id}/scope-rules/bulk-create:
+    parameters:
+      - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [scope]
+      summary: "Thêm nhiều scope rule một lần, body items"
       x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -399,15 +508,47 @@ paths:
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
+  /schedules/{schedule_id}/run:
+    parameters:
+      - {name: schedule_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [job]
+      summary: "Tạo ngay một job từ lịch, kiểm scope, không đổi next_run_at"
+      x-roles: [superadmin, admin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
   /tool-modules:
     get:
       tags: [tool_module]
-      summary: "Danh sách tool module, nhóm, schema tham số"
+      summary: "Danh sách tool module, nhóm, schema tham số. Trường tính và khóa tổng hợp theo api/architecture.md"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - {name: group, in: query, schema: {type: string, enum: [recon, scan, exploit]}}
+        - {name: runs_on, in: query, schema: {type: string}, description: "Tên engine"}
+        - {name: is_enabled, in: query, schema: {type: boolean}}
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /tool-modules/stats:
+    get:
+      tags: [tool_module]
+      summary: "Số job trong window, khung liền trước, job stalled"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - {name: window, in: query, schema: {type: string, enum: [24h, 7d, 30d], default: 24h}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /tools:
+    get:
+      tags: [tool_module]
+      summary: "Công cụ của tool module và phiên bản worker báo"
+      x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -424,7 +565,7 @@ paths:
   /engines:
     get:
       tags: [engine]
-      summary: "Danh sách engine, API key đã che"
+      summary: "Danh sách engine, API key đã che. Thêm version, last_tested_at, last_test_ok, api_key_updated_at, has_llm_api_key, uptime_seconds, slots_used, slots_total, settings"
       x-roles: [superadmin]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -438,7 +579,7 @@ paths:
       - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
     patch:
       tags: [engine]
-      summary: "Sửa kết nối engine"
+      summary: "Sửa kết nối engine, settings, llm_api_key chỉ ghi"
       x-roles: [superadmin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -449,6 +590,64 @@ paths:
     post:
       tags: [engine]
       summary: "Kiểm tra kết nối engine, response version theo api/architecture.md"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /engines/{engine_id}/workflows:
+    parameters:
+      - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [engine]
+      summary: "Workflow đã cài trên Osmedeus, đọc qua REST của engine"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /engines/{engine_id}/workflows/{name}:
+    parameters:
+      - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
+      - {name: name, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [engine]
+      summary: "Chi tiết một workflow Osmedeus"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /engines/{engine_id}/modules:
+    parameters:
+      - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [engine]
+      summary: "Native module của Vigolium, đọc qua REST của engine"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+    patch:
+      tags: [engine]
+      summary: "Bật, tắt native module của Vigolium"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /engines/{engine_id}/validate:
+    parameters:
+      - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [engine]
+      summary: "Kiểm tra cấu hình Vigolium qua REST của engine"
+      x-roles: [superadmin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /engines/{engine_id}/verify-model:
+    parameters:
+      - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [engine]
+      summary: "Kiểm tra model LLM của Vigolium"
       x-roles: [superadmin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -494,9 +693,11 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
-        - {name: status, in: query, schema: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}}
+        - {name: status, in: query, schema: {type: array, items: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}}}
         - $ref: '#/components/parameters/program_id'
         - {name: target, in: query, schema: {type: string}, description: "Job có mục tiêu này"}
+        - $ref: '#/components/parameters/q'
+        - {name: tool_module_id, in: query, schema: {type: array, items: {type: string, format: uuid}}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -504,6 +705,39 @@ paths:
       tags: [job]
       summary: "Tạo job, kiểm tra scope và tham số"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/JobCreate'}}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /jobs/bulk-create:
+    post:
+      tags: [job]
+      summary: "Tạo job cho nhiều tool module, kiểm scope từng job, tất cả hoặc không"
+      x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/JobBulkCreate'}}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /jobs/bulk-retry:
+    post:
+      tags: [job]
+      summary: "Thử lại job failed hàng loạt. User chỉ job mình tạo"
+      x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /jobs/cleanup:
+    post:
+      tags: [job]
+      summary: "Hủy job queued của program paused hoặc archived, trả số job đã hủy"
+      x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
@@ -556,6 +790,24 @@ paths:
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /jobs/{job_id}/prioritize:
+    parameters:
+      - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [job]
+      summary: "Dispatch Now: nâng priority lên high, đánh thức dispatcher"
+      x-roles: [superadmin, admin]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /dispatcher/wake:
+    post:
+      tags: [dispatcher]
+      summary: "Dispatch All: đánh thức dispatcher chạy ngay một lượt giao"
+      x-roles: [superadmin, admin]
+      responses:
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /dispatcher/status:
     get:
@@ -619,8 +871,12 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
-        - {name: dns_status, in: query, schema: {type: string, enum: [unknown, resolved, nxdomain, timeout]}}
+        - {name: dns_status, in: query, schema: {type: array, items: {type: string, enum: [unknown, resolved, nxdomain, timeout]}}}
         - {name: in_scope, in: query, schema: {type: boolean}}
+        - $ref: '#/components/parameters/q'
+        - {name: has_findings, in: query, schema: {type: boolean}}
+        - {name: first_seen_at_from, in: query, schema: {type: string, format: date-time}}
+        - {name: program_status, in: query, schema: {type: string, enum: [active, paused]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -629,18 +885,75 @@ paths:
       tags: [asset]
       summary: "Xuất danh sách domain"
       x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - $ref: '#/components/parameters/program_id'
+        - {name: dns_status, in: query, schema: {type: array, items: {type: string, enum: [unknown, resolved, nxdomain, timeout]}}}
+        - {name: in_scope, in: query, schema: {type: boolean}}
+        - $ref: '#/components/parameters/q'
+        - {name: has_findings, in: query, schema: {type: boolean}}
+        - {name: first_seen_at_from, in: query, schema: {type: string, format: date-time}}
+        - {name: program_status, in: query, schema: {type: string, enum: [active, paused]}}
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /domains/summary:
+    get:
+      tags: [asset]
+      summary: "Số liệu S04, trường theo api/architecture.md"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/program_id'
+        - {name: dns_status, in: query, schema: {type: array, items: {type: string, enum: [unknown, resolved, nxdomain, timeout]}}}
+        - {name: in_scope, in: query, schema: {type: boolean}}
+        - $ref: '#/components/parameters/q'
+        - {name: has_findings, in: query, schema: {type: boolean}}
+        - {name: first_seen_at_from, in: query, schema: {type: string, format: date-time}}
+        - {name: program_status, in: query, schema: {type: string, enum: [active, paused]}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /domains/bulk-delete:
+    post:
+      tags: [asset]
+      summary: "Xóa mềm nhiều domain, body ids"
+      x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
+      responses:
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /domains/{domain_id}:
     parameters:
       - {name: domain_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [asset]
-      summary: "Chi tiết domain kèm IP, URL, service"
+      summary: "Chi tiết domain kèm IP, URL, service, ip_records, service_ports"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [asset]
+      summary: "Xóa mềm domain"
+      x-roles: [superadmin, admin]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
+  /domains/{domain_id}/activity:
+    parameters:
+      - {name: domain_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [asset]
+      summary: "Dòng thời gian gộp sự kiện tài sản, finding, screenshot của domain"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
   /ips:
     get:
@@ -652,8 +965,22 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
+        - $ref: '#/components/parameters/q'
       responses:
         '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /ips/export:
+    get:
+      tags: [asset]
+      summary: "Xuất danh sách IP"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - $ref: '#/components/parameters/program_id'
+        - $ref: '#/components/parameters/q'
+      responses:
+        '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
         default: {$ref: '#/components/responses/Problem'}
   /ips/{ip_id}:
     parameters:
@@ -676,8 +1003,23 @@ paths:
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
         - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
       responses:
         '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /urls/export:
+    get:
+      tags: [asset]
+      summary: "Xuất danh sách URL"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
+      responses:
+        '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
         default: {$ref: '#/components/responses/Problem'}
   /urls/{url_id}:
     parameters:
@@ -700,8 +1042,23 @@ paths:
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/program_id'
         - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
       responses:
         '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /services/export:
+    get:
+      tags: [asset]
+      summary: "Xuất danh sách service"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
+      responses:
+        '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
         default: {$ref: '#/components/responses/Problem'}
   /services/{service_id}:
     parameters:
@@ -716,7 +1073,7 @@ paths:
   /asset-events:
     get:
       tags: [asset]
-      summary: "Sự kiện tài sản"
+      summary: "Sự kiện tài sản, thêm job_id, tool_module_name, asn, asn_org"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -751,18 +1108,44 @@ paths:
         - $ref: '#/components/parameters/program_id'
         - {name: domain_id, in: query, schema: {type: string, format: uuid}}
         - {name: is_failed, in: query, schema: {type: boolean}}
+        - $ref: '#/components/parameters/q'
+        - {name: technology_id, in: query, schema: {type: array, items: {type: string, format: uuid}}}
+        - {name: status_code, in: query, schema: {type: array, items: {type: string, enum: [2xx, 3xx, 4xx, 5xx]}}}
+        - {name: job_id, in: query, schema: {type: string, format: uuid}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+  /screenshots/summary:
+    get:
+      tags: [screenshot]
+      summary: "Số screenshot theo lớp mã HTTP"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/program_id'
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - {name: is_failed, in: query, schema: {type: boolean}}
+        - $ref: '#/components/parameters/q'
+        - {name: technology_id, in: query, schema: {type: array, items: {type: string, format: uuid}}}
+        - {name: job_id, in: query, schema: {type: string, format: uuid}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots/{screenshot_id}:
     parameters:
       - {name: screenshot_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [screenshot]
-      summary: "Chi tiết screenshot"
+      summary: "Chi tiết screenshot kèm tls, console_log, cookies không có giá trị, security_headers, html_size, html_sha256"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [screenshot]
+      summary: "Xóa mềm screenshot, output thô giữ nguyên"
+      x-roles: [superadmin, admin]
+      responses:
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots/{screenshot_id}/image:
     parameters:
@@ -770,6 +1153,36 @@ paths:
     get:
       tags: [screenshot]
       summary: "Ảnh screenshot"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /screenshots/{screenshot_id}/html:
+    parameters:
+      - {name: screenshot_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [screenshot]
+      summary: "HTML của trang dạng văn bản, kèm nosniff"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '200': {description: Văn bản HTML, content: {text/plain: {schema: {type: string}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /screenshots/{screenshot_id}/network:
+    parameters:
+      - {name: screenshot_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [screenshot]
+      summary: "Network log của lần chụp"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /screenshots/{screenshot_id}/har:
+    parameters:
+      - {name: screenshot_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [screenshot]
+      summary: "File HAR 1.2 dựng từ network_log, tải về"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
@@ -811,6 +1224,14 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
+  /asset-tags/bulk-create:
+    post:
+      tags: [tag]
+      summary: "Gắn một tag cho nhiều tài sản, body tag_id, asset_type, ids"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
   /asset-tags/{asset_tag_id}:
     parameters:
       - {name: asset_tag_id, in: path, required: true, schema: {type: string, format: uuid}}
@@ -834,16 +1255,17 @@ paths:
   /findings:
     get:
       tags: [finding]
-      summary: "Danh sách finding"
+      summary: "Danh sách finding, thêm tool_module_name, asset, matcher"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
-        - {name: triage_status, in: query, schema: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}
+        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
         - $ref: '#/components/parameters/program_id'
-        - {name: severity, in: query, schema: {type: string, enum: [critical, high, medium, low, info]}}
+        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
         - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -852,15 +1274,37 @@ paths:
       tags: [finding]
       summary: "Xuất finding"
       x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/ids'
+        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /findings/summary:
+    get:
+      tags: [finding]
+      summary: "Số liệu S20 theo bộ lọc"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
+        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/q'
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
   /findings/{finding_id}:
     parameters:
       - {name: finding_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [finding]
-      summary: "Chi tiết finding"
+      summary: "Chi tiết finding, thêm description, remediation, request, response, in_scope, scope_rule"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -939,12 +1383,13 @@ paths:
   /alerts:
     get:
       tags: [alert]
-      summary: "Cảnh báo của tài khoản"
+      summary: "Cảnh báo của tài khoản. Mỗi dòng id, alert_type, message, program_id, finding_id, job_id, created_at, is_read"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
+        - {name: is_read, in: query, schema: {type: boolean}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -976,6 +1421,47 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
+  /search:
+    get:
+      tags: [dashboard]
+      summary: "Tìm toàn cục trên program, domain, URL, finding, tool module"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - {name: q, in: query, required: true, schema: {type: string, minLength: 1}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 10}}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /saved-filters:
+    get:
+      tags: [user]
+      summary: "Bộ lọc đã lưu của tài khoản gọi"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/sort'
+        - {name: screen, in: query, schema: {type: string}}
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [user]
+      summary: "Lưu bộ lọc, body screen, name, params"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /saved-filters/{saved_filter_id}:
+    parameters:
+      - {name: saved_filter_id, in: path, required: true, schema: {type: string, format: uuid}}
+    delete:
+      tags: [user]
+      summary: "Xóa bộ lọc của chính mình"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '204': {description: Thành công}
+        default: {$ref: '#/components/responses/Problem'}
   /audit-logs:
     get:
       tags: [audit_log]
@@ -1005,6 +1491,34 @@ paths:
       tags: [dashboard]
       summary: "Tình trạng thành phần hệ thống S15, trường theo api/architecture.md"
       x-roles: [superadmin, admin]
+      parameters:
+        - {name: component, in: query, schema: {type: string, enum: [api, dispatcher, background, beat, postgres, reconos_log, redis, minio, osmedeus, vigolium]}, description: "Chỉ kiểm lại một thành phần"}
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /system/diagnostics:
+    post:
+      tags: [dashboard]
+      summary: "Tạo lần chẩn đoán, trả id, status"
+      x-roles: [superadmin, admin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /system/diagnostics/latest:
+    get:
+      tags: [dashboard]
+      summary: "Lần chẩn đoán gần nhất"
+      x-roles: [superadmin, admin]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
+  /system/diagnostics/{diagnostic_run_id}:
+    parameters:
+      - {name: diagnostic_run_id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [dashboard]
+      summary: "Một lần chẩn đoán: status, exit_code, output"
+      x-roles: [superadmin, admin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
@@ -1023,6 +1537,13 @@ paths:
   /system-settings/{key}:
     parameters:
       - {name: key, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [system]
+      summary: "Đọc một ngưỡng vận hành. Admin, User chỉ đọc key Đọc công khai trong configuration.md"
+      x-roles: [superadmin, admin, user]
+      responses:
+        '200': {$ref: '#/components/responses/Object'}
+        default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [system]
       summary: "Sửa một ngưỡng vận hành"
@@ -1033,8 +1554,8 @@ paths:
   /logs:
     get:
       tags: [system]
-      summary: "Log ứng dụng, lọc theo cấp độ, tiến trình, thời gian"
-      x-roles: [superadmin, admin]
+      summary: "Log ứng dụng, lọc theo cấp độ, tiến trình, thời gian, program, sự kiện, engine. User chỉ nhận log của job thuộc program được gán"
+      x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
@@ -1043,6 +1564,9 @@ paths:
         - {name: service, in: query, schema: {type: string}}
         - {name: logged_at_from, in: query, schema: {type: string, format: date-time}}
         - {name: logged_at_to, in: query, schema: {type: string, format: date-time}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: event, in: query, schema: {type: string}}
+        - {name: engine, in: query, schema: {type: string, enum: [osmedeus, vigolium]}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -1080,9 +1604,12 @@ paths:
   /worker/heartbeat:
     post:
       tags: [worker_contract]
-      summary: "Worker báo còn hoạt động"
+      summary: "Worker báo còn hoạt động, kèm tool module, công cụ đã cài, tải CPU"
       x-roles: [worker]
       security: [{worker_token: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/WorkerHeartbeat'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -1122,14 +1649,14 @@ paths:
         content: {application/octet-stream: {schema: {type: string, format: binary}}}
       responses:
         '201': {description: Đã lưu mới}
-        '200': {description: Đã có cùng tên, không ghi đè}
+        '200': {description: "Đã có cùng tên, không ghi đè"}
         default: {$ref: '#/components/responses/Problem'}
   /worker/jobs/{job_id}/finish:
     parameters:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [worker_contract]
-      summary: "Kết thúc job"
+      summary: "Kết thúc job, kèm status, status_reason, tool_version"
       x-roles: [worker]
       security: [{worker_token: []}]
       responses:
@@ -1153,6 +1680,56 @@ components:
     cursor: {name: cursor, in: query, schema: {type: string}}
     sort: {name: sort, in: query, schema: {type: string}}
     program_id: {name: program_id, in: query, schema: {type: string, format: uuid}}
+    q: {name: q, in: query, schema: {type: string}, description: "Chuỗi con không phân biệt hoa thường, cột tìm theo api/architecture.md"}
+    ids: {name: ids, in: query, schema: {type: array, maxItems: 500, items: {type: string, format: uuid}}, description: "Chỉ xuất các dòng này"}
+    format: {name: format, in: query, schema: {type: string, enum: [csv, jsonl, md], default: csv}}
+  schemas:
+    Ids:
+      type: object
+      required: [ids]
+      properties:
+        ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+    JobCreate:
+      type: object
+      required: [program_id, tool_module_id, target]
+      properties:
+        program_id: {type: string, format: uuid}
+        tool_module_id: {type: string, format: uuid}
+        target: {type: array, minItems: 1, items: {type: string}}
+        params: {type: object, description: "Theo param_schema của tool module"}
+        priority: {type: string, enum: [low, normal, high], default: normal}
+        proxy_id: {type: [string, 'null'], format: uuid}
+    JobBulkCreate:
+      type: object
+      required: [program_id, target, items]
+      properties:
+        program_id: {type: string, format: uuid}
+        target: {type: array, minItems: 1, items: {type: string}}
+        priority: {type: string, enum: [low, normal, high], default: normal}
+        proxy_id: {type: [string, 'null'], format: uuid}
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [tool_module_id]
+            properties:
+              tool_module_id: {type: string, format: uuid}
+              params: {type: object}
+    WorkerHeartbeat:
+      type: object
+      required: [tool_modules, tools]
+      properties:
+        tool_modules: {type: array, items: {type: string}}
+        tools:
+          type: array
+          items:
+            type: object
+            required: [name, version]
+            properties:
+              name: {type: string}
+              version: {type: [string, 'null']}
+        cpu_percent: {type: [number, 'null'], minimum: 0, maximum: 100}
   responses:
     Page:
       description: Một trang dữ liệu
