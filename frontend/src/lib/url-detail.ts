@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
+import { type Page, withQuery } from './page';
 
 /** One `url_technology` row joined to its `technology`: docs/data/schema.md. */
 export interface UrlTechnology {
@@ -46,6 +47,27 @@ export function useUrlDetail(urlId: string | null) {
     queryKey: urlKeys.detail(urlId ?? ''),
     queryFn: () => apiRequest<UrlDetail>(`/urls/${encodeURIComponent(urlId ?? '')}`),
     enabled: urlId !== null,
+  });
+}
+
+/** A row of the `technology` catalogue: docs/data/schema.md. */
+export interface Technology {
+  readonly id: string;
+  readonly name: string;
+  readonly category: string | null;
+}
+
+export const technologyKeys = {
+  all: ['technologies'] as const,
+  list: (limit: number) => ['technologies', 'list', limit] as const,
+};
+
+/** `GET /technologies`: options of the S06 Technologies filter. */
+export function useTechnologies(limit = 200) {
+  return useQuery({
+    queryKey: technologyKeys.list(limit),
+    queryFn: () =>
+      apiRequest<Page<Technology>>(withQuery('/technologies', { limit, sort: 'name' })),
   });
 }
 

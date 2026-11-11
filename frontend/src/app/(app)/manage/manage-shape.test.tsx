@@ -8,24 +8,16 @@ import ManagePage from './page';
 /** Headers the decision log renames, part B (M1, M2). */
 const RENAMED: Readonly<Record<string, string>> = {
   'Platform / Source': 'Platform',
-  'Last Sync': 'Updated',
+  'Last Sync': 'Last scanned',
 };
 
-/** Tiles the screen does not build, by label: no endpoint counts programs without scope (M3). */
-const DROPPED_TILES = ['Missing Scope'];
+const DROPPED_TILES: readonly string[] = [];
 
 function prunedMockup() {
   const doc = mockupDocument('s11-program-management.html');
   const root = doc.querySelector('main') as Element;
   const table = root.querySelector('table') as Element;
 
-  // The select-all checkbox column: bulk actions have no endpoint (M3).
-  const heads = Array.from(table.querySelectorAll('thead th'));
-  const at = heads.findIndex((th) => th.querySelector('input[type=checkbox]') !== null);
-  if (at === -1) throw new Error('Checkbox column not in the mockup');
-  for (const tr of Array.from(table.querySelectorAll('tr'))) {
-    if (tr.children.length === heads.length) tr.children[at]?.remove();
-  }
   // The expanded scope row: rows open collapsed.
   const expanded = Array.from(table.querySelectorAll('tbody tr')).find((tr) =>
     textOf(tr).includes('In-Scope Target Wildcards'),
@@ -40,9 +32,13 @@ function prunedMockup() {
   const tileLabels = Array.from(root.querySelectorAll('span'))
     .map(textOf)
     .filter((t) =>
-      ['Programs Registered', 'Active Surveillance', 'Mapped Targets', ...DROPPED_TILES].includes(
-        t,
-      ),
+      [
+        'Programs Registered',
+        'Active Surveillance',
+        'Missing Scope',
+        'Mapped Targets',
+        ...DROPPED_TILES,
+      ].includes(t),
     );
   const tiles = tileLabels.filter((t) => !DROPPED_TILES.includes(t)).length;
 
@@ -54,7 +50,9 @@ function prunedMockup() {
 function renderScreen(rows: number) {
   stubApi(
     {
-      '/programs?sort=name': page(Array.from({ length: rows }, (_, i) => programRow(i + 1))),
+      '/programs?sort=name&limit=10': page(
+        Array.from({ length: rows }, (_, i) => programRow(i + 1)),
+      ),
     },
     ME_SUPERADMIN,
   );
@@ -71,36 +69,32 @@ describe('S11 against its mockup', () => {
     expect(regionsOf(container.firstElementChild as Element)).toEqual(regionsOf(mockup.root));
   });
 
-  it('has the mockup columns, renamed and minus the dropped one, in order', async () => {
+  it('has the mockup columns, renamed, in order', async () => {
     const mockup = prunedMockup();
     renderScreen(1);
     await screen.findByRole('table');
     expect(screen.getAllByRole('columnheader').map(textOf)).toEqual(mockup.columns);
   });
 
-  it('shows the mockup tiles minus the dropped one', async () => {
+  it('shows the four mockup tiles', async () => {
     const mockup = prunedMockup();
     const { container } = renderScreen(1);
     await screen.findByRole('table');
-    expect(mockup.tiles).toBe(3);
+    expect(mockup.tiles).toBe(4);
     expect(container.querySelectorAll('[data-stat-tile]')).toHaveLength(mockup.tiles);
   });
 
-  it('builds nothing from the dropped parts', async () => {
+  it('builds search, selection and latency, and nothing from BBRF', async () => {
     const { container } = renderScreen(2);
     await screen.findByRole('table');
-    expect(container.querySelector('input[type=checkbox]')).toBeNull();
-    expect(container.querySelector('input[type=text]')).toBeNull();
+    expect(container.querySelector('input[type=search]')).not.toBeNull();
+    expect(container.querySelectorAll('input[type=checkbox]').length).toBeGreaterThan(2);
     const words = textOf(container);
-    for (const banned of [
-      'BBRF',
-      'Sync',
-      'Latency',
-      '+ Target',
-      'Selected',
-      'Osmedeus',
-      'Mapped',
-    ]) {
+    for (const built of ['Latency', '+ Target', 'Unmapped only', 'No Scope']) {
+      expect(words).toContain(built);
+    }
+    // BBRF and Sync are out of scope; M5 rewrites the claim that wildcards feed Osmedeus.
+    for (const banned of ['BBRF', 'Sync', 'Osmedeus', 'Inactive']) {
       expect(words).not.toContain(banned);
     }
   });

@@ -23,6 +23,9 @@ export interface Screenshot {
   readonly is_failed: boolean;
   readonly error_message: string | null;
   readonly captured_at: string;
+  /** Viewport of the capture (D1); absent from sources written before it. */
+  readonly width?: number | null;
+  readonly height?: number | null;
 }
 
 /** Each key starts with its resource, so invalidating `['screenshots']`, `['jobs']` or

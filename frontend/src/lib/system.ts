@@ -15,6 +15,12 @@ export interface HealthComponent {
   readonly status: ComponentStatus;
   readonly latency_ms: number | null;
   readonly checked_at: string;
+  /** Optional until the backend returns them: docs/api/architecture.md. */
+  readonly version?: string | null;
+  /** postgres: connections used/max. redis: used_memory/maxmemory. Others null (M33). */
+  readonly detail?: string | null;
+  /** Why the component is not `ok`, computed by the backend. */
+  readonly message?: string | null;
 }
 
 /** `GET /system/health`: docs/api/architecture.md, section on aggregate responses. */
@@ -22,7 +28,14 @@ export interface SystemHealth {
   readonly components: readonly HealthComponent[];
   readonly queue_length: number;
   readonly workers_online: number;
+  /** Enabled tool modules present on at least one online worker, over all tool modules (M34). */
+  readonly tools_installed?: { readonly installed: number; readonly total: number };
+  /** Running jobs over the summed `max_concurrency` of enabled tool modules, 0..1 (M24). */
+  readonly fleet_load?: number | null;
 }
+
+/** How often S15 re-reads the health snapshot on its own (the mockup's TICK 30s). */
+export const HEALTH_POLL_MS = 30_000;
 
 /** A row of `system_setting`. `value` is jsonb; the documented keys hold numbers. */
 export interface SystemSetting {
@@ -36,13 +49,46 @@ export const systemKeys = {
   health: ['system', 'health'] as const,
   settings: ['system-settings'] as const,
   settingsPage: (cursor: string | null) => ['system-settings', 'list', cursor] as const,
+  setting: (key: string) => ['system-settings', 'key', key] as const,
 };
 
-/** Superadmin and Admin only: pass `enabled` false for a User. */
-export function useSystemHealth(enabled = true) {
+/** Superadmin and Admin only: pass `enabled` false for a User. `poll` re-reads on a timer. */
+export function useSystemHealth(enabled = true, poll: number | false = false) {
   return useQuery({
     queryKey: systemKeys.health,
     queryFn: () => apiRequest<SystemHealth>('/system/health'),
+    enabled,
+    refetchInterval: poll,
+  });
+}
+
+/** Re-checks one component (`GET /system/health?component=`) and folds the fresh row into
+ * the cached snapshot, so the other cards keep their values. */
+export function useRecheckComponent() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) =>
+      apiRequest<SystemHealth>(withQuery('/system/health', { component: name })),
+    onSuccess: (fresh, name) => {
+      const row = fresh.components.find((c) => c.name === name);
+      if (row === undefined) return;
+      client.setQueryData<SystemHealth>(systemKeys.health, (current) =>
+        current === undefined
+          ? fresh
+          : {
+              ...current,
+              components: current.components.map((c) => (c.name === name ? row : c)),
+            },
+      );
+    },
+  });
+}
+
+/** One `system_setting` by key. Superadmin reads every key, others only public ones. */
+export function useSystemSetting(key: string, enabled = true) {
+  return useQuery({
+    queryKey: systemKeys.setting(key),
+    queryFn: () => apiRequest<SystemSetting>(`/system-settings/${encodeURIComponent(key)}`),
     enabled,
   });
 }

@@ -6,6 +6,9 @@ const COUNT = new Intl.NumberFormat('en-US');
  * (for example a 403): say so rather than show 0. */
 type Figure = number | null | undefined;
 
+const BAR = { primary: 'bg-primary', good: 'bg-good', warn: 'bg-warn' } as const;
+const INK = { primary: 'text-primary', good: 'text-good', warn: 'text-warn' } as const;
+
 function Tile({
   label,
   icon,
@@ -16,14 +19,14 @@ function Tile({
 }: {
   label: string;
   icon: string;
-  tone: 'primary' | 'good';
+  tone: 'primary' | 'good' | 'warn';
   value: Figure;
   /** Mono word after the figure, as the mockup writes "6 accounts" (M7). */
   unit: { text: string; live: boolean };
   note?: { label: string; text: string } | null;
 }): ReactElement {
-  const bar = tone === 'primary' ? 'bg-primary' : 'bg-good';
-  const ink = tone === 'primary' ? 'text-primary' : 'text-good';
+  const bar = BAR[tone];
+  const ink = INK[tone];
   return (
     <div
       data-stat-tile
@@ -70,22 +73,28 @@ function Tile({
 export function StatCards({
   userTotal,
   sessionTotal,
+  sessionAccounts,
+  lockedTotal,
   roleBreakdown,
 }: {
   userTotal: Figure;
   sessionTotal: Figure;
-  /** Counted from the rows on screen only, so it is labelled as this page. */
+  /** Accounts with at least one active session (M31). */
+  sessionAccounts: number | null;
+  /** N39: replaces the mockup's MFA tile. */
+  lockedTotal: Figure;
+  /** "1 Superadmin · 2 Admin", over every account (`role_counts`). */
   roleBreakdown: string | null;
 }): ReactElement {
   return (
-    <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2 xl:grid-cols-3">
       <Tile
         label="Total accounts"
         icon="groups"
         tone="primary"
         value={userTotal}
         unit={{ text: userTotal === 1 ? 'account' : 'accounts', live: false }}
-        note={roleBreakdown === null ? null : { label: 'On this page:', text: roleBreakdown }}
+        note={roleBreakdown === null ? null : { label: 'Allocation:', text: roleBreakdown }}
       />
       <Tile
         label="Active sessions"
@@ -93,7 +102,22 @@ export function StatCards({
         tone="good"
         value={sessionTotal}
         unit={{ text: 'live', live: true }}
-        note={{ label: 'Counted over:', text: 'All accounts' }}
+        note={
+          sessionAccounts === null
+            ? null
+            : {
+                label: 'Accounts:',
+                text: `${COUNT.format(sessionAccounts)} signed in`,
+              }
+        }
+      />
+      <Tile
+        label="Locked accounts"
+        icon="lock_person"
+        tone="warn"
+        value={lockedTotal}
+        unit={{ text: lockedTotal === 1 ? 'account' : 'accounts', live: false }}
+        note={{ label: 'Sign-in:', text: 'blocked until unlocked' }}
       />
     </div>
   );

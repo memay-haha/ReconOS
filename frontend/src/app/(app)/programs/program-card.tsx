@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
-import { SEVERITY_LABEL } from '@/lib/findings';
-import { type ProgramRow, SEVERITIES } from '@/lib/programs';
+import { formatAgo } from '@/lib/format-ago';
+import { formatMoment } from '@/lib/format-moment';
+import type { ProgramRow, Severity } from '@/lib/programs';
 
 import { safeHref } from './links';
 import { ProgramStatusBadge } from './status-badge';
@@ -24,6 +25,17 @@ const DOT: Readonly<Record<AssetCount, string>> = {
   service_count: 'bg-asset-service',
 };
 
+/** The card shows the three severities the mockup draws; Low and Info stay on S20. */
+const CARD_SEVERITIES: readonly Severity[] = ['critical', 'high', 'medium'];
+
+const SEVERITY_SHORT: Readonly<Record<Severity, string>> = {
+  critical: 'Crit',
+  high: 'High',
+  medium: 'Med',
+  low: 'Low',
+  info: 'Info',
+};
+
 const SEVERITY_TONE = {
   critical: 'bg-crit-strong-soft text-crit-strong',
   high: 'bg-warn-strong-soft text-warn',
@@ -31,6 +43,23 @@ const SEVERITY_TONE = {
   low: 'bg-surface-3 text-fg-muted',
   info: 'bg-surface-3 text-fg-faint',
 } as const;
+
+/** A zero count is drawn muted, as the mockup's "0 Crit". */
+const SEVERITY_ZERO = 'bg-surface-3 text-fg-muted';
+
+/** Card icon by `bounty_type` (N20). */
+const TYPE_ICON: Readonly<Record<ProgramRow['bounty_type'], string>> = {
+  bounty: 'paid',
+  vdp: 'shield',
+};
+
+/** "hackerone/uber" as the mockup writes it: platform and handle (N21). */
+export function platformLine(program: Pick<ProgramRow, 'platform' | 'platform_handle'>): string {
+  const platform = program.platform?.toLowerCase() ?? null;
+  const handle = program.platform_handle ?? null;
+  if (platform !== null && handle !== null) return `${platform}/${handle}`;
+  return platform ?? handle ?? 'No platform';
+}
 
 export function ProgramCard({ program }: { program: ProgramRow }): ReactElement {
   const href = safeHref(program.platform_url);
@@ -47,16 +76,16 @@ export function ProgramCard({ program }: { program: ProgramRow }): ReactElement 
               aria-hidden="true"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-surface-3 text-primary"
             >
-              <span className="material-symbols-outlined text-[16px]">folder</span>
+              <span className="material-symbols-outlined text-[16px]">
+                {TYPE_ICON[program.bounty_type]}
+              </span>
             </span>
             <div className="min-w-0">
               <h2 className="truncate font-body-code-bold text-body-code-bold text-fg transition-colors group-hover:text-primary">
                 {program.name}
               </h2>
-              {program.platform === null ? (
-                <span className="text-caption text-fg-faint">No platform</span>
-              ) : href === null ? (
-                <span className="text-caption text-fg-faint">{program.platform}</span>
+              {href === null ? (
+                <span className="text-caption text-fg-faint">{platformLine(program)}</span>
               ) : (
                 <a
                   href={href}
@@ -64,7 +93,7 @@ export function ProgramCard({ program }: { program: ProgramRow }): ReactElement 
                   rel="noopener noreferrer"
                   className="text-caption text-fg-faint underline-offset-2 hover:underline"
                 >
-                  {program.platform}
+                  {platformLine(program)}
                 </a>
               )}
             </div>
@@ -120,18 +149,21 @@ export function ProgramCard({ program }: { program: ProgramRow }): ReactElement 
         <div className="mb-3 flex flex-wrap items-center justify-between gap-space-xs rounded-sm bg-surface-3/40 px-1 py-1.5">
           <span className="font-label-caps text-label-caps uppercase text-fg-faint">Findings</span>
           <span className="flex flex-wrap items-center gap-1">
-            {SEVERITIES.map((severity) => (
+            {CARD_SEVERITIES.map((severity) => (
               <span
                 key={severity}
-                className={`rounded-sm px-1.5 py-0.5 font-body-code text-caption ${SEVERITY_TONE[severity]}`}
+                className={`rounded-sm px-1.5 py-0.5 font-body-code text-caption ${
+                  program.finding_counts[severity] === 0 ? SEVERITY_ZERO : SEVERITY_TONE[severity]
+                }`}
               >
-                {COUNT.format(program.finding_counts[severity])} {SEVERITY_LABEL[severity]}
+                {COUNT.format(program.finding_counts[severity])} {SEVERITY_SHORT[severity]}
               </span>
             ))}
           </span>
         </div>
       </div>
-      <div className="flex items-center justify-end border-t border-surface-2 pt-3">
+      <div className="flex items-center justify-between gap-2 border-t border-surface-2 pt-3">
+        <LastScanned at={program.last_job_finished_at ?? null} />
         <Link
           href={`/programs/${program.id}`}
           aria-label={`View details, ${program.name}`}
@@ -144,5 +176,20 @@ export function ProgramCard({ program }: { program: ProgramRow }): ReactElement 
         </Link>
       </div>
     </div>
+  );
+}
+
+/** max(`finished_at`) of completed jobs, relative as the mockup writes it (M22). */
+function LastScanned({ at }: { at: string | null }): ReactElement {
+  return (
+    <span
+      className="flex items-center gap-1 text-caption text-fg-faint"
+      title={at === null ? undefined : formatMoment(at)}
+    >
+      <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
+        schedule
+      </span>
+      {at === null ? 'Never scanned' : `Last scanned ${formatAgo(at)}`}
+    </span>
   );
 }

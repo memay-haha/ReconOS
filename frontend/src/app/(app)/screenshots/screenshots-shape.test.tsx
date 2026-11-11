@@ -40,7 +40,8 @@ function labelledSelect(doc: Document): Element {
 }
 
 /** `main` of the mockup, pruned by the Part D rows of
- * docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md. Every cut throws when it
+ * docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md and the S06 rows of
+ * docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md. Every cut throws when it
  * matches nothing, so an exclusion that no longer applies cannot linger. */
 function prunedMockup(): Element {
   const doc = new DOMParser().parseFromString(readFileSync(mockupFile, 'utf8'), 'text/html');
@@ -48,31 +49,26 @@ function prunedMockup(): Element {
   const button = (text: string) =>
     one(root, 'button', (b) => textOf(b).includes(text), `button ${text}`);
 
-  // M5, M3: Load Scan has no endpoint.
-  button('Load Scan').remove();
-
-  // M3: the Technologies filter has no endpoint; the program select keeps its place.
+  // 2026-11-05 keeps the program select; it stands before Technologies.
   const technologies = button('Technologies').closest('div.relative') as Element;
-  technologies.replaceWith(labelledSelect(doc));
-  // M3: HTTP status chips have no filter parameter. Show Failed sends is_failed (05/11/2026).
-  button('200').closest('div.inline-flex')?.remove();
-  // M3, debt 39: no endpoint takes a search string.
-  one(root, 'input[type=text]', () => true, 'search')
-    .closest('div.relative')
-    ?.remove();
-  // One pager per list: the Previous and Next of the footer.
+  technologies.before(labelledSelect(doc));
+  // The search box carries its own name instead of a visual label only.
+  // One pager per list (2026-11-05): the Previous and Next of the footer.
   button('Prev').closest('div.inline-flex')?.remove();
 
-  // The grid repeats one card shape per kind: keep the first normal card and the first
-  // failed one, which is all the screen draws.
+  // The grid repeats one card shape per kind: keep the queued card (N16), the first normal
+  // card and the first failed one.
   const grid = root.querySelector('div.grid') as Element;
   const cards = Array.from(grid.querySelectorAll(':scope > article'));
   const failed = one(grid, 'article', (a) => textOf(a).includes('FAILED'), 'failed card');
-  cards.filter((c) => c !== cards[0] && c !== failed).forEach((c) => c.remove());
-  // The card title opens S07.
-  for (const h2 of Array.from(grid.querySelectorAll('h2'))) wrapChildren(h2, 'a');
-  // M3: Force Dispatch has no endpoint; retrying is a job action on S10.
-  one(failed, 'button', (b) => textOf(b) === 'Force Dispatch', 'Force Dispatch').remove();
+  const queued = one(grid, 'article', (a) => textOf(a).includes('QUEUED'), 'queued card');
+  cards.filter((c) => c !== cards[0] && c !== failed && c !== queued).forEach((c) => c.remove());
+  // The queued card leads the first page.
+  grid.prepend(queued);
+  // The card title of a screenshot opens S07; a queued job has no screenshot yet.
+  for (const h2 of [cards[0], failed].map((c) => c?.querySelector('h2'))) {
+    if (h2 != null) wrapChildren(h2, 'a');
+  }
 
   // Footer: numbered pages, First and Last are banned; the pager is Previous and Next.
   const nav = root.querySelector('nav') as Element;
@@ -97,7 +93,26 @@ const SHOT = {
   is_failed: false,
   error_message: null,
   captured_at: '2026-11-04T01:05:00Z',
+  similar_group: 4,
+  similar_count: 3,
+  technologies: [{ name: 'React', category: 'framework' }],
+  retry_job_status: null,
+  width: 1920,
+  height: 1080,
 };
+
+const QUEUED_JOB = {
+  id: 'job-1',
+  program_id: 'p1',
+  tool_module_id: 'tm-gw',
+  status: 'queued',
+  target: ['https://k8s-ingress.example.com/'],
+  created_at: '2026-11-04T02:00:00Z',
+};
+
+function body(items: unknown[]) {
+  return Response.json({ items, next_cursor: null, total: items.length, total_is_estimate: false });
+}
 
 function renderScreen() {
   const failed = {
@@ -107,19 +122,24 @@ function renderScreen() {
     is_failed: true,
     status_code: null,
     error_message: 'net::ERR_CONNECTION_TIMED_OUT',
+    technologies: [],
   };
   vi.stubGlobal(
     'fetch',
-    vi.fn((path: string) =>
-      Promise.resolve(
-        Response.json({
-          items: path.startsWith('/api/v1/screenshots') ? [SHOT, failed] : [],
-          next_cursor: null,
-          total: 2,
-          total_is_estimate: false,
-        }),
-      ),
-    ),
+    vi.fn((path: string) => {
+      // Three status classes, as the mockup draws three chips.
+      if (path.startsWith('/api/v1/screenshots/summary')) {
+        return Promise.resolve(
+          Response.json({ by_status_code: { '2xx': 264, '4xx': 38, '5xx': 10 } }),
+        );
+      }
+      if (path.startsWith('/api/v1/screenshots')) return Promise.resolve(body([SHOT, failed]));
+      if (path.startsWith('/api/v1/tool-modules')) {
+        return Promise.resolve(body([{ id: 'tm-gw', name: 'gowitness' }]));
+      }
+      if (path.startsWith('/api/v1/jobs')) return Promise.resolve(body([QUEUED_JOB]));
+      return Promise.resolve(body([]));
+    }),
   );
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -136,6 +156,8 @@ describe('S06 against its mockup', () => {
     const mockup = prunedMockup();
     const { container } = renderScreen();
     await screen.findByText('Single Sign-On');
+    await screen.findByText('Screenshot job queued');
+    await screen.findByRole('button', { name: /5xx/ });
     const page = container.firstElementChild as Element;
     // The mockup root is the app's main; the screen renders inside the layout's main.
     expect(shapeOf(page, 0, landmarks).slice(1)).toEqual(shapeOf(mockup, 0, landmarks).slice(1));
@@ -144,17 +166,8 @@ describe('S06 against its mockup', () => {
   it('builds none of the dropped controls', async () => {
     const { container } = renderScreen();
     await screen.findByText('Single Sign-On');
-    expect(container.querySelectorAll('input')).toHaveLength(1);
     const text = textOf(container);
-    for (const banned of [
-      'Load Scan',
-      'Technologies',
-      'Force Dispatch',
-      'gowitness_daemon.sock',
-      'QUEUED',
-      'First',
-      'Last',
-    ]) {
+    for (const banned of ['gowitness_daemon.sock', 'First', 'Last', 'capture']) {
       expect(text).not.toContain(banned);
     }
   });

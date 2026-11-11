@@ -12,13 +12,12 @@ import {
 import { json, page, renderScreen, stubApi } from '../system/test-api';
 import VigoliumPage from './page';
 
-/** S17 keeps the connection only (decision Q7, tech-debt item 8). */
+/** S17 under D3-B: connection, LLM model and native modules; ingest proxy and hardening out. */
 function expected(): OutlineEntry[] {
   let e = outline(mockupMain('s17-vigolium-settings.html'));
-  e = rename(e, 'h2', 'Server & Ingest Proxy', 'Engine Connection', 'M1 debt 8: no ingest proxy');
-  e = dropSection(e, 'h2', 'Agentic Olium Engine', 'M1 debt 8');
-  e = dropSection(e, 'h2', 'Native Modules Suite', 'M1 debt 8');
-  e = dropSection(e, 'h2', 'Security Hardening & Sandboxing Flags', 'M1 debt 8');
+  e = rename(e, 'h2', 'Server & Ingest Proxy', 'Engine Connection', 'D3-B: no ingest proxy');
+  e = rename(e, 'h2', 'Agentic Olium Engine', 'LLM Verification Model', 'M2: no "Olium" term');
+  e = dropSection(e, 'h2', 'Security Hardening & Sandboxing Flags', 'D3-B: hardening flags out');
   return e;
 }
 
@@ -34,27 +33,30 @@ afterEach(() => vi.unstubAllGlobals());
 describe('S17 against its mockup', () => {
   it('has the headings of the mockup, minus the dropped parts', async () => {
     const { container } = render();
-    await screen.findByLabelText('Base URL');
+    await screen.findByLabelText('REST API Base URL');
     expect(outline(container.firstElementChild as Element)).toEqual(expected());
   });
 
   it('builds nothing from the dropped parts', async () => {
     const { container } = render();
-    await screen.findByLabelText('Base URL');
+    await screen.findByLabelText('REST API Base URL');
     const words = container.textContent ?? '';
     for (const banned of [
       'Master Secret',
       'Olium',
-      'Ingestion',
+      'Ingest',
       'MITM',
-      'Native Modules',
       'Hardening',
       'Projects',
       'Scope Defaults',
-      'Validate Config',
+      'Fingerprint',
+      'Bridge',
+      'Reveal',
+      'Rotate',
     ]) {
       expect(words).not.toContain(banned);
     }
-    expect(container.querySelectorAll('input')).toHaveLength(2);
+    // Base URL, API key; LLM model, base URL and key (the provider is a select).
+    expect(container.querySelectorAll('input')).toHaveLength(5);
   });
 });

@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 import type { ComponentStatus } from '@/lib/system';
 
 import { currentScreen } from './nav-items';
 import { ThemeToggle } from './theme-toggle';
 
-// The pill shows the dispatcher row of GET /system/health as the backend computed it; the
-// frontend does not judge liveness from a heartbeat itself.
+// The pill shows `status` of GET /dispatcher/status as the backend computed it, for every
+// role; the frontend does not judge liveness from a heartbeat itself.
 const DISPATCHER: Record<ComponentStatus, { label: string; tone: string; dot: string }> = {
   ok: {
     label: 'Dispatcher online',
@@ -42,10 +43,19 @@ export function Topbar({
   navToggled,
   navExpanded,
   onToggleNav,
+  search,
+  bell,
+  dispatcherHref = '/system',
 }: {
   displayName: string | null;
-  /** Null while unknown, or for a role that may not read GET /system/health: no pill then. */
+  /** Null while unknown: no pill then. */
   dispatcher: ComponentStatus | null;
+  /** The global search box, drawn by the shell with its data. */
+  search?: ReactNode;
+  /** The alert bell, drawn by the shell with its data. */
+  bell?: ReactNode;
+  /** Where the pill leads; null draws it without a link (a User cannot open S15). */
+  dispatcherHref?: string | null;
   navToggled: boolean;
   /** Whether the sidebar is on screen now, which depends on the breakpoint as well. */
   navExpanded: boolean;
@@ -96,9 +106,17 @@ export function Topbar({
         </nav>
       </div>
       <div className="flex shrink-0 items-center gap-space-md">
-        {pill === null ? null : (
+        {search}
+        {pill === null ? null : dispatcherHref === null ? (
+          <span className={`flex items-center gap-2 rounded-sm border px-2.5 py-1 ${pill.tone}`}>
+            <span aria-hidden="true" className={`h-2 w-2 rounded-full ${pill.dot}`} />
+            <span className="font-body-code text-caption font-medium tracking-wider uppercase">
+              {pill.label}
+            </span>
+          </span>
+        ) : (
           <Link
-            href="/system"
+            href={dispatcherHref}
             className={`flex items-center gap-2 rounded-sm border px-2.5 py-1 transition-colors ${pill.tone}`}
           >
             <span aria-hidden="true" className={`h-2 w-2 rounded-full ${pill.dot}`} />
@@ -108,7 +126,10 @@ export function Topbar({
           </Link>
         )}
         <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
-        <ThemeToggle look="bare" />
+        <div className="flex items-center gap-1">
+          {bell}
+          <ThemeToggle look="bare" />
+        </div>
         {displayName === null ? null : (
           <>
             <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />

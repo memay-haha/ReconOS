@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { type FormEvent, type ReactElement, useState } from 'react';
 
 import { Pagination, useCursorStack } from '@/components/pagination';
-import { type AssetEvent, useAssetEvents } from '@/lib/asset-events';
-import type { Screenshot } from '@/lib/domain-detail';
-import type { DomainDetail } from '@/lib/domains';
+import { type Screenshot, useJob } from '@/lib/domain-detail';
+import { type ActivityKind, type DomainDetail, useDomainActivity } from '@/lib/domains';
 import { SEVERITY_LABEL, useFindings } from '@/lib/findings';
 import { formatMoment } from '@/lib/format-moment';
-import { SEVERITIES } from '@/lib/programs';
+import { SEVERITIES, type Severity } from '@/lib/programs';
+import { useRealtimeStatus } from '@/lib/realtime';
 import { useCreateTag, useTagDomain, useTags, useUntagAsset } from '@/lib/tags';
 
 import { BUTTON, COUNT, FIELD, SEVERITY_BAR } from '../asset-ui';
@@ -37,6 +37,11 @@ const SEVERITY_TEXT = {
   info: 'text-fg-muted',
 } as const;
 
+/** The DNS record that gave each address, from `ip_records`. */
+function recordTypes(domain: DomainDetail): ReadonlyMap<string, string> {
+  return new Map((domain.ip_records ?? []).map((r) => [r.address, r.record_type]));
+}
+
 export function TargetPanel({
   domain,
   programName,
@@ -46,6 +51,8 @@ export function TargetPanel({
   programName: string;
   discoverySource: string;
 }): ReactElement {
+  const records = recordTypes(domain);
+  const kinds = new Set(records.values());
   return (
     <div className="flex h-full flex-col">
       <div className={PANEL + ' h-full'}>
@@ -54,9 +61,9 @@ export function TargetPanel({
             <span aria-hidden="true" className="material-symbols-outlined text-[17px] text-primary">
               feed
             </span>
-            Target
+            <span className="whitespace-nowrap">Target Characteristics</span>
           </span>
-          <span className="flex min-w-0 items-center gap-1 rounded-sm border border-border bg-surface py-0.5 pl-2 font-body-code text-caption text-fg-faint">
+          <span className="flex min-w-0 max-w-[45%] items-center gap-1 rounded-sm border border-border bg-surface py-0.5 pl-2 font-body-code text-caption text-fg-faint">
             <span className="truncate">{domain.id}</span>
             <CopyButton value={domain.id} label="Copy domain ID" />
           </span>
@@ -89,9 +96,14 @@ export function TargetPanel({
           <div className={BLOCK + ' gap-2'}>
             <div className="flex items-center justify-between gap-space-sm">
               <span className={KEY}>{`Resolves to (${COUNT.format(domain.ips.length)})`}</span>
-              {domain.cname !== null && (
-                <span className="truncate rounded-sm bg-surface-2 px-1.5 font-body-code text-[10px] uppercase tracking-wider text-fg-faint">{`CNAME ${domain.cname}`}</span>
-              )}
+              <span className="flex min-w-0 items-center gap-1">
+                {domain.cname !== null && (
+                  <span className="truncate rounded-sm bg-surface-2 px-1.5 font-body-code text-[10px] uppercase tracking-wider text-fg-faint">{`CNAME ${domain.cname}`}</span>
+                )}
+                {kinds.size === 1 && (
+                  <span className="rounded-sm bg-surface-2 px-1.5 font-body-code text-[10px] uppercase tracking-wider text-fg-faint">{`${[...kinds][0] ?? ''} Record`}</span>
+                )}
+              </span>
             </div>
             <div className="grid grid-cols-1 gap-1.5">
               {domain.ips.length === 0 && (
@@ -105,6 +117,11 @@ export function TargetPanel({
                   <div className="flex items-center gap-2">
                     <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-good" />
                     <span className="font-body-code text-xs text-primary">{ip}</span>
+                    {kinds.size > 1 && records.has(ip) && (
+                      <span className="font-body-code text-[10px] uppercase text-fg-faint">
+                        {records.get(ip)}
+                      </span>
+                    )}
                   </div>
                   <CopyButton value={ip} label={`Copy ${ip}`} />
                 </div>
@@ -258,6 +275,18 @@ function TagEditor({ domain }: { domain: DomainDetail }): ReactElement {
   );
 }
 
+/** The mockup's four boxes: low and info share the last one. */
+const SEVERITY_BOXES: readonly {
+  label: string;
+  tone: Severity;
+  severities: readonly Severity[];
+}[] = [
+  { label: 'Critical', tone: 'critical', severities: ['critical'] },
+  { label: 'High', tone: 'high', severities: ['high'] },
+  { label: 'Medium', tone: 'medium', severities: ['medium'] },
+  { label: 'Low / Info', tone: 'info', severities: ['low', 'info'] },
+];
+
 export function FindingsPanel({ domain }: { domain: DomainDetail }): ReactElement {
   const latest = useFindings({ domainId: domain.id, limit: 1 });
   const counts = domain.finding_counts;
@@ -272,7 +301,7 @@ export function FindingsPanel({ domain }: { domain: DomainDetail }): ReactElemen
           </span>
           Findings by Severity
         </span>
-        <span className="rounded-sm border border-crit-bd bg-crit-soft px-2 py-0.5 font-body-code text-caption font-medium text-crit">{`${COUNT.format(total)} open`}</span>
+        <span className="rounded-sm border border-crit-bd bg-crit-soft px-2 py-0.5 font-body-code text-caption font-medium text-crit">{`${COUNT.format(total)} open findings`}</span>
       </div>
       <div className="flex h-2.5 w-full overflow-hidden rounded-full border border-border bg-surface">
         {SEVERITIES.filter((s) => counts[s] > 0).map((s) => (
@@ -284,17 +313,17 @@ export function FindingsPanel({ domain }: { domain: DomainDetail }): ReactElemen
           />
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-space-sm sm:grid-cols-5">
-        {SEVERITIES.map((s) => (
+      <div className="grid grid-cols-2 gap-space-sm sm:grid-cols-4">
+        {SEVERITY_BOXES.map((box) => (
           <div
-            key={s}
+            key={box.label}
             className="flex flex-col items-center justify-center rounded-sm border border-border bg-surface p-space-sm"
           >
-            <span className={`mb-0.5 text-label-caps uppercase ${SEVERITY_TEXT[s]}`}>
-              {SEVERITY_LABEL[s]}
+            <span className={`mb-0.5 text-label-caps uppercase ${SEVERITY_TEXT[box.tone]}`}>
+              {box.label}
             </span>
-            <span className={`font-body-code text-stat-lg leading-none ${SEVERITY_TEXT[s]}`}>
-              {COUNT.format(counts[s])}
+            <span className={`font-body-code text-stat-lg leading-none ${SEVERITY_TEXT[box.tone]}`}>
+              {COUNT.format(box.severities.reduce((n, s) => n + counts[s], 0))}
             </span>
           </div>
         ))}
@@ -347,6 +376,11 @@ export function CapturePanel({
   latest: Screenshot | undefined;
   pending: boolean;
 }): ReactElement {
+  // The capture's job names the tool that took it.
+  const job = useJob(latest?.job_id ?? null);
+  const tool = job.data?.tool_module_name ?? null;
+  const size =
+    latest?.width != null && latest.height != null ? `${latest.width}×${latest.height}` : null;
   return (
     <div className={PANEL}>
       <div className={PANEL_HEAD}>
@@ -354,10 +388,12 @@ export function CapturePanel({
           <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-tertiary">
             screenshot_monitor
           </span>
-          Latest Screenshot
+          Latest Capture Preview
         </span>
         <span className="font-body-code text-caption text-fg-faint">
-          {latest === undefined ? '' : `Captured ${formatMoment(latest.captured_at)}`}
+          {latest === undefined
+            ? ''
+            : `Probed ${formatMoment(latest.captured_at)}${tool === null ? '' : ` via ${tool}`}`}
         </span>
       </div>
       {latest === undefined ? (
@@ -388,6 +424,11 @@ export function CapturePanel({
           >
             {latest.status_code === null ? 'No HTTP status' : `HTTP ${latest.status_code}`}
           </span>
+          {size !== null && (
+            <span className="absolute right-space-sm top-space-sm rounded-sm border border-border bg-surface px-2 py-0.5 font-body-code text-caption text-fg">
+              {size}
+            </span>
+          )}
           <div className="absolute inset-x-space-sm bottom-space-sm flex items-end justify-between gap-space-sm">
             <div className="min-w-0 pr-2">
               <p className="truncate text-sm font-medium text-fg">{latest.title ?? 'No title'}</p>
@@ -411,37 +452,41 @@ export function CapturePanel({
   );
 }
 
-/** A changed column as `old → new`. Values come from the target: shown as text only. */
-function describeDiff(diff: AssetEvent['diff']): string[] {
-  if (diff === null) return [];
-  return Object.entries(diff).map(([field, change]) => {
-    if (typeof change === 'object' && change !== null && 'old' in change && 'new' in change) {
-      const { old, new: next } = change as { old: unknown; new: unknown };
-      return `${field}: ${JSON.stringify(old)} → ${JSON.stringify(next)}`;
-    }
-    return `${field}: ${JSON.stringify(change)}`;
-  });
-}
-
-// Event kinds are `discovered` and `changed` only (decision log, part C): each has its mockup tone.
-const EVENT_LOOK = {
-  discovered: {
-    label: 'Discovered',
-    icon: 'add_circle',
-    box: 'border-good-bd bg-good-soft text-good',
-    chip: 'text-good',
+// Each activity kind has its mockup tone and icon.
+const ACTIVITY_LOOK: Readonly<
+  Record<ActivityKind, { label: string; icon: string; box: string; chip: string }>
+> = {
+  finding: {
+    label: 'Finding',
+    icon: 'error',
+    box: 'border-crit-bd bg-crit-soft text-crit',
+    chip: 'border-crit-bd bg-crit-soft text-crit',
   },
-  changed: {
-    label: 'Changed',
+  asset_event: {
+    label: 'Asset event',
     icon: 'change_circle',
-    box: 'border-warn-bd bg-warn-soft text-warn',
-    chip: 'text-warn',
+    box: 'border-good-bd bg-good-soft text-good',
+    chip: 'border-good-bd bg-good-soft text-good',
   },
+  screenshot: {
+    label: 'Screenshot',
+    icon: 'photo_camera',
+    box: 'border-info-bd bg-info-soft text-info',
+    chip: 'border-info-bd bg-info-soft text-info',
+  },
+};
+
+const SYNC_LOOK = {
+  open: { dot: 'bg-good', text: 'Live sync' },
+  connecting: { dot: 'bg-warn', text: 'Connecting' },
+  closed: { dot: 'bg-fg-faint', text: 'Live sync off' },
 } as const;
 
-export function EventsPanel({ domainId }: { domainId: string }): ReactElement {
+/** The unified timeline of the domain (N12), kept current by the WebSocket (N7). */
+export function ActivityPanel({ domainId }: { domainId: string }): ReactElement {
   const { cursor, canGoBack, goNext, goBack } = useCursorStack();
-  const events = useAssetEvents({ domainId, limit: 10 }, cursor);
+  const activity = useDomainActivity(domainId, cursor);
+  const sync = SYNC_LOOK[useRealtimeStatus()];
   return (
     <div className={PANEL}>
       <div className={PANEL_HEAD}>
@@ -450,84 +495,78 @@ export function EventsPanel({ domainId }: { domainId: string }): ReactElement {
             <span aria-hidden="true" className="material-symbols-outlined text-[19px] text-primary">
               history
             </span>
-            Asset events
+            Recent Activity
           </span>
-          {events.data !== undefined && (
+          {activity.data !== undefined && (
             <span className="rounded-sm border border-border bg-surface px-2 font-body-code text-[11px] text-fg-muted">
-              {`${COUNT.format(events.data.total)} events`}
+              {`${COUNT.format(activity.data.total)} events`}
             </span>
           )}
         </div>
+        <span className="flex items-center gap-1.5 font-body-code text-[11px] uppercase tracking-wider text-fg-muted">
+          <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${sync.dot}`} />
+          {sync.text}
+        </span>
       </div>
       <div className="flex flex-col gap-2">
-        {events.isPending && (
-          <p className="text-body-default text-fg-muted">Loading asset events…</p>
-        )}
-        {events.isError && (
+        {activity.isPending && <p className="text-body-default text-fg-muted">Loading activity…</p>}
+        {activity.isError && (
           <p role="alert" className="text-body-default text-crit">
-            Could not load the asset events.
+            Could not load the activity.
           </p>
         )}
-        {events.data?.items.length === 0 && (
-          <p className="text-body-default text-fg-muted">No asset events yet.</p>
+        {activity.data?.items.length === 0 && (
+          <p className="text-body-default text-fg-muted">No activity yet.</p>
         )}
-        {events.data?.items.map((event) => {
-          const look = EVENT_LOOK[event.event_type];
+        {activity.data?.items.map((row) => {
+          const look = ACTIVITY_LOOK[row.kind];
           return (
             <div
-              key={event.id}
+              key={`${row.kind}-${row.id}`}
               className="flex flex-col justify-between gap-3 rounded-sm border border-border bg-surface p-space-md md:flex-row md:items-center"
             >
-              <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border ${look.box}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border ${look.box}`}
                 >
                   <span className="material-symbols-outlined text-[18px]">{look.icon}</span>
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-sm border border-border bg-surface-2 px-2 py-0.5 font-body-code text-[11px] font-semibold uppercase ${look.chip}`}
-                    >
-                      {look.label}
-                    </span>
-                    <span className="truncate font-body-code text-sm font-semibold text-fg">
-                      {event.asset_name}
-                    </span>
-                    <span className="rounded-sm border border-border bg-surface-2 px-1.5 font-body-code text-[11px] text-fg-muted">
-                      {event.asset_type}
-                    </span>
-                  </div>
-                  {describeDiff(event.diff).map((line) => (
-                    <span
-                      key={line}
-                      className="break-all font-body-code text-caption text-fg-muted"
-                    >
-                      {line}
-                    </span>
-                  ))}
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-sm border px-2 py-0.5 font-body-code text-[11px] font-semibold uppercase ${look.chip}`}
+                  >
+                    {look.label}
+                  </span>
+                  <span className="break-all font-body-code text-sm text-fg">{row.title}</span>
                 </div>
               </div>
-              <span className="shrink-0 self-end whitespace-nowrap font-body-code text-caption text-fg-faint md:self-center">
-                {formatMoment(event.created_at)}
-              </span>
+              <div className="flex shrink-0 items-center gap-space-sm self-end md:self-center">
+                {row.tool_module_name !== null && (
+                  <span className="rounded-sm border border-accent-soft-bd bg-accent-soft px-2 py-0.5 font-body-code text-[11px] font-medium text-primary">
+                    {row.tool_module_name}
+                  </span>
+                )}
+                <span className="whitespace-nowrap font-body-code text-caption text-fg-faint">
+                  {formatMoment(row.at)}
+                </span>
+              </div>
             </div>
           );
         })}
       </div>
-      {events.data !== undefined && (
+      {activity.data !== undefined && (
         <div className="border-t border-border">
           <Pagination
-            label="Asset events pagination"
+            label="Activity pagination"
             page={{
-              total: events.data.total,
-              totalIsEstimate: events.data.total_is_estimate,
-              nextCursor: events.data.next_cursor,
+              total: activity.data.total,
+              totalIsEstimate: activity.data.total_is_estimate,
+              nextCursor: activity.data.next_cursor,
             }}
             canGoBack={canGoBack}
             onBack={goBack}
-            onNext={() => goNext(events.data.next_cursor)}
+            onNext={() => goNext(activity.data.next_cursor)}
           />
         </div>
       )}

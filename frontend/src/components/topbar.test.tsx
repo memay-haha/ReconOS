@@ -117,3 +117,35 @@ describe('Topbar menu button', () => {
     expect(onToggleNav).toHaveBeenCalledOnce();
   });
 });
+
+describe('Topbar slots', () => {
+  it('draws the search box and the bell it is given, as the mockup header does', () => {
+    render(
+      <Topbar
+        displayName="Root Admin"
+        dispatcher="ok"
+        navToggled={false}
+        navExpanded
+        onToggleNav={() => undefined}
+        search={<input aria-label="Search" />}
+        bell={<button type="button">Alerts</button>}
+      />,
+    );
+    expect(screen.getByRole('textbox', { name: 'Search' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alerts' })).toBeInTheDocument();
+  });
+
+  it('draws the pill without a link for a reader who cannot open S15', () => {
+    render(
+      <Topbar
+        displayName="Root Admin"
+        dispatcher="ok"
+        navToggled={false}
+        navExpanded
+        onToggleNav={() => undefined}
+        dispatcherHref={null}
+      />,
+    );
+    expect(screen.getByText('Dispatcher online').closest('a')).toBeNull();
+  });
+});

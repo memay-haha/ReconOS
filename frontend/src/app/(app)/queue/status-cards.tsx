@@ -10,13 +10,23 @@ import { STATUS_FILL, STATUS_LABEL_TEXT, STATUS_TEXT } from './status-tone';
 
 const CARD: Readonly<Record<JobStatus, { icon: string; note: string }>> = {
   pending_approval: { icon: 'gavel', note: 'Awaiting approval' },
-  queued: { icon: 'hourglass_top', note: 'Awaiting a worker' },
+  queued: { icon: 'hourglass_top', note: 'Awaiting worker slot' },
   dispatched: { icon: 'outbox', note: 'Sent to workers' },
-  running: { icon: 'sync', note: 'Running on a worker' },
+  running: { icon: 'sync', note: 'Active execution' },
   completed: { icon: 'check_circle', note: 'Finished' },
-  failed: { icon: 'error', note: 'Ended with an error' },
+  failed: { icon: 'error', note: 'Requires triage' },
   cancelled: { icon: 'block', note: 'Ended before finishing' },
 };
+
+/** The mockup's cards after Total Jobs. Pending approval and Cancelled stay in the pipeline
+ * legend and the status filter (M7: the mockup draws five status cards). */
+const CARD_STATUSES: readonly JobStatus[] = [
+  'queued',
+  'dispatched',
+  'running',
+  'completed',
+  'failed',
+];
 
 /** One status count. limit=1: only `total` is read, the same count the sidebar badge uses;
  * the cards and the pipeline bar share the query, so it is fetched once. */
@@ -24,8 +34,51 @@ function useStatusTotal(status: JobStatus | null): Figure {
   return totalOf(useJobs(status === null ? { limit: 1 } : { status, limit: 1 }));
 }
 
+/** Completed over completed plus failed: the mockup's "97.1% success". */
+function useSuccessNote(): string | null {
+  const completed = useStatusTotal('completed');
+  const failed = useStatusTotal('failed');
+  if (completed == null || failed == null || completed + failed === 0) return null;
+  return `${((completed / (completed + failed)) * 100).toFixed(1)}% success`;
+}
+
+function TotalCard(): ReactElement {
+  const value = useStatusTotal(null);
+  return (
+    <div
+      data-stat-tile
+      className="relative flex flex-col justify-between overflow-hidden rounded-sm border border-border bg-surface p-space-md"
+    >
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-fg-muted" />
+      <div className="flex items-start justify-between gap-space-xs">
+        <span className="font-label-caps text-label-caps uppercase tracking-wider text-fg-faint">
+          Total jobs
+        </span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-fg-muted">
+          stacked_bar_chart
+        </span>
+      </div>
+      <div className="my-1.5">
+        {value === undefined ? (
+          <p className="text-body-default text-fg-muted">Loading…</p>
+        ) : value === null ? (
+          <p className="text-body-default text-fg-muted">Unavailable</p>
+        ) : (
+          <p className="font-stat-lg text-stat-lg tracking-tight text-fg">{COUNT.format(value)}</p>
+        )}
+      </div>
+      <p className="flex items-center justify-between gap-1 font-caption text-caption text-fg-faint">
+        <span className="truncate">Every status</span>
+        <span className="font-body-code">100%</span>
+      </p>
+    </div>
+  );
+}
+
 function StatusCard({ status }: { status: JobStatus }): ReactElement {
   const value = useStatusTotal(status);
+  const success = useSuccessNote();
+  const note = status === 'completed' && success !== null ? success : CARD[status].note;
   return (
     <div
       data-stat-tile
@@ -63,17 +116,18 @@ function StatusCard({ status }: { status: JobStatus }): ReactElement {
           aria-hidden="true"
           className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_FILL[status]}`}
         />
-        <span className="truncate">{CARD[status].note}</span>
+        <span className="truncate">{note}</span>
       </p>
     </div>
   );
 }
 
-/** One card per job status, in schema order: docs/data/schema.md. */
+/** Total Jobs, then the five status cards of the mockup in schema order. */
 export function StatusCards(): ReactElement {
   return (
-    <div className="grid grid-cols-2 gap-space-md sm:grid-cols-4 xl:grid-cols-7">
-      {JOB_STATUSES.map((status) => (
+    <div className="grid grid-cols-2 gap-space-md sm:grid-cols-3 xl:grid-cols-6">
+      <TotalCard />
+      {CARD_STATUSES.map((status) => (
         <StatusCard key={status} status={status} />
       ))}
     </div>

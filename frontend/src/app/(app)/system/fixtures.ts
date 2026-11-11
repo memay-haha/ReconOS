@@ -11,6 +11,22 @@ export const HEALTH = {
   workers_online: 2,
 };
 
+export const TOOL = {
+  name: 'nuclei',
+  tool_modules: ['nuclei', 'osmedeus-general'],
+  status: 'installed',
+  installed: [{ worker_name: 'worker-recon-01', version: 'v3.3.5' }],
+};
+
+export const DIAGNOSTIC = {
+  id: 'd1',
+  status: 'failed',
+  exit_code: 1,
+  output: '[OK] api: responding\n[WARN] vigolium: latency high',
+  created_at: '2026-11-05T01:00:00Z',
+  finished_at: '2026-11-05T01:00:02Z',
+};
+
 export const WORKER = {
   id: 'w1',
   name: 'worker-recon-01',

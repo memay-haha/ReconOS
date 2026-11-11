@@ -16,9 +16,10 @@ vi.mock('@/lib/session', () => ({ readSessionForSignInScreen: async () => null }
 const mockup = resolve(import.meta.dirname, '../../../../docs/design/screens/s01-login.html');
 const landmarks = { landmarks: true };
 
-/** What the mockup draws that the screen deliberately does not: demo telemetry the
- * screen cannot know (version, dispatcher state, node name, encryption claim), the
- * theme indicator (replaced by the real ThemeToggle, checked below), and decorative halos. */
+/** What the header draws only from build values or a live answer (decisions D6-B, N3): the
+ * version chip and node chip come from the build, which sets neither under test, and the
+ * dispatcher pill waits for GET /health. The theme indicator is the real ThemeToggle,
+ * checked below. */
 const OMITTED_FROM_HEADER = [
   'span.font-body-code',
   'div.hidden',
@@ -98,14 +99,14 @@ describe('S01 against its mockup', () => {
   it('puts the theme button at the right end of the header, 32px like the mockup', async () => {
     const { container } = await renderPage();
     const header = container.querySelector('header') as Element;
-    const button = header.lastElementChild as HTMLElement;
+    const button = header.lastElementChild?.lastElementChild as HTMLElement;
     expect(button.tagName).toBe('BUTTON');
     expect(button).toHaveAccessibleName(/^Switch to \w+ theme$/);
     expect(button.className).toMatch(/\bh-8\b/);
     expect(button.className).toMatch(/\bw-8\b/);
   });
 
-  it('shows no claim in the footer that the screen cannot back', async () => {
+  it('shows no encryption claim in the footer over plain HTTP (decision N4)', async () => {
     const { container } = await renderPage();
     const footer = container.querySelector('footer') as Element;
     expect(wordsOf(footer).join(' ')).toBe('© ReconOS Security Systems');

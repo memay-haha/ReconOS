@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { page, paths, problem, renderWithClient, stubFetch } from '../domains/test-support';
 import MonitorPage from './page';
+import { replace, setSearch } from './test-navigation';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', async () => (await import('./test-navigation')).navigationMock);
 
 const DOMAIN = {
   id: 'd1',
@@ -22,6 +23,8 @@ const DOMAIN = {
   url_count: 2410,
   service_count: 6,
   finding_counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
+  asn: 64500,
+  asn_org: 'EXAMPLE-NET',
 };
 
 const IP = {
@@ -84,26 +87,40 @@ function routes() {
   };
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  setSearch('');
+  window.localStorage.clear();
+});
 
 describe('S03 asset monitor', () => {
-  it('opens on Domains and asks only for domains', async () => {
+  it('opens on Domains, and counts every tab with one row each', async () => {
     const fetchMock = stubFetch(routes());
     renderWithClient(<MonitorPage />);
     expect(await screen.findByText('auth.example.com')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /domains/i })).toHaveAttribute('aria-selected', 'true');
     expect(paths(fetchMock)).toContain('/api/v1/domains?sort=name&limit=25');
-    expect(paths(fetchMock).some((p) => p.startsWith('/api/v1/ips'))).toBe(false);
+    expect(paths(fetchMock)).toContain('/api/v1/ips?limit=1');
+    expect(paths(fetchMock)).toContain('/api/v1/urls?limit=1');
+    expect(paths(fetchMock)).toContain('/api/v1/services?limit=1');
+    await vi.waitFor(() =>
+      expect(screen.getByRole('tab', { name: /ips/i })).toHaveTextContent('IPs1'),
+    );
     expect(screen.getByText('NXDOMAIN', { selector: 'td span' })).toBeInTheDocument();
     expect(screen.getByText('(2 IPs)')).toBeInTheDocument();
+    expect(screen.getByText('AS64500 EXAMPLE-NET')).toBeInTheDocument();
+    expect(screen.getByText('6 ports')).toBeInTheDocument();
     expect(screen.getByText('2,410')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Asset pagination' })).toHaveTextContent(
+      'Showing 1–1 of 1 records',
+    );
     expect(screen.getByRole('link', { name: /view detail/i })).toHaveAttribute(
       'href',
       '/domains/d1',
     );
   });
 
-  it('switches tabs, drops the domain-only filters and the export', async () => {
+  it('switches tabs in the URL, drops the domain-only filters, exports the open tab', async () => {
     const fetchMock = stubFetch(routes());
     renderWithClient(<MonitorPage />);
     await screen.findByText('auth.example.com');
@@ -113,11 +130,15 @@ describe('S03 asset monitor', () => {
     );
 
     await userEvent.click(screen.getByRole('tab', { name: /ips/i }));
+    expect(replace).toHaveBeenCalledWith('/monitor?tab=ips', { scroll: false });
     expect(await screen.findByText('203.0.113.7')).toBeInTheDocument();
     expect(screen.getByText('AS13335')).toBeInTheDocument();
     expect(screen.getByText('Out-of-Scope')).toBeInTheDocument();
     expect(paths(fetchMock)).toContain('/api/v1/ips?limit=25');
-    expect(screen.queryByRole('link', { name: /export csv/i })).toBeNull();
+    expect(screen.getByRole('link', { name: /export csv/i })).toHaveAttribute(
+      'href',
+      '/api/v1/ips/export?format=csv',
+    );
     expect(screen.queryByRole('button', { name: 'NXDOMAIN' })).toBeNull();
     expect(screen.queryByLabelText('Scope')).toBeNull();
   });
@@ -158,11 +179,66 @@ describe('S03 asset monitor', () => {
     await screen.findByText('auth.example.com');
     await screen.findByRole('option', { name: 'Example Corp' });
     await userEvent.selectOptions(screen.getByLabelText('Program'), 'p1');
-    await userEvent.click(screen.getByRole('button', { name: 'Timeout' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unresolved' }));
     await userEvent.selectOptions(screen.getByLabelText('Scope'), 'true');
-    expect(paths(fetchMock).at(-1)).toBe(
-      '/api/v1/domains?program_id=p1&dns_status=timeout&in_scope=true&sort=name&limit=25',
+    // Decision M4: Unresolved is nxdomain and timeout.
+    expect(paths(fetchMock)).toContain(
+      '/api/v1/domains?program_id=p1&dns_status=nxdomain&dns_status=timeout&in_scope=true&sort=name&limit=25',
     );
+    // Decision N8: the badge tells the list is narrowed to In-Scope assets.
+    expect(screen.getByText('Active Scope')).toBeInTheDocument();
+  });
+
+  it('opens the tab the URL names, as S02 View all does', async () => {
+    setSearch('tab=services');
+    stubFetch(routes());
+    renderWithClient(<MonitorPage />);
+    expect(screen.getByRole('tab', { name: /services/i })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('8443')).toBeInTheDocument();
+  });
+
+  it('starts filtered by the program the URL names, as S09 Open full list links do', async () => {
+    setSearch('tab=ips&program_id=p2');
+    const fetchMock = stubFetch(routes());
+    renderWithClient(<MonitorPage />);
+    expect(await screen.findByText('203.0.113.7')).toBeInTheDocument();
+    expect(paths(fetchMock)).toContain('/api/v1/ips?program_id=p2&limit=25');
+  });
+
+  it('filters every tab by the quick filter, once typing pauses', async () => {
+    const fetchMock = stubFetch(routes());
+    renderWithClient(<MonitorPage />);
+    await screen.findByText('auth.example.com');
+    await userEvent.type(screen.getByLabelText('Quick filter'), '*.example.com');
+    await vi.waitFor(() =>
+      expect(paths(fetchMock)).toContain('/api/v1/domains?q=*.example.com&sort=name&limit=25'),
+    );
+    expect(paths(fetchMock)).toContain('/api/v1/ips?q=*.example.com&limit=1');
+    expect(paths(fetchMock).some((p) => p.includes('q=*.example.co&'))).toBe(false);
+  });
+
+  it('exports only the selected rows', async () => {
+    stubFetch(routes());
+    renderWithClient(<MonitorPage />);
+    await screen.findByText('auth.example.com');
+    await userEvent.click(screen.getByLabelText('Select auth.example.com'));
+    expect(screen.getByRole('link', { name: /export selected/i })).toHaveAttribute(
+      'href',
+      '/api/v1/domains/export?format=csv&ids=d1',
+    );
+  });
+
+  it('hides a column the reader turns off, and remembers it', async () => {
+    stubFetch(routes());
+    const { unmount } = renderWithClient(<MonitorPage />);
+    await screen.findByText('auth.example.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Customize columns' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'ASN / Org' }));
+    expect(screen.queryByRole('columnheader', { name: 'ASN / Org' })).toBeNull();
+    unmount();
+    renderWithClient(<MonitorPage />);
+    await screen.findByText('auth.example.com');
+    expect(screen.queryByRole('columnheader', { name: 'ASN / Org' })).toBeNull();
   });
 
   it('hides and shows the filters', async () => {

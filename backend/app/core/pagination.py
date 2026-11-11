@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel
+from sqlalchemy import ColumnElement
+from sqlalchemy.orm import InstrumentedAttribute
 
 from app.core.errors import BadRequestError
 
@@ -79,3 +81,13 @@ def decode_time_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
     if moment.tzinfo is None:
         raise BadRequestError(detail="cursor is not valid")
     return moment, row_id
+
+
+def contains_ignore_case(column: InstrumentedAttribute[str], q: str) -> ColumnElement[bool]:
+    """The `q` search of a list: a case-insensitive substring, matched literally.
+
+    LIKE metacharacters in q are escaped, so `%` or `_` typed by a client match
+    themselves instead of widening the search: docs/api/architecture.md.
+    """
+    literal = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return column.ilike(f"%{literal}%", escape="\\")

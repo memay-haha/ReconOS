@@ -1,6 +1,6 @@
 import type { AssetEvent } from '@/lib/asset-events';
 import type { DashboardSummary } from '@/lib/dashboard';
-import type { Screenshot } from '@/lib/screenshots';
+import type { Screenshot, ScreenshotListExtra } from '@/lib/screenshots';
 import type { UrlDetail } from '@/lib/url-detail';
 
 import { programs } from './programs';
@@ -104,33 +104,35 @@ export const urlDetails: readonly UrlDetail[] = HOSTS.map((host, i) => ({
   ],
 }));
 
-export const screenshots: readonly Screenshot[] = urlDetails.map((url, i) => {
-  const failed = i === 3;
-  return {
-    id: uuid('0190d300', i + 1),
-    program_id: PROGRAM_ID,
-    url_id: url.id,
-    job_id: uuid('0190d400', 1),
-    raw_output_id: uuid('0190d500', 1),
-    final_url: url.url,
-    status_code: failed ? null : url.status_code,
-    title: failed ? null : url.title,
-    // Two pairs of look-alikes, so sort=perception_hash has something to group.
-    perception_hash: failed ? null : `p:${String(i % 3)}f0e1d2c3b4a5968`,
-    http_headers: failed
-      ? null
-      : {
-          server: 'nginx',
-          'content-type': 'text/html; charset=UTF-8',
-          'strict-transport-security': 'max-age=31536000; includeSubDomains',
-          'x-frame-options': 'DENY',
-          'x-content-type-options': 'nosniff',
-        },
-    is_failed: failed,
-    error_message: failed ? 'net::ERR_CONNECTION_TIMED_OUT' : null,
-    captured_at: `2026-11-0${String(1 + (i % 4))}T0${String(i)}:15:00Z`,
-  };
-});
+export const screenshots: readonly Omit<Screenshot, ScreenshotListExtra>[] = urlDetails.map(
+  (url, i) => {
+    const failed = i === 3;
+    return {
+      id: uuid('0190d300', i + 1),
+      program_id: PROGRAM_ID,
+      url_id: url.id,
+      job_id: uuid('0190d400', 1),
+      raw_output_id: uuid('0190d500', 1),
+      final_url: url.url,
+      status_code: failed ? null : url.status_code,
+      title: failed ? null : url.title,
+      // Two pairs of look-alikes, so sort=perception_hash has something to group.
+      perception_hash: failed ? null : `p:${String(i % 3)}f0e1d2c3b4a5968`,
+      http_headers: failed
+        ? null
+        : {
+            server: 'nginx',
+            'content-type': 'text/html; charset=UTF-8',
+            'strict-transport-security': 'max-age=31536000; includeSubDomains',
+            'x-frame-options': 'DENY',
+            'x-content-type-options': 'nosniff',
+          },
+      is_failed: failed,
+      error_message: failed ? 'net::ERR_CONNECTION_TIMED_OUT' : null,
+      captured_at: `2026-11-0${String(1 + (i % 4))}T0${String(i)}:15:00Z`,
+    };
+  },
+);
 
 export const assetEvents: readonly AssetEvent[] = HOSTS.slice(0, 6).map((host, i) => ({
   id: uuid('0190d600', i + 1),

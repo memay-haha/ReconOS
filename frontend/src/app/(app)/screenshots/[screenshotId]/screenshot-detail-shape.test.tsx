@@ -13,6 +13,7 @@ import ScreenshotDetailPage from './page';
 vi.mock('next/navigation', () => ({
   useParams: () => ({ screenshotId: 's2' }),
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams('at=2'),
 }));
 
 const mockupFile = resolve(
@@ -31,13 +32,6 @@ function one(root: Element, selector: string, match: (e: Element) => boolean, wh
   return hit;
 }
 
-/** The panel a heading titles: the nearest ancestor that is a rounded card. */
-function panelOf(heading: Element): Element {
-  const panel = heading.closest('div.rounded-lg');
-  if (panel === null) throw new Error(`No panel around ${textOf(heading)}`);
-  return panel;
-}
-
 /** A button that downloads a file is a link in the product: `<a download>`. */
 function asLink(node: Element): void {
   const link = node.ownerDocument.createElement('a');
@@ -46,22 +40,36 @@ function asLink(node: Element): void {
 }
 
 /** The page of the mockup, pruned by the Part D rows of
- * docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md. */
+ * docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md and the S07 rows of
+ * docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md (D1, D5, N19). */
 function prunedMockup(): Element {
   const doc = new DOMParser().parseFromString(readFileSync(mockupFile, 'utf8'), 'text/html');
   const root = doc.querySelector('main > div') as Element;
   const button = (text: string) =>
     one(root, 'button', (b) => textOf(b).includes(text), `button ${text}`);
 
-  // M3: no endpoint deletes a screenshot.
-  button('Delete Capture').remove();
   asLink(button('Download PNG'));
   asLink(one(root, 'button', (b) => textOf(b).endsWith('PNG'), 'PNG button'));
-  // M3: the page HTML source, TLS details, network log, console log and cookies have no
-  // endpoint; gowitness records only the screenshot, the final URL and the headers.
-  button('View Page HTML Source').remove();
-  panelOf(one(root, 'h2', (h) => textOf(h).startsWith('TLS'), 'TLS')).remove();
-  panelOf(button('Network Log')).remove();
+  // M20: "Show all" opens the rest of the headers.
+  const keyHeaders = one(root, 'span', (e) => textOf(e).endsWith('Shown'), 'header count');
+  keyHeaders.after(doc.createElement('button'));
+  // D1: tabs carry ARIA roles; HAR and the raw output download as links.
+  const tabs = button('Network Log').parentElement as Element;
+  tabs.setAttribute('role', 'tablist');
+  for (const tab of Array.from(tabs.querySelectorAll('button'))) tab.setAttribute('role', 'tab');
+  const har = one(root, 'span', (e) => textOf(e) === 'HAR 1.2 Export', 'HAR');
+  asLink(har);
+  asLink(one(root, 'button', (b) => b.getAttribute('title') === 'Export Raw Telemetry', 'raw'));
+  // Only the open tab is drawn, inside one tabpanel; the network table ends with
+  // "Show all" for the events past the top 6.
+  const network = one(root, '#tab-network', () => true, 'network pane');
+  network.setAttribute('role', 'tabpanel');
+  for (const pane of Array.from(root.querySelectorAll('.tab-pane'))) {
+    if (pane !== network) pane.remove();
+  }
+  const footer = one(network, 'span', (e) => textOf(e).startsWith('Showing top'), 'net footer');
+  footer.append(doc.createElement('button'));
+  // The HTML source opens on demand, as a dialog drawn only while open.
   const source = one(root, 'h3', (h) => textOf(h).startsWith('Rendered HTML Source'), 'source');
   (source.closest('[id]') ?? source.parentElement?.parentElement)?.remove();
   return root;
@@ -77,16 +85,63 @@ const SHOT = {
   status_code: 200,
   title: 'Single Sign-On',
   perception_hash: 'abc',
-  http_headers: { server: 'cloudflare' },
+  http_headers: {
+    server: 'cloudflare',
+    'content-type': 'text/html',
+    'x-frame-options': 'DENY',
+    'cf-ray': '8c9735a2981-IAD',
+  },
   is_failed: false,
   error_message: null,
   captured_at: '2026-11-04T01:05:00Z',
+  similar_group: null,
+  similar_count: 1,
+  technologies: [],
+  retry_job_status: null,
+  width: 1920,
+  height: 1080,
+  worker_name: 'gowitness-02',
+  device_scale: 2,
+  remote_ip: '198.51.100.24',
+  duration_ms: 2480,
+  tls: {
+    protocol: 'TLS 1.3',
+    cipher: 'TLS_AES_256_GCM_SHA384',
+    issuer: 'R3',
+    subject: 'auth.example.com',
+    san: ['auth.example.com'],
+    not_before: '2026-08-15T00:00:00Z',
+    not_after: '2026-11-15T00:00:00Z',
+  },
+  console_log: [],
+  cookies: [],
+  html_size: 49_357,
+  html_sha256: 'abc',
+  security_headers: { 'x-frame-options': true },
+  security_headers_passed: 1,
+  security_headers_total: 1,
 };
+
+const NETWORK = Array.from({ length: 8 }, (_, i) => ({
+  method: 'GET',
+  url: `https://auth.example.com/${String(i)}`,
+  status_code: 200,
+  content_type: null,
+  size_bytes: 10,
+  duration_ms: 1,
+  remote_ip: null,
+}));
 
 function renderScreen() {
   vi.stubGlobal(
     'fetch',
     vi.fn((path: string) => {
+      if (path === '/api/v1/auth/me') {
+        return Promise.resolve(Response.json({ id: 'me', role: 'admin' }));
+      }
+      if (path.endsWith('/network')) {
+        return Promise.resolve(Response.json({ network_log: NETWORK }));
+      }
       if (path.startsWith('/api/v1/screenshots/')) return Promise.resolve(Response.json(SHOT));
       return Promise.resolve(
         Response.json({
@@ -121,28 +176,19 @@ describe('S07 against its mockup', () => {
     const mockup = prunedMockup();
     const { container } = renderScreen();
     await screen.findByText('Nginx');
+    await screen.findByRole('button', { name: /delete screenshot/i });
+    await screen.findByRole('table');
     const page = container.firstElementChild as Element;
-    const expected = shapeOf(mockup, 0, landmarks);
-    // The comparison must cover the bar, both columns and both lower panels.
-    expect(expected.filter((line) => /\b(a|button|h1|h2|h3)$/.test(line.trim()))).toHaveLength(12);
-    expect(shapeOf(page, 0, landmarks)).toEqual(expected);
+    expect(shapeOf(page, 0, landmarks)).toEqual(shapeOf(mockup, 0, landmarks));
   });
 
   it('builds none of the dropped parts', async () => {
     const { container } = renderScreen();
     await screen.findByText('Nginx');
-    expect(container.querySelector('table')).toBeNull();
     const text = textOf(container);
-    for (const banned of [
-      'Capture',
-      'CAP-',
-      'Wappalyzer',
-      'Hardened',
-      'Cookies',
-      'Console Log',
-      'Worker PID',
-      'TLS',
-    ]) {
+    // N19: no worker PID. M2: a screenshot is never called a capture. The mockup's
+    // Wappalyzer chip names a tool ReconOS does not run.
+    for (const banned of ['Capture', 'CAP-', 'Wappalyzer', 'Worker PID', 'Telemetry']) {
       expect(text).not.toContain(banned);
     }
   });

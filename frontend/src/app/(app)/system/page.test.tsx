@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { HEALTH, LOG, SETTING, WORKER } from './fixtures';
+import { DIAGNOSTIC, HEALTH, LOG, SETTING, TOOL } from './fixtures';
 import { latestDeleteDay } from './log-panel';
 import SystemPage from './page';
 import {
@@ -19,7 +19,10 @@ import {
 
 function standard(call: Call): Response | undefined {
   if (call.path === '/system/health') return json(HEALTH);
-  if (call.path.startsWith('/workers')) return json(page([WORKER]));
+  if (call.path.startsWith('/tools')) return json(page([TOOL]));
+  if (call.path.startsWith('/system/diagnostics') && call.method === 'GET') return json(DIAGNOSTIC);
+  if (call.path === '/system/diagnostics' && call.method === 'POST')
+    return json({ id: 'd1', status: 'running' });
   if (call.path.startsWith('/system-settings') && call.method === 'GET')
     return json(page([SETTING]));
   if (call.path.startsWith('/logs') && call.method === 'GET') return json(page([LOG]));
@@ -39,10 +42,10 @@ describe('S15 system health', () => {
     open('superadmin');
     const cards = await screen.findAllByRole('listitem');
     const vigolium = cards.find((c) => within(c).queryByText('Vigolium') !== null) as HTMLElement;
-    expect(within(vigolium).getByText('degraded')).toBeInTheDocument();
+    expect(within(vigolium).getAllByText('degraded').length).toBeGreaterThan(0);
     expect(within(vigolium).getByText('1,420 ms')).toBeInTheDocument();
     const osmedeus = cards.find((c) => within(c).queryByText('Osmedeus') !== null) as HTMLElement;
-    expect(within(osmedeus).getByText('down')).toBeInTheDocument();
+    expect(within(osmedeus).getAllByText('down').length).toBeGreaterThan(0);
     expect(within(osmedeus).getByText('No reply')).toBeInTheDocument();
     expect(screen.getByText('1,234')).toBeInTheDocument();
   });
@@ -53,7 +56,8 @@ describe('S15 system health', () => {
     await screen.findByText('parse_failed');
     const read = paths(calls);
     expect(read).toContain('/system/health');
-    expect(read).toContain('/workers?limit=200');
+    expect(read).toContain('/tools?limit=200');
+    expect(read).toContain('/system/diagnostics/latest');
     expect(read).toContain('/system-settings?limit=200');
     expect(read).toContain('/logs');
   });
@@ -72,12 +76,29 @@ describe('S15 system health', () => {
     expect(paths(calls)).toEqual(['/auth/me']);
   });
 
-  it('lists workers with their tool modules on the Tools view', async () => {
+  it('lists each tool with its tool modules and reported version (D4)', async () => {
     open('superadmin');
     await userEvent.click(await screen.findByRole('button', { name: 'Tools' }));
-    expect(await screen.findByText('worker-recon-01')).toBeVisible();
-    expect(screen.getByText('nuclei')).toBeVisible();
+    expect(await screen.findByText('v3.3.5')).toBeVisible();
+    expect(screen.getByText('osmedeus-general')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Tools' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Missing (0)' })).toBeInTheDocument();
+  });
+
+  it('runs a diagnostic and shows its console output (D4)', async () => {
+    const calls = open('admin');
+    expect(await screen.findByText('Some checks failed')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /run diagnostics/i }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('[WARN] vigolium: latency high')).toBeInTheDocument();
+    expect(within(dialog).getByText('Exit code: 1')).toBeInTheDocument();
+    expect(paths(calls, 'POST')).toEqual(['/system/diagnostics']);
+  });
+
+  it('rechecks one component only', async () => {
+    const calls = open('admin');
+    await userEvent.click(await screen.findByRole('button', { name: 'Recheck Redis' }));
+    await vi.waitFor(() => expect(paths(calls)).toContain('/system/health?component=redis'));
   });
 
   it('reloads the health on Refresh', async () => {

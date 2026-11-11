@@ -46,7 +46,41 @@ describe('RunScanDialog', () => {
   it('submits one tool module and the trimmed targets', async () => {
     const onSubmit = draw();
     await userEvent.click(screen.getByRole('button', { name: /create job/i }));
-    expect(onSubmit).toHaveBeenCalledWith({ toolModuleId: 'm1', target: ['a.example.com'] });
+    expect(onSubmit).toHaveBeenCalledWith({
+      toolModuleId: 'm1',
+      target: ['a.example.com'],
+      priority: 'normal',
+      params: {},
+    });
+  });
+
+  it('sends the priority and the parameters the tool module declares (D7-A, D8)', async () => {
+    const onSubmit = draw({
+      toolModules: [
+        {
+          ...MODULES[0]!,
+          default_params: { rate: 50 },
+          param_schema: {
+            properties: {
+              rate: { type: 'integer', title: 'Rate', minimum: 1, maximum: 500, default: 150 },
+              tags: { type: 'string', title: 'Tags' },
+              follow: { type: 'boolean', title: 'Follow redirects', default: true },
+            },
+          },
+        },
+      ],
+    });
+    expect(screen.getByLabelText('Rate')).toHaveValue(50);
+    await userEvent.clear(screen.getByLabelText('Rate'));
+    await userEvent.type(screen.getByLabelText('Rate'), '200');
+    await userEvent.selectOptions(screen.getByLabelText('Priority'), 'high');
+    await userEvent.click(screen.getByRole('button', { name: /create job/i }));
+    expect(onSubmit).toHaveBeenCalledWith({
+      toolModuleId: 'm1',
+      target: ['a.example.com'],
+      priority: 'high',
+      params: { rate: 200, follow: true },
+    });
   });
 
   it('says an exploit tool module needs approval', async () => {

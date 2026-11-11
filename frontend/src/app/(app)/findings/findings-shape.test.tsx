@@ -2,28 +2,27 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { finding, PROGRAM } from '../system/fixtures';
-import { dropEntry, mockupMain, type OutlineEntry, outline, rename } from '../system/shape-outline';
+import { PROGRAM } from '../system/fixtures';
+import { mockupMain, type OutlineEntry, outline } from '../system/shape-outline';
 import { json, page, renderScreen, stubApi } from '../system/test-api';
 import FindingsPage from './page';
+import { findingDetail, findingRow, SUMMARY } from './test-fixtures';
 
-const ROW = finding('f1', { name: 'Spring Boot Actuator Environment Exposure' });
+const NAME = 'Spring Boot Actuator Environment Exposure';
+const ROW = findingRow('f1', { name: NAME });
 
-/** The mockup pruned to what S20 builds, each change with its rule from frontend/CLAUDE.md. */
+/** The mockup with its finding dialog open. Nothing is dropped: the matcher column and the
+ * dialog's synopsis and telemetry blocks come from the D2 keys of `GET /findings/{id}`. */
 function expected(): OutlineEntry[] {
-  let e = outline(mockupMain('s20-global-findings-explorer.html'));
-  e = rename(e, 'th', 'Matched At / Target', 'Matched At', 'M2: finding.matched_at');
-  e = dropEntry(e, 'th', 'Matcher / Match', 'M3: no matcher column on finding');
-  e = rename(e, 'th', 'Discovered', 'First Seen', 'M2: first_seen_at');
-  e = rename(e, 'h3', 'Vulnerability Synopsis', 'Summary', 'M2: fields of finding');
-  e = rename(e, 'h3', 'Proof of Concept Telemetry', 'Evidence', 'M2: no "telemetry"');
-  return e;
+  return outline(mockupMain('s20-global-findings-explorer.html'));
 }
 
 function render() {
   stubApi('admin', (call) => {
     if (call.path.startsWith('/programs')) return json(page([PROGRAM]));
-    if (call.path === '/findings/f1') return json(ROW);
+    if (call.path.startsWith('/tool-modules')) return json(page([]));
+    if (call.path.startsWith('/findings/summary')) return json(SUMMARY);
+    if (call.path === '/findings/f1') return json(findingDetail('f1', { name: NAME }));
     if (call.path.startsWith('/findings')) return json(page([ROW]));
     return undefined;
   });
@@ -33,32 +32,22 @@ function render() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('S20 against its mockup', () => {
-  it('has the table, columns and drawer of the mockup, minus the dropped parts', async () => {
+  it('has the table, columns and finding dialog of the mockup', async () => {
     const { container } = render();
-    await userEvent.click(await screen.findByRole('button', { name: `Open ${ROW.name}` }));
-    await screen.findByText('Summary');
+    await userEvent.click(await screen.findByRole('button', { name: `Open ${NAME}` }));
+    await screen.findByText('Vulnerability Synopsis');
     expect(outline(container.firstElementChild as Element)).toEqual(expected());
   });
 
   it('builds nothing from the dropped parts', async () => {
     const { container } = render();
-    await userEvent.click(await screen.findByRole('button', { name: `Open ${ROW.name}` }));
-    await screen.findByText('Summary');
+    await userEvent.click(await screen.findByRole('button', { name: `Open ${NAME}` }));
+    await screen.findByText('Vulnerability Synopsis');
     const words = container.textContent ?? '';
-    for (const banned of [
-      'Push to Jira',
-      'Sync Nuclei',
-      'Nuclei v3',
-      'Remediation',
-      'Copy as Markdown',
-      'Web Tier',
-      'Mark Triaged',
-      'Hide False Positives',
-      'All Domains',
-      '/ page',
-    ]) {
+    // Push to Jira: stay-out list. Nuclei v3: N13 waits on job.tool_version (D4).
+    // Page numbers: cursor pagination only.
+    for (const banned of ['Push to Jira', 'Nuclei v3', 'Web Tier', '« First', 'Last »']) {
       expect(words).not.toContain(banned);
     }
-    expect(container.querySelector('input[type=search], input[type=text]')).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.15 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.17 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -109,13 +109,13 @@ Danh sách dùng phân trang cursor theo keyset.
 | `/users` | `username`, `display_name` |
 | `/tool-modules` | `name`, `title`, `description` |
 | `/findings` | `name`, `template_id`, `cve`, `matched_at` |
-| `/search` | Tên program, tên domain, `url`, tên finding, tên tool module. Lọc theo program được gán. Trả tối đa `limit` dòng, mặc định 10, tối đa 50, mỗi dòng `type`, `id`, `label`, `program_id` |
+| `/search` | Tên program, tên domain, `url`, tên finding, tên tool module. Lọc theo program được gán. Trả tối đa `limit` dòng, mặc định 10, tối đa 50, mỗi dòng `type` (`program`, `domain`, `url`, `finding`, `tool_module`), `id`, `label`, `program_id`, `NULL` với tool module |
 - Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/urls`, `/services`, `/asset-events`, `/screenshots`, `/findings`. Với `/services`: service trên IP mà domain phân giải ra, qua `domain_ip`. `/screenshots` nhận thêm `is_failed`, `job_id`, `technology_id`, `status_code` theo lớp `2xx`, `3xx`, `4xx`, `5xx`.
 - User chỉ nhận dữ liệu của program được gán, kể cả khi không truyền `program_id`.
 
 ### Trường tính và số liệu tổng hợp
 
-Trường tính không phải cột, API tính mỗi lần đọc và chỉ có ở endpoint ghi dưới đây.
+Trường tính không phải cột, API tính mỗi lần đọc và chỉ có ở endpoint đọc dưới đây.
 
 | Endpoint | Trường |
 |---|---|
@@ -128,14 +128,14 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | `GET /users` gọi bởi Admin | Chỉ `id`, `username`, `role` |
 | `GET /users`, `GET /users/{user_id}` gọi bởi Superadmin | `last_session_ip`, `last_seen_at` của phiên đang hoạt động gần nhất |
 | `GET /user-sessions` | `username`, `display_name` |
-| `GET /jobs`, `GET /jobs/{job_id}` | `created_by_username`, `worker_name`, `tool_module_name` |
-| `GET /workers` | `is_online`, `running_job_count`, `running_tool_module_ids` |
+| `GET /jobs`, `GET /jobs/{job_id}` | `created_by_username`, `worker_name`, `tool_module_name`, `status_changed_at`: giá trị mới nhất trong `created_at`, `approved_at`, `dispatched_at`, `started_at`, `finished_at`. Cột `priority` trả dạng `low`, `normal`, `high`, cột `tool_version` trả nguyên. `sort` nhận `created_at`, `-created_at`, `-status_changed_at`, `-priority` |
+| `GET /workers` | `is_online`, `running_job_count`, `running_tool_module_ids`. Cột `cpu_percent`, `tool_versions` trả nguyên như worker báo |
 | `GET /findings`, `GET /findings/{finding_id}` | `tool_module_name`, `asset`: `type`, `name`, `ip`, `port`, `service_name`. `matcher`. Riêng chi tiết thêm `description`, `remediation`, `request`, `response`, `in_scope`, `scope_rule`: giá trị In-Scope đầu tiên khớp tài sản, `NULL` khi không khớp |
 | `GET /screenshots` | `technologies`: `name`, `category`. `similar_group`, `similar_count`. `retry_job_status` |
 | `GET /screenshots/{screenshot_id}` | Như danh sách, thêm `worker_name`, `html_size`, `html_sha256`, `security_headers`: object 5 header, giá trị `true` khi có mặt, `security_headers_passed`, `security_headers_total` |
 | `GET /tool-modules` | `title`, `description`, `group`, `runs_on`, `tools`, `output_types`, `param_schema` lấy từ mã. `last_job_at`, `jobs_24h`, `finding_count`, `engine_status`, `disabled_reason`, `estimated_seconds` |
 | `GET /engines` | `version`, `last_tested_at`, `last_test_ok`, `api_key_updated_at`, `has_llm_api_key`, `uptime_seconds`, `slots_used`, `slots_total` |
-| `GET /alerts` | `is_read` của tài khoản gọi. Mỗi dòng `id`, `alert_type`, `message`, `program_id`, `finding_id`, `job_id`, `created_at`, `is_read` |
+| `GET /alerts` | Lọc `is_read`, `alert_type` lặp lại. `is_read` của tài khoản gọi. Mỗi dòng `id`, `alert_type`, `message`, `program_id`, `finding_id`, `job_id`, `created_at`, `is_read` |
 
 - `finding_counts` là object theo 5 mức severity, đếm finding có `triage_status` khác `false_positive`, `duplicate`, `resolved`. Gọi là finding mở.
 - Khung "today", "this week", "this month" trên UI là 24 giờ, 7 ngày, 30 ngày gần nhất, theo `window`.
@@ -144,10 +144,11 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 - `ip_resolved_count`: số IP có ít nhất một service. `service_port_count`: số cổng khác nhau. `has_findings`: domain có ít nhất một finding mở.
 - `similar_group`: số thứ tự nhóm cùng `perception_hash` trong bộ lọc hiện tại, xếp theo `captured_at` sớm nhất của nhóm. `similar_count`: số screenshot trong nhóm, `1` là duy nhất.
 - `retry_job_status`: trạng thái job gowitness mới nhất có mục tiêu là `final_url`, tạo sau `captured_at`. `NULL` khi chưa có.
-- `security_headers` xét `strict-transport-security`, `content-security-policy`, `x-frame-options`, `x-content-type-options`, `permissions-policy` trong `http_headers`.
+- `security_headers` có khóa là tên header viết thường: `strict-transport-security`, `content-security-policy`, `x-frame-options`, `x-content-type-options`, `permissions-policy` trong `http_headers`.
 - `is_online`: heartbeat trong ngưỡng như `workers_online`.
 - `engine_status`: `status` của thành phần engine trong `GET /system/health`, `NULL` khi tool module không chạy trên engine. `disabled_reason`: `off` khi tắt, `engine_disabled`, `engine_down`, `not_installed` khi không worker online nào cài, `NULL` khi sẵn sàng.
 - `estimated_seconds`: trung vị `finished_at` trừ `started_at` của 20 job `completed` gần nhất, `NULL` khi chưa có job.
+- `param_schema`: JSON Schema dạng object, mỗi tham số một khóa trong `properties` với `type`, `title`, `description`, `default`, `minimum`, `maximum`, `enum`. Tham số số luồng và tốc độ dùng tên khóa `threads`, `rate`. `runs_on`: tên engine, `NULL` khi tool module chạy công cụ trực tiếp. `output_types`: tập con của `domain`, `ip`, `url`, `service`, `screenshot`, `finding`.
 - `finding_count`: số finding có `job_id` thuộc job của tool module. `jobs_24h`: số job tạo trong 24 giờ.
 - `uptime_seconds`: thời gian từ `engine.ok_since`, `NULL` khi engine không `ok`. `slots_used`, `slots_total`: job `running` và tổng `max_concurrency` của tool module bật chạy trên engine.
 
@@ -156,8 +157,8 @@ Danh sách trả thêm khóa tổng hợp ngoài `items`, tính trên mọi dòn
 | Endpoint | Khóa |
 |---|---|
 | `GET /users` gọi bởi Superadmin | `role_counts`: số tài khoản theo vai trò. `locked_count` |
-| `GET /user-sessions` | `account_count`: số tài khoản có ít nhất một phiên đang hoạt động |
-| `GET /tool-modules` | `enabled_count`, `disabled_count`, `disabled_names`, `group_counts`, `engines_bound`: số engine bật, `installed_count`: số tool module bật có trên ít nhất một worker online |
+| `GET /user-sessions` | `account_count`: số tài khoản có ít nhất một phiên đang hoạt động. `sort`: `created_at`, `-created_at` mặc định, `last_seen_at`, `-last_seen_at`. `last_session_ip` của `GET /users` lấy từ phiên có `last_seen_at` mới nhất. `total` theo bộ lọc, `role_counts`, `locked_count` bỏ qua bộ lọc |
+| `GET /tool-modules` | `enabled_count`, `disabled_count`, `disabled_names`, `group_counts`, `engines_bound`: số engine bật, `installed_count`: số tool module bật có trên ít nhất một worker online, `ready_count`: số tool module có `disabled_reason` là `NULL` |
 
 Response tổng hợp:
 
@@ -210,7 +211,7 @@ Response tổng hợp:
 | 403 | `forbidden` | Vai trò không có quyền thao tác trên tài nguyên xem được. Request bị chặn do kiểm tra CSRF |
 | 403 | `self_approval_forbidden` | Duyệt job do chính mình tạo |
 | 404 | `not_found` | Không tồn tại, hoặc thuộc program User không được gán |
-| 409 | `conflict` | Vi phạm ràng buộc duy nhất. Chuyển trạng thái không hợp lệ |
+| 409 | `conflict` | Vi phạm ràng buộc duy nhất, kèm `errors` với `code` là `already_exists` cho trường bị trùng. Chuyển trạng thái không hợp lệ |
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
 | 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5) |
@@ -229,7 +230,7 @@ Response tổng hợp:
 | Xuất dữ liệu | `GET /<tài nguyên>/export?format=csv\|jsonl\|md`, cùng tham số lọc như danh sách, trả dạng stream. `ids` lặp lại, tối đa 500, chỉ xuất các dòng đó. Có cho `domains`, `ips`, `urls`, `services`, `findings`, `users` |
 | Tải output thô | `GET /raw-outputs/{raw_output_id}/content`, luôn `Content-Disposition: attachment` |
 | Ảnh screenshot | `GET /screenshots/{screenshot_id}/image`, kèm header `X-Content-Type-Options: nosniff` |
-| Dữ liệu trang của screenshot | `/html` trả `text/plain`, kèm `nosniff`, UI chỉ hiện dạng văn bản. `/network` trả `network_log`. `/har` dựng file HAR 1.2 từ `network_log`, `Content-Disposition: attachment` |
+| Dữ liệu trang của screenshot | `/html` trả `text/plain`, kèm `nosniff`, UI chỉ hiện dạng văn bản. `/network` trả object có khóa `network_log`. `/har` dựng file HAR 1.2 từ `network_log`, `Content-Disposition: attachment` |
 
 - Backend API đọc file từ MinIO rồi stream cho trình duyệt. ❌ Không trả URL trực tiếp tới MinIO.
 - Xuất CSV: thêm dấu `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`.
@@ -238,19 +239,19 @@ Response tổng hợp:
 
 | Endpoint | Quy ước |
 |---|---|
-| `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job |
+| `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body |
 | `POST /jobs/{job_id}/prioritize`, `POST /dispatcher/wake`, `POST /jobs/cleanup`, `POST /jobs/bulk-retry` | Dispatch Now, Dispatch All, Cleanup, Retry Failed: [business-flow.md](../architecture/business-flow.md). `cleanup` trả số job đã hủy |
 | `POST /schedules/{schedule_id}/run` | Tạo ngay một job từ lịch, kiểm scope, không đổi `next_run_at` |
 | `DELETE /domains/{domain_id}`, `POST /domains/bulk-delete`, `DELETE /screenshots/{screenshot_id}`, `DELETE /users/{user_id}` | Xóa mềm. Superadmin không xóa chính mình |
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}` |
 | `POST /users/{user_id}/revoke-sessions`, `POST /users/bulk-revoke-sessions` | Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi |
 | `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids` |
-| `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params` |
+| `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |
 | `GET /system-settings/{key}` | Superadmin đọc mọi key. Admin, User chỉ đọc key có cột Đọc công khai trong [configuration.md](../ops/configuration.md) |
-| `GET /roles/permissions` | Ma trận quyền sinh từ khai báo quyền của backend: mỗi dòng `action`, `superadmin`, `admin`, `user` với giá trị `allow`, `deny`, `limited` và `note` |
-| `POST /system/diagnostics`, `GET /system/diagnostics/{diagnostic_run_id}`, `GET /system/diagnostics/latest` | Tạo lần chẩn đoán chạy ở tiến trình nền, trả `id`, `status`. Đọc `status`, `exit_code`, `output`, `created_at`, `finished_at` |
+| `GET /roles/permissions` | Ma trận quyền sinh từ khai báo quyền của backend, trả `items`, mỗi dòng `action`, `superadmin`, `admin`, `user` với giá trị `allow`, `deny`, `limited` và `note` |
+| `POST /system/diagnostics`, `GET /system/diagnostics/{diagnostic_run_id}`, `GET /system/diagnostics/latest` | Tạo lần chẩn đoán chạy ở tiến trình nền, trả `id`, `status`. Đọc `id`, `status`, `exit_code`, `output`, `created_at`, `finished_at`. Mỗi dòng của `output` bắt đầu bằng một tiền tố: `[OK]` đạt, `[WARN]` chưa đạt nhưng hệ thống vẫn chạy, `[FAIL]` không đạt, `[*]` thông tin |
 | `GET /tools` | Mỗi công cụ của tool module: `name`, `tool_modules`, `status` (`installed`, `missing`), `installed`: `worker_name`, `version` theo heartbeat |
-| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `settings` và `llm_api_key`, chỉ ghi |
+| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `settings` và `llm_api_key`, chỉ ghi. Dạng response: schema `EngineWorkflow`, `EngineModule`, `EngineCheckResult` trong [openapi.yaml](openapi.yaml) |
 | `GET /logs` | User chỉ nhận log của job thuộc program được gán. Lọc thêm `program_id`, `event`, `engine` |
 
 ### WebSocket

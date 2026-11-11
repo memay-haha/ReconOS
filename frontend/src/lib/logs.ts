@@ -31,6 +31,10 @@ export interface LogFilter {
   /** ISO 8601 instants, inclusive. */
   readonly loggedFrom?: string | null;
   readonly loggedTo?: string | null;
+  /** N41: event name, and the engine whose calls the log is about. */
+  readonly event?: string | null;
+  readonly engine?: 'osmedeus' | 'vigolium' | null;
+  readonly limit?: number;
 }
 
 export const logKeys = {
@@ -43,12 +47,16 @@ export const logKeys = {
       filter.service ?? null,
       filter.loggedFrom ?? null,
       filter.loggedTo ?? null,
+      filter.event ?? null,
+      filter.engine ?? null,
+      filter.limit ?? null,
       cursor,
     ] as const,
 };
 
-export function useLogs(filter: LogFilter, cursor: string | null) {
+export function useLogs(filter: LogFilter, cursor: string | null, poll: number | false = false) {
   return useQuery({
+    refetchInterval: poll,
     queryKey: logKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<AppLog>>(
@@ -57,6 +65,9 @@ export function useLogs(filter: LogFilter, cursor: string | null) {
           service: filter.service,
           logged_at_from: filter.loggedFrom,
           logged_at_to: filter.loggedTo,
+          event: filter.event,
+          engine: filter.engine,
+          limit: filter.limit,
           cursor,
         }),
       ),

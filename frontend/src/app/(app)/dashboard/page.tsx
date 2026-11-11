@@ -3,6 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactElement, useEffect, useState } from 'react';
 
+import { type Alert, alertKeys, useAlerts } from '@/lib/alerts';
+
 import { NAV_GROUPS } from '@/components/nav-items';
 import { type AssetEvent, assetEventKeys, useAssetEvents } from '@/lib/asset-events';
 import {
@@ -12,9 +14,10 @@ import {
   dashboardKeys,
   useDashboardSummary,
 } from '@/lib/dashboard';
-import { type Finding, findingKeys, SEVERITY_LABEL, useFindings } from '@/lib/findings';
+import { type FindingRow, findingKeys, SEVERITY_LABEL, useFindings } from '@/lib/findings';
 import { type Job, JOB_STATUS_LABEL, type JobStatus, jobKeys, useJobs } from '@/lib/jobs';
 import { SEVERITIES, type Severity } from '@/lib/programs';
+import { useRealtimeStatus } from '@/lib/realtime';
 import { useToolModules } from '@/lib/tool-modules';
 
 import { shortId } from '../programs/links';
@@ -108,23 +111,87 @@ function useNow(): number {
   return now;
 }
 
-function assetItem(event: AssetEvent): FeedItem {
+const JOB_ICON: Readonly<Record<JobStatus, string>> = {
+  pending_approval: 'pending_actions',
+  queued: 'schedule',
+  dispatched: 'send',
+  running: 'progress_activity',
+  completed: 'check_circle',
+  failed: 'error',
+  cancelled: 'block',
+};
+
+const ASSET_NOUN: Readonly<Record<AssetEvent['asset_type'], [string, string]>> = {
+  domain: ['domain', 'domains'],
+  ip: ['IP', 'IPs'],
+  url: ['URL', 'URLs'],
+  service: ['service', 'services'],
+};
+
+function newest(values: readonly (string | null)[]): string {
+  return values
+    .filter((v): v is string => v !== null)
+    .reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a));
+}
+
+/** Asset events of one job, type and kind become one line, as the mockup writes "Discovered
+ * 148 endpoints … via gau": the job a parser ran for is what produced them together. */
+export function groupAssetEvents(events: readonly AssetEvent[]): AssetEvent[][] {
+  const groups = new Map<string, AssetEvent[]>();
+  for (const event of events) {
+    const key = `${event.job_id ?? event.id}|${event.asset_type}|${event.event_type}`;
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [event]);
+    else group.push(event);
+  }
+  return [...groups.values()];
+}
+
+function assetItem(group: readonly AssetEvent[]): FeedItem {
+  const first = group[0] as AssetEvent;
+  const [one, many] = ASSET_NOUN[first.asset_type];
+  const asn =
+    first.asset_type === 'ip' && group.length === 1 && first.asn != null
+      ? `AS${first.asn}${first.asn_org ? ` ${first.asn_org}` : ''}`
+      : null;
   return {
-    key: `asset-${event.id}`,
-    at: event.created_at,
-    icon: ASSET_ICON[event.asset_type],
-    tone: event.asset_type,
+    key: `asset-${first.id}`,
+    at: newest(group.map((e) => e.created_at)),
+    icon: ASSET_ICON[first.asset_type],
+    tone: first.asset_type,
     text: (
       <>
-        {event.event_type === 'discovered' ? 'Discovered' : 'Changed'} {event.asset_type}{' '}
-        <span className="font-body-code-bold text-primary">{event.asset_name}</span> under program{' '}
-        <span className="font-body-code text-fg-muted">{event.program_name}</span>
+        {first.event_type === 'discovered' ? 'Discovered' : 'Changed'}{' '}
+        {group.length === 1 ? (
+          <>
+            {one} <span className="font-body-code-bold text-primary">{first.asset_name}</span>
+            {asn !== null && (
+              <>
+                {' '}
+                (<span className="font-body-code text-fg-muted">{asn}</span>)
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="font-body-code-bold text-primary">{COUNT.format(group.length)}</span>{' '}
+            {many} (<span className="font-body-code text-fg">{first.asset_name}</span> and{' '}
+            {COUNT.format(group.length - 1)} more)
+          </>
+        )}
+        {first.tool_module_name ? (
+          <>
+            {' '}
+            via <span className="font-body-code text-fg-muted">{first.tool_module_name}</span>
+          </>
+        ) : null}{' '}
+        under program <span className="font-body-code text-fg-muted">{first.program_name}</span>
       </>
     ),
   };
 }
 
-function findingItem(finding: Finding): FeedItem {
+function findingItem(finding: FindingRow): FeedItem {
   return {
     key: `finding-${finding.id}`,
     at: finding.first_seen_at,
@@ -132,7 +199,13 @@ function findingItem(finding: Finding): FeedItem {
     tone: 'crit',
     text: (
       <>
-        Found{' '}
+        {finding.tool_module_name ? (
+          <>
+            <span className="font-body-code text-fg-muted">{finding.tool_module_name}</span> found
+          </>
+        ) : (
+          'Found'
+        )}{' '}
         <span className="font-body-code-bold text-crit">{finding.cve[0] ?? finding.name}</span>
         {finding.matched_at !== null && (
           <>
@@ -149,14 +222,33 @@ function jobItem(job: Job, toolName: string | undefined): FeedItem {
   const targets = job.target.length;
   return {
     key: `job-${job.id}`,
-    at: job.finished_at ?? job.created_at,
-    icon: 'check_circle',
-    tone: 'job',
+    at: newest([job.created_at, job.dispatched_at, job.started_at, job.finished_at]),
+    icon: JOB_ICON[job.status],
+    tone: job.status === 'failed' ? 'crit' : 'job',
     text: (
       <>
-        Job <span className="font-body-code text-fg">#{shortId(job.id)}</span> completed (
-        <span className="font-body-code text-fg-muted">{toolName ?? 'unknown tool module'}</span>{' '}
+        Job <span className="font-body-code text-fg">#{shortId(job.id)}</span>{' '}
+        {JOB_STATUS_LABEL[job.status].toLowerCase()} (
+        <span className="font-body-code text-fg-muted">
+          {job.tool_module_name ?? toolName ?? 'unknown tool module'}
+        </span>{' '}
         across {COUNT.format(targets)} {targets === 1 ? 'target' : 'targets'})
+      </>
+    ),
+  };
+}
+
+/** Decision N6: alerts of type `cert_expiring` join the feed. */
+function certItem(alert: Alert): FeedItem {
+  return {
+    key: `alert-${alert.id}`,
+    at: alert.created_at,
+    icon: 'flag',
+    tone: 'warn',
+    text: (
+      <>
+        TLS certificate expiry warning:{' '}
+        <span className="font-body-code text-fg">{alert.message}</span>
       </>
     ),
   };
@@ -209,24 +301,31 @@ function jobRows(data: DashboardSummary): Breakdown[][] {
 export default function DashboardPage(): ReactElement {
   const client = useQueryClient();
   const [span, setSpan] = useState<DashboardWindow>('24h');
-  const [paused, setPaused] = useState(false);
+  const [frozen, setFrozen] = useState<FeedItem[] | null>(null);
+  const paused = frozen !== null;
   const now = useNow();
+  // Decision N7: the feed follows the WebSocket; it polls only while the socket is down.
+  const live = useRealtimeStatus() === 'open';
 
   const poll = { refetchInterval: REFRESH_MS } as const;
-  const feedPoll = { refetchInterval: paused ? false : REFRESH_MS } as const;
+  const feedPoll = { refetchInterval: paused || live ? false : REFRESH_MS } as const;
   const summary = useDashboardSummary(span, poll);
   const events = useAssetEvents({ limit: FEED_LIMIT }, null, feedPoll);
   const findings = useFindings({ sort: '-first_seen_at', limit: FEED_LIMIT }, null, feedPoll);
-  const jobs = useJobs(
-    { status: 'completed', sort: '-finished_at', limit: FEED_LIMIT },
-    null,
-    feedPoll,
-  );
+  // Newest jobs whatever their status, so dispatches and failures show as well as completions.
+  const jobs = useJobs({ sort: '-created_at', limit: FEED_LIMIT }, null, feedPoll);
+  const alerts = useAlerts(FEED_LIMIT);
   const toolModules = useToolModules();
   const data = summary.data;
 
   const refresh = () => {
-    for (const queryKey of [dashboardKeys.all, assetEventKeys.all, findingKeys.all, jobKeys.all]) {
+    for (const queryKey of [
+      dashboardKeys.all,
+      assetEventKeys.all,
+      findingKeys.all,
+      jobKeys.all,
+      alertKeys.all,
+    ]) {
       void client.invalidateQueries({ queryKey });
     }
   };
@@ -247,15 +346,19 @@ export default function DashboardPage(): ReactElement {
   const feedFailed = events.isError || findings.isError || jobs.isError;
   const feedReady =
     events.data !== undefined && findings.data !== undefined && jobs.data !== undefined;
-  const feed: FeedItem[] = feedReady
+  const feedNow: FeedItem[] = feedReady
     ? [
-        ...events.data.items.map(assetItem),
+        ...groupAssetEvents(events.data.items).map(assetItem),
         ...findings.data.items.map(findingItem),
         ...jobs.data.items.map((j) => jobItem(j, toolName.get(j.tool_module_id))),
+        // The bell's alerts are optional here: a failed read leaves the cert lines out.
+        ...(alerts.data?.items ?? []).filter((a) => a.alert_type === 'cert_expiring').map(certItem),
       ]
         .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
         .slice(0, FEED_LIMIT)
     : [];
+  // Paused, the stream holds the lines it showed; refreshes land again on resume.
+  const feed = frozen ?? feedNow;
 
   const programs: Rank[] | undefined = data?.top_programs.map((p) => ({
     key: p.id,
@@ -368,6 +471,10 @@ export default function DashboardPage(): ReactElement {
             added={figure(data?.assets_new[type])}
             period={PERIOD[span]}
             trendIcon="arrow_upward"
+            // Decision M3: the Services tile counts services closed in the window.
+            closed={
+              type === 'service' ? { value: figure(data?.assets_closed?.service) } : undefined
+            }
           />
         ))}
       </div>
@@ -398,7 +505,7 @@ export default function DashboardPage(): ReactElement {
           icon="terminal"
           tone="service"
           tag="by service"
-          viewAll={routeOf('Monitor')}
+          viewAll={routeOf('Monitor') === null ? null : `${routeOf('Monitor')}?tab=services`}
           rows={ports}
           empty="No open ports found yet."
           footer={[
@@ -448,28 +555,33 @@ export default function DashboardPage(): ReactElement {
       </div>
 
       <div className="rounded-sm bg-surface p-space-lg shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span
               aria-hidden="true"
-              className={`h-2 w-2 rounded-full ${paused ? 'bg-fg-faint' : 'animate-ping bg-good'}`}
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                paused ? 'bg-fg-faint' : live ? 'animate-ping bg-good' : 'bg-warn'
+              }`}
             />
-            <h2 className="font-panel-title text-panel-title text-fg">Recent Activity</h2>
-            <span className="rounded-sm bg-surface-2 px-1.5 py-0.5 font-caption text-caption text-fg-faint">
-              auto-refresh 30s
+            <h2 className="font-panel-title text-panel-title text-fg">
+              Recent Activity (Live WebSocket)
+            </h2>
+            {/* While the socket is down the feed falls back to polling, and says so. */}
+            <span className="hidden rounded-sm bg-surface-2 px-1.5 py-0.5 font-caption text-caption text-fg-faint sm:inline">
+              {live ? 'stream::recon.events' : 'reconnecting · polling 30s'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="font-body-code text-caption text-fg-faint">
-              Auto-refresh: {paused ? 'OFF' : 'ON'}
+              Auto-scroll: {paused ? 'OFF' : 'ON'}
             </span>
             <button
               type="button"
               aria-pressed={paused}
-              aria-label={paused ? 'Resume feed' : 'Pause feed'}
-              title={paused ? 'Resume feed' : 'Pause feed'}
-              onClick={() => setPaused((p) => !p)}
-              className="rounded-sm p-1 text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg focus:ring-2 focus:ring-ring focus:outline-none"
+              aria-label={paused ? 'Resume stream' : 'Pause stream'}
+              title={paused ? 'Resume Stream' : 'Pause Stream'}
+              onClick={() => setFrozen(paused ? null : feedNow)}
+              className="rounded-sm p-1 text-fg-faint transition-colors hover:bg-surface-2 hover:text-fg focus:ring-2 focus:ring-ring focus:outline-none"
             >
               <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                 {paused ? 'play_arrow' : 'pause'}

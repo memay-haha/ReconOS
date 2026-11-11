@@ -9,6 +9,7 @@ import { shapeOf } from '@/test/dom-shape';
 
 import {
   cut,
+  cutByText,
   el,
   findByText,
   page,
@@ -19,8 +20,9 @@ import {
   textOf,
 } from '../domains/test-support';
 import MonitorPage from './page';
+import { setSearch } from './test-navigation';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', async () => (await import('./test-navigation')).navigationMock);
 
 const mockupFile = resolve(
   import.meta.dirname,
@@ -58,28 +60,27 @@ function prunedMockup(): Mockup {
   for (const link of Array.from(tablist.querySelectorAll('a')))
     retag(link, 'button', { role: 'tab' });
 
-  // Filter bar: no string search (M3, debt 39). The program select is labelled. The segmented
-  // control has the four dns_status values (M2), followed by the in_scope select. Column
-  // settings have no endpoint (M3).
-  cut(filterBar, 'input[type=text]', 'string search, debt 39');
+  // N8: Active Scope shows only while the list is narrowed to In-Scope; the screen opens
+  // without that filter.
+  cutByText(titleRow, 'span', 'Active Scope', 'decision N8');
+
+  // Filter bar: the program select is labelled; the DNS segments are a labelled group,
+  // followed by the In-scope select the decision log keeps (N9). Customize columns opens a
+  // popover, so its button sits in a wrapper.
   const select = filterBar.querySelector('select') as Element;
   select.before(el(doc, 'label'));
   const segmented = findByText(filterBar, 'div.flex', 'Unresolved');
-  segmented.replaceChildren(...Array.from({ length: 5 }, () => el(doc, 'button')));
+  segmented.setAttribute('role', 'group');
   segmented.after(el(doc, 'label', el(doc, 'select')));
-  cut(filterBar, 'button[title="Customize columns"]', 'no column settings');
+  const columnsButton = filterBar.querySelector('button[title="Customize columns"]') as Element;
+  columnsButton.replaceWith(el(doc, 'div', columnsButton.cloneNode(true) as Element));
 
-  // Bulk bar: Export Selected has no endpoint (M3).
-  findByText(bulk, 'button', 'Export Selected').remove();
+  // Bulk bar: Export Selected downloads a file, so it is a link.
+  retag(findByText(bulk, 'button', 'Export Selected'), 'a');
 
   // The table area is the panel of the selected tab (M6).
   tableArea.setAttribute('role', 'tabpanel');
   const table = tableArea.querySelector('table') as Element;
-  const heads = Array.from(table.querySelectorAll('thead th'));
-  // A domain row carries no ASN or organisation (M3).
-  const asn = heads.findIndex((th) => textOf(th) === 'ASN / ORG');
-  if (asn === -1) throw new Error('ASN / ORG column not in the mockup');
-  for (const tr of Array.from(table.querySelectorAll('tr'))) tr.children[asn]?.remove();
   // View Detail opens S05: a link.
   for (const button of Array.from(table.querySelectorAll('button'))) retag(button, 'a');
   const columns = Array.from(table.querySelectorAll('thead th')).map(textOf);
@@ -124,7 +125,11 @@ async function renderScreen(mockup: Mockup) {
   return view;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  setSearch('');
+  window.localStorage.clear();
+});
 
 // Rendering a full mockup page of rows is slow on a loaded machine.
 describe('S03 against its mockup', { timeout: 20_000 }, () => {
@@ -140,7 +145,8 @@ describe('S03 against its mockup', { timeout: 20_000 }, () => {
   it('has the columns of the mockup, renamed only where the decision log says', async () => {
     const mockup = prunedMockup();
     await renderScreen(mockup);
-    const renamed: Record<string, string> = { 'OPEN PORTS': 'Services', 'LAST SCAN': 'Last seen' };
+    // M2: the column shows `last_seen_at`, so it says Last seen.
+    const renamed: Record<string, string> = { 'LAST SCAN': 'Last seen' };
     const expected = mockup.columns.map((c) => (renamed[c] ?? c).toUpperCase());
     const mine = screen.getAllByRole('columnheader').map((th) => textOf(th).toUpperCase());
     expect(mine).toEqual(expected);
@@ -148,10 +154,10 @@ describe('S03 against its mockup', { timeout: 20_000 }, () => {
 
   it('builds nothing from the dropped parts', async () => {
     const mockup = prunedMockup();
-    const { container } = await renderScreen(mockup);
-    expect(container.querySelector('input[type=text], input[type=search]')).toBeNull();
-    const words = textOf(container);
-    for (const banned of ['Active Scope', 'Sync Realtime', 'Export Selected', 'ASN', 'First'])
-      expect(words).not.toContain(banned);
+    await renderScreen(mockup);
+    // Numbered pages, First and Last are banned (frontend/CLAUDE.md).
+    const pager = screen.getByRole('navigation', { name: 'Asset pagination' });
+    const buttons = Array.from(pager.querySelectorAll('button')).map(textOf);
+    expect(buttons).toEqual(['Previous', 'Next']);
   });
 });

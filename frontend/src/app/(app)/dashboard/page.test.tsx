@@ -21,6 +21,7 @@ const EVENT = {
   asset_type: 'domain',
   asset_name: 'api.example.com',
   program_name: 'Example Corp',
+  tool_module_name: 'subfinder',
 };
 
 const FINDING = {
@@ -45,6 +46,20 @@ const FINDING = {
   triaged_at: null,
   first_seen_at: '2026-11-04T01:10:00Z',
   last_seen_at: '2026-11-04T01:10:00Z',
+  tool_module_name: 'nuclei',
+  asset: null,
+  matcher: null,
+};
+
+const CERT = {
+  id: 'a1',
+  alert_type: 'cert_expiring',
+  message: 'TLS certificate of https://auth.example.com expires in 6 days',
+  program_id: 'p1',
+  finding_id: null,
+  job_id: null,
+  created_at: '2026-11-04T00:30:00Z',
+  is_read: false,
 };
 
 const JOB = {
@@ -52,7 +67,7 @@ const JOB = {
   program_id: 'p1',
   tool_module_id: 't1',
   status: 'completed',
-  priority: 0,
+  priority: 'normal',
   target: ['a.example.com', 'b.example.com'],
   params: {},
   proxy_id: null,
@@ -98,6 +113,7 @@ interface Sources {
   events?: () => Response;
   findings?: () => Response;
   jobs?: () => Response;
+  alerts?: () => Response;
 }
 
 function stub(sources: Sources = {}) {
@@ -113,6 +129,9 @@ function stub(sources: Sources = {}) {
     }
     if (path.startsWith('/api/v1/jobs')) {
       return Promise.resolve((sources.jobs ?? (() => Response.json(page([JOB]))))());
+    }
+    if (path.startsWith('/api/v1/alerts')) {
+      return Promise.resolve((sources.alerts ?? (() => Response.json(page([CERT]))))());
     }
     if (path.startsWith('/api/v1/tool-modules'))
       return Promise.resolve(Response.json(page([TOOL])));
@@ -142,6 +161,8 @@ function panel(title: string): HTMLElement {
 
 afterEach(() => vi.unstubAllGlobals());
 
+const FEED = 'Recent Activity (Live WebSocket)';
+
 describe('S02 dashboard', () => {
   it('reads the summary for the last 24 hours and the three feed sources', async () => {
     const fetchMock = stub();
@@ -150,7 +171,8 @@ describe('S02 dashboard', () => {
     expect(paths(fetchMock)).toContain('/api/v1/dashboard/summary?window=24h');
     expect(paths(fetchMock)).toContain('/api/v1/asset-events?sort=-created_at&limit=8');
     expect(paths(fetchMock)).toContain('/api/v1/findings?sort=-first_seen_at&limit=8');
-    expect(paths(fetchMock)).toContain('/api/v1/jobs?status=completed&sort=-finished_at&limit=8');
+    expect(paths(fetchMock)).toContain('/api/v1/jobs?sort=-created_at&limit=8');
+    expect(paths(fetchMock)).toContain('/api/v1/alerts?sort=-created_at&limit=8');
   });
 
   it('says it is synced and refreshes every 30s, as the mockup does', async () => {
@@ -167,8 +189,8 @@ describe('S02 dashboard', () => {
     expect(screen.getByText('86,410')).toBeInTheDocument();
     expect(screen.getByText('+2 today')).toBeInTheDocument();
     expect(screen.getAllByText('+1,204 today').length).toBeGreaterThan(0);
-    // No new service in the window: a flat line, not "+0".
-    expect(screen.getByText('0 today')).toBeInTheDocument();
+    // Decision M3: the Services tile counts services closed in the window.
+    expect(screen.getByText('−74 closed')).toBeInTheDocument();
   });
 
   it('asks for the chosen window and words the change for it', async () => {
@@ -245,16 +267,25 @@ describe('S02 dashboard', () => {
     expect(within(jobs).getByText('Throughput: ~182 jobs/min')).toBeInTheDocument();
   });
 
-  it('merges asset events, findings and finished jobs, newest first', async () => {
+  it('merges asset events, findings, jobs and expiring certificates, newest first', async () => {
     stub();
     wrap();
     await screen.findByText('api.example.com');
-    const feed = panel('Recent Activity');
+    const feed = panel(FEED);
     const rows = Array.from(feed.querySelectorAll('time')).map((t) => t.getAttribute('datetime'));
-    expect(rows).toEqual([FINDING.first_seen_at, EVENT.created_at, JOB.finished_at]);
+    expect(rows).toEqual([
+      FINDING.first_seen_at,
+      EVENT.created_at,
+      JOB.finished_at,
+      CERT.created_at,
+    ]);
     expect(within(feed).getByText('CVE-2024-0001')).toBeInTheDocument();
     expect(within(feed).getByText('#000a8491')).toBeInTheDocument();
     expect(within(feed).getByText('gowitness')).toBeInTheDocument();
+    // The tool module that produced each line.
+    expect(within(feed).getByText('nuclei')).toBeInTheDocument();
+    expect(within(feed).getByText('subfinder')).toBeInTheDocument();
+    expect(within(feed).getByText(CERT.message)).toBeInTheDocument();
     // Relative time on screen, the pinned date in the title.
     const first = feed.querySelector('time') as HTMLElement;
     expect(first.textContent).toMatch(/ago$/);
@@ -275,21 +306,71 @@ describe('S02 dashboard', () => {
       events: () => Response.json(page([])),
       findings: () => Response.json(page([])),
       jobs: () => Response.json(page([])),
+      alerts: () => Response.json(page([])),
     });
     wrap();
     expect(await screen.findByText('No activity yet.')).toBeInTheDocument();
   });
 
-  it('pauses and resumes the feed refresh', async () => {
+  it('pauses and resumes the stream', async () => {
     const user = userEvent.setup();
     stub();
     wrap();
     await screen.findByText('api.example.com');
-    expect(screen.getByText('Auto-refresh: ON')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Pause feed' }));
-    expect(screen.getByText('Auto-refresh: OFF')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Resume feed' }));
-    expect(screen.getByText('Auto-refresh: ON')).toBeInTheDocument();
+    expect(screen.getByText('Auto-scroll: ON')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Pause stream' }));
+    expect(screen.getByText('Auto-scroll: OFF')).toBeInTheDocument();
+    expect(screen.getByText('api.example.com')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Resume stream' }));
+    expect(screen.getByText('Auto-scroll: ON')).toBeInTheDocument();
+  });
+
+  it('groups the asset events of one job into one line', async () => {
+    stub({
+      events: () =>
+        Response.json(
+          page([
+            EVENT,
+            { ...EVENT, id: 'e2', asset_name: 'www.example.com' },
+            { ...EVENT, id: 'e3', asset_name: 'cdn.example.com' },
+          ]),
+        ),
+    });
+    wrap();
+    const line = await screen.findByText(/and 2 more/);
+    expect(line).toHaveTextContent(
+      'Discovered 3 domains (api.example.com and 2 more) via subfinder under program Example Corp',
+    );
+  });
+
+  it('names the ASN on a single IP line', async () => {
+    stub({
+      events: () =>
+        Response.json(
+          page([
+            {
+              ...EVENT,
+              asset_type: 'ip',
+              asset_name: '198.51.100.24',
+              asn: 64500,
+              asn_org: 'EXAMPLE-NET',
+            },
+          ]),
+        ),
+    });
+    wrap();
+    expect(await screen.findByText('AS64500 EXAMPLE-NET')).toBeInTheDocument();
+  });
+
+  it('opens the Services tab of S03 from Top Open Ports', async () => {
+    stub();
+    wrap();
+    await screen.findByText('14,892');
+    const ports = panel('Top Open Ports');
+    expect(within(ports).getByRole('link', { name: /View all/ })).toHaveAttribute(
+      'href',
+      '/monitor?tab=services',
+    );
   });
 
   it('reports a failed summary in its own words, not the backend title', async () => {

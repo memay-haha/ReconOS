@@ -26,13 +26,41 @@ export interface Ip {
 export interface AssetListFilter {
   readonly programId?: string | null;
   readonly domainId?: string | null;
+  /** Case-insensitive substring; `*` is a wildcard on addresses (decision N2). */
+  readonly q?: string | null;
   readonly limit?: number | null;
+}
+
+/** Formats of every `/<asset>/export`: docs/api/openapi.yaml. */
+export type AssetExportFormat = 'csv' | 'jsonl' | 'md';
+
+/** Link to `GET <path>/export` with the list's filters; `ids` (at most 500) narrows it to the
+ * selected rows. A link, not a fetch: the browser downloads the file. */
+export function assetExportHref(
+  path: '/ips' | '/urls' | '/services',
+  filter: AssetListFilter,
+  options: { readonly format?: AssetExportFormat; readonly ids?: readonly string[] } = {},
+): string {
+  return `/api/v1${withQuery(`${path}/export`, {
+    format: options.format ?? 'csv',
+    ids: options.ids,
+    program_id: filter.programId,
+    domain_id: path === '/ips' ? null : filter.domainId,
+    q: filter.q,
+  })}`;
 }
 
 export const ipKeys = {
   all: ['ips'] as const,
   list: (filter: AssetListFilter, cursor: string | null) =>
-    ['ips', 'list', filter.programId ?? null, filter.limit ?? null, cursor] as const,
+    [
+      'ips',
+      'list',
+      filter.programId ?? null,
+      filter.q ?? null,
+      filter.limit ?? null,
+      cursor,
+    ] as const,
 };
 
 export function useIps(
@@ -45,7 +73,12 @@ export function useIps(
     queryKey: ipKeys.list(filter, cursor),
     queryFn: () =>
       apiRequest<Page<Ip>>(
-        withQuery('/ips', { program_id: filter.programId, limit: filter.limit, cursor }),
+        withQuery('/ips', {
+          program_id: filter.programId,
+          q: filter.q,
+          limit: filter.limit,
+          cursor,
+        }),
       ),
   });
 }

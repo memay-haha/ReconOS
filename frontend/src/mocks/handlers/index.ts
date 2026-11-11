@@ -4,12 +4,26 @@ import { partCRoutes } from './part-c';
 import { partDRoutes } from './part-d';
 import { partERoutes } from './part-e';
 import { sharedRoutes } from './shared';
+import { stitchARoutes } from './stitch-a';
+import { stitchBRoutes } from './stitch-b';
+import { stitchCRoutes } from './stitch-c';
+import { stitchDRoutes } from './stitch-d';
+import { stitchERoutes } from './stitch-e';
+import { stitchFRoutes } from './stitch-f';
 
 export type { MockRoute } from './helpers';
 
 /** Handlers are described, not built: registry.ts builds only the routes the
  * backend does not serve, so a mock for a live endpoint never exists. */
+// Stitch pass routes come first: MSW answers with the first match, so a route redefined
+// there replaces the older one in part-b..e and shared.
 export const mockRoutes: readonly MockRoute[] = [
+  ...stitchARoutes,
+  ...stitchBRoutes,
+  ...stitchCRoutes,
+  ...stitchDRoutes,
+  ...stitchERoutes,
+  ...stitchFRoutes,
   ...sharedRoutes,
   ...partBRoutes,
   ...partCRoutes,

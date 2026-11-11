@@ -24,6 +24,12 @@ export interface AssetEvent {
   readonly asset_type: AssetType;
   readonly asset_name: string;
   readonly program_name: string;
+  /** Tool module of the job that found the asset; null without a job. Optional until every
+   * source sends it. */
+  readonly tool_module_name?: string | null;
+  /** IP events only: of the IP. */
+  readonly asn?: number | null;
+  readonly asn_org?: string | null;
 }
 
 export interface AssetEventFilter {

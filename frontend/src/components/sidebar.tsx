@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 import type { CurrentUser } from '@/lib/auth';
+import { versionLabel } from '@/lib/build-info';
 
 import { ChangePasswordDialog } from './change-password-dialog';
-import { NAV_GROUPS, isCurrent } from './nav-items';
-import type { NavItem } from './nav-items';
+import { NAV_GROUPS, badgeKey, isCurrent } from './nav-items';
+import type { NavBadge, NavItem } from './nav-items';
 
 const ROLE_LABEL: Record<CurrentUser['role'], string> = {
   superadmin: 'Superadmin',
@@ -16,13 +17,14 @@ const ROLE_LABEL: Record<CurrentUser['role'], string> = {
   user: 'User',
 };
 
-// The mockup colours the count of unreviewed findings and of queued jobs; the rest are neutral.
-const BADGE_TONE: Record<string, string> = {
-  '/findings?triage_status=new':
-    'border-crit-strong-bd bg-crit-strong-soft text-crit-strong font-semibold',
-  '/jobs?status=queued': 'border-warn-strong-bd bg-warn-strong-soft text-warn font-semibold',
+const BADGE_TONE: Record<NavBadge['tone'], string> = {
+  crit: 'border-crit-strong-bd bg-crit-strong-soft text-crit-strong font-semibold',
+  warn: 'border-warn-strong-bd bg-warn-strong-soft text-warn font-semibold',
+  neutral: 'border-border-subtle bg-surface-container-low text-fg-muted',
 };
-const BADGE_NEUTRAL = 'border-border-subtle bg-surface-container-low text-fg-muted';
+
+// Decision N3: every version chip shows the ReconOS build version.
+const VERSION = versionLabel();
 
 const ROW = 'flex items-center justify-between rounded-sm px-2.5 py-1.5 text-body-default';
 
@@ -34,12 +36,14 @@ function Icon({ name }: { name: string }) {
   );
 }
 
-function Count({ endpoint, value }: { endpoint: string; value: number }) {
+const COUNT = new Intl.NumberFormat('en-US');
+
+function Count({ badge, value }: { badge: NavBadge; value: number }) {
   return (
     <span
-      className={`rounded-sm border px-1.5 font-body-code text-caption ${BADGE_TONE[endpoint] ?? BADGE_NEUTRAL}`}
+      className={`rounded-sm border px-1.5 font-body-code text-caption ${BADGE_TONE[badge.tone]}`}
     >
-      {value}
+      {COUNT.format(value)}
     </span>
   );
 }
@@ -57,7 +61,7 @@ function Row({
 }) {
   const badge =
     item.badge !== undefined && count !== undefined ? (
-      <Count endpoint={item.badge} value={count} />
+      <Count badge={item.badge} value={count} />
     ) : null;
   const label = (
     <span className="flex items-center gap-2">
@@ -189,9 +193,11 @@ export function Sidebar({
                 <span className="text-primary">OS</span>
               </span>
             </div>
-            <span className="ml-auto rounded-sm border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-micro text-fg-dim">
-              v2.4
-            </span>
+            {VERSION === null ? null : (
+              <span className="ml-auto rounded-sm border border-border bg-surface-container-low px-1.5 py-0.5 font-body-code text-micro text-fg-dim">
+                {VERSION}
+              </span>
+            )}
           </div>
           <nav aria-label="Main" className="flex-1 space-y-gutter">
             {VISIBLE_GROUPS.map((group) => (
@@ -215,7 +221,7 @@ export function Sidebar({
                         item={item}
                         href={href}
                         current={isCurrent(pathname, href)}
-                        count={item.badge === undefined ? undefined : counts[item.badge]}
+                        count={item.badge === undefined ? undefined : counts[badgeKey(item.badge)]}
                       />
                     </li>
                   ))}

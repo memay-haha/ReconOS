@@ -5,9 +5,24 @@ export interface NavItem {
   /** Material Symbols Outlined ligature, as the mockups use. */
   readonly icon: string;
   readonly part: string;
-  /** Path and query whose `total` feeds the count beside the label. The query says what is
-   * counted: the mockup shows unreviewed findings and queued jobs, not every row. */
-  readonly badge?: string;
+  /** Where the count beside the label comes from. The query says what is counted: the
+   * mockup shows unreviewed findings and queued jobs, not every row. */
+  readonly badge?: NavBadge;
+}
+
+export interface NavBadge {
+  /** Path and query of the endpoint read. */
+  readonly path: string;
+  /** Dotted field of the response holding the count. A list endpoint's `total` is read with
+   * `limit=1`. */
+  readonly field: string;
+  /** The mockup colours a few counts; the rest are neutral. */
+  readonly tone: 'crit' | 'warn' | 'neutral';
+}
+
+/** One key per count, so two items may read different fields of one endpoint. */
+export function badgeKey(badge: NavBadge): string {
+  return `${badge.path}#${badge.field}`;
 }
 
 export interface NavGroup {
@@ -25,7 +40,18 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'grid_view', part: 'Part D' },
       { label: 'Monitor', href: '/monitor', icon: 'show_chart', part: 'Part C' },
-      { label: 'Domains', href: '/domains', icon: 'language', part: 'Part C', badge: '/domains' },
+      {
+        label: 'Domains',
+        href: '/domains',
+        icon: 'language',
+        part: 'Part C',
+        // Decision M2: domains discovered in the last 24 hours.
+        badge: {
+          path: '/dashboard/summary?window=24h',
+          field: 'assets_new.domain',
+          tone: 'neutral',
+        },
+      },
       { label: 'Screenshots', href: '/screenshots', icon: 'photo_camera', part: 'Part D' },
       { label: 'Programs', href: '/programs', icon: 'folder', part: 'Part B' },
       {
@@ -33,7 +59,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/findings',
         icon: 'pest_control',
         part: 'Part E',
-        badge: '/findings?triage_status=new',
+        badge: { path: '/findings?triage_status=new', field: 'total', tone: 'crit' },
       },
     ],
   },
@@ -46,7 +72,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/queue',
         icon: 'dns',
         part: 'Part B',
-        badge: '/jobs?status=queued',
+        badge: { path: '/jobs?status=queued', field: 'total', tone: 'warn' },
       },
       { label: 'Manage', href: '/manage', icon: 'tune', part: 'Part B' },
       { label: 'Raw Outputs', href: null, icon: 'description', part: 'Part B' },

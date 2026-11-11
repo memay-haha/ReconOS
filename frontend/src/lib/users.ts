@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
+import { withQuery } from './page';
 import { sessionKeys } from './sessions';
 import type { CurrentUser } from './auth';
 
@@ -22,29 +23,53 @@ export interface UserCore {
  * write response into this row, refetch instead (every mutation invalidates `userKeys.all`). */
 export interface UserRow extends UserCore {
   readonly active_user_session_count: number;
+  /** Superadmin only: `ip_address` and `last_seen_at` of the newest active session, null
+   * when there is none. Optional until the backend returns them (docs/api/architecture.md). */
+  readonly last_session_ip?: string | null;
+  readonly last_seen_at?: string | null;
 }
+
+export type UserRole = UserRow['role'];
+
+export const USER_ROLES: readonly UserRole[] = ['superadmin', 'admin', 'user'];
 
 export interface UserPage {
   readonly items: readonly UserRow[];
   readonly next_cursor: string | null;
   readonly total: number;
   readonly total_is_estimate: boolean;
+  /** Superadmin only, over every account the caller sees, ignoring filters and paging.
+   * Optional until the backend returns them. */
+  readonly role_counts?: Readonly<Record<UserRole, number>>;
+  readonly locked_count?: number;
+}
+
+export interface UserFilter {
+  /** Matches `username` and `display_name`. */
+  readonly q?: string | null;
+  readonly role?: UserRole | null;
+  readonly limit?: number;
 }
 
 export const userKeys = {
   all: ['users'] as const,
-  page: (cursor: string | null) => ['users', 'page', cursor] as const,
+  page: (cursor: string | null, filter: UserFilter = {}) =>
+    ['users', 'page', filter.q ?? null, filter.role ?? null, filter.limit ?? null, cursor] as const,
 };
 
-function withCursor(path: string, cursor: string | null): string {
-  return cursor === null ? path : `${path}?cursor=${encodeURIComponent(cursor)}`;
+export function useUsers(cursor: string | null, filter: UserFilter = {}) {
+  return useQuery({
+    queryKey: userKeys.page(cursor, filter),
+    queryFn: () =>
+      apiRequest<UserPage>(
+        withQuery('/users', { q: filter.q, role: filter.role, limit: filter.limit, cursor }),
+      ),
+  });
 }
 
-export function useUsers(cursor: string | null) {
-  return useQuery({
-    queryKey: userKeys.page(cursor),
-    queryFn: () => apiRequest<UserPage>(withCursor('/users', cursor)),
-  });
+/** `GET /users/export`: a plain link, the browser downloads the stream. Superadmin only. */
+export function userExportHref(filter: UserFilter, ids: readonly string[] = []): string {
+  return `/api/v1${withQuery('/users/export', { format: 'csv', q: filter.q, role: filter.role, ids })}`;
 }
 
 export interface UserCreateBody {
@@ -99,5 +124,32 @@ export function useLockUser() {
 export function useUnlockUser() {
   return useUserMutation((userId: string) =>
     apiRequest<void>(`/users/${userId}/unlock`, { method: 'POST' }),
+  );
+}
+
+/** Soft delete: the account is hidden and can no longer sign in. Never your own account. */
+export function useDeleteUser() {
+  return useUserMutation(
+    (userId: string) => apiRequest<void>(`/users/${userId}`, { method: 'DELETE' }),
+    [sessionKeys.all],
+  );
+}
+
+/** On your own row the backend keeps the calling session and revokes the others (N37). */
+export function useRevokeUserSessions() {
+  return useUserMutation(
+    (userId: string) => apiRequest<void>(`/users/${userId}/revoke-sessions`, { method: 'POST' }),
+    [sessionKeys.all],
+  );
+}
+
+export function useBulkRevokeSessions() {
+  return useUserMutation(
+    (ids: readonly string[]) =>
+      apiRequest<void>('/users/bulk-revoke-sessions', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
+    [sessionKeys.all],
   );
 }

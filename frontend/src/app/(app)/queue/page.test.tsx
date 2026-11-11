@@ -14,7 +14,7 @@ import {
 } from '../programs/test-api';
 import QueuePage from './page';
 
-const LIST = '/jobs?sort=-created_at';
+const LIST = '/jobs?sort=-created_at&limit=25';
 
 const IDLE = { last_heartbeat_at: null, queued_by_tool_module: {}, queued_by_program: {} };
 
@@ -34,9 +34,12 @@ describe('S10 queue', () => {
     const fetchMock = stubQueue({
       [LIST]: page([]),
       '/jobs?status=queued&limit=1': page([], { total: 1234 }),
+      '/jobs?status=completed&limit=1': page([], { total: 97 }),
+      '/jobs?status=failed&limit=1': page([], { total: 3 }),
     });
     renderWithClient(<QueuePage />);
     expect(await screen.findByText('1,234')).toBeInTheDocument();
+    expect(await screen.findByText('97.0% success')).toBeInTheDocument();
     for (const status of [
       'pending_approval',
       'queued',
@@ -62,8 +65,8 @@ describe('S10 queue', () => {
       '/programs?sort=name&limit=200': page([{ id: 'p1', name: 'Example Corp' }]),
     });
     renderWithClient(<QueuePage />);
-    expect(await screen.findByText('04/11/2026 08:05')).toBeInTheDocument();
-    expect(await screen.findByText('nuclei')).toBeInTheDocument();
+    expect(await screen.findByText(/04\/11\/2026 08:05/)).toBeInTheDocument();
+    expect((await screen.findAllByText('nuclei')).length).toBeGreaterThan(0);
     expect(screen.getAllByText('3 queued').length).toBeGreaterThan(0);
     expect((await screen.findAllByText('Example Corp')).length).toBeGreaterThan(0);
     expect(screen.getByText('nown1234')).toBeInTheDocument();
@@ -72,27 +75,80 @@ describe('S10 queue', () => {
   it('shows Workers to Admin and never asks for them as User', async () => {
     stubQueue({ [LIST]: page([]) }, ME_ADMIN);
     const { unmount } = renderWithClient(<QueuePage />);
-    expect(await screen.findByText('Workers')).toBeInTheDocument();
+    expect(await screen.findByText('Active Runner Nodes')).toBeInTheDocument();
     unmount();
     const fetchMock = stubQueue({ [LIST]: page([]) }, ME_USER);
     renderWithClient(<QueuePage />);
     await screen.findByText(/no jobs match/i);
-    expect(screen.queryByText('Workers')).toBeNull();
+    expect(screen.queryByText('Active Runner Nodes')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Dispatch All/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cleanup' })).toBeNull();
     expect(calls(fetchMock).some((c) => c.includes('/workers'))).toBe(false);
   });
 
-  it('filters by status and program', async () => {
+  it('filters by status, tool module and search text', async () => {
     const fetchMock = stubQueue({
       [LIST]: page([jobRow(1)]),
-      '/programs?sort=name&limit=200': page([{ id: 'p1', name: 'Example Corp' }]),
+      '/tool-modules?limit=200': page([{ id: 'tm1', name: 'nuclei' }]),
     });
     renderWithClient(<QueuePage />);
     await screen.findByRole('table');
     await userEvent.selectOptions(screen.getByLabelText('Status'), 'failed');
-    expect(calls(fetchMock)).toContain('GET /jobs?status=failed&sort=-created_at');
-    await screen.findByRole('option', { name: 'Example Corp' });
-    await userEvent.selectOptions(screen.getByLabelText('Program'), 'p1');
-    expect(calls(fetchMock)).toContain('GET /jobs?status=failed&program_id=p1&sort=-created_at');
+    expect(calls(fetchMock)).toContain('GET /jobs?status=failed&sort=-created_at&limit=25');
+    await screen.findByRole('option', { name: 'nuclei' });
+    await userEvent.selectOptions(screen.getByLabelText('Tool module'), 'tm1');
+    expect(calls(fetchMock)).toContain(
+      'GET /jobs?status=failed&sort=-created_at&limit=25&tool_module_id=tm1',
+    );
+    await userEvent.type(screen.getByLabelText('Filter jobs'), 'api');
+    await vi.waitFor(() =>
+      expect(calls(fetchMock)).toContain(
+        'GET /jobs?status=failed&sort=-created_at&limit=25&q=api&tool_module_id=tm1',
+      ),
+    );
+  });
+
+  it('runs the queue controls through their endpoints', async () => {
+    const fetchMock = stubQueue({
+      [LIST]: page([jobRow(1, { status: 'queued', target: ['q.example.com'] })]),
+      '/jobs?status=failed&limit=500': page([jobRow(7, { status: 'failed' })]),
+      '/dispatcher/status': { ...IDLE, status: 'ok', queued_total: 34, queue_capacity: 1000 },
+      'POST /jobs/cleanup': { cancelled: 2 },
+    });
+    renderWithClient(<QueuePage />);
+    await screen.findByRole('table');
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Dispatch All \(34 Queued\)/ }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+    expect(await screen.findByText('Cleanup cancelled 2 queued jobs.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Retry Failed/ }));
+    await userEvent.click(
+      within(rowOf('q.example.com')).getByRole('button', { name: 'Dispatch Now' }),
+    );
+    expect(calls(fetchMock)).toEqual(
+      expect.arrayContaining([
+        'POST /dispatcher/wake',
+        'POST /jobs/cleanup',
+        'POST /jobs/bulk-retry',
+        'POST /jobs/job-1-0000-0000/prioritize',
+      ]),
+    );
+    const retry = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/bulk-retry'));
+    expect(JSON.parse(String(retry?.[1]?.body))).toEqual({ ids: ['job-7-0000-0000'] });
+    expect(screen.getByText('34 waiting')).toBeInTheDocument();
+    expect(screen.getByText('3.4% used')).toBeInTheDocument();
+  });
+
+  it('shows the reason of a failed job behind View Error', async () => {
+    stubQueue({
+      [LIST]: page([jobRow(1, { status: 'failed', status_reason: 'Tool module timed out' })]),
+    });
+    renderWithClient(<QueuePage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'View Error' }));
+    expect(
+      within(screen.getByRole('dialog')).getByText('Tool module timed out'),
+    ).toBeInTheDocument();
   });
 
   it('offers the actions the status allows', async () => {
@@ -114,10 +170,10 @@ describe('S10 queue', () => {
       within(rowOf(text))
         .getAllByRole('button')
         .map((b) => b.textContent);
-    expect(names('pending.example.com')).toEqual(['Approve', 'Reject', 'Raw outputs', 'Logs']);
-    expect(names('running.example.com')).toEqual(['Cancel', 'Raw outputs', 'Logs']);
-    expect(names('cancelled.example.com')).toEqual(['Retry', 'Raw outputs', 'Logs']);
-    expect(names('done.example.com')).toEqual(['Raw outputs', 'Logs']);
+    expect(names('pending.example.com')).toEqual(['Approve', 'Reject']);
+    expect(names('running.example.com')).toEqual(['Cancel', 'Logs']);
+    expect(names('cancelled.example.com')).toEqual(['Retry']);
+    expect(names('done.example.com')).toEqual(['Raw outputs']);
     expect(screen.getByText('Out of scope')).toBeInTheDocument();
   });
 
@@ -179,7 +235,21 @@ describe('S10 queue', () => {
 
   it('opens the raw outputs of a job with a download link, and its logs', async () => {
     stubQueue({
-      [LIST]: page([jobRow(1, { status: 'completed' })]),
+      [LIST]: page([
+        jobRow(1, { status: 'completed', target: ['done.example.com'] }),
+        jobRow(2, { status: 'running', target: ['run.example.com'], started_at: null }),
+      ]),
+      '/jobs/job-2-0000-0000/logs': page([
+        {
+          id: 'l1',
+          logged_at: '2026-11-04T01:05:00Z',
+          level: 'error',
+          service: 'worker',
+          event: '<b>job_failed</b>',
+          job_id: 'job-2-0000-0000',
+          context: {},
+        },
+      ]),
       '/jobs/job-1-0000-0000/raw-outputs': page([
         {
           id: 'ro1',
@@ -213,7 +283,8 @@ describe('S10 queue', () => {
       '/api/v1/raw-outputs/ro1/content',
     );
     expect(screen.getByText('2.0 KB')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Logs' }));
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+    await userEvent.click(within(rowOf('run.example.com')).getByRole('button', { name: 'Logs' }));
     expect(await screen.findByText('<b>job_failed</b>')).toBeInTheDocument();
     expect(container.querySelector('b')).toBeNull();
   });

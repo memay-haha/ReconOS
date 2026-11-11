@@ -1,23 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { type KeyboardEvent, type ReactElement, useState } from 'react';
 
 import { ApiError } from '@/lib/api-client';
-import { useDiscoveryEvent, useDomainScreenshots, useJob } from '@/lib/domain-detail';
-import { useDomain } from '@/lib/domains';
+import { useMe } from '@/lib/auth';
+import {
+  useDiscoveryEvent,
+  useDomainScreenshots,
+  useJob,
+  useJobsForTarget,
+} from '@/lib/domain-detail';
+import { type DomainNav, useDeleteDomain, useDomain, useDomainNav } from '@/lib/domains';
 import { SEVERITY_LABEL } from '@/lib/findings';
 import { formatMoment } from '@/lib/format-moment';
 import { SEVERITIES } from '@/lib/programs';
+import { useServices } from '@/lib/services';
 import { useToolModules } from '@/lib/tool-modules';
+import { useUrls } from '@/lib/urls';
 
 import { DnsBadge } from '../asset-bits';
 import { copyText, COUNT } from '../asset-ui';
-import { RunScanButton } from '../run-scan-button';
+import { ConfirmDialog } from '../modal';
+import { ScanButton } from '../scan-modal';
 import { useProgramOptions } from '../use-program-options';
 import { CopyButton } from './copy-button';
-import { CapturePanel, EventsPanel, FindingsPanel, TargetPanel } from './overview';
+import { ActivityPanel, CapturePanel, FindingsPanel, TargetPanel } from './overview';
 import {
   DnsPanel,
   FindingsTab,
@@ -46,6 +55,77 @@ const TILE_TONE = {
   shot: 'text-tertiary',
   crit: 'text-crit',
 } as const;
+
+const STEP =
+  'inline-flex h-7 items-center gap-1 rounded-sm border border-border bg-surface px-2 font-body-code text-caption text-fg-muted hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring';
+const STEP_OFF =
+  'inline-flex h-7 items-center gap-1 rounded-sm border border-border bg-surface px-2 font-body-code text-caption text-fg-faint opacity-60';
+
+/** Previous, position and Next within the S04 page the reader came from. Opened directly, the
+ * cache holds no page and the stepper stays hidden. */
+function Stepper({ nav, domainId }: { nav: DomainNav | null; domainId: string }) {
+  const index = nav === null ? -1 : nav.ids.indexOf(domainId);
+  if (nav === null || index < 0) return null;
+  const prev = nav.ids[index - 1];
+  const next = nav.ids[index + 1];
+  const href = (id: string) => `/domains/${encodeURIComponent(id)}`;
+  return (
+    <nav aria-label="Domain navigation" className="flex items-center gap-space-xs">
+      {prev === undefined ? (
+        <span aria-disabled="true" className={STEP_OFF}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px]">
+            chevron_left
+          </span>
+          Previous
+        </span>
+      ) : (
+        <Link href={href(prev)} title="Previous domain" className={STEP}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px]">
+            chevron_left
+          </span>
+          Previous
+        </Link>
+      )}
+      <span className="px-1 font-body-code text-caption text-fg-muted">
+        <span className="text-fg">{COUNT.format(nav.start + index)}</span>
+        {` / ${nav.totalIsEstimate ? '~' : ''}${COUNT.format(nav.total)}`}
+      </span>
+      {next === undefined ? (
+        <span aria-disabled="true" className={STEP_OFF}>
+          Next
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px]">
+            chevron_right
+          </span>
+        </span>
+      ) : (
+        <Link href={href(next)} title="Next domain" className={STEP}>
+          Next
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px]">
+            chevron_right
+          </span>
+        </Link>
+      )}
+    </nav>
+  );
+}
+
+/** "9 unique endpoints · 2 API" (M11): distinct paths, and URLs answering JSON or XML. */
+function urlNote(
+  urls: readonly { path: string; content_type: string | null }[],
+  partial: boolean,
+): string {
+  const unique = new Set(urls.map((u) => u.path)).size;
+  const api = urls.filter((u) => /json|xml/i.test(u.content_type ?? '')).length;
+  const about = partial ? '≥' : '';
+  return `${about}${COUNT.format(unique)} unique endpoints · ${about}${COUNT.format(api)} API`;
+}
+
+/** Addresses with at least one service (M10). */
+function respondingNote(responding: number, total: number): string {
+  if (total === 0) return 'No addresses';
+  if (responding === total) return total === 1 ? 'Responding' : 'All responding';
+  return `${COUNT.format(responding)} of ${COUNT.format(total)} responding`;
+}
 
 function Tile({
   label,
@@ -95,12 +175,20 @@ function Tile({
 export default function DomainDetailPage(): ReactElement {
   const params = useParams<{ domainId: string }>();
   const domainId = params.domainId;
+  const router = useRouter();
+  const me = useMe();
   const domain = useDomain(domainId);
+  const nav = useDomainNav();
   const { nameOf } = useProgramOptions();
   const toolModules = useToolModules();
   const discovery = useDiscoveryEvent(domainId);
   const discoveryJob = useJob(discovery.data?.job_id ?? null);
   const screenshots = useDomainScreenshots(domainId);
+  const services = useServices({ domainId, limit: 200 });
+  const urls = useUrls({ domainId, limit: 200 });
+  const history = useJobsForTarget(domain.data?.name ?? null);
+  const remove = useDeleteDomain();
+  const [confirming, setConfirming] = useState(false);
   const [tab, setTab] = useState<TabId>('overview');
 
   const crumbs = (name: string) => (
@@ -120,6 +208,7 @@ export default function DomainDetailPage(): ReactElement {
         </span>
         <span className="truncate font-body-code text-caption text-primary">{name}</span>
       </div>
+      <Stepper nav={nav} domainId={domainId} />
     </div>
   );
 
@@ -150,12 +239,19 @@ export default function DomainDetailPage(): ReactElement {
   const findingTotal = SEVERITIES.reduce((n, s) => n + counts[s], 0);
   const highest = SEVERITIES.find((s) => counts[s] > 0);
   const modules = toolModules.data?.items ?? [];
+  const job = discoveryJob.data;
   const toolName =
-    discoveryJob.data === undefined
+    job === undefined
       ? null
-      : (modules.find((m) => m.id === discoveryJob.data.tool_module_id)?.name ?? null);
+      : (job.tool_module_name ?? modules.find((m) => m.id === job.tool_module_id)?.name ?? null);
+  const toolVersion = job?.tool_version ?? null;
   const programName = nameOf(d.program_id);
   const shotTotal = screenshots.data?.total;
+  const latest = screenshots.data?.items[0];
+  const responding =
+    services.data === undefined ? undefined : new Set(services.data.items.map((s) => s.ip_id)).size;
+  const ports = d.service_ports ?? [];
+  const canDelete = me.data !== undefined && me.data.role !== 'user';
 
   const tabs: { id: TabId; label: string; count: number | undefined }[] = [
     { id: 'overview', label: 'Overview', count: undefined },
@@ -164,7 +260,7 @@ export default function DomainDetailPage(): ReactElement {
     { id: 'services', label: 'Services', count: d.service_count },
     { id: 'screenshots', label: 'Screenshots', count: shotTotal },
     { id: 'findings', label: 'Findings', count: findingTotal },
-    { id: 'history', label: 'Scan History', count: undefined },
+    { id: 'history', label: 'Scan History', count: history.data?.total },
   ];
 
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -253,19 +349,69 @@ export default function DomainDetailPage(): ReactElement {
               </span>
               <span>Copy Name</span>
             </button>
-            <RunScanButton
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  remove.reset();
+                  setConfirming(true);
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-crit-bd bg-crit-soft px-space-md text-body-default text-crit shadow-sm hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+                  delete
+                </span>
+                <span>Delete</span>
+              </button>
+            )}
+            <ScanButton
               assets={[{ target: d.name, programId: d.program_id }]}
               programName={nameOf}
+              activeIps={responding}
               icon="radar"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-space-md md:grid-cols-3 xl:grid-cols-5">
-          <Tile label="Assigned IPs" icon="router" tone="ip" value={d.ips.length} />
-          <Tile label="URLs" icon="link" tone="url" value={d.url_count} />
-          <Tile label="Services" icon="lan" tone="service" value={d.service_count} />
-          <Tile label="Screenshots" icon="photo_camera" tone="shot" value={shotTotal} />
+          <Tile
+            label="Assigned IPs"
+            icon="router"
+            tone="ip"
+            value={d.ips.length}
+            note={responding === undefined ? undefined : respondingNote(responding, d.ips.length)}
+          />
+          <Tile
+            label="URLs"
+            icon="link"
+            tone="url"
+            value={d.url_count}
+            note={
+              urls.data === undefined
+                ? undefined
+                : urlNote(urls.data.items, urls.data.next_cursor !== null)
+            }
+          />
+          <Tile
+            label="Services"
+            icon="lan"
+            tone="service"
+            value={d.service_count}
+            note={ports.length === 0 ? undefined : ports.map((p) => String(p)).join(', ')}
+          />
+          <Tile
+            label="Screenshots"
+            icon="photo_camera"
+            tone="shot"
+            value={shotTotal}
+            note={
+              latest === undefined
+                ? undefined
+                : latest.status_code === null
+                  ? 'Latest: no HTTP status'
+                  : `Latest HTTP ${latest.status_code}`
+            }
+          />
           <Tile
             label="Findings"
             icon="warning"
@@ -322,18 +468,21 @@ export default function DomainDetailPage(): ReactElement {
                   <TargetPanel
                     domain={d}
                     programName={programName}
-                    discoverySource={toolName ?? 'Unknown'}
+                    discoverySource={
+                      toolName === null
+                        ? 'Unknown'
+                        : toolVersion === null
+                          ? toolName
+                          : `${toolName} (${toolVersion})`
+                    }
                   />
                 </div>
                 <div className="flex flex-col gap-space-md lg:col-span-7">
                   <FindingsPanel domain={d} />
-                  <CapturePanel
-                    latest={screenshots.data?.items[0]}
-                    pending={screenshots.isPending}
-                  />
+                  <CapturePanel latest={latest} pending={screenshots.isPending} />
                 </div>
                 <div className="lg:col-span-12">
-                  <EventsPanel domainId={d.id} />
+                  <ActivityPanel domainId={d.id} />
                 </div>
               </>
             )}
@@ -370,6 +519,24 @@ export default function DomainDetailPage(): ReactElement {
           </div>
         </div>
       </div>
+      {confirming && (
+        <ConfirmDialog
+          title={`Delete ${d.name}?`}
+          message="The domain leaves every list. Raw outputs stay stored, and the action is recorded in the audit log."
+          confirmLabel="Delete"
+          pending={remove.isPending}
+          error={remove.isError ? 'Could not delete the domain.' : null}
+          onConfirm={() =>
+            remove.mutate(d.id, {
+              onSuccess: () => {
+                setConfirming(false);
+                router.push('/domains');
+              },
+            })
+          }
+          onClose={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }

@@ -48,6 +48,11 @@ function table(
         users={props.users ?? ROWS}
         selectedId={props.selectedId ?? null}
         meId={props.meId ?? null}
+        checked={new Set()}
+        canWrite
+        idleAfterMinutes={15}
+        onToggle={vi.fn()}
+        onToggleAll={vi.fn()}
         onSelect={props.onSelect ?? vi.fn()}
         onEdit={props.onEdit ?? vi.fn()}
       />
@@ -88,7 +93,7 @@ describe('UserTable', () => {
       within(screen.getByRole('row', { name: /rootadmin/ })).getByText('2 sessions'),
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole('row', { name: /analyst/ })).getByText('No active sessions'),
+      within(screen.getByRole('row', { name: /analyst/ })).getByText('0 active (logged out)'),
     ).toBeInTheDocument();
   });
 
@@ -135,33 +140,66 @@ describe('UserTable', () => {
 
   it('says the list is empty instead of showing an empty table', () => {
     render(table({ users: [] }));
-    expect(screen.getByText(/no accounts yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no accounts match/i)).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });
 
 describe('StatCards', () => {
   it('writes the numbers with English grouping', () => {
-    render(<StatCards userTotal={1234} sessionTotal={5} roleBreakdown={null} />);
+    render(
+      <StatCards
+        userTotal={1234}
+        sessionTotal={5}
+        sessionAccounts={null}
+        lockedTotal={0}
+        roleBreakdown={null}
+      />,
+    );
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('shows an unavailable value, not zero, when a total is unknown', () => {
-    render(<StatCards userTotal={3} sessionTotal={null} roleBreakdown={null} />);
-    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+    render(
+      <StatCards
+        userTotal={3}
+        sessionTotal={null}
+        sessionAccounts={null}
+        lockedTotal={4}
+        roleBreakdown={null}
+      />,
+    );
+    expect(screen.getAllByText('Unavailable')).toHaveLength(1);
     expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
   it('shows a loading value that differs from unavailable', () => {
-    render(<StatCards userTotal={undefined} sessionTotal={undefined} roleBreakdown={null} />);
+    render(
+      <StatCards
+        userTotal={undefined}
+        sessionTotal={undefined}
+        sessionAccounts={null}
+        lockedTotal={0}
+        roleBreakdown={null}
+      />,
+    );
     expect(screen.getAllByText('Loading…')).toHaveLength(2);
     expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
   });
 
-  it('labels the role breakdown as counted from this page only', () => {
-    render(<StatCards userTotal={9} sessionTotal={1} roleBreakdown="1 Superadmin · 2 User" />);
-    expect(screen.getByText('On this page:')).toBeInTheDocument();
+  it('labels the role breakdown as the allocation over every account', () => {
+    render(
+      <StatCards
+        userTotal={9}
+        sessionTotal={1}
+        sessionAccounts={1}
+        lockedTotal={2}
+        roleBreakdown="1 Superadmin · 2 User"
+      />,
+    );
+    expect(screen.getByText('Allocation:')).toBeInTheDocument();
     expect(screen.getByText('1 Superadmin · 2 User')).toBeInTheDocument();
+    expect(screen.getByText('1 signed in')).toBeInTheDocument();
   });
 });

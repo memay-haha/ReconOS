@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, type ReactElement, useState } from 'react';
+import { type FormEvent, type ReactElement, type ReactNode, useState } from 'react';
 
 import { FieldError } from '@/components/field-error';
 import { fieldErrorsOf } from '@/lib/api-client';
@@ -213,7 +213,10 @@ function RuleRow({
             {rule.value}
           </span>
           <span className="text-caption text-fg-faint">
-            {RULE_TYPE_LABEL[rule.rule_type]} · added {formatMoment(rule.created_at)}
+            {rule.matched_domain_count === undefined
+              ? RULE_TYPE_LABEL[rule.rule_type]
+              : `${COUNT.format(rule.matched_domain_count)} matched ${rule.matched_domain_count === 1 ? 'domain' : 'domains'}`}{' '}
+            · added {formatMoment(rule.created_at)}
           </span>
           {rule.reason !== null && (
             <span className="text-caption text-fg-muted">Reason: {rule.reason}</span>
@@ -225,8 +228,12 @@ function RuleRow({
           )}
         </div>
       </div>
-      {canManage && (
-        <span className="ml-2 flex shrink-0 items-center gap-1">
+      <span className="ml-2 flex shrink-0 items-center gap-1">
+        {/* N27: the badge names the rule type only; no source or verified flag. */}
+        <span className="rounded-sm bg-surface-3 px-1.5 py-0.5 font-label-caps text-label-caps uppercase text-fg-muted">
+          {RULE_TYPE_LABEL[rule.rule_type]}
+        </span>
+        {canManage && (
           <button
             type="button"
             onClick={() => setEditing(true)}
@@ -238,6 +245,8 @@ function RuleRow({
               edit
             </span>
           </button>
+        )}
+        {canManage && (
           <button
             type="button"
             onClick={() => remove.mutate(rule.id)}
@@ -250,24 +259,33 @@ function RuleRow({
               delete
             </span>
           </button>
-        </span>
-      )}
+        )}
+      </span>
     </li>
   );
 }
 
-function RuleSection({
+export function RuleSection({
   programId,
   scopeType,
   rules,
   canManage,
+  collapseAt,
+  actions,
 }: {
   programId: string;
   scopeType: ScopeType;
   rules: readonly ScopeRule[];
   canManage: boolean;
+  /** Given, only this many rules show until "View all" is pressed, as the S09 overview. */
+  collapseAt?: number;
+  /** Icon buttons at the right of the title (S09: radar, add_link). */
+  actions?: ReactNode;
 }): ReactElement {
   const inScope = scopeType === 'in_scope';
+  const [expanded, setExpanded] = useState(false);
+  const shown =
+    collapseAt === undefined || expanded ? rules : rules.slice(0, Math.max(0, collapseAt));
   return (
     <section
       aria-label={inScope ? 'In-Scope' : 'Out-of-Scope'}
@@ -282,7 +300,7 @@ function RuleSection({
             >
               {inScope ? 'verified' : 'block'}
             </span>
-            {inScope ? 'In-Scope' : 'Out-of-Scope'}
+            {inScope ? 'In-Scope Definitions' : 'Out-of-Scope Exclusions'}
           </h2>
           <span
             className={`rounded-sm px-2 py-0.5 font-body-code text-caption ${
@@ -293,6 +311,9 @@ function RuleSection({
           >
             {COUNT.format(rules.length)} {rules.length === 1 ? 'rule' : 'rules'}
           </span>
+          {actions !== undefined && (
+            <span className="ml-auto flex items-center gap-1">{actions}</span>
+          )}
         </div>
         {inScope && (
           <p className="text-caption text-fg-muted">
@@ -321,10 +342,25 @@ function RuleSection({
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
-          {rules.map((rule) => (
+          {shown.map((rule) => (
             <RuleRow key={rule.id} rule={rule} canManage={canManage} programId={programId} />
           ))}
         </ul>
+      )}
+      {collapseAt !== undefined && rules.length > collapseAt && (
+        <div className="flex items-center justify-between gap-2 text-caption">
+          <span className="text-fg-faint">
+            Showing {COUNT.format(shown.length)} of {COUNT.format(rules.length)} rules
+          </span>
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+            className="rounded-sm font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {expanded ? 'Show fewer' : `View all ${COUNT.format(rules.length)} rules →`}
+          </button>
+        </div>
       )}
     </section>
   );

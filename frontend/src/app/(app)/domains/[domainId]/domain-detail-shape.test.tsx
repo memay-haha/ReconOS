@@ -1,17 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { domainKeys } from '@/lib/domains';
 import { shapeOf } from '@/test/dom-shape';
 
 import {
   cut,
   el,
   findByText,
+  ME_ADMIN,
   parseMockup,
-  renderWithClient,
   retag,
   stubFetch,
   textOf,
@@ -30,20 +32,39 @@ const mockupFile = resolve(
 );
 const landmarks = { landmarks: true };
 
+/** Rendered as if opened from S04, so the Previous / Next stepper shows, by an Admin, so
+ * Delete shows (D5). */
+function renderScreen() {
+  stubFetch(detailRoutes(), ME_ADMIN);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(domainKeys.nav, {
+    ids: ['d0', DETAIL.id, 'd2'],
+    start: 1,
+    total: 64,
+    totalIsEstimate: false,
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <DomainDetailPage />
+    </QueryClientProvider>,
+  );
+}
+
 /** `main > div` of the mockup, pruned to what the product builds. Every cut names its rule in
- * the part C table of docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md. */
+ * the part C table of docs/superpowers/specs/2026-11-05-fe-shell-b-e-decisions.md, or the
+ * D/M/N row of docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md. */
 function prunedMockup(): Element {
   const doc = parseMockup(readFileSync(mockupFile, 'utf8'));
   const root = doc.querySelector('main > div') as Element;
 
-  // The Run Scan modal is the shared RunScanDialog, closed until opened (M2).
-  cut(root, '#scanModal', 'shared Run Scan dialog');
-  // Previous 3 / 64 Next needs a position in a list no endpoint gives (M3).
-  findByText(root, 'div.flex', 'Previous').remove();
+  // The Run Scan modal is closed until opened (N14).
+  cut(root, '#scanModal', 'Run Scan modal, closed');
+  // Previous / Next move to another domain: links in a navigation landmark.
+  const stepper = findByText(root, 'div.flex', 'Previous');
+  for (const button of Array.from(stepper.querySelectorAll('button'))) retag(button, 'a');
+  retag(stepper, 'nav');
 
   const [, content] = Array.from(root.children) as [Element, Element];
-  // Delete has no endpoint (M3).
-  findByText(content, 'button', 'Delete').remove();
 
   // Tabs: the bar is a tablist and the grid its panel (M6). URLs and Services list by
   // domain_id, settled on 05/11/2026.
@@ -76,7 +97,7 @@ function prunedMockup(): Element {
   findByText(panel, 'div.border-t', 'Auto-reconciled').remove();
   // Inspect opens S07: a link.
   retag(findByText(panel, 'span', 'Inspect'), 'a');
-  // Asset events page with Previous and Next (M6).
+  // The activity pages with Previous and Next (M6, N12).
   const events = (
     findByText(panel, 'div', 'Recent Telemetry Activity').closest('.lg\\:col-span-12') as Element
   ).firstElementChild as Element;
@@ -89,12 +110,12 @@ afterEach(() => vi.unstubAllGlobals());
 describe('S05 against its mockup', () => {
   it('lays out the same regions in the same order', async () => {
     const mockup = prunedMockup();
-    stubFetch(detailRoutes());
-    const { container } = renderWithClient(<DomainDetailPage />);
+    const { container } = renderScreen();
     await screen.findByRole('heading', { name: /auth\.example\.com/ });
     await screen.findByRole('link', { name: /inspect/i });
-    await screen.findByText('OAuth open redirect');
-    await screen.findByRole('navigation', { name: 'Asset events pagination' });
+    await screen.findAllByText('OAuth open redirect');
+    await screen.findByRole('navigation', { name: 'Activity pagination' });
+    await screen.findByRole('button', { name: 'Delete' });
     const mine = shapeOf(container.firstElementChild as Element, 0, landmarks).slice(1);
     // A pruning slip that empties both trees must not pass as a match.
     expect(mine.length).toBeGreaterThan(25);
@@ -102,11 +123,11 @@ describe('S05 against its mockup', () => {
   });
 
   it('builds nothing from the dropped parts', async () => {
-    stubFetch(detailRoutes());
-    const { container } = renderWithClient(<DomainDetailPage />);
+    const { container } = renderScreen();
     await screen.findByRole('heading', { name: /auth\.example\.com/ });
     const words = textOf(container);
-    for (const banned of ['BBRF', 'Delete', 'Vulnerabilities', 'Telemetry', '#DOM', 'Confidence'])
+    // BBRF (G1), the mockup's sample id, and reconciliation confidence (M12) stay out.
+    for (const banned of ['BBRF', 'Telemetry', '#DOM', 'Confidence', 'Auto-reconciled'])
       expect(words).not.toContain(banned);
   });
 });

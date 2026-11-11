@@ -46,10 +46,10 @@ export function RunScanButton({
   const programId = singleProgram(assets);
   const mixed = assets.length > 0 && programId === null;
 
-  const submit = ({ toolModuleId, target }: RunScanRequest) => {
+  const submit = ({ toolModuleId, target, priority, params }: RunScanRequest) => {
     if (programId === null) return;
     createJob.mutate(
-      { program_id: programId, tool_module_id: toolModuleId, target },
+      { program_id: programId, tool_module_id: toolModuleId, target, priority, params },
       {
         onSuccess: () => {
           setOpen(false);

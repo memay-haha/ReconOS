@@ -70,3 +70,18 @@ export function useDeleteSchedule() {
     apiRequest<void>(`/schedules/${id}`, { method: 'DELETE' }),
   );
 }
+
+/** Trigger on S09: `POST /schedules/{id}/run` creates one job now, scope-checked, without
+ * moving `next_run_at` (N28, Superadmin and Admin). Jobs refetch, the key spelled out. */
+export function useRunSchedule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiRequest<unknown>(`/schedules/${id}/run`, { method: 'POST' }),
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: scheduleKeys.all }),
+        client.invalidateQueries({ queryKey: ['jobs'] }),
+      ]);
+    },
+  });
+}

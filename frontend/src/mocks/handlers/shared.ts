@@ -53,7 +53,7 @@ export const sharedRoutes: readonly MockRoute[] = [
       program_id: body.program_id,
       tool_module_id: body.tool_module_id,
       status: exploit ? 'pending_approval' : 'queued',
-      priority: 0,
+      priority: 'normal',
       target: body.target,
       params: {},
       proxy_id: null,

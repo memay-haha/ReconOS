@@ -22,6 +22,11 @@ export const DETAIL = {
     { id: 'at2', tag_id: 'tg2', key: 'tier', value: 'auth' },
     { id: 'at3', tag_id: 'tg3', key: 'cloud', value: 'cloudflare' },
   ],
+  ip_records: [
+    { address: '198.51.100.24', record_type: 'A' },
+    { address: '198.51.100.25', record_type: 'A' },
+  ],
+  service_ports: [80, 443, 8080, 8443],
 };
 
 export const TAGS = [
@@ -59,7 +64,7 @@ export const JOB = {
   program_id: 'p1',
   tool_module_id: 't1',
   status: 'completed',
-  priority: 0,
+  priority: 'normal',
   target: [DETAIL.name],
   params: {},
   proxy_id: null,
@@ -117,11 +122,89 @@ export const SCREENSHOT = {
   captured_at: '2026-11-04T01:00:00Z',
 };
 
+/** The unified timeline (N12): one row of each kind. Titles come from the target. */
+export const ACTIVITY = [
+  {
+    kind: 'finding',
+    id: 'f1',
+    at: '2026-11-04T01:05:00Z',
+    title: 'OAuth open redirect',
+    tool_module_name: 'nuclei',
+    job_id: 'j2',
+  },
+  {
+    kind: 'asset_event',
+    id: 'e1',
+    at: '2026-11-03T01:05:00Z',
+    title: '<b>dns_status</b> changed',
+    tool_module_name: 'dnsx',
+    job_id: 'j9',
+  },
+  {
+    kind: 'screenshot',
+    id: 's1',
+    at: '2026-11-02T01:05:00Z',
+    title: 'https://auth.example.com/ captured',
+    tool_module_name: null,
+    job_id: 'j3',
+  },
+];
+
+/** Two services on one of the two addresses: one responding IP (M10). */
+const SERVICE = {
+  program_id: 'p1',
+  ip_id: 'ip1',
+  transport: 'tcp',
+  name: 'https',
+  product: 'nginx',
+  version: null,
+  banner: null,
+  in_scope: true,
+  first_seen_at: '2026-10-12T07:22:00Z',
+  last_seen_at: '2026-11-04T01:05:00Z',
+};
+export const SERVICES = [
+  { ...SERVICE, id: 'sv1', port: 443 },
+  { ...SERVICE, id: 'sv2', port: 8443 },
+];
+
+/** Three URLs on two paths, one answering JSON (M11). */
+function url(id: string, path: string, contentType: string) {
+  return {
+    id,
+    program_id: 'p1',
+    domain_id: DETAIL.id,
+    ip_id: null,
+    url: `https://auth.example.com${path}`,
+    scheme: 'https',
+    host: 'auth.example.com',
+    port: 443,
+    path,
+    status_code: 200,
+    title: null,
+    content_length: null,
+    content_type: contentType,
+    webserver: null,
+    favicon_hash: null,
+    in_scope: true,
+    first_seen_at: '2026-10-12T07:22:00Z',
+    last_seen_at: '2026-11-04T01:05:00Z',
+  };
+}
+export const URLS = [
+  url('u1', '/login', 'text/html'),
+  url('u2', '/login', 'text/html; charset=utf-8'),
+  url('u3', '/api/v1/me', 'application/json'),
+];
+
 /** Routes for a fully loaded S05. `/asset-events` answers the discovery lookup, which asks
  * for the oldest event, apart from the newest-first list. */
 export function detailRoutes(): Record<string, unknown> {
   return {
     [`/api/v1/domains/${DETAIL.id}`]: DETAIL,
+    [`/api/v1/domains/${DETAIL.id}/activity`]: page(ACTIVITY),
+    '/api/v1/services': page(SERVICES),
+    '/api/v1/urls': page(URLS),
     '/api/v1/tags': page(TAGS),
     '/api/v1/asset-events': (path: string) =>
       path.includes('sort=created_at&') ? page([DISCOVERED]) : page([EVENT]),

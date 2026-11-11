@@ -3,7 +3,8 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import { ApiError, fieldErrorsOf } from '@/lib/api-client';
-import type { ToolModule } from '@/lib/tool-modules';
+import { JOB_PRIORITIES, JOB_PRIORITY_LABEL, type JobPriority } from '@/lib/jobs';
+import type { ParamSchema, ParamSpec, ToolModule } from '@/lib/tool-modules';
 
 import { FieldError } from './field-error';
 
@@ -22,6 +23,47 @@ const UNEXPECTED = 'Could not create the job. Try again later.';
 export interface RunScanRequest {
   readonly toolModuleId: string;
   readonly target: readonly string[];
+  /** D8: the dispatcher hands out `high` first. */
+  readonly priority: JobPriority;
+  /** Values for the tool module's `param_schema` (D7-A); blank fields are left out so the
+   * backend applies `default_params`. */
+  readonly params: Readonly<Record<string, unknown>>;
+}
+
+/** A tool module as the dialog needs it: the list row of `GET /tool-modules` carries the
+ * parameter allowlist. */
+export type ScanToolModule = ToolModule & { readonly param_schema?: ParamSchema };
+
+function isNumeric(spec: ParamSpec): boolean {
+  return spec.type === 'integer' || spec.type === 'number';
+}
+
+function initialParams(module: ScanToolModule | undefined): Record<string, string | boolean> {
+  const values: Record<string, string | boolean> = {};
+  for (const [key, spec] of Object.entries(module?.param_schema?.properties ?? {})) {
+    const value = module?.default_params[key] ?? spec.default;
+    values[key] =
+      spec.type === 'boolean'
+        ? value === true
+        : value === undefined || value === null
+          ? ''
+          : String(value);
+  }
+  return values;
+}
+
+function paramsOf(
+  module: ScanToolModule | undefined,
+  values: Readonly<Record<string, string | boolean>>,
+): Record<string, unknown> {
+  const params: Record<string, unknown> = {};
+  for (const [key, spec] of Object.entries(module?.param_schema?.properties ?? {})) {
+    const value = values[key];
+    if (typeof value === 'boolean') params[key] = value;
+    else if (value === undefined || value.trim() === '') continue;
+    else params[key] = isNumeric(spec) ? Number(value) : value;
+  }
+  return params;
 }
 
 /** The backend decides scope and approval; this only names the outcome it reported. */
@@ -46,6 +88,8 @@ function Body({
   const enabled = toolModules.filter((m) => m.is_enabled);
   const [toolModuleId, setToolModuleId] = useState(enabled[0]?.id ?? '');
   const [targetText, setTargetText] = useState(targets.join('\n'));
+  const [priority, setPriority] = useState<JobPriority>('normal');
+  const [paramValues, setParamValues] = useState(() => initialParams(enabled[0]));
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstRef = useRef<HTMLSelectElement>(null);
 
@@ -96,7 +140,7 @@ function Body({
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line !== '');
-    onSubmit({ toolModuleId, target });
+    onSubmit({ toolModuleId, target, priority, params: paramsOf(chosen, paramValues) });
   };
 
   return (
@@ -121,7 +165,10 @@ function Body({
               id="run-scan-tool-module"
               ref={firstRef}
               value={toolModuleId}
-              onChange={(e) => setToolModuleId(e.target.value)}
+              onChange={(e) => {
+                setToolModuleId(e.target.value);
+                setParamValues(initialParams(enabled.find((m) => m.id === e.target.value)));
+              }}
               className={FIELD}
             >
               {enabled.map((m) => (
@@ -151,6 +198,73 @@ function Body({
             />
             <FieldError errors={fields} field="target" />
           </div>
+          <div className="flex flex-col gap-space-sm">
+            <label htmlFor="run-scan-priority" className={LABEL}>
+              Priority
+            </label>
+            <select
+              id="run-scan-priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as JobPriority)}
+              className={FIELD}
+            >
+              {JOB_PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {JOB_PRIORITY_LABEL[p]}
+                </option>
+              ))}
+            </select>
+            <FieldError errors={fields} field="priority" />
+          </div>
+          {Object.keys(chosen?.param_schema?.properties ?? {}).length > 0 && (
+            <fieldset className="flex flex-col gap-space-sm">
+              <legend className={LABEL}>Parameters</legend>
+              {Object.entries(chosen?.param_schema?.properties ?? {}).map(([key, spec]) => {
+                const id = `run-scan-param-${key}`;
+                const value = paramValues[key];
+                return (
+                  <div key={key} className="flex flex-col gap-space-xs">
+                    {spec.type === 'boolean' ? (
+                      <label
+                        htmlFor={id}
+                        className="flex items-center gap-space-sm text-body-default text-fg"
+                      >
+                        <input
+                          id={id}
+                          type="checkbox"
+                          checked={value === true}
+                          onChange={(e) =>
+                            setParamValues((v) => ({ ...v, [key]: e.target.checked }))
+                          }
+                          className="h-4 w-4 accent-primary-container"
+                        />
+                        {spec.title ?? key}
+                      </label>
+                    ) : (
+                      <>
+                        <label htmlFor={id} className="text-caption text-fg-muted">
+                          {spec.title ?? key}
+                        </label>
+                        <input
+                          id={id}
+                          type={isNumeric(spec) ? 'number' : 'text'}
+                          min={spec.minimum}
+                          max={spec.maximum}
+                          value={typeof value === 'string' ? value : ''}
+                          onChange={(e) => setParamValues((v) => ({ ...v, [key]: e.target.value }))}
+                          className={FIELD}
+                        />
+                      </>
+                    )}
+                    {spec.description === undefined ? null : (
+                      <p className="text-caption text-fg-faint">{spec.description}</p>
+                    )}
+                    <FieldError errors={fields} field={`params.${key}`} />
+                  </div>
+                );
+              })}
+            </fieldset>
+          )}
           {message !== null && (
             <p
               role="alert"
@@ -188,7 +302,7 @@ export interface RunScanDialogProps {
   /** Prefilled targets: the selected assets, or empty for free entry. */
   readonly targets: readonly string[];
   readonly editableTargets: boolean;
-  readonly toolModules: readonly ToolModule[];
+  readonly toolModules: readonly ScanToolModule[];
   readonly pending: boolean;
   readonly error: unknown;
   readonly onSubmit: (request: RunScanRequest) => void;

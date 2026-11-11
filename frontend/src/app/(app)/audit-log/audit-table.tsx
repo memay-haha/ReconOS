@@ -52,7 +52,7 @@ export function AuditTable({ rows }: { rows: readonly AuditLogRow[] }): ReactEle
       <table className="w-full border-collapse text-left text-body-default text-fg">
         <caption className="sr-only">Audit log entries, newest first</caption>
         <thead>
-          <tr className="h-10 border-b border-border bg-surface-2">
+          <tr className="h-8 border-b border-border bg-surface-2">
             <th scope="col" className={HEAD_FIRST}>
               When
             </th>

@@ -30,6 +30,8 @@ export interface ScopeRule {
   readonly reason: string | null;
   readonly created_by: string | null;
   readonly created_at: string;
+  /** Domains of the program the rule matches (M28). Computed on read. */
+  readonly matched_domain_count?: number;
 }
 
 export interface ScopeRuleBody {
@@ -87,5 +89,16 @@ export function useUpdateScopeRule() {
 export function useDeleteScopeRule() {
   return useScopeRuleMutation((id: string) =>
     apiRequest<void>(`/scope-rules/${id}`, { method: 'DELETE' }),
+  );
+}
+
+/** add_link on S09: `POST /programs/{id}/scope-rules/bulk-create` adds several rules at once,
+ * all or nothing (N26). */
+export function useBulkCreateScopeRules(programId: string) {
+  return useScopeRuleMutation((items: readonly ScopeRuleBody[]) =>
+    apiRequest<unknown>(`/programs/${programId}/scope-rules/bulk-create`, {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
   );
 }

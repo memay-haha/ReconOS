@@ -3,7 +3,13 @@
 import type { ReactElement } from 'react';
 
 import type { CurrentUser } from '@/lib/auth';
-import { type Job, type JobAction, type JobStatus, useJobAction } from '@/lib/jobs';
+import {
+  type Job,
+  type JobAction,
+  type JobStatus,
+  useJobAction,
+  usePrioritizeJob,
+} from '@/lib/jobs';
 
 import { errorText } from '../programs/error-text';
 
@@ -45,20 +51,40 @@ export function allowedActions(job: Job, me: CurrentUser | null): readonly JobAc
   });
 }
 
+/** Dispatch Now (D8): a queued job, Superadmin and Admin. */
+export function canDispatchNow(job: Job, me: CurrentUser | null): boolean {
+  return job.status === 'queued' && (me?.role === 'superadmin' || me?.role === 'admin');
+}
+
 export function JobActions({
   job,
   me,
   onShow,
+  onError,
 }: {
   job: Job;
   me: CurrentUser | null;
   onShow: (view: 'raw' | 'logs') => void;
+  /** View Error: opens `status_reason` of a failed job. */
+  onError: () => void;
 }): ReactElement {
   const mutation = useJobAction();
+  const prioritize = usePrioritizeJob();
   const actions = allowedActions(job, me);
+  const failed = mutation.isError ? mutation.error : prioritize.isError ? prioritize.error : null;
   return (
     <span className="flex flex-col items-end gap-space-xs">
-      <span className="flex justify-end gap-1 whitespace-nowrap">
+      <span className="flex flex-wrap justify-end gap-1">
+        {canDispatchNow(job, me) && (
+          <button
+            type="button"
+            disabled={prioritize.isPending}
+            onClick={() => prioritize.mutate(job.id)}
+            className={APPROVE_BUTTON}
+          >
+            Dispatch Now
+          </button>
+        )}
         {actions.map((action) => (
           <button
             key={action}
@@ -76,16 +102,26 @@ export function JobActions({
             {LABEL[action]}
           </button>
         ))}
-        <button type="button" onClick={() => onShow('raw')} className={ROW_BUTTON}>
-          Raw outputs
-        </button>
-        <button type="button" onClick={() => onShow('logs')} className={ROW_BUTTON}>
-          Logs
-        </button>
+        {job.status === 'failed' && job.status_reason !== null && (
+          <button type="button" onClick={onError} className={DANGER_BUTTON}>
+            View Error
+          </button>
+        )}
+        {/* As the mockup: output of a completed job, logs of a running or failed one. */}
+        {job.status === 'completed' && (
+          <button type="button" onClick={() => onShow('raw')} className={ROW_BUTTON}>
+            Raw outputs
+          </button>
+        )}
+        {(job.status === 'running' || job.status === 'failed') && (
+          <button type="button" onClick={() => onShow('logs')} className={ROW_BUTTON}>
+            Logs
+          </button>
+        )}
       </span>
-      {mutation.isError && (
+      {failed !== null && (
         <span role="alert" className="text-caption text-crit-strong">
-          {errorText(mutation.error, 'Could not change the job.')}
+          {errorText(failed, 'Could not change the job.')}
         </span>
       )}
     </span>

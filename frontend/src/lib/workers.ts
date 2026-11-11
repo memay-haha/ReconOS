@@ -13,6 +13,12 @@ export interface Worker {
   readonly tool_modules: readonly string[];
   readonly last_heartbeat_at: string | null;
   readonly created_at: string;
+  // Computed on read since the Stitch pass: docs/api/openapi.yaml `GET /workers`.
+  readonly is_online?: boolean;
+  readonly running_job_count?: number;
+  readonly running_tool_module_ids?: readonly string[];
+  /** CPU load the worker reports in its heartbeat, 0 to 100 (D8). */
+  readonly cpu_percent?: number | null;
 }
 
 export const workerKeys = {

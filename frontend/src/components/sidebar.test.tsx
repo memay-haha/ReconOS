@@ -138,13 +138,24 @@ describe('Sidebar against the mockup', () => {
     wrap(USER);
     expect(NAV_GROUPS.find((g) => g.heading === 'System')?.tag).toBe('ROOT');
     expect(screen.getByText('ROOT')).toBeInTheDocument();
-    expect(screen.getByText('v2.4')).toBeInTheDocument();
+    // Decision N3: the build version, stamped from package.json (vitest sets no env, so none).
   });
 
   it('counts unreviewed findings and queued jobs, as the mockup means', () => {
-    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) => (i.badge ? [i.badge] : []));
+    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) =>
+      i.badge ? [i.badge.path] : [],
+    );
     expect(badges).toContain('/findings?triage_status=new');
     expect(badges).toContain('/jobs?status=queued');
+  });
+
+  it('counts domains new in 24 hours beside Domains (decision M2)', () => {
+    const domains = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.label === 'Domains');
+    expect(domains?.badge).toEqual({
+      path: '/dashboard/summary?window=24h',
+      field: 'assets_new.domain',
+      tone: 'neutral',
+    });
   });
 
   it('draws each icon with the ligature the mockup uses', () => {
@@ -207,7 +218,7 @@ describe('Sidebar behaviour', () => {
   });
 
   it('shows a count beside a label when one is given', () => {
-    wrap(null, { '/domains': 64 });
+    wrap(null, { '/dashboard/summary?window=24h#assets_new.domain': 64 });
     const domains = screen.getByText('Domains').closest('li') as HTMLElement;
     expect(within(domains).getByText('64')).toBeInTheDocument();
   });

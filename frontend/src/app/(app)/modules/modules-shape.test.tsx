@@ -2,18 +2,11 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { toolModule } from '../system/fixtures';
-import {
-  dropEntry,
-  dropSection,
-  insertAfter,
-  mockupMain,
-  type OutlineEntry,
-  outline,
-  rename,
-} from '../system/shape-outline';
+import { PROGRAM } from '../system/fixtures';
+import { dropEntry, mockupMain, type OutlineEntry, outline, rename } from '../system/shape-outline';
 import { json, page, renderScreen, stubApi } from '../system/test-api';
 import ModulesPage from './page';
+import { moduleList, moduleRow } from './test-fixtures';
 
 const CAPABILITY_CARDS = [
   'Subdomain Enumeration',
@@ -27,64 +20,73 @@ const CAPABILITY_CARDS = [
   'OAST / Out-of-Band Listener',
 ];
 
-/** The mockup pruned to what S18 builds, each change with its rule from frontend/CLAUDE.md. */
-function expected(): OutlineEntry[] {
+/** The mockup's table view, pruned to what S18 builds, each change with its rule. */
+function expectedTable(): OutlineEntry[] {
   let e = outline(mockupMain('s18-modules-recon-capabilities.html'));
-  // Each card is a lone heading in the outline; dropSection would also take the table below.
-  for (const card of CAPABILITY_CARDS) e = dropEntry(e, 'h3', card, 'M1 debt 5: capability');
-  e = rename(e, 'th', 'Scan Type', 'Tool module', 'M1 debt 5: one row per tool module');
-  e = dropEntry(e, 'th', 'Capability', 'M1 debt 5');
-  e = rename(e, 'th', 'Phase', 'Group', 'M2: Recon, Scan, Exploit');
-  e = dropEntry(e, 'th', 'Primary Engine', 'M1 debt 5');
-  e = dropEntry(e, 'th', 'Alternative', 'M1 debt 5');
-  e = dropEntry(e, 'th', 'Output Contract', 'M3: GET /tool-modules has no output field');
-  e = dropEntry(e, 'th', '24h Jobs', 'M3: no source');
-  e = insertAfter(
-    e,
-    { tag: 'th', text: 'Group' },
-    ['Concurrency', 'Rate limit', 'Timeout'].map((text) => ({ tag: 'th', text })),
-    'M6: the tool_module columns the Configure form edits',
-  );
-  e = dropSection(e, 'h2', 'Dispatch Capability', 'M7: the Run drawer opens as a dialog');
+  // The mockup keeps the cards and the hidden table in one DOM; the screen draws one view.
+  for (const card of CAPABILITY_CARDS) e = dropEntry(e, 'h3', card, 'M7: Grid and Table swap');
+  e = rename(e, 'th', 'Scan Type', 'Tool Module', 'M2: the column holds tool_module.name');
+  e = rename(e, 'th', 'Phase', 'Group', 'M2: glossary, Recon, Scan, Exploit');
+  e = dropEntry(e, 'th', 'Alternative', 'D7-A: one engine per tool module');
+  const at = e.findIndex((x) => x.tag === 'th' && x.text === '24h Jobs');
+  e = [
+    ...e.slice(0, at + 1),
+    ...['Concurrency', 'Rate limit', 'Timeout'].map((text) => ({ tag: 'th', text })),
+    ...e.slice(at + 1),
+  ]; // N47: the limits Configure edits stay in the Table view
   return e;
 }
 
 function render() {
-  stubApi('superadmin', (call) =>
-    call.path === '/tool-modules?limit=200'
-      ? json(page([toolModule('t1', 'gowitness', 'recon'), toolModule('t2', 'sqlmap', 'exploit')]))
-      : undefined,
-  );
+  stubApi('superadmin', (call) => {
+    if (call.path.startsWith('/tool-modules/stats'))
+      return json({ jobs: 1, jobs_prev: 1, stalled: 0 });
+    if (call.path.startsWith('/tool-modules'))
+      return json(
+        moduleList([
+          moduleRow('t1', 'gowitness', 'recon', true, { title: 'Screenshot Engine' }),
+          moduleRow('t2', 'sqlmap', 'exploit'),
+        ]),
+      );
+    if (call.path.startsWith('/programs')) return json(page([PROGRAM]));
+    return undefined;
+  });
   return renderScreen(<ModulesPage />);
 }
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('S18 against its mockup', () => {
-  it('has the headings, table and columns of the mockup, minus the dropped parts', async () => {
+  it('has the table and columns of the mockup, minus the dropped parts', async () => {
     const { container } = render();
-    await screen.findByText('gowitness');
-    // The mockup keeps its table in the DOM behind the Table switch; the screen renders it on demand.
+    await screen.findByText('Screenshot Engine');
     await userEvent.click(screen.getByRole('button', { name: 'Table' }));
-    expect(outline(container.firstElementChild as Element)).toEqual(expected());
+    await userEvent.click(screen.getByRole('button', { name: 'Run gowitness' }));
+    expect(outline(container.firstElementChild as Element)).toEqual(expectedTable());
+  });
+
+  it('draws one h3 per card in the Grid view, as the mockup does', async () => {
+    const { container } = render();
+    await screen.findByText('Screenshot Engine');
+    const headings = outline(container.firstElementChild as Element).filter((e) => e.tag === 'h3');
+    expect(headings.map((h) => h.text)).toEqual(['Screenshot Engine', 'sqlmap title']);
   });
 
   it('builds nothing from the dropped parts', async () => {
     const { container } = render();
-    await screen.findByText('gowitness');
+    await screen.findByText('Screenshot Engine');
+    await userEvent.click(screen.getByRole('button', { name: 'Run gowitness' }));
     const words = container.textContent ?? '';
     for (const banned of [
       'New Module',
       'BBRF',
       'gowitness DB',
       'CATALOG',
-      'ENGINES',
-      'Threads',
-      'Primary Engine',
-      'listener',
+      'Alternative',
+      'Target Engine Override',
+      'CORE ASSESSMENT',
     ]) {
       expect(words).not.toContain(banned);
     }
-    expect(container.querySelector('input[type=search], input[type=text]')).toBeNull();
   });
 });

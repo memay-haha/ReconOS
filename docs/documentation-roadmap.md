@@ -25,7 +25,7 @@
 | 14 | `docs/security/authentication.md`          | 7       | 8                    | 🟢 Xong       | 2026-11-03 | v1.2: zxcvbn, cookie theo môi trường, bootstrap Superadmin, bảng danh tính ở `core` |
 | 15 | `docs/security/authorization.md` | 8 | 9, 14 | 🔵 Chờ duyệt | 2026-11-12 | v1.9: xóa mềm, điều khiển hàng đợi, chẩn đoán, bộ lọc đã lưu, đọc ngưỡng công khai |
 | 16 | `docs/security/threat-model.md` | 17 | 8, 12, 15 | 🔵 Chờ duyệt | 2026-11-12 | v1.7: không lưu giá trị cookie, `/health` chỉ 204, API key LLM, HTML trang dạng văn bản |
-| 17 | `docs/api/architecture.md` | 10 | 12, 15 | 🔵 Chờ duyệt | 2026-11-12 | v1.15: endpoint, tham số `q`, trường tính theo sổ quyết định 2026-11-11 |
+| 17 | `docs/api/architecture.md` | 10 | 12, 15 | 🔵 Chờ duyệt | 2026-11-12 | v1.17: giá trị `sort` của `/user-sessions`, sửa câu trường tính. v1.16: dạng response của search, job, screenshot, tool module, engine, chẩn đoán, lọc `alert_type`, `ready_count`. v1.15: endpoint, tham số `q`, trường tính theo sổ quyết định 2026-11-11 |
 | 18 | `docs/architecture/request-flow.md`        | 6       | 14, 17               | 🔵 Chờ duyệt | 2026-11-04 | v1.2: request ID từ `X-Request-ID`. v1.1: WebSocket áp dụng ngay khi đổi vai trò |
 | 19 | `.claude/rules/coding-convention.md`       | 22      | 6, 7                 | 🔵 Chờ duyệt | 2026-11-04 | v1.2: make lint chạy đủ các lệnh kiểm tra |
 | 20 | `.claude/rules/design-patterns.md`         | 23      | 9                    | 🟢 Xong       | 2026-11-01 | v1.0: Router, service, plugin parser và runner, chống xử lý trùng |
@@ -38,7 +38,7 @@
 | 27 | `docs/ops/performance.md`                  | 18      | 12                   | 🟢 Xong      | 2026-11-01 | v1.0: Keyset, upsert theo lô, stream output thô, cache Redis 30 giây |
 | 28 | `docs/ops/scalability.md`                  | 19      | 13, 27               | 🟢 Xong       | 2026-11-01 | v1.0: Số bản chạy của từng tiến trình, thứ tự mở rộng CSDL, phân vùng |
 | 29 | `CLAUDE.md`                                | 1, 2, 3 | 1, 6, 7, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-05 | Mockup lệch tài liệu áp quy tắc mặc định của frontend/CLAUDE.md, không dừng hỏi |
-| 30 | `docs/tech-debt.md` | 25 | - | 🔵 Chờ duyệt | 2026-11-12 | v3.5: cập nhật nợ 5, 7, 8, 9, 10, 32, 39, 40 theo sổ 2026-11-11, thêm nợ 42 cờ gowitness |
+| 30 | `docs/tech-debt.md` | 25 | - | 🔵 Chờ duyệt | 2026-11-12 | v3.7: nợ 43 xong. v3.6: thêm nợ 43 trường tính S12 chưa có ở backend. v3.5: cập nhật nợ 5, 7, 8, 9, 10, 32, 39, 40 theo sổ 2026-11-11, thêm nợ 42 cờ gowitness |
 | 31 | `docs/roadmap.md` | 26 | 1 | 🔵 Chờ duyệt | 2026-11-12 | v2.11: khớp mockup Stitch, backend endpoint mới theo đợt sở hữu màn hình |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md` | - | 12, 17, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-12 | Lọc `deleted_at` khi đọc `user`, `domain`, `screenshot` |

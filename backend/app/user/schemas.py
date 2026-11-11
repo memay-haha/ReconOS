@@ -2,10 +2,12 @@
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.identity import UserRole
+from app.core.pagination import Page
 
 
 class LoginRequest(BaseModel):
@@ -50,6 +52,32 @@ class UserDetailResponse(UserResponse):
     """
 
     active_user_session_count: int
+    # The newest live session, null when the account has none.
+    last_session_ip: str | None
+    last_seen_at: datetime | None
+
+    @field_validator("last_session_ip", mode="before")
+    @classmethod
+    def _address_as_text(cls, value: object) -> object:
+        # The INET column hands back an ipaddress object, not a string.
+        return None if value is None else str(value)
+
+
+class UserBriefResponse(BaseModel):
+    """The account list as an Admin sees it: enough to pick a User for a program."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    username: str
+    role: UserRole
+
+
+class UserPage(Page[UserDetailResponse]):
+    """The Superadmin list. Both aggregates cover every account and ignore the filters."""
+
+    role_counts: dict[UserRole, int]
+    locked_count: int
 
 
 class UserSessionResponse(BaseModel):
@@ -68,3 +96,20 @@ class UserSessionResponse(BaseModel):
     def _address_as_text(cls, value: object) -> object:
         # The INET column hands back an ipaddress object, not a string.
         return None if value is None else str(value)
+
+
+# Sort keys GET /user-sessions accepts. A leading '-' sorts newest first.
+UserSessionSort = Literal["created_at", "-created_at", "last_seen_at", "-last_seen_at"]
+
+
+class ActiveUserSessionResponse(UserSessionResponse):
+    """A row of GET /user-sessions, which names the account the session belongs to."""
+
+    username: str
+    display_name: str
+
+
+class ActiveUserSessionPage(Page[ActiveUserSessionResponse]):
+    """account_count covers every live session and ignores paging."""
+
+    account_count: int

@@ -145,7 +145,7 @@ paths:
       summary: "Ma trận quyền sinh từ khai báo quyền của backend"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/RolePermissions'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /users/{user_id}/sessions:
     parameters:
@@ -168,7 +168,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [created_at, '-created_at', last_seen_at, '-last_seen_at'], default: '-created_at'}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
@@ -192,7 +192,7 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Worker'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [worker]
@@ -532,7 +532,7 @@ paths:
         - {name: runs_on, in: query, schema: {type: string}, description: "Tên engine"}
         - {name: is_enabled, in: query, schema: {type: boolean}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/ToolModuleList'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /tool-modules/stats:
     get:
@@ -550,7 +550,7 @@ paths:
       summary: "Công cụ của tool module và phiên bản worker báo"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Tool'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /tool-modules/{tool_module_id}:
     parameters:
@@ -602,7 +602,7 @@ paths:
       summary: "Workflow đã cài trên Osmedeus, đọc qua REST của engine"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/EngineWorkflow'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines/{engine_id}/workflows/{name}:
     parameters:
@@ -613,7 +613,7 @@ paths:
       summary: "Chi tiết một workflow Osmedeus"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/EngineWorkflowDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines/{engine_id}/modules:
     parameters:
@@ -623,14 +623,14 @@ paths:
       summary: "Native module của Vigolium, đọc qua REST của engine"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/EngineModule'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [engine]
-      summary: "Bật, tắt native module của Vigolium"
+      summary: "Bật, tắt native module của Vigolium, body modules: mảng name, is_enabled. Trả danh sách sau khi đổi"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/EngineModule'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines/{engine_id}/validate:
     parameters:
@@ -640,7 +640,7 @@ paths:
       summary: "Kiểm tra cấu hình Vigolium qua REST của engine"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/EngineCheckResult'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines/{engine_id}/verify-model:
     parameters:
@@ -650,7 +650,7 @@ paths:
       summary: "Kiểm tra model LLM của Vigolium"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/EngineCheckResult'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines/{engine_id}/variables:
     parameters:
@@ -687,7 +687,7 @@ paths:
   /jobs:
     get:
       tags: [job]
-      summary: "Danh sách job"
+      summary: "Danh sách job. sort nhận created_at, -created_at, -status_changed_at, -priority"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -699,7 +699,7 @@ paths:
         - $ref: '#/components/parameters/q'
         - {name: tool_module_id, in: query, schema: {type: array, items: {type: string, format: uuid}}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Job'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [job]
@@ -720,7 +720,7 @@ paths:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/JobBulkCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/JobBulkCreateResult'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/bulk-retry:
     post:
@@ -1094,7 +1094,7 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Technology'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots:
     get:
@@ -1113,7 +1113,7 @@ paths:
         - {name: status_code, in: query, schema: {type: array, items: {type: string, enum: [2xx, 3xx, 4xx, 5xx]}}}
         - {name: job_id, in: query, schema: {type: string, format: uuid}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Screenshot'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots/summary:
     get:
@@ -1128,7 +1128,7 @@ paths:
         - {name: technology_id, in: query, schema: {type: array, items: {type: string, format: uuid}}}
         - {name: job_id, in: query, schema: {type: string, format: uuid}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/ScreenshotSummary'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots/{screenshot_id}:
     parameters:
@@ -1138,7 +1138,7 @@ paths:
       summary: "Chi tiết screenshot kèm tls, console_log, cookies không có giá trị, security_headers, html_size, html_sha256"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/ScreenshotDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
     delete:
       tags: [screenshot]
@@ -1175,7 +1175,7 @@ paths:
       summary: "Network log của lần chụp"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/ScreenshotNetwork'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /screenshots/{screenshot_id}/har:
     parameters:
@@ -1390,8 +1390,9 @@ paths:
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
         - {name: is_read, in: query, schema: {type: boolean}}
+        - {name: alert_type, in: query, schema: {type: array, items: {type: string, enum: [finding_new, job_pending_approval, job_failed, asset_new, cert_expiring]}}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Alert'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /alerts/{alert_id}/read:
     parameters:
@@ -1430,7 +1431,7 @@ paths:
         - {name: q, in: query, required: true, schema: {type: string, minLength: 1}}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 10}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/SearchResponse'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /saved-filters:
     get:
@@ -1443,14 +1444,14 @@ paths:
         - $ref: '#/components/parameters/sort'
         - {name: screen, in: query, schema: {type: string}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/SavedFilter'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [user]
-      summary: "Lưu bộ lọc, body screen, name, params"
+      summary: "Lưu bộ lọc, body screen, name, params. Trùng name trong cùng screen: 409 conflict, errors code already_exists"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/SavedFilter'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /saved-filters/{saved_filter_id}:
     parameters:
@@ -1502,7 +1503,7 @@ paths:
       summary: "Tạo lần chẩn đoán, trả id, status"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/DiagnosticRunCreated'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /system/diagnostics/latest:
     get:
@@ -1510,7 +1511,7 @@ paths:
       summary: "Lần chẩn đoán gần nhất"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/DiagnosticRun'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /system/diagnostics/{diagnostic_run_id}:
     parameters:
@@ -1520,7 +1521,7 @@ paths:
       summary: "Một lần chẩn đoán: status, exit_code, output"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/DiagnosticRun'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /system-settings:
     get:
@@ -1684,6 +1685,356 @@ components:
     ids: {name: ids, in: query, schema: {type: array, maxItems: 500, items: {type: string, format: uuid}}, description: "Chỉ xuất các dòng này"}
     format: {name: format, in: query, schema: {type: string, enum: [csv, jsonl, md], default: csv}}
   schemas:
+    PageMeta:
+      type: object
+      required: [items, next_cursor, total, total_is_estimate]
+      properties:
+        items: {type: array, items: {type: object}}
+        next_cursor: {type: [string, 'null']}
+        total: {type: integer}
+        total_is_estimate: {type: boolean}
+    SearchResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [type, id, label, program_id]
+            properties:
+              type: {type: string, enum: [program, domain, url, finding, tool_module]}
+              id: {type: string, format: uuid}
+              label: {type: string, description: "Dữ liệu của mục tiêu, hiển thị dạng văn bản"}
+              program_id: {type: [string, 'null'], format: uuid, description: "NULL với tool_module"}
+    RolePermissions:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [action, superadmin, admin, user, note]
+            properties:
+              action: {type: string}
+              superadmin: {$ref: '#/components/schemas/PermissionGrant'}
+              admin: {$ref: '#/components/schemas/PermissionGrant'}
+              user: {$ref: '#/components/schemas/PermissionGrant'}
+              note: {type: [string, 'null']}
+    PermissionGrant: {type: string, enum: [allow, deny, limited]}
+    Worker:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        tool_modules: {type: array, items: {type: string}}
+        tool_versions:
+          type: array
+          items:
+            type: object
+            properties:
+              name: {type: string}
+              version: {type: [string, 'null']}
+        cpu_percent: {type: [number, 'null']}
+        last_heartbeat_at: {type: [string, 'null'], format: date-time}
+        created_at: {type: string, format: date-time}
+        is_online: {type: boolean}
+        running_job_count: {type: integer}
+        running_tool_module_ids: {type: array, items: {type: string, format: uuid}}
+    ParamSchema:
+      type: object
+      description: "JSON Schema dạng object. Tham số số luồng và tốc độ dùng khóa threads, rate"
+      properties:
+        type: {type: string, enum: [object]}
+        properties:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              type: {type: string}
+              title: {type: string}
+              description: {type: string}
+              default: {}
+              minimum: {type: number}
+              maximum: {type: number}
+              enum: {type: array}
+    ToolModule:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        title: {type: string}
+        description: {type: string}
+        group: {type: string, enum: [recon, scan, exploit]}
+        is_enabled: {type: boolean}
+        default_params: {type: object}
+        max_concurrency: {type: integer}
+        rate_limit_per_minute: {type: [integer, 'null']}
+        timeout_minutes: {type: integer}
+        updated_at: {type: string, format: date-time}
+        runs_on: {type: [string, 'null'], description: "Tên engine, NULL khi chạy công cụ trực tiếp"}
+        tools: {type: array, items: {type: string}}
+        output_types: {type: array, items: {type: string, enum: [domain, ip, url, service, screenshot, finding]}}
+        param_schema: {$ref: '#/components/schemas/ParamSchema'}
+        last_job_at: {type: [string, 'null'], format: date-time}
+        jobs_24h: {type: integer}
+        finding_count: {type: integer}
+        engine_status: {type: [string, 'null'], enum: [ok, degraded, down, null]}
+        disabled_reason: {type: [string, 'null'], enum: [off, engine_disabled, engine_down, not_installed, null]}
+        estimated_seconds: {type: [integer, 'null']}
+    ToolModuleList:
+      allOf:
+        - {$ref: '#/components/schemas/PageMeta'}
+        - type: object
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/ToolModule'}}
+            enabled_count: {type: integer}
+            disabled_count: {type: integer}
+            disabled_names: {type: array, items: {type: string}}
+            group_counts:
+              type: object
+              properties:
+                recon: {type: integer}
+                scan: {type: integer}
+                exploit: {type: integer}
+            engines_bound: {type: integer}
+            installed_count: {type: integer}
+            ready_count: {type: integer}
+    Tool:
+      type: object
+      properties:
+        name: {type: string}
+        tool_modules: {type: array, items: {type: string}}
+        status: {type: string, enum: [installed, missing]}
+        installed:
+          type: array
+          items:
+            type: object
+            properties:
+              worker_name: {type: string}
+              version: {type: [string, 'null']}
+    EngineWorkflow:
+      type: object
+      properties:
+        name: {type: string}
+        kind: {type: string, description: "Loại workflow Osmedeus: flow hoặc module"}
+        step_count: {type: [integer, 'null']}
+        description: {type: [string, 'null']}
+        tags: {type: array, items: {type: string}}
+    EngineWorkflowDetail:
+      allOf:
+        - {$ref: '#/components/schemas/EngineWorkflow'}
+        - type: object
+          properties:
+            steps:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: {type: string}
+                  description: {type: [string, 'null']}
+    EngineModule:
+      type: object
+      properties:
+        name: {type: string}
+        kind: {type: string, enum: [active, passive], description: "active gửi lưu lượng tới mục tiêu, passive chỉ đọc lưu lượng"}
+        is_enabled: {type: boolean}
+        description: {type: [string, 'null']}
+    EngineCheckResult:
+      type: object
+      required: [ok, issues]
+      properties:
+        ok: {type: boolean}
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              level: {type: string, enum: [critical, advisory]}
+              message: {type: string}
+    Job:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        tool_module_id: {type: string, format: uuid}
+        tool_module_name: {type: string}
+        status: {type: string, enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled]}
+        priority: {type: string, enum: [low, normal, high]}
+        target: {type: array, items: {type: string}}
+        params: {type: object}
+        proxy_id: {type: [string, 'null'], format: uuid}
+        schedule_id: {type: [string, 'null'], format: uuid}
+        retry_of_job_id: {type: [string, 'null'], format: uuid}
+        worker_id: {type: [string, 'null'], format: uuid}
+        worker_name: {type: [string, 'null']}
+        created_by: {type: [string, 'null'], format: uuid}
+        created_by_username: {type: [string, 'null']}
+        approved_by: {type: [string, 'null'], format: uuid}
+        status_reason: {type: [string, 'null']}
+        tool_version: {type: [string, 'null']}
+        created_at: {type: string, format: date-time}
+        approved_at: {type: [string, 'null'], format: date-time}
+        dispatched_at: {type: [string, 'null'], format: date-time}
+        started_at: {type: [string, 'null'], format: date-time}
+        last_heartbeat_at: {type: [string, 'null'], format: date-time}
+        finished_at: {type: [string, 'null'], format: date-time}
+        status_changed_at: {type: string, format: date-time}
+    JobBulkCreateResult:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Job'}}
+    Technology:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        category: {type: [string, 'null']}
+    Screenshot:
+      type: object
+      description: "Mọi trường chữ lấy từ mục tiêu, hiển thị dạng văn bản"
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        url_id: {type: string, format: uuid}
+        job_id: {type: string, format: uuid}
+        raw_output_id: {type: string, format: uuid}
+        final_url: {type: [string, 'null']}
+        status_code: {type: [integer, 'null']}
+        title: {type: [string, 'null']}
+        perception_hash: {type: [string, 'null']}
+        http_headers: {type: [object, 'null']}
+        is_failed: {type: boolean}
+        error_message: {type: [string, 'null']}
+        captured_at: {type: string, format: date-time}
+        similar_group: {type: [integer, 'null']}
+        similar_count: {type: integer}
+        technologies:
+          type: array
+          items:
+            type: object
+            properties:
+              name: {type: string}
+              category: {type: [string, 'null']}
+        retry_job_status: {type: [string, 'null'], enum: [pending_approval, queued, dispatched, running, completed, failed, cancelled, null]}
+        width: {type: [integer, 'null']}
+        height: {type: [integer, 'null']}
+    ScreenshotDetail:
+      allOf:
+        - {$ref: '#/components/schemas/Screenshot'}
+        - type: object
+          properties:
+            worker_name: {type: [string, 'null']}
+            device_scale: {type: [number, 'null']}
+            remote_ip: {type: [string, 'null']}
+            duration_ms: {type: [integer, 'null']}
+            tls:
+              type: [object, 'null']
+              properties:
+                protocol: {type: [string, 'null']}
+                cipher: {type: [string, 'null']}
+                issuer: {type: [string, 'null']}
+                subject: {type: [string, 'null']}
+                san: {type: array, items: {type: string}}
+                not_before: {type: [string, 'null'], format: date-time}
+                not_after: {type: [string, 'null'], format: date-time}
+            console_log:
+              type: array
+              items:
+                type: object
+                properties:
+                  level: {type: string}
+                  message: {type: string}
+                  at: {type: [string, 'null'], format: date-time}
+            cookies:
+              type: array
+              description: "Không có giá trị cookie (G7)"
+              items:
+                type: object
+                properties:
+                  name: {type: string}
+                  domain: {type: [string, 'null']}
+                  path: {type: [string, 'null']}
+                  expires: {type: [string, 'null'], format: date-time}
+                  secure: {type: boolean}
+                  http_only: {type: boolean}
+                  same_site: {type: [string, 'null']}
+            html_size: {type: [integer, 'null']}
+            html_sha256: {type: [string, 'null']}
+            security_headers:
+              type: object
+              description: "Khóa là tên header viết thường, giá trị true khi có mặt"
+              properties:
+                strict-transport-security: {type: boolean}
+                content-security-policy: {type: boolean}
+                x-frame-options: {type: boolean}
+                x-content-type-options: {type: boolean}
+                permissions-policy: {type: boolean}
+            security_headers_passed: {type: integer}
+            security_headers_total: {type: integer}
+    ScreenshotSummary:
+      type: object
+      required: [by_status_code]
+      properties:
+        by_status_code:
+          type: object
+          properties:
+            2xx: {type: integer}
+            3xx: {type: integer}
+            4xx: {type: integer}
+            5xx: {type: integer}
+    ScreenshotNetwork:
+      type: object
+      required: [network_log]
+      properties:
+        network_log:
+          type: array
+          items:
+            type: object
+            properties:
+              method: {type: string}
+              url: {type: string}
+              status_code: {type: [integer, 'null']}
+              content_type: {type: [string, 'null']}
+              size_bytes: {type: [integer, 'null']}
+              duration_ms: {type: [integer, 'null']}
+              remote_ip: {type: [string, 'null']}
+    Alert:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        alert_type: {type: string, enum: [finding_new, job_pending_approval, job_failed, asset_new, cert_expiring]}
+        message: {type: string}
+        program_id: {type: [string, 'null'], format: uuid}
+        finding_id: {type: [string, 'null'], format: uuid}
+        job_id: {type: [string, 'null'], format: uuid}
+        created_at: {type: string, format: date-time}
+        is_read: {type: boolean}
+    SavedFilter:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        screen: {type: string}
+        name: {type: string}
+        params: {type: object}
+        created_at: {type: string, format: date-time}
+    DiagnosticRunCreated:
+      type: object
+      required: [id, status]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [running, passed, failed]}
+    DiagnosticRun:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [running, passed, failed]}
+        exit_code: {type: [integer, 'null']}
+        output: {type: [string, 'null'], description: "Mỗi dòng bắt đầu bằng [OK], [WARN], [FAIL] hoặc [*]"}
+        created_at: {type: string, format: date-time}
+        finished_at: {type: [string, 'null'], format: date-time}
     Ids:
       type: object
       required: [ids]

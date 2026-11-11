@@ -26,9 +26,12 @@ function parseParams(text: string): Record<string, unknown> | null {
 export function ModuleForm({
   module,
   onClose,
+  onSaved = onClose,
 }: {
   module: ToolModule;
   onClose: () => void;
+  /** Called after a successful save, in place of `onClose`, so the screen can confirm it. */
+  onSaved?: () => void;
 }): ReactElement {
   const [concurrency, setConcurrency] = useState(String(module.max_concurrency));
   const [rate, setRate] = useState(
@@ -56,7 +59,7 @@ export function ModuleForm({
           timeout_minutes: Number(timeout),
         },
       },
-      { onSuccess: onClose },
+      { onSuccess: onSaved },
     );
   };
 

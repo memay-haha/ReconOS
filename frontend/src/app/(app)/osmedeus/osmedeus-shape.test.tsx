@@ -2,14 +2,7 @@ import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ENGINE, VARIABLE, VIGOLIUM } from '../system/fixtures';
-import {
-  dropEntry,
-  dropSection,
-  mockupMain,
-  type OutlineEntry,
-  outline,
-  rename,
-} from '../system/shape-outline';
+import { dropEntry, mockupMain, type OutlineEntry, outline, rename } from '../system/shape-outline';
 import { json, page, renderScreen, stubApi } from '../system/test-api';
 import OsmedeusPage from './page';
 
@@ -21,14 +14,19 @@ function expected(): OutlineEntry[] {
     'h1',
     'Osmedeus Settings v4.5.1-core',
     'Osmedeus Settings',
-    'M4: version from test',
+    'N3: no version in tests',
   );
-  e = dropEntry(e, 'h3', 'Cluster Resource Overhead', 'M3: no endpoint');
   e = rename(e, 'h2', 'Global Variables & Tokens', 'Engine Variables', 'M2: glossary');
   e = rename(e, 'th', 'Key Name', 'Key', 'M2: engine_variable.key');
-  e = dropEntry(e, 'th', 'Source', 'M3: no source column');
-  e = dropSection(e, 'h2', 'Scan Tactics & Intensity Presets', 'M1 debt 8');
-  e = dropSection(e, 'h2', 'Installed Workflows Index (28 Total)', 'M3: link to S18 instead');
+  e = dropEntry(e, 'th', 'Source', 'N42: no variable source');
+  e = rename(
+    e,
+    'h2',
+    'Installed Workflows Index (28 Total)',
+    'Installed Workflows Index (1 Total)',
+    'D3-B: count from the engine',
+  );
+  // D3-B: Cluster Resource Overhead sits under the connection panel, as the mockup draws it.
   return e;
 }
 
@@ -36,6 +34,10 @@ function render() {
   stubApi('superadmin', (call) => {
     if (call.path === '/engines?limit=200') return json(page([ENGINE, VIGOLIUM]));
     if (call.path === '/engines/e1/variables') return json(page([VARIABLE]));
+    if (call.path.startsWith('/engines/e1/workflows'))
+      return json(
+        page([{ name: 'general', kind: 'flow', step_count: 1, description: null, tags: [] }]),
+      );
     return undefined;
   });
   return renderScreen(<OsmedeusPage />);
@@ -47,13 +49,8 @@ describe('S16 against its mockup', () => {
   it('has the headings, tables and columns of the mockup, minus the dropped parts', async () => {
     const { container } = render();
     await screen.findByText('GITHUB_TOKEN');
+    await screen.findByText('general');
     expect(outline(container.firstElementChild as Element)).toEqual(expected());
-  });
-
-  it('links the workflows to S18 instead of listing them', async () => {
-    render();
-    await screen.findByText('GITHUB_TOKEN');
-    expect(screen.getByRole('link', { name: /tool modules/i })).toHaveAttribute('href', '/modules');
   });
 
   it('builds nothing from the dropped parts', async () => {
@@ -64,12 +61,12 @@ describe('S16 against its mockup', () => {
       'Bearer Token',
       'Reveal',
       'Rotate',
-      'Scan Tactics',
       'Environments',
-      'Redis',
+      'Database & Redis',
+      'Cloud & LLM',
       'Schedules',
-      'Worker Pool',
-      'Daemon',
+      'Open Folder',
+      '/root/',
       'v4.5.1',
     ]) {
       expect(words).not.toContain(banned);

@@ -12,6 +12,8 @@ import { ALERT, COUNT, NOTE, PANEL } from '../programs/ui';
 
 const SECTION_LABEL = 'font-label-caps text-label-caps uppercase tracking-wider text-fg-faint';
 
+const RUNNER_TH = 'px-space-md py-1.5 font-label-caps text-label-caps uppercase text-fg-muted';
+
 /** Queued jobs per tool module as bars, the mockup's "by scan type" list (M7). */
 function ToolModuleBars({
   counts,
@@ -128,44 +130,201 @@ function PanelHeader({
   );
 }
 
-/** Dispatcher heartbeat and the Workers list. Workers is Superadmin and Admin only, so it
- * is not requested for User. */
-export function DispatcherPanel({ showWorkers }: { showWorkers: boolean }): ReactElement {
-  const status = useDispatcherStatus();
+const STATUS_WORD = { ok: 'Healthy', degraded: 'Degraded', down: 'Down' } as const;
+
+const STATUS_PILL = {
+  ok: 'border-good-bd bg-good-soft text-good',
+  degraded: 'border-warn-bd bg-warn-soft text-warn',
+  down: 'border-crit-bd bg-crit-soft text-crit',
+} as const;
+
+const STATUS_DOT = { ok: 'bg-good', degraded: 'bg-warn', down: 'bg-crit' } as const;
+
+/** "34.0%" of a part over a whole, or null when either is missing. */
+function share(part: number | undefined, whole: number | undefined): number | null {
+  if (part === undefined || whole === undefined || whole === 0) return null;
+  return (part / whole) * 100;
+}
+
+function seconds(value: number | null | undefined): string {
+  if (value == null) return '-';
+  const total = Math.round(value);
+  const m = Math.floor(total / 60);
+  return m === 0 ? `${total}s` : `${m}m ${String(total % 60).padStart(2, '0')}s`;
+}
+
+function bytes(value: number | null | undefined): string {
+  if (value == null) return '-';
+  if (value >= 1_048_576) return `${(value / 1_048_576).toFixed(1)} MB`;
+  if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${COUNT.format(value)} B`;
+}
+
+/** A labelled gauge: Queue Depth Pressure (M23), Worker Fleet Capacity (M24). */
+function Gauge({
+  label,
+  percent,
+  suffix,
+  left,
+  right,
+}: {
+  label: string;
+  percent: number | null;
+  suffix: string;
+  left: string;
+  right: string;
+}): ReactElement {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-sm border border-border bg-surface-2 p-space-sm">
+      <div className="flex items-center justify-between gap-space-sm font-caption text-caption">
+        <span className="text-fg-muted">{label}</span>
+        <span className="font-body-code text-primary">
+          {percent === null ? '-' : `${percent.toFixed(1)}% ${suffix}`}
+        </span>
+      </div>
+      <span aria-hidden="true" className="h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+        <span
+          className="block h-full rounded-full bg-primary-container"
+          style={{ width: `${Math.min(100, percent ?? 0)}%` }}
+        />
+      </span>
+      <div className="flex items-center justify-between font-body-code text-caption text-fg-faint">
+        <span>{left}</span>
+        <span>{right}</span>
+      </div>
+    </div>
+  );
+}
+
+/** CPU load as the mockup colours it: green, amber past 50%, red past 80%. */
+type CpuLevel = 'none' | 'low' | 'mid' | 'high';
+
+const CPU_TONE: Readonly<Record<CpuLevel, string>> = {
+  none: 'text-fg-faint',
+  low: 'text-good',
+  mid: 'text-warn',
+  high: 'text-crit',
+};
+
+function cpuLevel(value: number | null | undefined): CpuLevel {
+  if (value == null) return 'none';
+  if (value >= 80) return 'high';
+  if (value >= 50) return 'mid';
+  return 'low';
+}
+
+/** Dispatcher Engine: health, queue and fleet gauges, then the runner nodes. Workers is
+ * Superadmin and Admin only, so it is not requested for User. */
+export function DispatcherPanel({
+  showWorkers,
+  version,
+  toolModuleNames,
+  poll,
+}: {
+  showWorkers: boolean;
+  version: string | null;
+  toolModuleNames: ReadonlyMap<string, string>;
+  poll: number | false;
+}): ReactElement {
+  const status = useDispatcherStatus(poll);
   const workers = useWorkers(null, showWorkers);
+  const d = status.data;
+  const health = d?.status ?? null;
+  const online = (workers.data?.items ?? []).filter((w) => w.is_online !== false);
 
   return (
     <div className={`${PANEL} flex flex-col gap-space-md p-space-lg`}>
-      <PanelHeader
-        icon="precision_manufacturing"
-        title="Dispatcher"
-        subtitle="Hands queued jobs to workers"
-      />
+      <div className="flex items-center justify-between gap-space-sm border-b border-border pb-space-sm">
+        <div className="flex items-center gap-space-sm">
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary">
+            precision_manufacturing
+          </span>
+          <div>
+            <h2 className="font-panel-title text-panel-title font-semibold leading-tight text-fg">
+              Dispatcher Engine
+            </h2>
+            <p className="font-body-code text-caption text-fg-faint">
+              {version === null ? 'Dispatcher' : `ReconOS ${version}`} · heartbeat{' '}
+              {d?.last_heartbeat_at == null ? 'never' : formatMoment(d.last_heartbeat_at)}
+            </p>
+          </div>
+        </div>
+        {health !== null && (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-label-caps text-label-caps uppercase ${STATUS_PILL[health]}`}
+          >
+            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[health]}`} />
+            {STATUS_WORD[health]}
+          </span>
+        )}
+      </div>
       {status.isPending && <p className={NOTE}>Loading the dispatcher status…</p>}
       {status.isError && (
         <p role="alert" className={ALERT}>
           {errorText(status.error, 'Could not load the dispatcher status.')}
         </p>
       )}
-      {status.data !== undefined && (
-        <dl className="grid grid-cols-1 gap-2 rounded-sm border border-border bg-surface-2 p-space-sm">
-          <div>
-            <dt className={SECTION_LABEL}>Last heartbeat</dt>
-            <dd className="mt-0.5 font-body-code-bold text-body-default text-fg">
-              {status.data.last_heartbeat_at === null
-                ? 'Never'
-                : formatMoment(status.data.last_heartbeat_at)}
-            </dd>
+      {d !== undefined && (
+        <>
+          <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2">
+            <Gauge
+              label="Queue Depth Pressure"
+              percent={share(d.queued_total, d.queue_capacity)}
+              suffix="used"
+              left={d.queued_total === undefined ? '-' : `${COUNT.format(d.queued_total)} waiting`}
+              right={d.queue_capacity === undefined ? '-' : `${COUNT.format(d.queue_capacity)} cap`}
+            />
+            <Gauge
+              label="Worker Fleet Capacity"
+              percent={share(d.running_total, d.slot_capacity)}
+              suffix="Utl"
+              left={
+                d.running_total === undefined || d.slot_capacity === undefined
+                  ? '-'
+                  : `${COUNT.format(d.running_total)} / ${COUNT.format(d.slot_capacity)} slots busy`
+              }
+              right={
+                d.workers_online === undefined
+                  ? '-'
+                  : `${COUNT.format(d.workers_online)} workers online`
+              }
+            />
           </div>
-        </dl>
+          <dl className="grid grid-cols-2 gap-space-sm rounded-sm border border-border bg-surface-2 p-space-sm md:grid-cols-4">
+            <div>
+              <dt className={SECTION_LABEL}>Throughput</dt>
+              <dd className="mt-0.5 font-body-code text-body-code text-fg">
+                {d.jobs_per_minute === undefined ? '-' : `~${d.jobs_per_minute.toFixed(1)}/min`}
+              </dd>
+            </div>
+            <div>
+              <dt className={SECTION_LABEL}>Job Latency</dt>
+              <dd className="mt-0.5 font-body-code text-body-code text-fg">
+                {seconds(d.avg_wait_seconds)}
+              </dd>
+            </div>
+            <div>
+              <dt className={SECTION_LABEL}>Redis Store</dt>
+              <dd className="mt-0.5 font-body-code text-body-code text-good">
+                {bytes(d.redis_used_bytes)}
+              </dd>
+            </div>
+            <div>
+              <dt className={SECTION_LABEL}>Last Dispatch</dt>
+              <dd className="mt-0.5 font-body-code text-caption text-fg-muted">
+                {d.last_dispatched_at == null ? 'Never' : formatMoment(d.last_dispatched_at)}
+              </dd>
+            </div>
+          </dl>
+        </>
       )}
       {showWorkers && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <span className={SECTION_LABEL}>Workers</span>
+            <span className={SECTION_LABEL}>Active Runner Nodes</span>
             {workers.data !== undefined && (
               <span className="font-body-code text-caption text-fg-faint">
-                {COUNT.format(workers.data.items.length)} registered
+                {COUNT.format(online.length)} connected
               </span>
             )}
           </div>
@@ -179,44 +338,61 @@ export function DispatcherPanel({ showWorkers }: { showWorkers: boolean }): Reac
             <p className="text-caption text-fg-muted">No worker has registered.</p>
           )}
           {workers.data !== undefined && workers.data.items.length > 0 && (
-            <div className="overflow-hidden rounded-sm border border-border">
-              <div
-                aria-hidden="true"
-                className="grid grid-cols-12 bg-surface-2 px-space-md py-1.5 font-label-caps text-label-caps uppercase text-fg-muted"
-              >
-                <span className="col-span-4">Worker</span>
-                <span className="col-span-5">Tool modules</span>
-                <span className="col-span-3 text-right">Last heartbeat</span>
-              </div>
-              <ul className="divide-y divide-border font-body-code text-caption">
-                {workers.data.items.map((w) => (
-                  <li
-                    key={w.id}
-                    className="grid grid-cols-12 items-center gap-x-space-xs px-space-md py-2 hover:bg-surface-3"
-                  >
-                    <span className="col-span-4 truncate font-body-code-bold text-fg">
-                      {w.name}
-                    </span>
-                    <span className="col-span-5 flex flex-wrap gap-1">
-                      {w.tool_modules.length === 0 ? (
-                        <span className="text-fg-muted">No tool module</span>
-                      ) : (
-                        w.tool_modules.map((m) => (
+            <div className="overflow-x-auto rounded-sm border border-border">
+              <table className="w-full min-w-[440px] border-collapse text-left font-body-code text-caption">
+                <thead className="bg-surface-2">
+                  <tr>
+                    <th className={RUNNER_TH}>Runner node</th>
+                    <th className={RUNNER_TH}>Active module</th>
+                    <th className={RUNNER_TH}>Concurrency</th>
+                    <th className={`${RUNNER_TH} text-right`}>CPU load</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {workers.data.items.map((w) => (
+                    <tr key={w.id}>
+                      <td className="px-space-md py-2">
+                        <span className="flex items-center gap-1.5 text-fg">
                           <span
-                            key={m}
-                            className="rounded-sm border border-border bg-surface-3 px-1.5 text-primary"
-                          >
-                            {m}
-                          </span>
-                        ))
-                      )}
-                    </span>
-                    <span className="col-span-3 text-right text-fg-muted">
-                      {w.last_heartbeat_at === null ? 'Never' : formatMoment(w.last_heartbeat_at)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                            aria-hidden="true"
+                            className={`h-1.5 w-1.5 rounded-full ${w.is_online === false ? 'bg-fg-faint' : 'bg-good'}`}
+                          />
+                          {w.name}
+                          {w.is_online === false && (
+                            <span className="text-fg-faint">(offline)</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-space-md py-2">
+                        <span className="flex flex-wrap gap-1">
+                          {(w.running_tool_module_ids ?? []).length === 0 ? (
+                            <span className="text-fg-faint">Idle</span>
+                          ) : (
+                            (w.running_tool_module_ids ?? []).map((id) => (
+                              <span
+                                key={id}
+                                className="rounded-sm bg-surface-3 px-1.5 text-primary"
+                              >
+                                {toolModuleNames.get(id) ?? shortId(id)}
+                              </span>
+                            ))
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-space-md py-2 text-fg-muted">
+                        {w.running_job_count === undefined
+                          ? '-'
+                          : `${COUNT.format(w.running_job_count)} concurrent`}
+                      </td>
+                      <td
+                        className={`px-space-md py-2 text-right ${CPU_TONE[cpuLevel(w.cpu_percent)]}`}
+                      >
+                        {w.cpu_percent == null ? '-' : `${Math.round(w.cpu_percent)}%`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -229,11 +405,13 @@ export function DispatcherPanel({ showWorkers }: { showWorkers: boolean }): Reac
 export function DistributionPanel({
   toolModuleNames,
   programNames,
+  poll = false,
 }: {
   toolModuleNames: ReadonlyMap<string, string>;
   programNames: ReadonlyMap<string, string>;
+  poll?: number | false;
 }): ReactElement {
-  const status = useDispatcherStatus();
+  const status = useDispatcherStatus(poll);
   const queued =
     status.data === undefined
       ? null

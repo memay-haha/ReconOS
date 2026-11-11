@@ -7,6 +7,7 @@ export const SUMMARY: DashboardSummary = {
   programs_new: 2,
   assets: { domain: 14892, ip: 4105, url: 86410, service: 9842 },
   assets_new: { domain: 1204, ip: 88, url: 5320, service: 0 },
+  assets_closed: { service: 74 },
   new_assets_daily: Array.from({ length: 14 }, (_, i) => ({
     date: `2026-10-${String(23 + i).padStart(2, '0')}`,
     domain: i === 12 ? 1480 : i === 13 ? 1204 : 300 + i,

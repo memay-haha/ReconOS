@@ -1,6 +1,6 @@
 # 📋 Nợ kỹ thuật
 
-> Phiên bản: 3.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 3.7 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 25: Nợ kỹ thuật
 
 | # | Nợ | Lý do chấp nhận | Ảnh hưởng | Hướng xử lý | Trạng thái |
@@ -47,3 +47,4 @@
 | 40 | Frontend chưa có client WebSocket. Màn hình phần B đến E chỉ làm mới khi tải lại query hoặc bấm Refresh, chưa làm mới theo sự kiện `job.status_changed`, `finding.created`, `asset.discovered` như [api/architecture.md](api/architecture.md). | Backend chưa có endpoint `/ws`, dựng client trước thì không có gì để kết nối. Ngày 2026-11-05. | Hàng đợi job, finding mới, tài sản mới không tự cập nhật trên màn hình đang mở. | Dựng client WebSocket một chỗ trong provider của TanStack Query, làm mới query theo `type` của sự kiện, gom sự kiện liên tiếp. Ngày 2026-11-12 người dùng chọn N7: dựng client trong đợt khớp mockup Stitch, chạy với `/ws` giả khi backend chưa có. | 🔴 Chưa làm |
 | 41 | Bảng dài trên S03, S04, S10, S20 chưa dùng virtual scroll như [frontend/CLAUDE.md](../frontend/CLAUDE.md) yêu cầu. Mỗi trang hiển thị tối đa `limit` dòng, tối đa 200. | Phân trang cursor đã giới hạn số dòng mỗi trang, dữ liệu mẫu chưa đủ lớn để đo. Ngày 2026-11-05. | Trang 200 dòng có thể cuộn chậm trên máy yếu. | Thêm virtual scroll cho các bảng này khi backend trả dữ liệu thật, đo trước và sau. | 🔴 Chưa làm |
 | 42 | Cờ dòng lệnh để gowitness ghi TLS, network log, console log, cookie, IP máy chủ, thời gian chụp và HTML mỗi trang thành file riêng chưa kiểm chứng trên phiên bản gowitness trong image worker. | Quyết định D1-A ngày 2026-11-12 chốt dữ liệu cần lưu trước khi có worker gowitness để thử. | Runner, parser viết theo [external-services.md](integrations/external-services.md) có thể không nhận được trường nào đó, S07 thiếu tab tương ứng. | Kiểm chứng trên gowitness thật ở đợt 7 của [roadmap.md](roadmap.md). Trường gowitness không xuất được thì ghi lại tại đây và báo người dùng. | 🔴 Chưa làm |
+| 43 | `GET /users` và `GET /user-sessions` đã chạy ở backend nhưng chưa trả trường tính mới cho S12: `role_counts`, `locked_count`, `last_session_ip`, `account_count` theo [api/architecture.md](api/architecture.md). | Sổ 2026-11-11 mở rộng API sau khi backend phần A đã xong. Ngày 2026-11-12. | Thẻ Locked accounts trên S12 hiện "Unavailable", bộ lọc vai trò không có số đếm. | Ngày 2026-11-12 đã thêm vào service `user` kèm test. Lọc `deleted_at` chờ migration xóa mềm của [adr-soft-delete.md](decisions/adr-soft-delete.md). | 🟢 Xong |

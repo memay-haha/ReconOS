@@ -39,8 +39,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe('S16 Osmedeus settings', () => {
   it('shows the base URL and an empty, write-only API key field', async () => {
     open('superadmin');
-    expect(await screen.findByLabelText('Base URL')).toHaveValue(ENGINE.base_url);
-    const key = screen.getByLabelText('API key');
+    expect(await screen.findByLabelText('REST API Base URL')).toHaveValue(ENGINE.base_url);
+    const key = screen.getByLabelText('API Key');
     expect(key).toHaveAttribute('type', 'password');
     expect(key).toHaveValue('');
     expect(screen.queryByRole('button', { name: /reveal|copy|rotate|show/i })).toBeNull();
@@ -50,28 +50,29 @@ describe('S16 Osmedeus settings', () => {
     const calls = open('superadmin', (call) =>
       call.method === 'PATCH' ? json(ENGINE) : standard(call),
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Save connection' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')).toEqual({
         method: 'PATCH',
         path: '/engines/e1',
-        body: { base_url: ENGINE.base_url },
+        body: { base_url: ENGINE.base_url, settings: { scan_preset: 'balanced' } },
       }),
     );
-    expect(await screen.findByText('Connection saved.')).toBeInTheDocument();
+    expect(await screen.findByText('Changes saved.')).toBeInTheDocument();
   });
 
   it('sends a new key once and clears the field', async () => {
     const calls = open('superadmin', (call) =>
       call.method === 'PATCH' ? json(ENGINE) : standard(call),
     );
-    const key = await screen.findByLabelText('API key');
+    const key = await screen.findByLabelText('API Key');
     await userEvent.type(key, 'not-a-real-key');
-    await userEvent.click(screen.getByRole('button', { name: 'Save connection' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
         base_url: ENGINE.base_url,
         api_key: 'not-a-real-key',
+        settings: { scan_preset: 'balanced' },
       }),
     );
     await vi.waitFor(() => expect(key).toHaveValue(''));
@@ -81,7 +82,7 @@ describe('S16 Osmedeus settings', () => {
     const calls = open('superadmin', (call) =>
       call.method === 'POST' ? json({ version: 'v5.0.1' }) : standard(call),
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Test connection' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Test Connection' }));
     expect(await screen.findByText('The engine answered: v5.0.1')).toBeInTheDocument();
     expect(paths(calls, 'POST')).toEqual(['/engines/e1/test']);
   });
@@ -90,7 +91,7 @@ describe('S16 Osmedeus settings', () => {
     open('superadmin', (call) =>
       call.method === 'POST' ? problem(502, 'engine_unreachable') : standard(call),
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Test connection' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Test Connection' }));
     expect(await screen.findByText(/did not answer/i)).toBeInTheDocument();
     expect(screen.queryByText('Backend Title')).toBeNull();
   });
@@ -141,6 +142,45 @@ describe('S16 Osmedeus settings', () => {
     expect(paths(calls)).toEqual(['/auth/me']);
   });
 
+  it('saves the chosen scan preset with Save Changes (D3-B)', async () => {
+    const calls = open('superadmin', (call) =>
+      call.method === 'PATCH' ? json(ENGINE) : standard(call),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Select Deep' }));
+    expect(screen.getByText('Active: Deep')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await vi.waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        base_url: ENGINE.base_url,
+        settings: { scan_preset: 'deep' },
+      }),
+    );
+  });
+
+  it('lists the workflows the engine reports and refreshes them on Refresh Index', async () => {
+    const calls = open('superadmin', (call) =>
+      call.path.startsWith('/engines/e1/workflows')
+        ? json(
+            page([
+              {
+                name: 'general',
+                kind: 'flow',
+                step_count: 14,
+                description: 'Full',
+                tags: ['recon'],
+              },
+            ]),
+          )
+        : standard(call),
+    );
+    expect(await screen.findByText('general')).toBeInTheDocument();
+    expect(screen.getByText('14 steps')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Refresh Index' }));
+    await vi.waitFor(() =>
+      expect(paths(calls).filter((p) => p.startsWith('/engines/e1/workflows'))).toHaveLength(2),
+    );
+  });
+
   it('says so when the engine is not configured', async () => {
     open('superadmin', (call) =>
       call.path === '/engines?limit=200' ? json(page([VIGOLIUM])) : standard(call),
@@ -152,7 +192,7 @@ describe('S16 Osmedeus settings', () => {
 describe('S17 Vigolium settings', () => {
   it('shows the connection of the Vigolium engine and no variables', async () => {
     const calls = open('superadmin', standard, <VigoliumPage />);
-    expect(await screen.findByLabelText('Base URL')).toHaveValue(VIGOLIUM.base_url);
+    expect(await screen.findByLabelText('REST API Base URL')).toHaveValue(VIGOLIUM.base_url);
     expect(screen.queryByRole('heading', { name: 'Engine Variables' })).toBeNull();
     expect(paths(calls).some((p) => p.includes('/variables'))).toBe(false);
   });
@@ -163,8 +203,57 @@ describe('S17 Vigolium settings', () => {
       (call) => (call.method === 'POST' ? json({}) : standard(call)),
       <VigoliumPage />,
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Test connection' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Test Connection' }));
     expect(await screen.findByText('The engine answered.')).toBeInTheDocument();
     expect(paths(calls, 'POST')).toEqual(['/engines/e2/test']);
+  });
+
+  it('saves the LLM settings and a write-only LLM key, then clears the key field', async () => {
+    const calls = open(
+      'superadmin',
+      (call) => (call.method === 'PATCH' ? json(VIGOLIUM) : standard(call)),
+      <VigoliumPage />,
+    );
+    await userEvent.type(await screen.findByLabelText('Target Model Identifier'), 'model-x');
+    const key = screen.getByLabelText('LLM API Key');
+    expect(key).toHaveAttribute('type', 'password');
+    await userEvent.type(key, 'not-a-real-llm-key');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+    await vi.waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        base_url: VIGOLIUM.base_url,
+        settings: { llm_provider: 'openai-compatible', llm_model: 'model-x', llm_base_url: '' },
+        llm_api_key: 'not-a-real-llm-key',
+      }),
+    );
+    await vi.waitFor(() => expect(key).toHaveValue(''));
+  });
+
+  it('shows the validation result and toggles a native module', async () => {
+    const calls = open(
+      'superadmin',
+      (call) => {
+        if (call.path === '/engines/e2/validate')
+          return json({ ok: true, issues: [{ level: 'advisory', message: 'Slow health check' }] });
+        if (call.path.startsWith('/engines/e2/modules') && call.method === 'GET')
+          return json(
+            page([{ name: 'xss-scanner', kind: 'active', is_enabled: true, description: null }]),
+          );
+        if (call.method === 'PATCH') return json({});
+        return standard(call);
+      },
+      <VigoliumPage />,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Validate Config' }));
+    expect(await screen.findByText('Config Valid')).toBeInTheDocument();
+    expect(screen.getByText('Slow health check')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('switch', { name: 'xss-scanner enabled' }));
+    await vi.waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')).toEqual({
+        method: 'PATCH',
+        path: '/engines/e2/modules',
+        body: { modules: [{ name: 'xss-scanner', is_enabled: false }] },
+      }),
+    );
   });
 });

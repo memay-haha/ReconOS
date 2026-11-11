@@ -141,7 +141,7 @@ function job(
     program_id: n % 3 === 0 ? P2 : P1,
     tool_module_id: tm(toolModule),
     status,
-    priority: 0,
+    priority: 'normal',
     target: [target],
     params: {},
     proxy_id: null,

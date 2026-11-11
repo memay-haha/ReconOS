@@ -35,6 +35,7 @@ export function ProgramForm({
   const [name, setName] = useState(program?.name ?? '');
   const [platform, setPlatform] = useState(program?.platform ?? '');
   const [platformUrl, setPlatformUrl] = useState(program?.platform_url ?? '');
+  const [platformHandle, setPlatformHandle] = useState(program?.platform_handle ?? '');
   const [bountyType, setBountyType] = useState<Program['bounty_type']>(
     program?.bounty_type ?? 'bounty',
   );
@@ -51,6 +52,7 @@ export function ProgramForm({
       name: name.trim(),
       platform: blankToNull(platform),
       platform_url: blankToNull(platformUrl),
+      platform_handle: blankToNull(platformHandle),
       bounty_type: bountyType,
       description: blankToNull(description),
     };
@@ -106,6 +108,19 @@ export function ProgramForm({
             className={FIELD}
           />
           <FieldError errors={errors} field="platform_url" />
+        </div>
+        <div className="flex flex-col gap-space-sm">
+          <label htmlFor="program-platform-handle" className={LABEL}>
+            Platform handle
+          </label>
+          <input
+            id="program-platform-handle"
+            value={platformHandle}
+            placeholder="example"
+            onChange={(e) => setPlatformHandle(e.target.value)}
+            className={FIELD}
+          />
+          <FieldError errors={errors} field="platform_handle" />
         </div>
         <div className="flex flex-col gap-space-sm">
           <label htmlFor="program-bounty-type" className={LABEL}>

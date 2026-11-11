@@ -113,7 +113,7 @@ export function jobRow(n: number, extra: Partial<Job> = {}): Job {
     program_id: 'p1',
     tool_module_id: 'tm1',
     status: 'queued',
-    priority: 0,
+    priority: 'normal',
     target: [`a${n}.example.com`],
     params: {},
     proxy_id: null,

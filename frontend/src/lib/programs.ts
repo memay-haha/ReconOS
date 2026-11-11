@@ -20,6 +20,8 @@ export interface Program {
   readonly name: string;
   readonly platform: string | null;
   readonly platform_url: string | null;
+  /** The program's handle on its platform, typed by hand (`uber`): N21. */
+  readonly platform_handle?: string | null;
   readonly bounty_type: 'bounty' | 'vdp';
   readonly description: string | null;
   readonly status: ProgramStatus;
@@ -39,13 +41,47 @@ export interface ProgramRow extends Program {
   readonly url_count: number;
   readonly service_count: number;
   readonly finding_counts: FindingCounts;
+  // Computed on read since the Stitch pass (docs/api/architecture.md, computed fields).
+  // Optional so a row from an older mock still type-checks; a screen shows "-" when absent.
+  /** max(`finished_at`) of the program's `completed` jobs (M22). */
+  readonly last_job_finished_at?: string | null;
+  /** In-scope domains over all domains, 0 to 1; null before the first domain. */
+  readonly scope_coverage?: number | null;
+  /** Assets with `first_seen_at` in the last 24 hours (M1). */
+  readonly assets_new_today?: { readonly domain: number; readonly url: number };
+  /** IPs with at least one service (M10). */
+  readonly ip_resolved_count?: number;
+  /** Distinct ports across the program's services. */
+  readonly service_port_count?: number;
+  readonly screenshot_count?: number;
+  /** Username of `created_by`, the "Maintained by" of S09 (N24). */
+  readonly created_by_username?: string | null;
 }
+
+/** Sort keys `GET /programs` accepts: docs/api/openapi.yaml. */
+export const PROGRAM_SORTS = [
+  'name',
+  '-domain_count',
+  '-finding_critical_count',
+  '-last_job_finished_at',
+] as const;
+export type ProgramSort = (typeof PROGRAM_SORTS)[number];
+
+/** A program page plus how long the request took in the browser: the S11 footer's
+ * "Latency" (M29). Measured here, never sent by the backend. */
+export type ProgramPage = Page<ProgramRow> & { readonly latency_ms: number };
 
 export interface ProgramFilter {
   /** `archived` is not a list filter: archived programs leave the list. */
   readonly status?: Exclude<ProgramStatus, 'archived'> | null;
   readonly sort?: string | null;
   readonly limit?: number | null;
+  /** Substring of name, platform, platform_handle or description (N2). */
+  readonly q?: string | null;
+  /** false: programs without any In-Scope rule (S08 "Show empty scope", S11 No Scope). */
+  readonly hasInScopeRule?: boolean | null;
+  /** false: programs with no domain yet (S11 "Unmapped only", M27). */
+  readonly hasDomain?: boolean | null;
 }
 
 export const programKeys = {
@@ -57,6 +93,9 @@ export const programKeys = {
       filter.status ?? null,
       filter.sort ?? null,
       filter.limit ?? null,
+      filter.q ?? null,
+      filter.hasInScopeRule ?? null,
+      filter.hasDomain ?? null,
       cursor,
     ] as const,
   detail: (programId: string) => ['programs', 'detail', programId] as const,
@@ -65,15 +104,21 @@ export const programKeys = {
 export function usePrograms(filter: ProgramFilter = {}, cursor: string | null = null) {
   return useQuery({
     queryKey: programKeys.list(filter, cursor),
-    queryFn: () =>
-      apiRequest<Page<ProgramRow>>(
+    queryFn: async (): Promise<ProgramPage> => {
+      const started = performance.now();
+      const result = await apiRequest<Page<ProgramRow>>(
         withQuery('/programs', {
           status: filter.status,
           sort: filter.sort,
           limit: filter.limit,
+          q: filter.q === '' ? undefined : filter.q,
+          has_in_scope_rule: filter.hasInScopeRule,
+          has_domain: filter.hasDomain,
           cursor,
         }),
-      ),
+      );
+      return { ...result, latency_ms: Math.round(performance.now() - started) };
+    },
   });
 }
 
@@ -89,6 +134,7 @@ export interface ProgramBody {
   readonly name: string;
   readonly platform: string | null;
   readonly platform_url: string | null;
+  readonly platform_handle?: string | null;
   readonly bounty_type: Program['bounty_type'];
   readonly description: string | null;
 }
@@ -130,5 +176,20 @@ export function useProgramAction() {
 export function useDeleteProgram() {
   return useProgramMutation((programId: string) =>
     apiRequest<void>(`/programs/${programId}`, { method: 'DELETE' }),
+  );
+}
+
+/** `POST /programs/bulk-<action>`: all or nothing, at most 500 ids. delete is Superadmin
+ * only and hard, as `DELETE /programs/{id}`: docs/api/architecture.md. */
+export const PROGRAM_BULK_ACTIONS = ['pause', 'resume', 'archive', 'delete'] as const;
+export type ProgramBulkAction = (typeof PROGRAM_BULK_ACTIONS)[number];
+
+export function useBulkProgramAction() {
+  return useProgramMutation(
+    ({ action, ids }: { action: ProgramBulkAction; ids: readonly string[] }) =>
+      apiRequest<void>(`/programs/bulk-${action}`, {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
   );
 }

@@ -10,12 +10,18 @@ const FOCUSABLE =
  * unless a request is in flight, and focus returns to the opener. */
 export function Modal({
   title,
+  icon,
   busy,
+  wide = false,
   onClose,
   children,
 }: {
   title: string;
+  /** Material Symbols ligature drawn before the title, as some mockup dialogs do. */
+  icon?: string;
   busy: boolean;
+  /** The diagnostics console of S15 is drawn wider than a form. */
+  wide?: boolean;
   onClose: () => void;
   children: ReactNode;
 }): ReactElement {
@@ -62,11 +68,19 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-full w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface-container p-margin shadow-modal"
+        className={`max-h-full w-full overflow-y-auto rounded-lg border border-border bg-surface-container p-margin shadow-modal ${wide ? 'max-w-3xl' : 'max-w-lg'}`}
       >
-        <h2 id={titleId} className="text-panel-title text-fg">
-          {title}
-        </h2>
+        {/* The icon sits beside the heading, so the dialog's name stays the title alone. */}
+        <div className="flex items-center gap-space-sm">
+          {icon === undefined ? null : (
+            <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-primary">
+              {icon}
+            </span>
+          )}
+          <h2 id={titleId} className="text-panel-title text-fg">
+            {title}
+          </h2>
+        </div>
         <div className="mt-gutter">{children}</div>
       </div>
     </div>

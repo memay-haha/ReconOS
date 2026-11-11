@@ -26,6 +26,11 @@ export interface DashboardSummary {
   readonly programs_new: number;
   readonly assets: AssetCounts;
   readonly assets_new: AssetCounts;
+  /** Services whose `closed_at` falls in the window (decision M3). Optional until every
+   * source sends it. */
+  readonly assets_closed?: { readonly service: number };
+  /** `confirmed` or `reported` findings older than `finding_sla_days` minus 2 days (M21). */
+  readonly findings_near_sla?: number;
   /** 14 days, oldest first; the last entry is today. */
   readonly new_assets_daily: readonly {
     readonly date: string;

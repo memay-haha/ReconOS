@@ -35,6 +35,7 @@ export function StatTile({
   added,
   period,
   trendIcon,
+  closed,
 }: {
   label: string;
   icon: string;
@@ -44,8 +45,59 @@ export function StatTile({
   added: number | null | undefined;
   period: string;
   trendIcon: string;
+  /** Given, the footer counts what closed in the window instead (decision M3: services). */
+  closed?: { readonly value: number | null | undefined };
 }): ReactElement {
   const grew = added !== null && added !== undefined && added > 0;
+  if (closed !== undefined) {
+    return (
+      <Tile label={label} icon={icon} accent={accent} value={value}>
+        <div className="mt-4 flex items-center gap-1.5 font-caption text-caption text-warn">
+          <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
+            remove
+          </span>
+          <span>
+            {closed.value === undefined
+              ? '…'
+              : closed.value === null
+                ? '–'
+                : `−${COUNT.format(closed.value)} closed`}
+          </span>
+        </div>
+      </Tile>
+    );
+  }
+  return (
+    <Tile label={label} icon={icon} accent={accent} value={value}>
+      <div
+        className={`mt-4 flex items-center gap-1.5 font-caption text-caption ${grew ? 'text-good' : 'text-warn'}`}
+      >
+        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
+          {grew ? trendIcon : 'remove'}
+        </span>
+        <span>
+          {added === undefined || added === null
+            ? '…'
+            : `${grew ? '+' : ''}${COUNT.format(added)} ${period}`}
+        </span>
+      </div>
+    </Tile>
+  );
+}
+
+function Tile({
+  label,
+  icon,
+  accent,
+  value,
+  children,
+}: {
+  label: string;
+  icon: string;
+  accent: Accent;
+  value: number | null | undefined;
+  children: ReactNode;
+}): ReactElement {
   return (
     <div
       data-stat-tile
@@ -73,18 +125,7 @@ export function StatTile({
           </span>
         </div>
       </div>
-      <div
-        className={`mt-4 flex items-center gap-1.5 font-caption text-caption ${grew ? 'text-good' : 'text-warn'}`}
-      >
-        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
-          {grew ? trendIcon : 'remove'}
-        </span>
-        <span>
-          {added === undefined || added === null
-            ? '…'
-            : `${grew ? '+' : ''}${COUNT.format(added)} ${period}`}
-        </span>
-      </div>
+      {children}
     </div>
   );
 }
@@ -518,7 +559,7 @@ export function BreakdownPanel({
 }
 
 /** Colour of a feed row's icon square. */
-export type FeedTone = 'domain' | 'ip' | 'url' | 'service' | 'crit' | 'job';
+export type FeedTone = 'domain' | 'ip' | 'url' | 'service' | 'crit' | 'warn' | 'job';
 
 const FEED_TINT: Readonly<Record<FeedTone, string>> = {
   domain: 'bg-asset-domain/10 text-asset-domain',
@@ -526,6 +567,7 @@ const FEED_TINT: Readonly<Record<FeedTone, string>> = {
   url: 'bg-asset-url/10 text-asset-url',
   service: 'bg-asset-service/10 text-asset-service',
   crit: 'bg-crit-soft text-crit',
+  warn: 'bg-warn-soft text-warn',
   job: 'bg-surface-3 text-primary',
 };
 

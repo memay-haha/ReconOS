@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { cut, mockupDocument, pagerToNav, regionsOf, textOf } from '../programs/shape-helpers';
+import { mockupDocument, pagerToNav, regionsOf, textOf } from '../programs/shape-helpers';
 import { jobRow, page, renderWithClient, stubApi } from '../programs/test-api';
 import QueuePage from './page';
 
@@ -14,11 +14,10 @@ const RENAMED: Readonly<Record<string, string>> = {
   STATUS: 'Status',
   'QUEUED AT': 'Created',
   DURATION: 'Duration',
+  WORKER: 'Worker',
   ACTIONS: 'Actions',
 };
-const DROPPED_COLUMNS = [
-  { label: 'WORKER', reason: 'M2: job columns are Target, Tool module, Created, Duration' },
-];
+const DROPPED_COLUMNS: readonly { label: string; reason: string }[] = [];
 
 function prunedMockup() {
   const doc = mockupDocument('s10-staging-queue.html');
@@ -45,13 +44,11 @@ function prunedMockup() {
   // First, page numbers and Last go: Previous and Next only (frontend/CLAUDE.md).
   const first = Array.from(root.querySelectorAll('button')).find((b) => textOf(b) === 'First');
   pagerToNav(first?.closest('div') as Element);
-  // Auto-refresh follows WebSocket events; there is no pause switch to build.
-  cut(root, 'input[placeholder^="Filter jobs"]', 'M3: no string search (debt 39)');
   return { root, columns };
 }
 
 function renderScreen() {
-  stubQueue({ '/jobs?sort=-created_at': page([jobRow(1)]) });
+  stubQueue({ '/jobs?sort=-created_at&limit=25': page([jobRow(1)]) });
   return renderWithClient(<QueuePage />);
 }
 
@@ -79,31 +76,23 @@ describe('S10 against its mockup', () => {
     expect(screen.getAllByRole('columnheader').map(textOf)).toEqual(mockup.columns);
   });
 
-  it('shows one card per job status, seven in all', async () => {
+  it('shows Total Jobs and the five status cards of the mockup', async () => {
     const { container } = renderScreen();
     await screen.findByRole('table');
-    expect(container.querySelectorAll('[data-stat-tile]')).toHaveLength(7);
+    expect(container.querySelectorAll('[data-stat-tile]')).toHaveLength(6);
   });
 
   it('builds nothing from the dropped parts', async () => {
     const { container } = renderScreen();
     await screen.findByRole('table');
     const words = textOf(container);
-    for (const banned of [
-      'Staging',
-      'Generate Jobs',
-      'Dispatch All',
-      'Dispatch Now',
-      'Cleanup',
-      'CPU LOAD',
-      'Redis',
-      'Throughput',
-      'Processing',
-      'View Artifact',
-      'Stop',
-    ]) {
+    // N32 keeps Queue; Generate Jobs is out of scope; M2 says Running, Cancel, Raw outputs.
+    for (const banned of ['Staging', 'Generate Jobs', 'Processing', 'View Artifact', 'Stop']) {
       expect(words).not.toContain(banned);
     }
-    expect(container.querySelector('input[type=text]')).toBeNull();
+    for (const built of ['Dispatch All', 'Cleanup', 'Retry Failed', 'Pause auto-refresh']) {
+      expect(words).toContain(built);
+    }
+    expect(container.querySelector('input[type=search]')).not.toBeNull();
   });
 });

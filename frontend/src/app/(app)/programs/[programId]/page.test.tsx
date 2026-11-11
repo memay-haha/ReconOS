@@ -17,10 +17,19 @@ import {
 import ProgramDetailPage from './page';
 
 const push = vi.fn();
+const replace = vi.fn();
+// The tab lives in `?tab=`: a test opens a tab by setting it before rendering.
+let search = new URLSearchParams();
 vi.mock('next/navigation', () => ({
   useParams: () => ({ programId: 'p1' }),
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, replace }),
+  usePathname: () => '/programs/p1',
+  useSearchParams: () => search,
 }));
+
+function onTab(tab: string): void {
+  search = new URLSearchParams(`tab=${tab}`);
+}
 
 const RULES = page([
   {
@@ -53,6 +62,8 @@ const BASE = {
 afterEach(() => {
   vi.unstubAllGlobals();
   push.mockReset();
+  replace.mockReset();
+  search = new URLSearchParams();
 });
 
 describe('S09 program detail', () => {
@@ -106,7 +117,9 @@ describe('S09 program detail', () => {
     expect(screen.queryByRole('button', { name: /archive/i })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Users' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Proxies' })).toBeNull();
-    expect(screen.getByRole('button', { name: /run scan/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run Scan' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add several In-Scope rules' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Trigger / })).toBeNull();
     expect(calls(fetchMock).some((c) => c.includes('/proxies'))).toBe(false);
   });
 
@@ -139,21 +152,90 @@ describe('S09 program detail', () => {
     expect(calls(fetchMock)).toContain('POST /programs/p1/pause');
   });
 
-  it('lists the jobs of the program and names who created them', async () => {
+  it('lists the recent jobs on the Overview and names who triggered them', async () => {
     const fetchMock = stubApi({
       ...BASE,
-      '/jobs?program_id=p1&sort=-created_at': page([
+      '/jobs?program_id=p1&sort=-created_at&limit=10': page([
         jobRow(1, { created_by: null }),
-        jobRow(2, { created_by: ME_ADMIN.id }),
-        jobRow(3, { created_by: '0190a000-0000-7000-8000-0000abcdef12' }),
+        jobRow(2, { created_by: ME_ADMIN.id, created_by_username: 'ops' }),
+        jobRow(3, {
+          created_by: '0190a000-0000-7000-8000-0000abcdef12',
+          params: { templates: 'cves' },
+        }),
       ]),
     });
     renderWithClient(<ProgramDetailPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: 'Jobs' }));
     expect(await screen.findByText('Schedule')).toBeInTheDocument();
-    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText('ops')).toBeInTheDocument();
     expect(screen.getByText('abcdef12')).toBeInTheDocument();
-    expect(calls(fetchMock)).toContain('GET /jobs?program_id=p1&sort=-created_at');
+    expect(screen.getByText('(templates=cves)')).toBeInTheDocument();
+    expect(calls(fetchMock)).toContain('GET /jobs?program_id=p1&sort=-created_at&limit=10');
+  });
+
+  it('keeps the tab in the URL', async () => {
+    stubApi(BASE);
+    renderWithClient(<ProgramDetailPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /Domains/ }));
+    expect(replace).toHaveBeenCalledWith('/programs/p1?tab=domains', { scroll: false });
+  });
+
+  it('lists the domains of the program on the Domains tab', async () => {
+    onTab('domains');
+    const fetchMock = stubApi(BASE);
+    renderWithClient(<ProgramDetailPage />);
+    expect(await screen.findByRole('tab', { name: /Domains/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await vi.waitFor(() =>
+      expect(calls(fetchMock)).toContain('GET /domains?program_id=p1&limit=25'),
+    );
+  });
+
+  it('triggers a feed through its schedule', async () => {
+    const fetchMock = stubApi({
+      ...BASE,
+      '/programs/p1/schedules': page([
+        {
+          id: 's1',
+          program_id: 'p1',
+          tool_module_id: 'tm1',
+          target: ['*.example.com'],
+          params: {},
+          interval_minutes: 360,
+          is_enabled: true,
+          created_by: null,
+          last_run_at: null,
+          next_run_at: null,
+          created_at: '2026-11-01T01:00:00Z',
+        },
+      ]),
+      'POST /schedules/s1/run': { id: 'j9' },
+    });
+    renderWithClient(<ProgramDetailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Trigger / }));
+    expect(calls(fetchMock)).toContain('POST /schedules/s1/run');
+  });
+
+  it('adds several In-Scope rules at once', async () => {
+    const fetchMock = stubApi({ ...BASE, 'POST /programs/p1/scope-rules/bulk-create': {} });
+    renderWithClient(<ProgramDetailPage />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Add several In-Scope rules' }),
+    );
+    await userEvent.type(
+      screen.getByLabelText('Values, one per line'),
+      '*.a.example.com{enter}*.b.example.com',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Add rules' }));
+    const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+    expect(post?.[0]).toBe('/api/v1/programs/p1/scope-rules/bulk-create');
+    expect(JSON.parse(String(post?.[1]?.body))).toEqual({
+      items: [
+        { scope_type: 'in_scope', rule_type: 'wildcard', value: '*.a.example.com', reason: null },
+        { scope_type: 'in_scope', rule_type: 'wildcard', value: '*.b.example.com', reason: null },
+      ],
+    });
   });
 
   it('assigns a User account and offers only accounts with the User role', async () => {
@@ -164,8 +246,8 @@ describe('S09 program detail', () => {
         { id: 'u2', username: 'bob', role: 'admin' },
       ]),
     });
+    onTab('users');
     renderWithClient(<ProgramDetailPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: 'Users' }));
     const select = await screen.findByLabelText('User');
     await screen.findByRole('option', { name: 'alice' });
     expect(within(select).queryByRole('option', { name: 'bob' })).toBeNull();
@@ -190,8 +272,8 @@ describe('S09 program detail', () => {
         },
       ]),
     });
+    onTab('proxies');
     const { container } = renderWithClient(<ProgramDetailPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: 'Proxies' }));
     await screen.findByText('egress');
     expect(container.innerHTML).not.toContain('secret');
     const url = screen.getByLabelText('Proxy URL');
@@ -224,10 +306,13 @@ describe('S09 program detail', () => {
         },
       ]),
     });
+    onTab('scope');
     renderWithClient(<ProgramDetailPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: 'Schedules' }));
     await screen.findByRole('option', { name: 'nuclei' });
-    await userEvent.type(screen.getByLabelText(/targets/i), 'example.com');
+    await userEvent.type(
+      within(screen.getByRole('form', { name: 'New schedule' })).getByLabelText(/targets/i),
+      'example.com',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Add schedule' }));
     const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
     expect(post?.[0]).toBe('/api/v1/programs/p1/schedules');

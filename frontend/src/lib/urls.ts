@@ -37,6 +37,7 @@ export const urlKeys = {
       'list',
       filter.programId ?? null,
       filter.domainId ?? null,
+      filter.q ?? null,
       filter.limit ?? null,
       cursor,
     ] as const,
@@ -55,6 +56,7 @@ export function useUrls(
         withQuery('/urls', {
           program_id: filter.programId,
           domain_id: filter.domainId,
+          q: filter.q,
           limit: filter.limit,
           cursor,
         }),

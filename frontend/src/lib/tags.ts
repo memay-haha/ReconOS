@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from './api-client';
+import type { AssetType } from './asset-events';
 import { domainDetailKeys } from './domains';
 import { type Page, withQuery } from './page';
 
@@ -63,6 +64,21 @@ export function useUntagAsset() {
   return useMutation({
     mutationFn: (assetTagId: string) =>
       apiRequest<void>(`/asset-tags/${encodeURIComponent(assetTagId)}`, { method: 'DELETE' }),
+    onSuccess: () => client.invalidateQueries({ queryKey: domainDetailKeys.all }),
+  });
+}
+
+/** One tag onto many assets of one type, all or none (N11). Lists carry no tags, so only the
+ * domain detail reads them again. */
+export function useBulkTagAssets() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      readonly tag_id: string;
+      readonly asset_type: AssetType;
+      readonly ids: readonly string[];
+    }) =>
+      apiRequest<void>('/asset-tags/bulk-create', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => client.invalidateQueries({ queryKey: domainDetailKeys.all }),
   });
 }
