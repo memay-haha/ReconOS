@@ -42,7 +42,7 @@
 | 31 | `docs/roadmap.md` | 26 | 1 | 🔵 Chờ duyệt | 2026-11-12 | v2.11: khớp mockup Stitch, backend endpoint mới theo đợt sở hữu màn hình |
 | 32 | `docs/appendix/references.md`              | 27      | -                    | 🟢 Xong       | 2026-11-01 | v1.3: thêm tên đầy đủ cho viết tắt, nhóm Viết tài liệu |
 | 33 | `backend/CLAUDE.md` | - | 12, 17, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-12 | Lọc `deleted_at` khi đọc `user`, `domain`, `screenshot` |
-| 34 | `frontend/CLAUDE.md` | - | 17, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-12 | Danh sách không làm theo sổ 2026-11-11, chip phiên bản và node gắn lúc build |
+| 34 | `frontend/CLAUDE.md` | - | 17, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-12 | Danh sách không làm theo sổ 2026-11-11, chip phiên bản và node gắn lúc build. M3: thiếu API thì mở rộng openapi.yaml, không bỏ phần tử mockup |
 | 35 | `workers/CLAUDE.md` | - | 13, 19 đến 24 | 🔵 Chờ duyệt | 2026-11-12 | Heartbeat báo `tools`, `cpu_percent`, finish báo `tool_version` |
 | 36 | `docs/data/schema.md` | 9 | 11 | 🔵 Chờ duyệt | 2026-11-12 | v1.7: 36 bảng, xóa mềm, cột gowitness, `finding.detail`, `engine.settings`, `priority` |
 | 37 | `.claude/rules/vietnamese-writing.md`     | -       | -                    | 🟢 Xong       | 2026-11-01 | Do người dùng viết. Luôn nạp. Xung đột với documentation.md: mục 8 của documentation.md |
