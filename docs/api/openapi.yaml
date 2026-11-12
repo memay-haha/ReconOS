@@ -224,12 +224,12 @@ paths:
   /programs:
     get:
       tags: [program]
-      summary: "Danh sách program. sort nhận name, -domain_count, -finding_critical_count, -last_job_finished_at"
+      summary: "Danh sách program, không gồm program archived. User chỉ nhận program được gán"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [name, -domain_count, -finding_critical_count, -last_job_finished_at], default: name}}
         - {name: status, in: query, schema: {type: string, enum: [active, paused]}}
         - $ref: '#/components/parameters/q'
         - {name: has_in_scope_rule, in: query, schema: {type: boolean}}
@@ -239,10 +239,15 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [program]
-      summary: "Tạo program"
+      summary: "Tạo program, trạng thái active. Trùng name: 409 conflict"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ProgramCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Program vừa tạo, không có trường tính
+          content: {application/json: {schema: {$ref: '#/components/schemas/Program'}}}
         default: {$ref: '#/components/responses/Problem'}
   /programs/bulk-pause:
     post:
@@ -293,17 +298,22 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [program]
-      summary: "Chi tiết program"
+      summary: "Chi tiết program kèm trường tính. Program chưa gán cho User: 404"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [program]
-      summary: "Sửa program"
+      summary: "Sửa program, chỉ gửi trường cần đổi. Program archived: 409 conflict"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ProgramCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Program sau khi sửa
+          content: {application/json: {schema: {$ref: '#/components/schemas/Program'}}}
         default: {$ref: '#/components/responses/Problem'}
     delete:
       tags: [program]
@@ -317,7 +327,7 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [program]
-      summary: "Tạm dừng program"
+      summary: "Tạm dừng program: active sang paused. Trạng thái khác: 409 conflict"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -327,7 +337,7 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [program]
-      summary: "Tiếp tục program"
+      summary: "Tiếp tục program: paused sang active. Trạng thái khác: 409 conflict"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -337,7 +347,7 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [program]
-      summary: "Lưu trữ program"
+      summary: "Lưu trữ program: active hoặc paused sang archived. Không bỏ lưu trữ được"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -347,19 +357,22 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [program]
-      summary: "User được gán vào program"
+      summary: "User được gán vào program, gán gần nhất trước. Mỗi dòng program_id, user_id, assigned_by, assigned_at"
       x-roles: [superadmin, admin]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [-assigned_at], default: -assigned_at}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [program]
-      summary: "Gán User vào program"
+      summary: "Gán User vào program. Chỉ tài khoản vai trò user. Đã gán: 409 conflict"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [user_id], properties: {user_id: {type: string, format: uuid}}}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -379,31 +392,41 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [program]
-      summary: "Danh sách proxy, URL đã che"
+      summary: "Danh sách proxy, tạo gần nhất trước. Không trả URL, kể cả dạng che"
       x-roles: [superadmin, admin]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [-created_at], default: -created_at}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Proxy'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [program]
-      summary: "Thêm proxy"
+      summary: "Thêm proxy. URL lưu mã hóa. Trùng name trong program: 409 conflict. Program archived: 409 conflict"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ProxyCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Proxy vừa tạo, không có URL
+          content: {application/json: {schema: {$ref: '#/components/schemas/Proxy'}}}
         default: {$ref: '#/components/responses/Problem'}
   /proxies/{proxy_id}:
     parameters:
       - {name: proxy_id, in: path, required: true, schema: {type: string, format: uuid}}
     patch:
       tags: [program]
-      summary: "Sửa proxy"
+      summary: "Sửa proxy, chỉ gửi trường cần đổi. Gửi url để thay URL đã lưu"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ProxyCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Proxy sau khi sửa, không có URL
+          content: {application/json: {schema: {$ref: '#/components/schemas/Proxy'}}}
         default: {$ref: '#/components/responses/Problem'}
     delete:
       tags: [program]
@@ -417,31 +440,53 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [scope]
-      summary: "Danh sách scope rule. Mỗi dòng thêm matched_domain_count"
+      summary: "Danh sách scope rule. matched_domain_count có từ khi có bảng domain"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [created_at, -created_at], default: created_at}}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [scope]
-      summary: "Thêm scope rule"
+      summary: "Thêm scope rule. Value lưu dạng chuẩn hóa"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ScopeRuleCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Scope rule vừa tạo
+          content: {application/json: {schema: {$ref: '#/components/schemas/ScopeRule'}}}
         default: {$ref: '#/components/responses/Problem'}
   /programs/{program_id}/scope-rules/bulk-create:
     parameters:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [scope]
-      summary: "Thêm nhiều scope rule một lần, body items"
+      summary: "Thêm nhiều scope rule một lần, tất cả hoặc không"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items: {type: array, minItems: 1, maxItems: 200, items: {$ref: '#/components/schemas/ScopeRuleCreate'}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Các scope rule vừa tạo theo thứ tự của body
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: '#/components/schemas/ScopeRule'}}
         default: {$ref: '#/components/responses/Problem'}
   /scope-rules/{scope_rule_id}:
     parameters:
@@ -450,8 +495,13 @@ paths:
       tags: [scope]
       summary: "Sửa scope rule"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ScopeRuleUpdate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Scope rule sau khi sửa
+          content: {application/json: {schema: {$ref: '#/components/schemas/ScopeRule'}}}
         default: {$ref: '#/components/responses/Problem'}
     delete:
       tags: [scope]
@@ -465,10 +515,27 @@ paths:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [scope]
-      summary: "Kiểm tra danh sách mục tiêu với scope"
+      summary: "Kiểm tra danh sách mục tiêu với scope, không ghi gì"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targets]
+              properties:
+                targets: {type: array, minItems: 1, maxItems: 200, items: {type: string}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Kết quả từng mục tiêu theo thứ tự của body
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: '#/components/schemas/ScopeCheckResult'}}
         default: {$ref: '#/components/responses/Problem'}
   /programs/{program_id}/schedules:
     parameters:
@@ -2053,6 +2120,49 @@ components:
       required: [ids]
       properties:
         ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+    ProgramCreate:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 255}
+        platform: {type: [string, 'null'], maxLength: 255}
+        platform_url: {type: [string, 'null'], description: "Chỉ http, https. Sai: mã url_invalid"}
+        platform_handle: {type: [string, 'null'], maxLength: 255}
+        bounty_type: {type: string, enum: [bounty, vdp], default: bounty}
+        description: {type: [string, 'null'], maxLength: 10000}
+    Program:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        platform: {type: [string, 'null']}
+        platform_url: {type: [string, 'null']}
+        platform_handle: {type: [string, 'null']}
+        bounty_type: {type: string, enum: [bounty, vdp]}
+        description: {type: [string, 'null']}
+        status: {type: string, enum: [active, paused, archived]}
+        created_by: {type: [string, 'null'], format: uuid}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        archived_at: {type: [string, 'null'], format: date-time}
+    ProxyCreate:
+      type: object
+      required: [name, url]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 255}
+        url: {type: string, writeOnly: true, description: "Scheme http, https, socks4, socks4a, socks5, socks5h, có host, không path, query, fragment. Sai: mã proxy_url_invalid, lỗi không lặp lại giá trị"}
+        is_enabled: {type: boolean, default: true}
+    Proxy:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        name: {type: string}
+        is_enabled: {type: boolean}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
     JobCreate:
       type: object
       required: [program_id, tool_module_id, target]
@@ -2080,6 +2190,42 @@ components:
             properties:
               tool_module_id: {type: string, format: uuid}
               params: {type: object}
+    ScopeRule:
+      type: object
+      required: [id, program_id, scope_type, rule_type, value, reason, created_by, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        scope_type: {type: string, enum: [in_scope, out_of_scope]}
+        rule_type: {type: string, enum: [domain, wildcard, cidr, url]}
+        value: {type: string, description: "Dạng chuẩn hóa theo business-flow.md"}
+        reason: {type: [string, 'null']}
+        created_by: {type: [string, 'null'], format: uuid}
+        created_at: {type: string, format: date-time}
+    ScopeRuleCreate:
+      type: object
+      required: [scope_type, rule_type, value]
+      properties:
+        scope_type: {type: string, enum: [in_scope, out_of_scope]}
+        rule_type: {type: string, enum: [domain, wildcard, cidr, url]}
+        value: {type: string, minLength: 1, maxLength: 2048}
+        reason: {type: [string, 'null'], maxLength: 1000, description: "Bắt buộc khi scope_type là out_of_scope"}
+    ScopeRuleUpdate:
+      type: object
+      properties:
+        scope_type: {type: string, enum: [in_scope, out_of_scope]}
+        rule_type: {type: string, enum: [domain, wildcard, cidr, url]}
+        value: {type: string, minLength: 1, maxLength: 2048}
+        reason: {type: [string, 'null'], maxLength: 1000}
+    ScopeCheckResult:
+      type: object
+      required: [target, normalized_target, in_scope, verdict, rule_value]
+      properties:
+        target: {type: string}
+        normalized_target: {type: [string, 'null']}
+        in_scope: {type: boolean}
+        verdict: {type: string, enum: [in_scope, invalid_target, no_in_scope_match, out_of_scope_match]}
+        rule_value: {type: [string, 'null']}
     WorkerHeartbeat:
       type: object
       required: [tool_modules, tools]

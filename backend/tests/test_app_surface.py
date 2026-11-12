@@ -46,6 +46,33 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("DELETE", "/user-sessions/{user_session_id}"),
     ("GET", "/audit-logs"),
     ("GET", "/health"),
+    # Batch 3, program module: docs/superpowers/specs/2026-11-02-implementation-roadmap-design.md
+    ("GET", "/programs"),
+    ("POST", "/programs"),
+    ("POST", "/programs/bulk-pause"),
+    ("POST", "/programs/bulk-resume"),
+    ("POST", "/programs/bulk-archive"),
+    ("POST", "/programs/bulk-delete"),
+    ("GET", "/programs/{program_id}"),
+    ("PATCH", "/programs/{program_id}"),
+    ("DELETE", "/programs/{program_id}"),
+    ("POST", "/programs/{program_id}/pause"),
+    ("POST", "/programs/{program_id}/resume"),
+    ("POST", "/programs/{program_id}/archive"),
+    ("GET", "/programs/{program_id}/users"),
+    ("POST", "/programs/{program_id}/users"),
+    ("DELETE", "/programs/{program_id}/users/{user_id}"),
+    ("GET", "/programs/{program_id}/proxies"),
+    ("POST", "/programs/{program_id}/proxies"),
+    ("PATCH", "/proxies/{proxy_id}"),
+    ("DELETE", "/proxies/{proxy_id}"),
+    # Batch 3, scope module.
+    ("GET", "/programs/{program_id}/scope-rules"),
+    ("POST", "/programs/{program_id}/scope-rules"),
+    ("POST", "/programs/{program_id}/scope-rules/bulk-create"),
+    ("PATCH", "/scope-rules/{scope_rule_id}"),
+    ("DELETE", "/scope-rules/{scope_rule_id}"),
+    ("POST", "/programs/{program_id}/scope-check"),
 }
 MUTATING = sorted(pair for pair in BATCH_SURFACE if pair[0] in UNSAFE_METHODS)
 

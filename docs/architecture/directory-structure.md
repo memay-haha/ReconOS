@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.7 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -59,6 +59,7 @@
 - Mỗi module tự chứa: `router.py` là endpoint, `service.py` là nghiệp vụ, `models.py` là model SQLAlchemy, `schemas.py` là schema Pydantic.
 - Module không sở hữu bảng nào thì không có `models.py`. Bảng mà mọi tầng đều cần nằm trong `app/core/`: [dependency-graph.md](dependency-graph.md).
 - Module chỉ gọi module khác qua `service.py`.
+- Module được có file riêng cho phần thuần không truy cập CSDL, ví dụ `app/scope/matching.py` so khớp scope. Module khác vẫn gọi qua `service.py` của module đó.
 - `app/core/models.py` import model của mọi module để Alembic tạo migration.
 - Danh sách module và trách nhiệm: [modules.md](modules.md).
 - Mã backend chạy thành nhiều tiến trình: Backend API, dispatcher, tiến trình nền, Celery Beat. Vai trò từng tiến trình: [system.md](system.md).

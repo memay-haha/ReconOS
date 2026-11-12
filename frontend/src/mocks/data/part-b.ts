@@ -1,10 +1,7 @@
 import type { Job, JobStatus } from '@/lib/jobs';
 import type { JobLogEntry } from '@/lib/job-logs';
-import type { ProgramUser } from '@/lib/program-users';
-import type { Proxy } from '@/lib/proxies';
 import type { RawOutput } from '@/lib/raw-outputs';
 import type { Schedule } from '@/lib/schedules';
-import type { ScopeRule } from '@/lib/scope-rules';
 
 import { programs, toolModules } from './programs';
 import { users } from './users';
@@ -16,69 +13,6 @@ const P1 = programs[0]?.id ?? '';
 const P2 = programs[1]?.id ?? '';
 const tm = (index: number) => toolModules[index]?.id ?? '';
 const ME = users[0]?.id ?? null;
-
-export const scopeRules: ScopeRule[] = [
-  {
-    id: '0190d000-0000-7000-8000-000000000001',
-    program_id: P1,
-    scope_type: 'in_scope',
-    rule_type: 'wildcard',
-    value: '*.example.com',
-    reason: null,
-    created_by: ME,
-    created_at: '2026-10-01T03:00:00Z',
-  },
-  {
-    id: '0190d000-0000-7000-8000-000000000002',
-    program_id: P1,
-    scope_type: 'in_scope',
-    rule_type: 'domain',
-    value: 'example.com',
-    reason: null,
-    created_by: ME,
-    created_at: '2026-10-01T03:01:00Z',
-  },
-  {
-    id: '0190d000-0000-7000-8000-000000000003',
-    program_id: P1,
-    scope_type: 'in_scope',
-    rule_type: 'cidr',
-    value: '198.51.100.0/24',
-    reason: null,
-    created_by: ME,
-    created_at: '2026-10-02T03:00:00Z',
-  },
-  {
-    id: '0190d000-0000-7000-8000-000000000004',
-    program_id: P1,
-    scope_type: 'in_scope',
-    rule_type: 'url',
-    value: 'https://api.example.com/v2/',
-    reason: null,
-    created_by: ME,
-    created_at: '2026-10-03T03:00:00Z',
-  },
-  {
-    id: '0190d000-0000-7000-8000-000000000005',
-    program_id: P1,
-    scope_type: 'out_of_scope',
-    rule_type: 'domain',
-    value: 'billing.example.com',
-    reason: 'Third-party payment vendor',
-    created_by: ME,
-    created_at: '2026-10-03T04:00:00Z',
-  },
-  {
-    id: '0190d000-0000-7000-8000-000000000006',
-    program_id: P2,
-    scope_type: 'in_scope',
-    rule_type: 'wildcard',
-    value: '*.example.org',
-    reason: null,
-    created_by: ME,
-    created_at: '2026-10-12T03:00:00Z',
-  },
-];
 
 export const schedules: Schedule[] = [
   {
@@ -106,26 +40,6 @@ export const schedules: Schedule[] = [
     last_run_at: null,
     next_run_at: null,
     created_at: '2026-10-05T05:00:00Z',
-  },
-];
-
-export const proxies: Proxy[] = [
-  {
-    id: '0190f000-0000-7000-8000-000000000001',
-    program_id: P1,
-    name: 'egress-sg',
-    is_enabled: true,
-    created_at: '2026-10-01T06:00:00Z',
-    updated_at: '2026-10-20T06:00:00Z',
-  },
-];
-
-export const programUsers: ProgramUser[] = [
-  {
-    program_id: P1,
-    user_id: users[2]?.id ?? '',
-    assigned_by: ME,
-    assigned_at: '2026-10-02T06:00:00Z',
   },
 ];
 

@@ -83,7 +83,9 @@ def decode_time_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
     return moment, row_id
 
 
-def contains_ignore_case(column: InstrumentedAttribute[str], q: str) -> ColumnElement[bool]:
+def contains_ignore_case(
+    column: InstrumentedAttribute[str] | InstrumentedAttribute[str | None], q: str
+) -> ColumnElement[bool]:
     """The `q` search of a list: a case-insensitive substring, matched literally.
 
     LIKE metacharacters in q are escaped, so `%` or `_` typed by a client match

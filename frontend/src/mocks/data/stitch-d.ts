@@ -1,7 +1,6 @@
 import type { Job, JobStatus } from '@/lib/jobs';
 import type { ProgramRow } from '@/lib/programs';
 import type { Schedule } from '@/lib/schedules';
-import type { ScopeRule } from '@/lib/scope-rules';
 import type { Worker } from '@/lib/workers';
 
 import { programs as basePrograms, toolModules } from './programs';
@@ -192,50 +191,6 @@ export const programs: ProgramRow[] = [
 ];
 
 const P = (index: number) => programs[index]?.id ?? '';
-
-let ruleSeq = 100;
-function rule(
-  programIndex: number,
-  scopeType: ScopeRule['scope_type'],
-  ruleType: ScopeRule['rule_type'],
-  value: string,
-  matched: number,
-  reason: string | null = null,
-): ScopeRule {
-  ruleSeq += 1;
-  return {
-    id: `0190d000-0000-7000-8000-000000000${ruleSeq}`,
-    program_id: P(programIndex),
-    scope_type: scopeType,
-    rule_type: ruleType,
-    value,
-    reason,
-    created_by: ME,
-    created_at: ago(ruleSeq * 5 * HOUR),
-    matched_domain_count: matched,
-  };
-}
-
-export const scopeRules: ScopeRule[] = [
-  rule(0, 'in_scope', 'wildcard', '*.example.com', 2109),
-  rule(0, 'in_scope', 'wildcard', '*.api.example.com', 894),
-  rule(0, 'in_scope', 'wildcard', '*.shop.example.com', 409),
-  rule(0, 'in_scope', 'wildcard', '*.partners.example.com', 211),
-  rule(0, 'in_scope', 'domain', 'example.com', 1),
-  rule(0, 'in_scope', 'cidr', '198.51.100.0/24', 0),
-  rule(0, 'in_scope', 'url', 'https://api.example.com/v2/', 1),
-  rule(0, 'in_scope', 'wildcard', '*.edge.example.com', 73),
-  rule(0, 'out_of_scope', 'domain', 'billing.example.com', 1, 'Third-party payment vendor'),
-  rule(0, 'out_of_scope', 'wildcard', '*.vault.example.com', 4, 'Production HSM cluster'),
-  rule(1, 'in_scope', 'wildcard', '*.example.org', 16),
-  rule(1, 'in_scope', 'domain', 'example.org', 1),
-  rule(2, 'in_scope', 'wildcard', '*.acme.example.net', 1402),
-  rule(2, 'in_scope', 'wildcard', '*.pay.example.net', 418),
-  rule(2, 'out_of_scope', 'domain', 'legacy.example.net', 1, 'Decommissioned'),
-  rule(3, 'in_scope', 'wildcard', '*.globex.test', 2415),
-  rule(4, 'in_scope', 'wildcard', '*.initech.test', 982),
-  rule(6, 'in_scope', 'wildcard', '*.hooli.test', 643),
-];
 
 let scheduleSeq = 100;
 function schedule(

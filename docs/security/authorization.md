@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.9 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -98,7 +98,8 @@
 Backend luôn ghi nhật ký thao tác cho các thao tác sau (G7):
 
 - Tạo, sửa, khóa, xóa mềm tài khoản. Đổi vai trò. Thu hồi phiên.
-- Lưu trữ, xóa cứng program, kể cả hàng loạt.
+- Tạo, sửa, tạm dừng, tiếp tục, lưu trữ, xóa cứng program, kể cả hàng loạt.
+- Thêm, sửa, xóa proxy. `detail` chỉ ghi tên proxy hoặc tên trường đã đổi, không ghi URL.
 - Xóa mềm domain, screenshot.
 - Dispatch Now, Dispatch All, Cleanup hàng đợi, chạy ngay một lịch.
 - Tạo lần chẩn đoán.

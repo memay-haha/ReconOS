@@ -1,11 +1,9 @@
 import { HttpResponse } from 'msw';
 
 import type { JobStatus } from '@/lib/jobs';
-import type { ProgramRow } from '@/lib/programs';
-import type { ScopeRuleBody } from '@/lib/scope-rules';
 
 import { gowitnessJobs } from '../data/stitch-c';
-import { jobs, programs, schedules, scopeRules, workers } from '../data/stitch-d';
+import { jobs, programs, schedules, workers } from '../data/stitch-d';
 import { type MockRoute, route } from './helpers';
 
 /** Mock routes added by the Stitch fidelity pass (docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md).
@@ -45,89 +43,7 @@ async function idsOf(request: Request): Promise<string[]> {
     : [];
 }
 
-const PROGRAM_SORT: Readonly<Record<string, (a: ProgramRow, b: ProgramRow) => number>> = {
-  name: (a, b) => a.name.localeCompare(b.name),
-  '-domain_count': (a, b) => b.domain_count - a.domain_count,
-  '-finding_critical_count': (a, b) => b.finding_counts.critical - a.finding_counts.critical,
-  '-last_job_finished_at': (a, b) =>
-    (b.last_job_finished_at ?? '').localeCompare(a.last_job_finished_at ?? ''),
-};
-
-function setStatus(ids: readonly string[], status: ProgramRow['status']): void {
-  for (const id of ids) {
-    const at = programs.findIndex((p) => p.id === id);
-    const found = programs[at];
-    if (found !== undefined) programs[at] = { ...found, status };
-  }
-}
-
 export const stitchDRoutes: readonly MockRoute[] = [
-  // Programs
-  route('GET /programs', ({ request }) => {
-    const url = new URL(request.url);
-    const q = url.searchParams.get('q');
-    const status = url.searchParams.get('status');
-    const hasRule = url.searchParams.get('has_in_scope_rule');
-    const hasDomain = url.searchParams.get('has_domain');
-    const sort = PROGRAM_SORT[url.searchParams.get('sort') ?? 'name'] ?? PROGRAM_SORT.name;
-    const rows = programs
-      .filter((p) => p.status !== 'archived')
-      .filter((p) => status === null || p.status === status)
-      .filter(
-        (p) =>
-          q === null ||
-          [p.name, p.platform, p.platform_handle, p.description].some((v) => matches(v, q)),
-      )
-      .filter((p) => hasRule === null || p.in_scope_rule_count > 0 === (hasRule === 'true'))
-      .filter((p) => hasDomain === null || p.domain_count > 0 === (hasDomain === 'true'))
-      .sort(sort);
-    return paged(rows, url);
-  }),
-  route('GET /programs/:program_id', ({ params }) => {
-    const found = programs.find((p) => p.id === params.program_id);
-    return found === undefined ? problem(404, 'not_found') : HttpResponse.json(found);
-  }),
-  route('POST /programs/bulk-pause', async ({ request }) => {
-    setStatus(await idsOf(request), 'paused');
-    return noContent();
-  }),
-  route('POST /programs/bulk-resume', async ({ request }) => {
-    setStatus(await idsOf(request), 'active');
-    return noContent();
-  }),
-  route('POST /programs/bulk-archive', async ({ request }) => {
-    setStatus(await idsOf(request), 'archived');
-    return noContent();
-  }),
-  route('POST /programs/bulk-delete', async ({ request }) => {
-    for (const id of await idsOf(request)) {
-      const at = programs.findIndex((p) => p.id === id);
-      if (at !== -1) programs.splice(at, 1);
-    }
-    return noContent();
-  }),
-
-  // Scope rules
-  route('GET /programs/:program_id/scope-rules', ({ params, request }) =>
-    paged(
-      scopeRules.filter((r) => r.program_id === params.program_id),
-      new URL(request.url),
-    ),
-  ),
-  route('POST /programs/:program_id/scope-rules/bulk-create', async ({ params, request }) => {
-    const body = (await request.json()) as { items?: ScopeRuleBody[] };
-    const created = (body.items ?? []).map((item) => ({
-      ...item,
-      id: crypto.randomUUID(),
-      program_id: String(params.program_id),
-      created_by: null,
-      created_at: new Date().toISOString(),
-      matched_domain_count: 0,
-    }));
-    scopeRules.push(...created);
-    return HttpResponse.json({ items: created });
-  }),
-
   // Schedules
   route('GET /programs/:program_id/schedules', ({ params, request }) =>
     paged(

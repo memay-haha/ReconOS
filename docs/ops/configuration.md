@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -109,11 +109,12 @@ Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong mô
 ### Khóa mã hóa
 
 - `RECONOS_ENCRYPTION_KEYS` là danh sách `<id>:<khóa base64>` cách nhau bằng dấu phẩy. Khóa đầu tiên dùng để mã hóa, mọi khóa dùng được để giải mã.
-- Khóa dài 256 bit, sinh bằng nguồn ngẫu nhiên an toàn.
+- Khóa dài 256 bit, sinh bằng nguồn ngẫu nhiên an toàn. ID khóa gồm 1 đến 64 ký tự `A-Z`, `a-z`, `0-9`, `_`, `-`, không trùng nhau.
+- Giá trị sai dạng làm Backend API dừng ngay khi khởi động. Thông báo lỗi không chứa khóa.
 - Xoay vòng khóa:
   1. Thêm khóa mới vào đầu danh sách.
   2. Khởi động lại lõi.
-  3. Chạy lệnh mã hóa lại trong `backend/app/core/` để chuyển mọi bản mã sang khóa mới.
+  3. Chạy `uv run --directory backend python -m app.core.crypto reencrypt` để chuyển mọi bản mã sang khóa mới. Lệnh tìm mọi cột tên kết thúc bằng `_encrypted`, chạy trong một transaction.
   4. Xóa khóa cũ khỏi danh sách.
   5. Khởi động lại lõi.
 - Mất khóa thì không giải mã được thông tin xác thực đã lưu. Sao lưu khóa tách khỏi bản sao lưu CSDL.

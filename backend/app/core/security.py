@@ -22,8 +22,9 @@ import structlog
 from argon2 import PasswordHasher
 from argon2.exceptions import Argon2Error, InvalidHashError
 from fastapi import Request
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, column, select, table, true
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 from zxcvbn import zxcvbn
 
 from app.core import audit
@@ -230,12 +231,41 @@ def require_roles(*roles: UserRole) -> Callable[[User, Request], Awaitable[User]
     return guard
 
 
-async def allowed_program_ids(user: User) -> frozenset[uuid.UUID] | AllPrograms:
-    """Programs the account may read.
+# The assignment table belongs to the program module, a higher tier. Core reads
+# it by table name and never imports that model: docs/architecture/dependency-graph.md.
+_program_user = table("program_user", column("program_id"), column("user_id"))
 
-    Superadmin and Admin see everything. The assignment table `program_user`
-    arrives in batch 3, which is where the User branch starts querying it.
+
+def _sees_every_program(user: User) -> bool:
+    return user.role in {UserRole.SUPERADMIN.value, UserRole.ADMIN.value}
+
+
+async def allowed_program_ids(
+    session: AsyncSession, user: User
+) -> frozenset[uuid.UUID] | AllPrograms:
+    """Programs the account may read: every one for Superadmin and Admin.
+
+    A User sees the programs `program_user` assigns to it, and nothing else.
     """
-    if user.role in {UserRole.SUPERADMIN.value, UserRole.ADMIN.value}:
+    if _sees_every_program(user):
         return ALL_PROGRAMS
-    return frozenset()
+    rows = await session.scalars(
+        select(_program_user.c.program_id).where(_program_user.c.user_id == user.id)
+    )
+    return frozenset(rows.all())
+
+
+def program_visible_to(
+    user: User, program_id: ColumnElement[uuid.UUID] | InstrumentedAttribute[uuid.UUID]
+) -> ColumnElement[bool]:
+    """WHERE clause limiting rows that carry `program_id` to what `user` may read.
+
+    Every query over program data goes through this, lists included, so a User
+    never receives a row of a program it was not assigned: docs/security/authorization.md.
+    A subquery rather than a materialised id list, so it costs one round trip.
+    """
+    if _sees_every_program(user):
+        return true()
+    return program_id.in_(
+        select(_program_user.c.program_id).where(_program_user.c.user_id == user.id)
+    )
