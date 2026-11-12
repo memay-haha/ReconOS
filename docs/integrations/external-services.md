@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -138,8 +138,8 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 |---|---|---|---|
 | `nuclei` | Quét | `nuclei.jsonl`: mỗi dòng một kết quả | Finding |
 | `gowitness` | Recon | `gowitness.jsonl` và từng file ảnh PNG | Screenshot, URL, công nghệ |
-| `sqlmap` | Khai thác | Gói nén thư mục output của sqlmap | Finding |
-| `dalfox` | Khai thác | File JSON kết quả | Finding |
+| `sqlmap` | Khai thác | `sqlmap.zip`: `results.csv` ở gốc gói, thư mục output của sqlmap trong `output/` | Finding |
+| `dalfox` | Khai thác | `dalfox.jsonl`: dòng đầu `{"meta": ...}`, mỗi dòng sau một finding | Finding |
 
 - gowitness ghi JSONL, không dùng CSDL riêng của gowitness. Runner cấu hình gowitness ghi cả URL chụp lỗi vào JSONL. Parser tạo screenshot có `is_failed` cho URL đó.
 - Runner bật ghi đủ dữ liệu trang của gowitness: TLS, network log, console log, cookie, độ phân giải, IP máy chủ, thời gian chụp, HTML. HTML mỗi trang là một file output thô riêng, dòng JSONL ghi tên file ảnh và file HTML. Parser liên kết `screenshot.raw_output_id`, `html_raw_output_id` theo tên file, ghi các cột jsonb theo [schema.md](../data/schema.md), bỏ giá trị cookie (G7).
@@ -147,6 +147,10 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 - httpx ghi ngày hết hạn chứng chỉ TLS, parser ghi `url.tls_not_after`.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
 - Parser `nuclei` (`app/parser/nuclei.py`) đọc mọi output thô của job nuclei. `stdout.txt` cùng JSONL với `nuclei.jsonl`, chuỗi khử trùng lặp gộp lại. Dòng không phải JSON của `stderr.txt` bị bỏ và đếm. Trường đọc, giới hạn độ dài, tài sản của finding: [schema.md](../data/schema.md).
+- `sqlmap` 1.10.8: `-m` file mục tiêu, `--batch`, `--disable-coloring`, `--output-dir`, `--results-file`, `--level`, `--risk`, `--threads`, `--timeout`, `--retries`, `--delay`, `--technique`, `--dbms`, `--proxy-file`. Tham số `level`, `risk`, `technique`, `dbms`, `threads`, `timeout`, `retries`, `delay`. Phiên bản lấy từ `sqlmap --version`. Runner nén `results.csv` và thư mục `--output-dir` thành `sqlmap.zip` cả khi công cụ lỗi hoặc bị hủy, bỏ symlink, dừng job `failed` khi tổng dung lượng vượt 10 GiB.
+- `dalfox` 3.2.4: `scan --input-type file`, `--config`, `--format jsonl`, `--output dalfox.jsonl`, `--silence`, `--no-color`, `--workers`, `--delay`, `--timeout`, `--rate-limit`, `--retries`, `--follow-redirects`, `--skip-mining`, `--skip-discovery`, `--deep-scan`, `--only-poc`. Tham số `workers`, `delay`, `timeout`, `rate`, `retries`, `follow_redirects`, `skip_mining`, `skip_discovery`, `deep_scan`, `only_poc`. Phiên bản lấy từ `dalfox --version`. dalfox v3 bỏ qua biến môi trường proxy, nên proxy đi qua file cấu hình JSON quyền `0600` truyền bằng `--config`, xóa khi công cụ dừng (G7). Mã thoát `1` là có finding, coi như `completed`. Mã `2` là lỗi.
+- Tham số ngoài allowlist và lý do loại của từng công cụ ghi trong docstring của `contracts/tool_modules/<tool module>.py`, có test trong `contracts/tests/test_tool_modules.py`.
+- Parser `sqlmap` (`app/parser/sqlmap.py`) chỉ mở mục `results.csv` của gói, mỗi dòng CSV `Target URL,Place,Parameter,Technique(s),Note(s)` một finding, severity `high`, `low` khi sqlmap ghi `false positive or unexploitable`. File không phải zip (`stdout.txt`, `stderr.txt`) không sinh gì. Parser `dalfox` (`app/parser/dalfox.py`) bỏ dòng `meta`, severity lấy từ `severity` của dalfox, thiếu thì theo hạng `V` `high`, `A`, `R` `medium`, `I` `info`. Finding của cả hai nằm trên URL bỏ query và fragment.
 - `nuclei`: `-list`, `-jsonl`, `-output nuclei.jsonl`, `-silent`, `-no-color`, `-disable-update-check`, `-rate-limit`, `-concurrency`, `-timeout`, `-retries`, `-severity`, `-tags`, `-exclude-tags`, `-proxy`. Tham số `rate`, `threads`, `timeout`, `retries`, `severity`, `tags`, `exclude_tags`. Phiên bản lấy từ `nuclei -version`.
 
 ### Gọi engine
@@ -242,7 +246,7 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 |---|---|
 | `nuclei`, phần nuclei trong Osmedeus | `template-id`, `matched-at` |
 | `vigolium` | `finding_hash` của Vigolium |
-| `dalfox` | Loại lỗ hổng, URL, tham số bị ảnh hưởng |
-| `sqlmap` | URL, tham số bị ảnh hưởng, kỹ thuật |
+| `dalfox` | Loại lỗ hổng là `inject_type`, URL bỏ query, tham số bị ảnh hưởng |
+| `sqlmap` | URL như trong `results.csv`, vị trí kèm tham số bị ảnh hưởng dạng `GET:id`, chuỗi chữ cái kỹ thuật |
 
 - `dedup_key` bắt đầu bằng tên tool module: [database.md](../data/database.md).

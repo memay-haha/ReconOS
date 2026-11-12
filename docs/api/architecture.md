@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.27 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -244,6 +244,7 @@ Response tổng hợp:
 | Endpoint | Quy ước |
 |---|---|
 | `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body. Program không `active`: `409`. Tool module tắt: `422` mã `tool_module_disabled`. `proxy_id` phải thuộc program và đang bật, sai thì `422` mã `not_found` hoặc `proxy_disabled`. `params` gộp `default_params` của tool module rồi kiểm tra theo `param_schema`, job lưu đủ tham số sau khi điền mặc định |
+| `POST /jobs/{job_id}/approve`, `POST /jobs/{job_id}/reject` | Không có body, trả `204`. Chỉ nhận job `pending_approval`, trạng thái khác `409`. Người tạo job gọi: `403 self_approval_forbidden`, kể cả Superadmin, ghi `permission_denied` vào nhật ký thao tác. Kết quả từng thao tác: [business-flow.md](../architecture/business-flow.md) |
 | `POST /jobs/{job_id}/cancel`, `POST /jobs/{job_id}/retry`, `POST /jobs/bulk-retry` | Hủy job `pending_approval`, `queued`, `dispatched`, `running`, trạng thái khác `409`. Job `running` bị hủy giữ `finished_at` rỗng tới khi worker gọi finish. Thử lại nhận job `failed`, `cancelled`, kiểm lại mọi bước như tạo mới. `bulk-retry` tất cả hoặc không, trả `items` theo thứ tự `ids` |
 | `POST /workers`, `POST /workers/{worker_id}/tokens`, `POST /worker-tokens/{worker_token_id}/revoke` | Body `name`, trùng tên `409`. Token trả một lần trong `token`, CSDL lưu SHA-256. Thu hồi token đã thu hồi: `204`, không đổi gì. Ghi nhật ký `worker_registered`, `worker_token_created`, `worker_token_revoked` |
 | `PATCH /tool-modules/{tool_module_id}` | Body `is_enabled`, `default_params`, `max_concurrency`, `rate_limit_per_minute` (`null`: không giới hạn tốc độ), `timeout_minutes`. Gửi `null` cho trường khác `rate_limit_per_minute`: mã `null_not_allowed`. `default_params` chỉ nhận khóa có trong `param_schema` |

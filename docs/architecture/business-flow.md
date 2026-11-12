@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -127,6 +127,8 @@ stateDiagram-v2
 - Tạm dừng program không phải trạng thái job. Dispatcher không giao job `queued` của program tạm dừng. Job `dispatched`, `running` chạy tiếp đến xong.
 - Chuyển trạng thái program: tạm dừng `active` sang `paused`, tiếp tục `paused` sang `active`, lưu trữ `active` hoặc `paused` sang `archived`. Không bỏ lưu trữ được. Chuyển khác trả `409 conflict`.
 - Program `archived` chỉ đọc: không sửa program, không thêm, sửa, xóa proxy. Gán, bỏ gán User vẫn được vì thao tác này quyết định ai đọc dữ liệu đã lưu trữ.
+- Duyệt job `pending_approval`: job chuyển `queued`, ghi `approved_by`, `approved_at`, đánh thức dispatcher. Từ chối: job chuyển `cancelled`, `status_reason` là `Rejected by approver.`, ghi `finished_at`. Người duyệt hay từ chối ghi trong nhật ký thao tác `job_approved`, `job_rejected`. Job ở trạng thái khác trả `409 conflict`.
+- Người tạo job không duyệt, không từ chối được job đó, kể cả Superadmin. Điều kiện `created_by` khác người duyệt nằm ngay trong câu `UPDATE`. Job do lịch sinh có `created_by` `NULL` nên Superadmin, Admin nào cũng duyệt được: nợ 70 trong [tech-debt.md](../tech-debt.md).
 - Thử lại job `failed` hoặc `cancelled`: tạo job mới liên kết job cũ. Job cũ giữ nguyên trạng thái và output thô. Job mới được kiểm tra lại scope và đi lại luồng duyệt nếu thuộc nhóm khai thác.
 - Ưu tiên, giới hạn đồng thời và tốc độ khi giao: [system.md](system.md).
 

@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { jobLogs, jobs, schedules } from '../data/part-b';
+import { jobLogs, schedules } from '../data/part-b';
 import { users } from '../data/users';
 import { type MockRoute, page, route } from './helpers';
 
@@ -62,15 +62,6 @@ export const partBRoutes: readonly MockRoute[] = [
   ),
 
   // Jobs
-  route('POST /jobs/:job_id/approve', ({ params }) => {
-    const found = jobs.find((j) => j.id === params.job_id);
-    if (found === undefined) return problem(404, 'not_found');
-    // The sample jobs are created by the sample Superadmin, as the real rule would refuse.
-    return found.created_by === users[0]?.id
-      ? problem(403, 'self_approval_forbidden')
-      : noContent();
-  }),
-  route('POST /jobs/:job_id/reject', noContent),
   route('GET /jobs/:job_id/logs', ({ params }) =>
     HttpResponse.json(page(jobLogs.filter((l) => l.job_id === params.job_id))),
   ),

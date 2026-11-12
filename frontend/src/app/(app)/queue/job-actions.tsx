@@ -46,7 +46,8 @@ export function allowedActions(job: Job, me: CurrentUser | null): readonly JobAc
   if (me === null) return [];
   const manager = me.role === 'superadmin' || me.role === 'admin';
   return BY_STATUS[job.status].filter((action) => {
-    if (action === 'approve' || action === 'reject') return manager;
+    // A second person reviews an exploit job (G5): never its creator, Superadmin included.
+    if (action === 'approve' || action === 'reject') return manager && job.created_by !== me.id;
     return manager || job.created_by === me.id;
   });
 }

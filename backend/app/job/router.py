@@ -128,6 +128,16 @@ async def read_job(job_id: uuid.UUID, actor: Reader, session: DbDep) -> JobRespo
     return await service.get_job_row(session, viewer=actor, job_id=job_id)
 
 
+@router.post("/jobs/{job_id}/approve", status_code=204)
+async def approve_job(job_id: uuid.UUID, request: Request, actor: Operator, session: DbDep) -> None:
+    await service.approve_job(session, actor=actor, job_id=job_id, path=request.url.path)
+
+
+@router.post("/jobs/{job_id}/reject", status_code=204)
+async def reject_job(job_id: uuid.UUID, request: Request, actor: Operator, session: DbDep) -> None:
+    await service.reject_job(session, actor=actor, job_id=job_id, path=request.url.path)
+
+
 @router.post("/jobs/{job_id}/cancel", status_code=204)
 async def cancel_job(job_id: uuid.UUID, request: Request, actor: Reader, session: DbDep) -> None:
     await service.cancel_job(session, actor=actor, job_id=job_id, path=request.url.path)

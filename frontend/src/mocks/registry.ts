@@ -110,6 +110,9 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /findings/:finding_id',
   'PATCH /findings/:finding_id',
   'PUT /findings/:finding_id/tags',
+  // Batch 8: approval of exploit jobs (S10).
+  'POST /jobs/:job_id/approve',
+  'POST /jobs/:job_id/reject',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {
