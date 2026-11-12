@@ -12,6 +12,7 @@ from contracts.tool_modules.osmedeus import OsmedeusParams
 from contracts.tool_modules.osmedeus_domain_extensive import OSMEDEUS_DOMAIN_EXTENSIVE
 from contracts.tool_modules.osmedeus_domain_lite import OSMEDEUS_DOMAIN_LITE
 from contracts.tool_modules.osmedeus_general import OSMEDEUS_GENERAL
+from contracts.tool_modules.vigolium import VIGOLIUM, VigoliumParams
 
 TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
     spec.name: spec
@@ -20,6 +21,7 @@ TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
         OSMEDEUS_DOMAIN_LITE,
         OSMEDEUS_GENERAL,
         OSMEDEUS_DOMAIN_EXTENSIVE,
+        VIGOLIUM,
     )
 }
 
@@ -31,4 +33,5 @@ __all__ = [
     "ToolGroup",
     "ToolModuleSpec",
     "ToolParams",
+    "VigoliumParams",
 ]

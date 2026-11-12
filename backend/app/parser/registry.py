@@ -15,6 +15,7 @@ from app.parser.nuclei import NucleiParser
 from app.parser.osmedeus_domain_extensive import OsmedeusDomainExtensiveParser
 from app.parser.osmedeus_domain_lite import OsmedeusDomainLiteParser
 from app.parser.osmedeus_general import OsmedeusGeneralParser
+from app.parser.vigolium import VigoliumParser
 from app.raw_output import service as raw_output_service
 
 PARSERS: Final[tuple[Parser, ...]] = (
@@ -22,6 +23,7 @@ PARSERS: Final[tuple[Parser, ...]] = (
     OsmedeusDomainLiteParser(),
     OsmedeusGeneralParser(),
     OsmedeusDomainExtensiveParser(),
+    VigoliumParser(),
 )
 
 _BY_TOOL_MODULE: dict[str, Parser] = {}

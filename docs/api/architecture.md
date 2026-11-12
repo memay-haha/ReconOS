@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.27 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -216,7 +216,7 @@ Response tổng hợp:
 | 404 | `not_found` | Không tồn tại, hoặc thuộc program User không được gán |
 | 409 | `conflict` | Vi phạm ràng buộc duy nhất, kèm `errors` với `code` là `already_exists` cho trường bị trùng. Chuyển trạng thái không hợp lệ |
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
-| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường. Mã riêng trong `errors`: `tool_module_disabled`, `proxy_disabled`, `filename_invalid`, `not_found` khi ID trong body không tồn tại, `engine_not_configured` khi bật engine chưa có `base_url` hoặc API key, `not_supported` khi gửi `llm_api_key` cho engine không dùng LLM. Tham số job sai schema tool module: `field` là `params.<khóa>`, `code` là mã của Pydantic như `extra_forbidden` |
+| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường. Mã riêng trong `errors`: `tool_module_disabled`, `proxy_disabled`, `filename_invalid`, `not_found` khi ID trong body không tồn tại, `engine_not_configured` khi bật engine chưa có `base_url` hoặc API key, `not_supported` khi gửi `llm_api_key` cho engine không dùng LLM. `module_required` khi `PATCH /engines/{engine_id}/modules` tắt hết native module của một loại. Tham số job sai schema tool module: `field` là `params.<khóa>`, `code` là mã của Pydantic như `extra_forbidden` |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5). `errors` từng mục tiêu: `code` là `target_out_of_scope`, hoặc `invalid_target` khi mục tiêu không phải domain, IP, CIDR, URL đọc được |
 | 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
@@ -281,7 +281,7 @@ Response tổng hợp:
 | `GET /roles/permissions` | Ma trận quyền sinh từ khai báo quyền của backend, trả `items`, mỗi dòng `action`, `superadmin`, `admin`, `user` với giá trị `allow`, `deny`, `limited` và `note` |
 | `POST /system/diagnostics`, `GET /system/diagnostics/{diagnostic_run_id}`, `GET /system/diagnostics/latest` | Tạo lần chẩn đoán chạy ở tiến trình nền, trả `id`, `status`. Đọc `id`, `status`, `exit_code`, `output`, `created_at`, `finished_at`. Mỗi dòng của `output` bắt đầu bằng một tiền tố: `[OK]` đạt, `[WARN]` chưa đạt nhưng hệ thống vẫn chạy, `[FAIL]` không đạt, `[*]` thông tin |
 | `GET /tools` | Mỗi công cụ của tool module: `name`, `tool_modules`, `status` (`installed`, `missing`), `installed`: `worker_name`, `version` theo heartbeat |
-| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `base_url`, `api_key`, `is_enabled`, `settings` và `llm_api_key`. API key chỉ ghi, bỏ trống thì giữ key cũ. `settings` kiểm tra theo khóa của từng engine trong [schema.md](../data/schema.md), khóa lạ trả `422`. Tên biến engine trong `PUT /engines/{engine_id}/variables/{key}` khớp `^[A-Za-z_][A-Za-z0-9_]{0,63}$`, body `value`. Dạng response: schema `EngineWorkflow`, `EngineModule`, `EngineCheckResult` trong [openapi.yaml](openapi.yaml) |
+| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `base_url`, `api_key`, `is_enabled`, `settings` và `llm_api_key`. API key chỉ ghi, bỏ trống thì giữ key cũ. `settings` kiểm tra theo khóa của từng engine trong [schema.md](../data/schema.md), khóa lạ trả `422`. Tên biến engine trong `PUT /engines/{engine_id}/variables/{key}` khớp `^[A-Za-z_][A-Za-z0-9_]{0,63}$`, body `value`. Dạng response: schema `EngineWorkflow`, `EngineModule`, `EngineCheckResult` trong [openapi.yaml](openapi.yaml). `PATCH /engines/{engine_id}/modules` nhận `modules`: mảng `name`, `is_enabled`, module không gửi giữ trạng thái, tên không có trên engine trả `422` mã `not_found`. Danh sách module xếp theo `kind` rồi `name`. Đổi module ghi nhật ký `engine_modules_updated`, kiểm tra model ghi `engine_model_verified` với `ok` |
 | `GET /logs` | User chỉ nhận log của job thuộc program được gán. Lọc thêm `program_id`, `event`, `engine` |
 
 ### WebSocket

@@ -76,6 +76,11 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /engines/:engine_id/variables',
   'PUT /engines/:engine_id/variables/:key',
   'DELETE /engines/:engine_id/variables/:key',
+  // Batch 9: Vigolium native modules and checks (S17).
+  'GET /engines/:engine_id/modules',
+  'PATCH /engines/:engine_id/modules',
+  'POST /engines/:engine_id/validate',
+  'POST /engines/:engine_id/verify-model',
   // Batch 5: assets, tags and parse (S03, S04, S05).
   'GET /domains',
   'GET /domains/export',

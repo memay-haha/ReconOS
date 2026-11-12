@@ -64,8 +64,11 @@ def _is_ip(value: str) -> bool:
     return True
 
 
-def _asset(matched_at: str, ip: str | None) -> AssetRecord:
-    """The asset `matched-at` names. Raises ValueError when it names none."""
+def asset_of(matched_at: str, ip: str | None) -> AssetRecord:
+    """The asset a matched location names. Raises ValueError when it names none.
+
+    Shared with app/parser/vigolium.py: a finding sits on the same kind of asset.
+    """
     if "://" in matched_at:
         parts = urlsplit(matched_at)
         if parts.scheme.lower() not in ("http", "https"):
@@ -123,7 +126,7 @@ def finding_from_line(line: str, tool_module: str) -> FindingRecord:
         evidence=clip("\n".join(extracted), MAX_EVIDENCE),
         cve=cve[:20],
         detail=detail,
-        asset=_asset(matched_at, _text(entry.get("ip"))),
+        asset=asset_of(matched_at, _text(entry.get("ip"))),
     )
 
 

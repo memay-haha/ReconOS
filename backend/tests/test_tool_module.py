@@ -105,7 +105,7 @@ async def test_list_filters_and_pages(
         "osmedeus-general",
     ]
     first = (await client.get(f"{API}/tool-modules", params={"limit": 1, "sort": "-name"})).json()
-    assert first["items"][0]["name"] == "osmedeus-general"
+    assert first["items"][0]["name"] == "vigolium"
     if first["next_cursor"]:
         after = await client.get(
             f"{API}/tool-modules",
