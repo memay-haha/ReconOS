@@ -1,0 +1,7 @@
+Target URL,Place,Parameter,Technique(s),Note(s)
+https://a.example.com/item.php?id=1,GET,id,BEUST,
+https://a.example.com/login,POST,username,BT,
+"https://b.example.com/list?sort=name,asc&page=2",GET,page,T,false positive or unexploitable
+https://a.example.com/item.php?id=1,GET,id,XYZ,
+ftp://a.example.com/file,GET,id,B,
+not,a,row

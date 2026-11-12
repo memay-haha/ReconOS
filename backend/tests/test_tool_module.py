@@ -95,17 +95,18 @@ async def test_list_filters_and_pages(
     client: AsyncClient, logged_in: Login, tool: ToolModule
 ) -> None:
     await logged_in(UserRole.ADMIN)
-    assert (await client.get(f"{API}/tool-modules", params={"group": "exploit"})).json()[
-        "items"
-    ] == []
+    exploit = (await client.get(f"{API}/tool-modules", params={"group": "exploit"})).json()
+    assert [item["name"] for item in exploit["items"]] == ["dalfox", "sqlmap"]
     on_engine = (await client.get(f"{API}/tool-modules", params={"runs_on": "osmedeus"})).json()
     assert [item["name"] for item in on_engine["items"]] == [
         "osmedeus-domain-extensive",
         "osmedeus-domain-lite",
         "osmedeus-general",
     ]
+    every = (await client.get(f"{API}/tool-modules", params={"limit": 200})).json()["items"]
     first = (await client.get(f"{API}/tool-modules", params={"limit": 1, "sort": "-name"})).json()
     assert first["items"][0]["name"] == "vigolium"
+    assert first["items"][0]["name"] == max(item["name"] for item in every)
     if first["next_cursor"]:
         after = await client.get(
             f"{API}/tool-modules",

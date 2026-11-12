@@ -162,7 +162,7 @@ def test_params_outside_schema_fail_the_job_without_running(tmp_path: Path) -> N
 
 def test_unknown_tool_module_fails_the_job(tmp_path: Path) -> None:
     job_id = uuid4()
-    client = FakeClient(_spec(job_id, tool_module="sqlmap"), JobHeartbeatAction.CONTINUE)
+    client = FakeClient(_spec(job_id, tool_module="not-installed"), JobHeartbeatAction.CONTINUE)
 
     _execute(client, job_id, tmp_path)
 

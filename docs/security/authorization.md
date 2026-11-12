@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.15 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.16 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -89,7 +89,7 @@
 2. Mỗi endpoint khai báo quyền cần có qua dependency của FastAPI trong `core/security.py`.
 3. Tài nguyên thuộc program: backend kiểm tra User được gán vào program của tài nguyên đó. Truy vấn danh sách luôn lọc theo program được gán.
 4. Với tài nguyên ngoài phạm vi của User, backend trả lỗi giống khi tài nguyên không tồn tại, để không lộ tài nguyên đó có tồn tại.
-5. Duyệt job: backend so người duyệt với người tạo job. Trùng thì từ chối, kể cả Superadmin.
+5. Duyệt, từ chối job: backend so người duyệt với người tạo job. Trùng thì từ chối `403 self_approval_forbidden`, kể cả Superadmin. Job do lịch sinh không có người tạo, `created_by` `NULL`: nợ 70 trong [tech-debt.md](../tech-debt.md).
 6. Hủy, thử lại job với vai trò User: backend so tài khoản gọi với người tạo job. Khác thì trả `403 forbidden`.
 7. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình, không khóa, không xóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
 8. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem. Sự kiện không thuộc program nào, ví dụ worker đổi trạng thái, chỉ đẩy cho Superadmin, Admin. Đổi vai trò, gán hoặc bỏ gán program: áp dụng ngay từ sự kiện tiếp theo trên kết nối đang mở.

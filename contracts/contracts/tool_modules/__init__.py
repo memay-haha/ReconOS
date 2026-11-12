@@ -7,11 +7,13 @@ docs/architecture/modules.md
 from typing import Final
 
 from contracts.tool_modules.base import OutputType, ToolGroup, ToolModuleSpec, ToolParams
+from contracts.tool_modules.dalfox import DALFOX, DalfoxParams
 from contracts.tool_modules.nuclei import NUCLEI, NucleiParams
 from contracts.tool_modules.osmedeus import OsmedeusParams
 from contracts.tool_modules.osmedeus_domain_extensive import OSMEDEUS_DOMAIN_EXTENSIVE
 from contracts.tool_modules.osmedeus_domain_lite import OSMEDEUS_DOMAIN_LITE
 from contracts.tool_modules.osmedeus_general import OSMEDEUS_GENERAL
+from contracts.tool_modules.sqlmap import SQLMAP, SqlmapParams
 from contracts.tool_modules.vigolium import VIGOLIUM, VigoliumParams
 
 TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
@@ -22,14 +24,18 @@ TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
         OSMEDEUS_GENERAL,
         OSMEDEUS_DOMAIN_EXTENSIVE,
         VIGOLIUM,
+        SQLMAP,
+        DALFOX,
     )
 }
 
 __all__ = [
     "TOOL_MODULES",
+    "DalfoxParams",
     "NucleiParams",
     "OsmedeusParams",
     "OutputType",
+    "SqlmapParams",
     "ToolGroup",
     "ToolModuleSpec",
     "ToolParams",

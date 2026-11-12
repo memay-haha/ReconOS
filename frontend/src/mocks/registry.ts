@@ -130,6 +130,9 @@ export const IMPLEMENTED: readonly string[] = [
   'DELETE /reports/:report_id',
   'POST /reports/:report_id/submit',
   'GET /reports/:report_id/export',
+  // Batch 8: approval of exploit jobs (S10).
+  'POST /jobs/:job_id/approve',
+  'POST /jobs/:job_id/reject',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

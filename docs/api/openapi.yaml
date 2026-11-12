@@ -865,7 +865,7 @@ paths:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [job]
-      summary: "Duyệt job nhóm khai thác"
+      summary: "Duyệt job nhóm khai thác: pending_approval sang queued. Người tạo job nhận 403 self_approval_forbidden, kể cả Superadmin. Trạng thái khác 409"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -875,7 +875,7 @@ paths:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [job]
-      summary: "Từ chối job nhóm khai thác"
+      summary: "Từ chối job nhóm khai thác: pending_approval sang cancelled, status_reason Rejected by approver. Người tạo job nhận 403 self_approval_forbidden. Trạng thái khác 409"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}

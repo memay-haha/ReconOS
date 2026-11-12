@@ -86,6 +86,9 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("POST", "/jobs/cleanup"),
     ("GET", "/jobs/{job_id}"),
     ("POST", "/jobs/{job_id}/cancel"),
+    # Batch 8, approval of exploit jobs.
+    ("POST", "/jobs/{job_id}/approve"),
+    ("POST", "/jobs/{job_id}/reject"),
     ("POST", "/jobs/{job_id}/retry"),
     ("POST", "/jobs/{job_id}/prioritize"),
     ("GET", "/jobs/{job_id}/raw-outputs"),

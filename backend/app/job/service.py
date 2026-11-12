@@ -45,6 +45,7 @@ from app.core.errors import (
     FieldError,
     ForbiddenError,
     NotFoundError,
+    SelfApprovalForbiddenError,
     ValidationFailedError,
 )
 from app.core.identity import User, UserRole
@@ -89,6 +90,7 @@ RETRYABLE = (S.FAILED, S.CANCELLED)
 
 # Reasons are fixed English sentences: no request data, no credential.
 REASON_CANCELLED_BY_USER = "Cancelled by user."
+REASON_REJECTED = "Rejected by approver."
 REASON_CLEANUP = "Queue cleanup: program is paused or archived."
 REASON_ARCHIVED = "Program archived."
 REASON_OUT_OF_SCOPE = "Target no longer in scope at dispatch."
@@ -630,6 +632,90 @@ async def prioritize_job(session: AsyncSession, *, actor: User, job_id: uuid.UUI
         resource_id=job.id,
     )
     await notify_dispatcher(session, "job_prioritized")
+
+
+async def _review_pending(
+    session: AsyncSession,
+    *,
+    actor: User,
+    job_id: uuid.UUID,
+    path: str,
+    target: S,
+    values: dict[str, Any],
+) -> Job:
+    """Move a `pending_approval` job on behalf of a second person (G5).
+
+    The creator check runs twice: before, to answer `self_approval_forbidden`
+    and record the refusal, and inside the UPDATE, so no path can change a
+    job's status for the account that created it. A job with no creator
+    (`created_by` NULL, made by a schedule) has nobody to compare against:
+    docs/security/authorization.md.
+    """
+    job = await get_visible_job(session, viewer=actor, job_id=job_id)
+    if job.created_by == actor.id:
+        # Detached: the 403 below rolls the request transaction back.
+        await audit.record_detached(
+            action="permission_denied",
+            user_id=actor.id,
+            resource_type=RESOURCE,
+            resource_id=job.id,
+            detail={"reason": "self_approval", "method": "POST", "path": path},
+        )
+        raise SelfApprovalForbiddenError(detail="the creator of a job cannot review it")
+    changed = await _transition(
+        session,
+        job.id,
+        sources=(S.PENDING_APPROVAL,),
+        target=target,
+        values=values,
+        where=(Job.created_by.is_distinct_from(actor.id),),
+    )
+    if changed is None:
+        raise ConflictError(detail="only a job pending approval can be approved or rejected")
+    return changed
+
+
+async def approve_job(session: AsyncSession, *, actor: User, job_id: uuid.UUID, path: str) -> None:
+    """`pending_approval` to `queued`, recording who approved and when, then wake the dispatcher."""
+    job = await _review_pending(
+        session,
+        actor=actor,
+        job_id=job_id,
+        path=path,
+        target=S.QUEUED,
+        values={"approved_by": actor.id, "approved_at": _now()},
+    )
+    await audit.record(
+        session,
+        action="job_approved",
+        user_id=actor.id,
+        program_id=job.program_id,
+        resource_type=RESOURCE,
+        resource_id=job.id,
+        detail={"created_by": str(job.created_by) if job.created_by else None},
+    )
+    await notify_dispatcher(session, "job_approved")
+
+
+async def reject_job(session: AsyncSession, *, actor: User, job_id: uuid.UUID, path: str) -> None:
+    """`pending_approval` to `cancelled` with a fixed reason; the audit log names who rejected."""
+    job = await _review_pending(
+        session,
+        actor=actor,
+        job_id=job_id,
+        path=path,
+        target=S.CANCELLED,
+        values={"status_reason": REASON_REJECTED, "finished_at": _now()},
+    )
+    await audit.record(
+        session,
+        action="job_rejected",
+        user_id=actor.id,
+        program_id=job.program_id,
+        resource_type=RESOURCE,
+        resource_id=job.id,
+        detail={"created_by": str(job.created_by) if job.created_by else None},
+    )
 
 
 async def cleanup_queue(session: AsyncSession, *, actor: User) -> int:
