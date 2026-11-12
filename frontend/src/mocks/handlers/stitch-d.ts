@@ -1,9 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import type { JobStatus } from '@/lib/jobs';
-
-import { gowitnessJobs } from '../data/stitch-c';
-import { jobs, programs, schedules, workers } from '../data/stitch-d';
+import { schedules } from '../data/stitch-d';
 import { type MockRoute, route } from './helpers';
 
 /** Mock routes added by the Stitch fidelity pass (docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md).
@@ -15,8 +12,6 @@ function problem(status: number, code: string) {
     { status, headers: { 'content-type': 'application/problem+json' } },
   );
 }
-
-const noContent = () => new HttpResponse(null, { status: 204 });
 
 /** Keyset pagination stand-in: the cursor is the offset, as opaque to the screen as the real one. */
 function paged<T>(rows: readonly T[], url: URL) {
@@ -30,17 +25,6 @@ function paged<T>(rows: readonly T[], url: URL) {
     total: rows.length,
     total_is_estimate: false,
   });
-}
-
-function matches(value: string | null | undefined, q: string): boolean {
-  return (value ?? '').toLowerCase().includes(q.toLowerCase());
-}
-
-async function idsOf(request: Request): Promise<string[]> {
-  const body = (await request.json()) as { ids?: unknown };
-  return Array.isArray(body.ids)
-    ? body.ids.filter((id): id is string => typeof id === 'string')
-    : [];
 }
 
 export const stitchDRoutes: readonly MockRoute[] = [
@@ -64,80 +48,6 @@ export const stitchDRoutes: readonly MockRoute[] = [
   }),
 
   // Jobs and the dispatcher
-  route('GET /jobs', ({ request }) => {
-    const url = new URL(request.url);
-    const statuses = url.searchParams.getAll('status') as JobStatus[];
-    const programId = url.searchParams.get('program_id');
-    const modules = url.searchParams.getAll('tool_module_id');
-    const q = url.searchParams.get('q');
-    // `target`: jobs that have this target (S05 Scan History).
-    const target = url.searchParams.get('target');
-    const rows = jobs.filter(
-      (j) =>
-        (target === null || j.target.includes(target)) &&
-        (statuses.length === 0 || statuses.includes(j.status)) &&
-        (programId === null || j.program_id === programId) &&
-        (modules.length === 0 || modules.includes(j.tool_module_id)) &&
-        (q === null || j.target.some((t) => matches(t, q)) || matches(j.tool_module_name, q)),
-    );
-    return paged(rows, url);
-  }),
-  route('GET /jobs/:job_id', ({ params }) => {
-    // The gowitness jobs behind the sample screenshots (S05 latest capture, S07) live in
-    // stitch-c data.
-    const found = [...jobs, ...gowitnessJobs].find((j) => j.id === params.job_id);
-    return found === undefined ? problem(404, 'not_found') : HttpResponse.json(found);
-  }),
-  route('POST /jobs/:job_id/prioritize', ({ params }) => {
-    const at = jobs.findIndex((j) => j.id === params.job_id);
-    const found = jobs[at];
-    if (found === undefined) return problem(404, 'not_found');
-    if (found.status !== 'queued') return problem(409, 'conflict');
-    jobs[at] = { ...found, priority: 'high' };
-    return noContent();
-  }),
-  route('POST /jobs/bulk-retry', async ({ request }) => {
-    const ids = await idsOf(request);
-    return HttpResponse.json({ items: ids.map(() => ({ id: crypto.randomUUID() })) });
-  }),
-  route('POST /jobs/cleanup', () => {
-    const paused = new Set(programs.filter((p) => p.status !== 'active').map((p) => p.id));
-    let cancelled = 0;
-    jobs.forEach((j, at) => {
-      if (j.status === 'queued' && paused.has(j.program_id)) {
-        jobs[at] = { ...j, status: 'cancelled', status_reason: 'Program paused' };
-        cancelled += 1;
-      }
-    });
-    return HttpResponse.json({ cancelled });
-  }),
-  route('POST /dispatcher/wake', noContent),
-  route('GET /dispatcher/status', () => {
-    const queued = jobs.filter((j) => j.status === 'queued');
-    const count = (key: (j: (typeof jobs)[number]) => string) =>
-      queued.reduce<Record<string, number>>((acc, j) => {
-        acc[key(j)] = (acc[key(j)] ?? 0) + 1;
-        return acc;
-      }, {});
-    const online = workers.filter((w) => w.is_online === true);
-    return HttpResponse.json({
-      status: 'ok',
-      last_heartbeat_at: new Date(Date.now() - 4_000).toISOString(),
-      queued_by_tool_module: count((j) => j.tool_module_id),
-      queued_by_program: count((j) => j.program_id),
-      queued_total: queued.length,
-      queue_capacity: 1000,
-      workers_online: online.length,
-      running_total: jobs.filter((j) => j.status === 'running').length,
-      slot_capacity: 14,
-      jobs_per_minute: 3.2,
-      avg_wait_seconds: 102,
-      redis_used_bytes: 1_258_291,
-      last_dispatched_at: new Date(Date.now() - 12_000).toISOString(),
-      last_dispatched_tool_module: 'nuclei',
-    });
-  }),
-  route('GET /workers', ({ request }) => paged(workers, new URL(request.url))),
 
   // Public settings S09 reads (N30).
   route('GET /system-settings/:key', ({ params }) => {

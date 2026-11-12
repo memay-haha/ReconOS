@@ -196,10 +196,13 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [worker]
-      summary: "Đăng ký worker"
+      summary: "Đăng ký worker. Trùng tên: 409"
       x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/WorkerCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Worker vừa đăng ký, content: {application/json: {schema: {$ref: '#/components/schemas/Worker'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /workers/{worker_id}/tokens:
     parameters:
@@ -209,14 +212,14 @@ paths:
       summary: "Tạo token worker, trả token một lần"
       x-roles: [superadmin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Token chỉ xuất hiện trong response này, content: {application/json: {schema: {$ref: '#/components/schemas/WorkerTokenCreated'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /worker-tokens/{worker_token_id}/revoke:
     parameters:
       - {name: worker_token_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [worker]
-      summary: "Thu hồi token worker"
+      summary: "Thu hồi token worker. Token đã thu hồi: 204, không đổi gì"
       x-roles: [superadmin]
       responses:
         '204': {description: Thành công}
@@ -622,7 +625,7 @@ paths:
       parameters:
         - {name: window, in: query, schema: {type: string, enum: [24h, 7d, 30d], default: 24h}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/ToolModuleStats'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /tools:
     get:
@@ -637,10 +640,13 @@ paths:
       - {name: tool_module_id, in: path, required: true, schema: {type: string, format: uuid}}
     patch:
       tags: [tool_module]
-      summary: "Sửa cấu hình tool module"
+      summary: "Sửa cấu hình tool module. default_params kiểm tra theo param_schema"
       x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ToolModuleUpdate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Tool module sau khi sửa, content: {application/json: {schema: {$ref: '#/components/schemas/ToolModule'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /engines:
     get:
@@ -783,13 +789,13 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [job]
-      summary: "Tạo job, kiểm tra scope và tham số"
+      summary: "Tạo job, kiểm tra scope và tham số. Program không active: 409"
       x-roles: [superadmin, admin, user]
       requestBody:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/JobCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Job vừa tạo, content: {application/json: {schema: {$ref: '#/components/schemas/Job'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/bulk-create:
     post:
@@ -805,13 +811,13 @@ paths:
   /jobs/bulk-retry:
     post:
       tags: [job]
-      summary: "Thử lại job failed hàng loạt. User chỉ job mình tạo"
+      summary: "Thử lại job failed hoặc cancelled hàng loạt, tất cả hoặc không. User chỉ job mình tạo"
       x-roles: [superadmin, admin, user]
       requestBody:
         required: true
         content: {application/json: {schema: {$ref: '#/components/schemas/Ids'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Các job mới theo thứ tự ids, content: {application/json: {schema: {$ref: '#/components/schemas/JobBulkCreateResult'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/cleanup:
     post:
@@ -819,7 +825,9 @@ paths:
       summary: "Hủy job queued của program paused hoặc archived, trả số job đã hủy"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Số job đã hủy
+          content: {application/json: {schema: {type: object, required: [cancelled], properties: {cancelled: {type: integer}}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}:
     parameters:
@@ -829,7 +837,7 @@ paths:
       summary: "Chi tiết job"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/Job'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}/approve:
     parameters:
@@ -866,10 +874,10 @@ paths:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [job]
-      summary: "Thử lại job, tạo job mới"
+      summary: "Thử lại job failed hoặc cancelled, tạo job mới có retry_of_job_id. Trạng thái khác: 409"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Job mới, content: {application/json: {schema: {$ref: '#/components/schemas/Job'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}/prioritize:
     parameters:
@@ -892,24 +900,24 @@ paths:
   /dispatcher/status:
     get:
       tags: [dispatcher]
-      summary: "Trạng thái dispatcher và hàng đợi, trường theo api/architecture.md"
+      summary: "Trạng thái dispatcher và hàng đợi, trường theo api/architecture.md. User chỉ đếm job của program được gán"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/DispatcherStatus'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /jobs/{job_id}/raw-outputs:
     parameters:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [raw_output]
-      summary: "Output thô của job"
+      summary: "Output thô của job. sort nhận created_at, -created_at"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/sort'
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/RawOutput'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /raw-outputs/{raw_output_id}:
     parameters:
@@ -919,14 +927,14 @@ paths:
       summary: "Metadata output thô"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/RawOutput'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /raw-outputs/{raw_output_id}/content:
     parameters:
       - {name: raw_output_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [raw_output]
-      summary: "Tải nội dung output thô"
+      summary: "Tải nội dung output thô: application/octet-stream, Content-Disposition attachment, X-Content-Type-Options nosniff. Ghi nhật ký raw_output_downloaded"
       x-roles: [superadmin, admin, user]
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
@@ -1678,9 +1686,11 @@ paths:
     get:
       tags: [realtime]
       summary: "Kết nối WebSocket nhận sự kiện"
+      description: "Origin sai hoặc phiên không hợp lệ: từ chối khi bắt tay. Mã đóng 4401 khi phiên kết thúc, 1011 khi mất Redis: docs/api/architecture.md"
       x-roles: [superadmin, admin, user]
       responses:
         '101': {description: Chuyển sang WebSocket}
+        '403': {description: Origin sai hoặc phiên không hợp lệ khi bắt tay}
         default: {$ref: '#/components/responses/Problem'}
   /worker/heartbeat:
     post:
@@ -1703,7 +1713,9 @@ paths:
       x-roles: [worker]
       security: [{worker_token: []}]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Đặc tả job, model JobSpec trong contracts/tasks.py
+          content: {application/json: {schema: {$ref: '#/components/schemas/JobSpec'}}}
         default: {$ref: '#/components/responses/Problem'}
   /worker/jobs/{job_id}/heartbeat:
     parameters:
@@ -1714,12 +1726,14 @@ paths:
       x-roles: [worker]
       security: [{worker_token: []}]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Việc worker làm tiếp
+          content: {application/json: {schema: {$ref: '#/components/schemas/JobHeartbeatResponse'}}}
         default: {$ref: '#/components/responses/Problem'}
   /worker/jobs/{job_id}/raw-outputs/{filename}:
     parameters:
       - {name: job_id, in: path, required: true, schema: {type: string, format: uuid}}
-      - {name: filename, in: path, required: true, schema: {type: string}}
+      - {name: filename, in: path, required: true, schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,255}$'}, description: "Không chứa `..`"}
     put:
       tags: [worker_contract]
       summary: "Upload một file output thô"
@@ -1729,8 +1743,9 @@ paths:
         required: true
         content: {application/octet-stream: {schema: {type: string, format: binary}}}
       responses:
-        '201': {description: Đã lưu mới}
-        '200': {description: "Đã có cùng tên, không ghi đè"}
+        '201': {description: Đã lưu mới, content: {application/json: {schema: {$ref: '#/components/schemas/RawOutput'}}}}
+        '200': {description: "Đã có cùng tên, không ghi đè, trả bản đã lưu", content: {application/json: {schema: {$ref: '#/components/schemas/RawOutput'}}}}
+        '413': {description: "Vượt upload_max_bytes"}
         default: {$ref: '#/components/responses/Problem'}
   /worker/jobs/{job_id}/finish:
     parameters:
@@ -1740,6 +1755,9 @@ paths:
       summary: "Kết thúc job, kèm status, status_reason, tool_version"
       x-roles: [worker]
       security: [{worker_token: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/JobFinish'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -1749,6 +1767,9 @@ paths:
       summary: "Gửi log của worker theo lô"
       x-roles: [worker]
       security: [{worker_token: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/WorkerLogBatch'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -2226,6 +2247,64 @@ components:
         in_scope: {type: boolean}
         verdict: {type: string, enum: [in_scope, invalid_target, no_in_scope_match, out_of_scope_match]}
         rule_value: {type: [string, 'null']}
+    WorkerCreate:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100, pattern: '^\S+$', description: "Tên máy worker"}
+    WorkerTokenCreated:
+      type: object
+      required: [id, worker_id, token, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        worker_id: {type: string, format: uuid}
+        token: {type: string, description: "Chỉ trả một lần, CSDL lưu giá trị băm"}
+        created_at: {type: string, format: date-time}
+    ToolModuleUpdate:
+      type: object
+      properties:
+        is_enabled: {type: boolean}
+        default_params: {type: object, description: "Chỉ khóa có trong param_schema"}
+        max_concurrency: {type: integer, minimum: 1, maximum: 1000}
+        rate_limit_per_minute: {type: [integer, 'null'], minimum: 1, description: "null: không giới hạn tốc độ"}
+        timeout_minutes: {type: integer, minimum: 1, maximum: 10080}
+    ToolModuleStats:
+      type: object
+      properties:
+        window: {type: string, enum: [24h, 7d, 30d]}
+        jobs: {type: integer}
+        jobs_prev: {type: integer}
+        stalled: {type: integer}
+    RawOutput:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        job_id: {type: string, format: uuid}
+        filename: {type: string}
+        content_type: {type: string}
+        size_bytes: {type: integer}
+        sha256: {type: string}
+        parse_status: {type: string, enum: [pending, parsed, failed, no_parser]}
+        parse_error: {type: [string, 'null']}
+        created_at: {type: string, format: date-time}
+        parsed_at: {type: [string, 'null'], format: date-time}
+    DispatcherStatus:
+      type: object
+      properties:
+        status: {type: string, enum: [ok, degraded, down]}
+        last_heartbeat_at: {type: [string, 'null'], format: date-time}
+        queued_total: {type: integer}
+        queued_by_tool_module: {type: object, additionalProperties: {type: integer}}
+        queued_by_program: {type: object, additionalProperties: {type: integer}}
+        queue_capacity: {type: integer}
+        workers_online: {type: integer}
+        running_total: {type: integer}
+        slot_capacity: {type: integer}
+        jobs_per_minute: {type: number}
+        avg_wait_seconds: {type: [number, 'null']}
+        redis_used_bytes: {type: [integer, 'null']}
+        last_dispatched_at: {type: [string, 'null'], format: date-time}
+        last_dispatched_tool_module: {type: [string, 'null']}
     WorkerHeartbeat:
       type: object
       required: [tool_modules, tools]
@@ -2240,6 +2319,57 @@ components:
               name: {type: string}
               version: {type: [string, 'null']}
         cpu_percent: {type: [number, 'null'], minimum: 0, maximum: 100}
+    JobSpec:
+      type: object
+      additionalProperties: false
+      required: [job_id, tool_module, target, params, timeout_minutes, heartbeat_seconds, proxy_url, engine]
+      properties:
+        job_id: {type: string, format: uuid}
+        tool_module: {type: string}
+        target: {type: array, minItems: 1, items: {type: string}}
+        params: {type: object, description: "Đã kiểm tra theo schema tham số của tool module"}
+        timeout_minutes: {type: integer, minimum: 1}
+        heartbeat_seconds: {type: integer, minimum: 1, description: "Giá trị job_heartbeat_seconds"}
+        proxy_url: {type: [string, 'null'], description: "Thông tin xác thực, chỉ đi qua HTTPS"}
+        engine:
+          type: [object, 'null']
+          required: [name, base_url, api_key, variables]
+          properties:
+            name: {type: string}
+            base_url: {type: string}
+            api_key: {type: string}
+            variables: {type: object, additionalProperties: {type: string}}
+    JobHeartbeatResponse:
+      type: object
+      required: [action]
+      properties:
+        action: {type: string, enum: [continue, cancel]}
+    JobFinish:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: {type: string, enum: [completed, failed, cancelled], description: "cancelled: worker đã dừng theo lệnh hủy"}
+        status_reason: {type: [string, 'null'], maxLength: 500}
+        tool_version: {type: [string, 'null'], maxLength: 100}
+    WorkerLogBatch:
+      type: object
+      additionalProperties: false
+      required: [records]
+      properties:
+        records:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: object
+            required: [logged_at, level, event]
+            properties:
+              logged_at: {type: string, format: date-time}
+              level: {type: string, enum: [info, warning, error, critical]}
+              event: {type: string, pattern: '^[a-z][a-z0-9_]{0,99}$'}
+              job_id: {type: [string, 'null'], format: uuid}
+              context: {type: object}
   responses:
     Page:
       description: Một trang dữ liệu

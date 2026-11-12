@@ -2,9 +2,9 @@
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 from app.core.identity import UserRole
 from app.core.pagination import Page
@@ -113,3 +113,42 @@ class ActiveUserSessionPage(Page[ActiveUserSessionResponse]):
     """account_count covers every live session and ignores paging."""
 
     account_count: int
+
+
+WorkerName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, pattern=r"^\S+$")
+]
+WorkerSort = Literal["name", "-last_heartbeat_at", "created_at"]
+
+
+class WorkerCreateRequest(BaseModel):
+    """Name of the worker machine: docs/security/authentication.md, section Token worker."""
+
+    name: WorkerName
+
+
+class WorkerToolVersion(BaseModel):
+    name: str
+    version: str | None
+
+
+class WorkerResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    tool_modules: list[str]
+    tool_versions: list[WorkerToolVersion]
+    cpu_percent: float | None
+    last_heartbeat_at: datetime | None
+    created_at: datetime
+    is_online: bool
+    running_job_count: int
+    running_tool_module_ids: list[uuid.UUID]
+
+
+class WorkerTokenCreatedResponse(BaseModel):
+    """The only response that ever carries the token: it is shown once (G7)."""
+
+    id: uuid.UUID
+    worker_id: uuid.UUID
+    token: str
+    created_at: datetime

@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, func, select
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
+from app.core import realtime
 from app.core.config import Settings, get_settings
 
 # Alembic autogenerate produces stable constraint names only with a convention.
@@ -64,15 +65,19 @@ async def session_scope(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     """One unit of work: commit when the body returns, roll back when it raises.
 
     Used by the request dependency, the dispatcher loop and background tasks.
+    Realtime events queued on the session are published after the commit, and
+    dropped on rollback: docs/architecture/request-flow.md.
     """
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
         try:
             yield session
         except Exception:
+            realtime.take_pending_events(session)
             await session.rollback()
             raise
         await session.commit()
+        await realtime.publish_events(realtime.take_pending_events(session))
 
 
 @lru_cache
@@ -122,3 +127,25 @@ async def independent_session() -> AsyncIterator[AsyncSession]:
     """
     async with session_scope(get_independent_engine()) as session:
         yield session
+
+
+@lru_cache
+def get_log_engine() -> AsyncEngine:
+    """One engine per process for the reconos_log database."""
+    return build_log_engine()
+
+
+# Channel the dispatcher LISTENs on: docs/architecture/system.md, section Cơ chế dispatcher.
+DISPATCHER_CHANNEL = "reconos_dispatcher"
+
+
+async def notify_dispatcher(session: AsyncSession, reason: str) -> None:
+    """Wake the dispatcher once this transaction commits.
+
+    PostgreSQL delivers NOTIFY only on commit and drops it on rollback, so the
+    dispatcher never acts on a change that did not happen. `reason` is a short
+    word for the dispatcher log, never data from a request.
+    """
+    await session.execute(
+        select(func.pg_notify(DISPATCHER_CHANNEL, reason)),
+    )

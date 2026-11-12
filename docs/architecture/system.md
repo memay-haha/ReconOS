@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-> Phiên bản: 1.3 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 4: Kiến trúc hệ thống
 > Liên quan: [overview.md](overview.md), [tech-stack.md](tech-stack.md), [directory-structure.md](directory-structure.md), [ADR chọn tech stack](../decisions/adr-tech-stack.md)
 
@@ -152,16 +152,18 @@ flowchart LR
 
 ### Cơ chế dispatcher
 
-1. Backend API hoặc tiến trình nền ghi job vào PostgreSQL và gửi `NOTIFY` trong cùng transaction. Transaction rollback thì không có thông báo.
+1. Backend API hoặc tiến trình nền ghi job vào PostgreSQL và gửi `NOTIFY` kênh `reconos_dispatcher` trong cùng transaction. Transaction rollback thì không có thông báo.
 2. Dispatcher `LISTEN` để phản ứng ngay. Dispatcher cũng quét định kỳ để không bỏ sót khi mất kết nối. Chu kỳ quét: [configuration.md](../ops/configuration.md). Dispatch Now, Dispatch All trên S10 chỉ gửi `NOTIFY`, dispatcher chạy lượt giao như bình thường: [business-flow.md](business-flow.md).
 3. Mỗi lượt giao job:
    - Bỏ qua job chờ duyệt và job của program tạm dừng.
    - Chọn job `priority` cao trước, cùng mức thì job tạo trước.
-   - Kiểm tra giới hạn số job đồng thời và tốc độ theo công cụ, program, mục tiêu.
+   - Kiểm tra giới hạn số job đồng thời và tốc độ theo công cụ, program, mục tiêu. Bản đầu chỉ có ngưỡng theo tool module: `max_concurrency` đếm job `dispatched`, `running`, `rate_limit_per_minute` đếm job giao trong 60 giây qua. Ngưỡng theo program, mục tiêu: nợ 48 trong [tech-debt.md](../tech-debt.md).
+   - Kiểm tra lại scope. Mục tiêu không còn hợp lệ thì chuyển job `cancelled`.
    - Đếm job đang chạy và chuyển trạng thái job trong cùng một transaction PostgreSQL. Không vượt giới hạn khi nhiều sự kiện đến cùng lúc.
-   - Gửi task Celery cho worker.
+   - Gửi task Celery cho worker sau khi transaction commit. Gửi lỗi thì chuyển job `dispatched` về `queued`.
+   - Cùng lượt: chuyển job `pending_approval`, `queued` của program `archived` sang `cancelled`, chuyển job `running` mất heartbeat quá `job_heartbeat_timeout_minutes` sang `failed`, publish `worker.status_changed` cho worker vừa mất heartbeat.
 4. Nhiều bản dispatcher có thể chạy. Chỉ bản giữ PostgreSQL advisory lock được giao job. Bản giữ lock dừng thì kết nối đóng, lock được nhả, bản chờ chiếm lock và tiếp tục.
-5. Dispatcher gửi heartbeat. Trạng thái hiển thị ở S10, S15.
+5. Dispatcher ghi heartbeat vào key Redis `reconos:dispatcher:heartbeat` sau mỗi lượt. Trạng thái hiển thị ở S10, S15 qua `GET /dispatcher/status`: [api/architecture.md](../api/architecture.md).
 
 ```mermaid
 sequenceDiagram
@@ -234,7 +236,9 @@ sequenceDiagram
 ### Realtime
 
 1. Tiến trình nào đổi trạng thái thì publish sự kiện lên Redis pub/sub: job đổi trạng thái, finding mới, heartbeat.
-2. Backend API subscribe, đẩy sự kiện tới trình duyệt qua WebSocket theo quyền của tài khoản.
+   - Service xếp sự kiện vào session bằng `queue_event` trong `app/core/realtime.py`, cùng transaction với thay đổi. `session_scope` chỉ publish sau khi commit, rollback thì bỏ.
+   - Publish không chặn nghiệp vụ: Redis lỗi thì ghi log `warning` rồi bỏ sự kiện, vì thay đổi đã nằm trong PostgreSQL và trình duyệt làm mới query khi kết nối lại.
+2. Backend API subscribe, đẩy sự kiện tới trình duyệt qua WebSocket theo quyền của tài khoản. Mỗi kết nối WebSocket giữ một kết nối subscribe tới Redis.
 3. Frontend cập nhật dữ liệu bằng TanStack Query.
 
 ```mermaid

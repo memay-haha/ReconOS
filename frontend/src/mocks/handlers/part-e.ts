@@ -8,7 +8,6 @@ import {
   systemHealth,
   systemSettings,
 } from '../data/part-e';
-import { toolModules } from '../data/programs';
 import { type MockRoute, page, route } from './helpers';
 
 function notFound() {
@@ -76,12 +75,6 @@ export const partERoutes: readonly MockRoute[] = [
   ),
   route('PUT /engines/:engine_id/variables/:key', () => new HttpResponse(null, { status: 204 })),
   route('DELETE /engines/:engine_id/variables/:key', () => new HttpResponse(null, { status: 204 })),
-  route('PATCH /tool-modules/:tool_module_id', async ({ params, request }) => {
-    const found = toolModules.find((m) => m.id === params.tool_module_id);
-    if (found === undefined) return notFound();
-    const body = (await request.json()) as Record<string, unknown>;
-    return HttpResponse.json({ ...found, ...body, updated_at: new Date().toISOString() });
-  }),
   route('GET /findings', ({ request }) => {
     const query = new URL(request.url).searchParams;
     const severities = query.getAll('severity');

@@ -80,9 +80,9 @@ files = ["backend", "contracts", "workers"]
 # same, which mypy reads as a duplicate module.
 exclude = "^backend/migrations_log/env\\.py$"
 
-# Neither library ships py.typed: docs/architecture/tech-stack.md
+# These libraries ship no py.typed: docs/architecture/tech-stack.md
 [[tool.mypy.overrides]]
-module = ["aioboto3.*", "celery.*"]
+module = ["aioboto3.*", "asyncpg.*", "celery.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

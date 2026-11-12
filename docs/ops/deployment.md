@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.4 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -42,7 +42,7 @@
 | `infras/nginx/` | Cấu hình Nginx |
 | `infras/postgres/` | Script tạo CSDL `reconos`, `reconos_log`, hai CSDL test và tài khoản `reconos_app`, `reconos_log_app` |
 | `infras/minio/` | Script tạo bucket output thô và bucket test |
-| `infras/redis/` | File ACL tài khoản Redis của lõi và của worker |
+| `infras/redis/` | `acl.conf`: quyền tài khoản `default` của lõi và `worker`, không chứa mật khẩu. `render-acl.sh`: entrypoint của container Redis, ghi aclfile chứa SHA-256 của mật khẩu rồi chạy `redis-server` |
 
 ### Container vùng lõi
 
@@ -92,7 +92,9 @@ MinIO không còn phát hành image công khai và repo đã archived: nợ 19 t
 ### Máy worker và engine
 
 - Image `reconos-worker` cài sẵn runner và công cụ: nuclei, gowitness, sqlmap, dalfox. Phiên bản công cụ cố định trong Dockerfile.
+- Dockerfile tải công cụ và bộ template bằng `ADD --checksum`, sai SHA-256 thì build dừng. Hiện có nuclei 3.11.1 và nuclei-templates 10.5.2 trong `/home/reconos/nuclei-templates`. Job không tải template mới.
 - Mỗi máy worker chạy `compose.worker.yaml`, khai báo `RECONOS_WORKER_TOOL_MODULES` theo công cụ dùng trên máy đó.
+- Worker kết nối Redis bằng tài khoản `worker`, ghi trong `RECONOS_REDIS_URL`, mật khẩu trong `RECONOS_REDIS_PASSWORD` của máy worker. Container Redis nhận cùng mật khẩu qua `RECONOS_REDIS_WORKER_PASSWORD`: [configuration.md](configuration.md).
 - Cập nhật công cụ: đổi phiên bản trong Dockerfile, build image mới, triển khai lại máy worker. Worker báo phiên bản công cụ qua heartbeat, S15 hiển thị. ❌ Không cập nhật công cụ từ UI.
 - Cài engine server Osmedeus, Vigolium trên máy riêng trong vùng worker theo hướng dẫn chính thức. Engine server chạy ở chế độ server có API key.
 - Dọn thư mục làm việc và dữ liệu lượt chạy cũ trên engine server bằng lịch chạy định kỳ trên máy engine. ReconOS đã giữ bản gốc trong output thô.

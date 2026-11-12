@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.20 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.22 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -145,7 +145,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 - `similar_group`: số thứ tự nhóm cùng `perception_hash` trong bộ lọc hiện tại, xếp theo `captured_at` sớm nhất của nhóm. `similar_count`: số screenshot trong nhóm, `1` là duy nhất.
 - `retry_job_status`: trạng thái job gowitness mới nhất có mục tiêu là `final_url`, tạo sau `captured_at`. `NULL` khi chưa có.
 - `security_headers` có khóa là tên header viết thường: `strict-transport-security`, `content-security-policy`, `x-frame-options`, `x-content-type-options`, `permissions-policy` trong `http_headers`.
-- `is_online`: heartbeat trong ngưỡng như `workers_online`.
+- `is_online`: `last_heartbeat_at` mới hơn `job_heartbeat_timeout_minutes`, cùng ngưỡng dispatcher dùng để chuyển job mất heartbeat sang `failed`. `workers_online` đếm worker `is_online`.
 - `engine_status`: `status` của thành phần engine trong `GET /system/health`, `NULL` khi tool module không chạy trên engine. `disabled_reason`: `off` khi tắt, `engine_disabled`, `engine_down`, `not_installed` khi không worker online nào cài, `NULL` khi sẵn sàng.
 - `estimated_seconds`: trung vị `finished_at` trừ `started_at` của 20 job `completed` gần nhất, `NULL` khi chưa có job.
 - `param_schema`: JSON Schema dạng object, mỗi tham số một khóa trong `properties` với `type`, `title`, `description`, `default`, `minimum`, `maximum`, `enum`. Tham số số luồng và tốc độ dùng tên khóa `threads`, `rate`. `runs_on`: tên engine, `NULL` khi tool module chạy công cụ trực tiếp. `output_types`: tập con của `domain`, `ip`, `url`, `service`, `screenshot`, `finding`.
@@ -181,7 +181,9 @@ Response tổng hợp:
 - `top_ports[].name`: tên dịch vụ gặp nhiều nhất trên cổng đó, `NULL` khi chưa nhận diện được.
 - `confirmed_cve_findings_24h`: số finding có `cve` không rỗng, `triage_status` là `confirmed`, `triaged_at` trong 24 giờ qua.
 - `jobs_per_minute`: số job chuyển sang `completed` trong 60 phút qua chia 60.
-- `workers_online`: tính như trong `GET /system/health`.
+- `workers_online`: tính như `is_online` của `GET /workers`.
+- `status` của dispatcher: heartbeat trong Redis không cũ hơn 2 lần `dispatcher_poll_seconds` là `ok`, không cũ hơn 5 lần là `degraded`, cũ hơn hoặc không có là `down`. Redis không trả lời: `down`, `redis_used_bytes` là `null`.
+- `GET /dispatcher/status` với vai trò User: `queued_*`, `running_total`, `jobs_per_minute`, `avg_wait_seconds`, `last_dispatched_*` chỉ tính job của program được gán.
 - `queue_capacity`: `system_setting` cùng tên. `slot_capacity`: tổng `max_concurrency` của tool module bật. `fleet_load`: job `running` chia `slot_capacity`.
 - `avg_wait_seconds`: trung bình `started_at` trừ `approved_at`, thiếu thì `created_at`, của job bắt đầu trong 60 phút qua. `redis_used_bytes`: `used_memory` của Redis.
 - `components[].detail`: `postgres` là kết nối đang dùng trên tối đa, `redis` là `used_memory` trên `maxmemory`, thành phần khác `NULL`.
@@ -213,7 +215,7 @@ Response tổng hợp:
 | 404 | `not_found` | Không tồn tại, hoặc thuộc program User không được gán |
 | 409 | `conflict` | Vi phạm ràng buộc duy nhất, kèm `errors` với `code` là `already_exists` cho trường bị trùng. Chuyển trạng thái không hợp lệ |
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
-| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường |
+| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường. Mã riêng trong `errors`: `tool_module_disabled`, `proxy_disabled`, `filename_invalid`, `not_found` khi ID trong body không tồn tại. Tham số job sai schema tool module: `field` là `params.<khóa>`, `code` là mã của Pydantic như `extra_forbidden` |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5). `errors` từng mục tiêu: `code` là `target_out_of_scope`, hoặc `invalid_target` khi mục tiêu không phải domain, IP, CIDR, URL đọc được |
 | 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
@@ -239,7 +241,10 @@ Response tổng hợp:
 
 | Endpoint | Quy ước |
 |---|---|
-| `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body |
+| `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body. Program không `active`: `409`. Tool module tắt: `422` mã `tool_module_disabled`. `proxy_id` phải thuộc program và đang bật, sai thì `422` mã `not_found` hoặc `proxy_disabled`. `params` gộp `default_params` của tool module rồi kiểm tra theo `param_schema`, job lưu đủ tham số sau khi điền mặc định |
+| `POST /jobs/{job_id}/cancel`, `POST /jobs/{job_id}/retry`, `POST /jobs/bulk-retry` | Hủy job `pending_approval`, `queued`, `dispatched`, `running`, trạng thái khác `409`. Job `running` bị hủy giữ `finished_at` rỗng tới khi worker gọi finish. Thử lại nhận job `failed`, `cancelled`, kiểm lại mọi bước như tạo mới. `bulk-retry` tất cả hoặc không, trả `items` theo thứ tự `ids` |
+| `POST /workers`, `POST /workers/{worker_id}/tokens`, `POST /worker-tokens/{worker_token_id}/revoke` | Body `name`, trùng tên `409`. Token trả một lần trong `token`, CSDL lưu SHA-256. Thu hồi token đã thu hồi: `204`, không đổi gì. Ghi nhật ký `worker_registered`, `worker_token_created`, `worker_token_revoked` |
+| `PATCH /tool-modules/{tool_module_id}` | Body `is_enabled`, `default_params`, `max_concurrency`, `rate_limit_per_minute` (`null`: không giới hạn tốc độ), `timeout_minutes`. Gửi `null` cho trường khác `rate_limit_per_minute`: mã `null_not_allowed`. `default_params` chỉ nhận khóa có trong `param_schema` |
 | `POST /jobs/{job_id}/prioritize`, `POST /dispatcher/wake`, `POST /jobs/cleanup`, `POST /jobs/bulk-retry` | Dispatch Now, Dispatch All, Cleanup, Retry Failed: [business-flow.md](../architecture/business-flow.md). `cleanup` trả số job đã hủy |
 | `GET /programs/{program_id}/scope-rules` | `sort`: `created_at` mặc định, `-created_at` |
 | `POST /programs/{program_id}/scope-rules`, `POST …/scope-rules/bulk-create`, `PATCH /scope-rules/{scope_rule_id}` | Body `scope_type`, `rule_type`, `value`, `reason`. `value` lưu dạng chuẩn hóa: [business-flow.md](../architecture/business-flow.md). Giá trị không đọc được: `422 validation_error`, `errors` với `field` là `value` hoặc `items.<i>.value`, `code` là một trong `invalid_length`, `not_ascii`, `control_character`, `invalid_domain`, `invalid_ip`, `invalid_url`, `invalid_path`, `encoded_slash`, `unsupported_scheme`, `credentials_in_url`, `invalid_port`, `wildcard_target`, `wrong_rule_form`, `query_in_rule`. Out-of-Scope thiếu `reason`: `code` là `missing`. Trùng scope rule sau chuẩn hóa: `409 conflict`, `code` là `already_exists`. Program `archived`: `409 conflict`. `bulk-create` tối đa 200 phần tử, tất cả hoặc không |
@@ -253,7 +258,7 @@ Response tổng hợp:
 | `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng của đợt sau trả `0` hoặc `null` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md) |
 | `POST /programs/{program_id}/users` | Body `user_id`. Chỉ gán tài khoản vai trò `user`. Tài khoản không tồn tại: `422`, `errors` có `user_id` mã `not_found`. Vai trò khác: mã `role_not_assignable`. Đã gán: `409 conflict`. Gán, bỏ gán vẫn làm được khi program `archived` |
 | `GET /programs/{program_id}/users`, `GET /programs/{program_id}/proxies` | Một thứ tự duy nhất: `sort` chỉ nhận `-assigned_at`, `-created_at` |
-| `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy |
+| `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy. Xóa proxy mà job chưa kết thúc còn dùng: `409 conflict`. Job đã kết thúc giữ lịch sử, `proxy_id` về `NULL` |
 | `POST /users/{user_id}/revoke-sessions`, `POST /users/bulk-revoke-sessions` | Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi |
 | `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids` |
 | `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |
@@ -266,9 +271,14 @@ Response tổng hợp:
 
 ### WebSocket
 
-- Một endpoint `/api/v1/ws`. Xác thực bằng cookie phiên, kiểm tra `Origin` khi bắt tay.
+- Một endpoint `/api/v1/ws`. Xác thực bằng cookie phiên, kiểm tra `Origin` khi bắt tay. Bắt tay, kiểm tra lại phiên, mã đóng kết nối: [request-flow.md](../architecture/request-flow.md).
 - Server chỉ đẩy sự kiện. Thao tác của người dùng đi qua REST.
-- Mỗi sự kiện chỉ gửi cho tài khoản xem được program của sự kiện.
+- Mỗi sự kiện chỉ gửi cho tài khoản xem được program của sự kiện. Sự kiện có `program_id` là `null` thuộc toàn hệ thống, chỉ gửi cho Superadmin, Admin.
+
+| Mã đóng | Khi nào | Trình duyệt |
+|---|---|---|
+| `4401` | Phiên hết hạn hoặc bị thu hồi khi đang mở | Không kết nối lại, làm mới query đang mở để về S01 |
+| `1011` | Backend API mất kết nối Redis | Kết nối lại |
 
 ```json
 {"type": "job.status_changed", "program_id": "0190...", "data": {"job_id": "0190...", "status": "running"}, "at": "2026-11-01T08:00:00Z"}
@@ -276,11 +286,11 @@ Response tổng hợp:
 
 | `type` | Khi nào |
 |---|---|
-| `job.status_changed` | Job đổi trạng thái |
+| `job.status_changed` | Job đổi trạng thái. `data` gồm `job_id`, `status` |
 | `finding.created` | Parser tạo finding mới |
 | `asset.discovered` | Parser tạo tài sản mới, gom theo job |
 | `alert.created` | Có cảnh báo mới |
-| `worker.status_changed` | Worker bắt đầu gửi heartbeat hoặc mất heartbeat |
+| `worker.status_changed` | Worker bắt đầu gửi heartbeat hoặc mất heartbeat. `program_id` là `null`, `data` gồm `worker_id`, `is_online` |
 
 - Frontend nhận sự kiện thì làm mới query TanStack Query tương ứng. Mất kết nối thì kết nối lại và làm mới toàn bộ query đang mở.
 

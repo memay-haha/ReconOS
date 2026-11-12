@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.4 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -60,8 +60,11 @@ sequenceDiagram
 | Xác nhận | `acks_late`, mỗi lần nhận một task. Worker dừng đột ngột thì Celery giao lại task |
 | Serializer | JSON. ❌ Không dùng pickle |
 
-- Dispatcher gửi task vào queue theo `tool_module.name` của job.
-- Model task: `contracts/`. Backend và workers kiểm tra cùng model.
+- Dispatcher gửi task vào queue theo `tool_module.name` của job, exchange trực tiếp cùng tên queue.
+- Model task: `RunJobTask` trong `contracts/tasks.py`. Backend và workers kiểm tra cùng model.
+- Worker giữ message chưa xác nhận ở key riêng `job.unacked`, `job.unacked_index`, `job.unacked_mutex`. Lõi dùng key mặc định `unacked`. Nhờ vậy worker không đưa được message vào queue của lõi khi Celery khôi phục message chưa xác nhận.
+- `visibility_timeout` của worker là 24 giờ, dài hơn thời hạn chạy của mọi job.
+- Worker tắt remote control, sự kiện task, gossip, mingle để chỉ dùng key của queue job: ACL ở `infras/redis/acl.conf`.
 
 ### Endpoint của contract worker
 
@@ -76,15 +79,21 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 | `POST /api/v1/worker/jobs/{job_id}/finish` | Kết thúc job sau khi upload xong, kèm `tool_version` của công cụ đã chạy | Job chuyển `completed` hoặc `failed`, ghi `job.tool_version` |
 | `POST /api/v1/worker/logs` | Gửi log của worker theo lô | Ghi vào CSDL log: [logging.md](../../.claude/rules/logging.md) |
 
-- Heartbeat, upload, finish chỉ chấp nhận job đang `running` trên đúng worker đã claim. Sai thì trả `409`.
-- Đặc tả job khi claim: tool module, mục tiêu, tham số đã kiểm tra, thời hạn chạy, proxy, cấu hình engine nếu có.
+- Heartbeat chỉ chấp nhận job đang `running` trên đúng worker đã claim. Upload, finish chấp nhận job `running`, hoặc `cancelled` khi job bị hủy lúc đang chạy trên đúng worker đó và chưa nhận finish, để worker gửi phần output đã có. Sai thì trả `409`.
+- Đặc tả job khi claim là model `JobSpec` trong `contracts/tasks.py`: `job_id`, `tool_module`, `target`, `params` đã kiểm tra, `timeout_minutes`, `heartbeat_seconds` lấy từ `job_heartbeat_seconds`, `proxy_url`, `engine` gồm `name`, `base_url`, `api_key`, `variables`. Worker không đọc CSDL nên nhận chu kỳ heartbeat qua claim.
+- Body finish là `JobFinish` trong `contracts/job_status.py`: `status` nhận `completed`, `failed`, `cancelled`, kèm `status_reason`, `tool_version`. `cancelled` là worker xác nhận đã dừng theo lệnh hủy, job giữ trạng thái `cancelled`. Job đã `cancelled` mà worker gửi `completed` hoặc `failed` thì job vẫn giữ `cancelled`, chỉ ghi `tool_version`.
+- Finish lặp lại sau khi job đã kết thúc với cùng trạng thái trên đúng worker trả `204`, không đổi gì. Job đã `cancelled` coi mọi finish của worker đó là đã nhận.
+- Log theo lô: Backend API chỉ giữ `job_id` của bản ghi khi job đó do chính worker gửi log claim. `job_id` khác bị bỏ, `context` thêm `job_id_rejected`. `context` qua processor ẩn thông tin xác thực trước khi ghi `reconos_log`.
+- Worker trực tuyến khi heartbeat worker mới hơn `job_heartbeat_timeout_minutes`. Dispatcher publish `worker.status_changed` khi worker mất heartbeat, Backend API publish khi worker gửi lại heartbeat.
+- Heartbeat job trả `JobHeartbeatResponse` có `action`. Heartbeat worker là `WorkerHeartbeat`, log theo lô là `WorkerLogBatch` tối đa 1.000 bản ghi, cùng nằm trong `contracts/worker.py`. Worker gửi heartbeat worker theo `RECONOS_WORKER_HEARTBEAT_SECONDS`, gửi log mỗi 5 giây.
 - Worker lấy phiên bản công cụ bằng lệnh phiên bản của từng công cụ khi khởi động, với engine lấy từ REST của engine. `version` là `NULL` khi công cụ không báo. `cpu_percent` là tải CPU trung bình của máy từ lần heartbeat trước.
 - Proxy, API key, biến engine giải mã ở Backend API, chỉ đi qua HTTPS tới worker. ❌ Runner không ghi chúng ra log, file output.
 
 ### Upload output thô
 
 - Body là nội dung file, gửi dạng stream. Header `Content-Type` theo định dạng file.
-- Tên file do runner đặt, duy nhất trong job. ❌ Không chứa `/`, `..`.
+- Tên file do runner đặt, duy nhất trong job, khớp `RAW_OUTPUT_FILENAME_PATTERN` trong `contracts/raw_output.py`. ❌ Không chứa `/`, `..`.
+- `Content-Type` theo đuôi file trong `CONTENT_TYPES` của `contracts/raw_output.py`, đuôi khác gửi `application/octet-stream`.
 - Công cụ ghi file đơn: mỗi file một lần upload, gồm `stdout.txt`, `stderr.txt` của tiến trình con.
 - Công cụ hoặc engine ghi cả thư mục: nén thư mục thành một gói, upload một lần.
 - Upload lại cùng tên sau lỗi mạng: an toàn, không tạo bản trùng.
@@ -94,11 +103,14 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 
 | Việc | Thử lại | Hết lượt thử |
 |---|---|---|
-| Worker gọi Backend API: claim, heartbeat, upload, finish, gửi log | Tối đa 5 lần, backoff lũy thừa, chỉ lỗi mạng và `5xx` | Dừng công cụ, ghi log `error`. Dispatcher chuyển job `failed` khi mất heartbeat |
+| Worker gọi Backend API: claim, heartbeat, upload, finish, gửi log | Tối đa 5 lần sau lần gọi đầu, chờ 1, 2, 4, 8, 16 giây, chỉ lỗi mạng và `5xx`. `429` chờ theo `Retry-After`, tối đa 300 giây | Dừng công cụ, ghi log `error`. Dispatcher chuyển job `failed` khi mất heartbeat |
 | Runner gọi REST API của engine | Tối đa 5 lần, backoff lũy thừa, chỉ lỗi mạng và `5xx` | Job `failed` |
 | Job `failed` | ❌ Không tự thử lại | Người dùng thử lại thủ công, tạo job mới |
 
 - Thử lại an toàn vì upload cùng tên file, chuyển trạng thái job đều idempotent.
+- Timeout mỗi lời gọi Backend API: kết nối 10 giây, đọc và ghi 60 giây cho mỗi đoạn dữ liệu. Upload gửi lại cả file ở mỗi lần thử.
+- `409` không thử lại: claim `409` thì worker bỏ task, heartbeat, upload, finish `409` thì worker dừng job, không gọi finish.
+- Lần gửi log cuối khi worker dừng chỉ gọi một lần.
 
 ### Heartbeat và hủy job
 
@@ -109,7 +121,7 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 
 | Loại | Cách dừng |
 |---|---|
-| Công cụ | SIGTERM cho nhóm tiến trình của tiến trình con, quá thời gian chờ thì SIGKILL |
+| Công cụ | SIGTERM cho nhóm tiến trình của tiến trình con, quá 10 giây thì SIGKILL |
 | Osmedeus | `DELETE /osm/api/runs/{run_id}` |
 | Vigolium | `POST /api/scans/{scan_uuid}/stop` |
 
@@ -117,6 +129,9 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 
 - Runner gọi công cụ bằng danh sách đối số, mỗi job một thư mục làm việc riêng: [coding-convention.md](../../.claude/rules/coding-convention.md).
 - Mục tiêu ghi vào file trong thư mục làm việc, truyền đường dẫn file cho công cụ.
+- Proxy ghi vào file quyền `0600` trong thư mục làm việc, xóa ngay khi công cụ dừng, không đặt trong danh sách đối số, không upload (G7).
+- Tiến trình con chỉ nhận biến môi trường `PATH`, `HOME`, `LANG`, `LC_ALL`, `TZ`. Token worker, mật khẩu Redis không tới công cụ.
+- Runner kiểm tra lại `params` bằng schema tham số của tool module trong `contracts/tool_modules/`. Không khớp thì finish `failed`, không chạy công cụ.
 - Xóa thư mục làm việc sau khi finish thành công.
 
 | Tool module | Nhóm | Output thô | Parser tạo |
@@ -131,6 +146,7 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 - Cờ gowitness cho các trường trên chưa kiểm chứng trên phiên bản gowitness đang dùng: nợ 42 trong [tech-debt.md](../tech-debt.md).
 - httpx ghi ngày hết hạn chứng chỉ TLS, parser ghi `url.tls_not_after`.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
+- `nuclei`: `-list`, `-jsonl`, `-output nuclei.jsonl`, `-silent`, `-no-color`, `-disable-update-check`, `-rate-limit`, `-concurrency`, `-timeout`, `-retries`, `-severity`, `-tags`, `-exclude-tags`, `-proxy`. Tham số `rate`, `threads`, `timeout`, `retries`, `severity`, `tags`, `exclude_tags`. Phiên bản lấy từ `nuclei -version`.
 
 ### Gọi engine
 

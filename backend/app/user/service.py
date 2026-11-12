@@ -1,28 +1,39 @@
 """Accounts, sessions and the login flow: docs/security/authentication.md."""
 
+import hashlib
 import math
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any, NamedTuple
+from typing import Annotated, Any, NamedTuple
 
+import structlog
+from fastapi import Depends, Header
 from sqlalchemy import (
     ColumnElement,
     ScalarSelect,
+    Text,
     and_,
+    column,
     delete,
     func,
     or_,
     select,
+    table,
     text,
     true,
     tuple_,
 )
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
-from app.core import audit
+from app.core import audit, realtime
 from app.core.db import independent_session
+from app.core.deps import DbDep
 from app.core.errors import (
+    BadRequestError,
     ConflictError,
     CurrentPasswordIncorrectError,
     ForbiddenError,
@@ -31,10 +42,12 @@ from app.core.errors import (
     UnauthenticatedError,
 )
 from app.core.identity import User, UserRole, UserSession
+from app.core.logging import mask_credentials, write_app_log_rows
 from app.core.pagination import (
     MAX_LIMIT,
     Page,
     contains_ignore_case,
+    decode_cursor,
     decode_time_cursor,
     encode_cursor,
 )
@@ -47,7 +60,7 @@ from app.core.security import (
     verify_password,
 )
 from app.core.system_setting import get_int_setting
-from app.user.models import LoginAttempt
+from app.user.models import LoginAttempt, Worker, WorkerToken
 from app.user.schemas import (
     ActiveUserSessionPage,
     ActiveUserSessionResponse,
@@ -57,7 +70,12 @@ from app.user.schemas import (
     UserResponse,
     UserSessionResponse,
     UserSessionSort,
+    WorkerResponse,
+    WorkerSort,
+    WorkerTokenCreatedResponse,
+    WorkerToolVersion,
 )
+from contracts.worker import WorkerHeartbeat, WorkerLogBatch
 
 
 class LoginResult(NamedTuple):
@@ -563,3 +581,255 @@ async def revoke_session(session: AsyncSession, *, actor: User, user_session_id:
         resource_type="user_session",
         resource_id=user_session_id,
     )
+
+
+# ---------------------------------------------------------------- workers
+#
+# Worker machines and their bearer tokens: docs/security/authentication.md,
+# section Token worker. The job table sits on a higher tier, so it is read by
+# table name only: docs/architecture/dependency-graph.md.
+
+log = structlog.get_logger()
+
+WORKER_TOKEN_BYTES = 32
+_BEARER_PREFIX = "bearer "
+_WORKER_UNAUTHENTICATED = "worker authentication is required"
+
+_job = table(
+    "job",
+    column("id", PG_UUID(as_uuid=True)),
+    column("program_id", PG_UUID(as_uuid=True)),
+    column("worker_id", PG_UUID(as_uuid=True)),
+    column("tool_module_id", PG_UUID(as_uuid=True)),
+    column("status", Text),
+)
+
+
+def hash_worker_token(token: str) -> str:
+    """SHA-256 of the token. The database never holds the token itself (G7)."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+async def worker_online_cutoff(session: AsyncSession) -> datetime:
+    """A worker is online while its heartbeat is newer than this.
+
+    Same threshold the dispatcher uses to declare a job's worker lost:
+    docs/api/architecture.md.
+    """
+    minutes = await get_int_setting(session, "job_heartbeat_timeout_minutes")
+    return datetime.now(UTC) - timedelta(minutes=minutes)
+
+
+def is_worker_online(worker: Worker, cutoff: datetime) -> bool:
+    return worker.last_heartbeat_at is not None and worker.last_heartbeat_at > cutoff
+
+
+async def online_workers(session: AsyncSession) -> list[Worker]:
+    cutoff = await worker_online_cutoff(session)
+    rows = await session.scalars(
+        select(Worker).where(Worker.last_heartbeat_at > cutoff).order_by(Worker.name)
+    )
+    return list(rows)
+
+
+async def list_workers(
+    session: AsyncSession, *, limit: int, cursor: str | None, sort: WorkerSort = "name"
+) -> Page[WorkerResponse]:
+    size = _clamp(limit)
+    stmt = select(Worker).order_by(Worker.name, Worker.id)
+    if cursor is not None:
+        seen_name, seen_id = decode_cursor(cursor)
+        if not isinstance(seen_name, str):
+            raise BadRequestError(detail="cursor is not valid")
+        stmt = stmt.where(tuple_(Worker.name, Worker.id) > (seen_name, seen_id))
+    rows = list(await session.scalars(stmt.limit(size + 1)))
+    page_rows = rows[:size]
+    running: dict[uuid.UUID, list[uuid.UUID]] = {}
+    if page_rows:
+        result = await session.execute(
+            select(_job.c.worker_id, _job.c.tool_module_id).where(
+                _job.c.status == "running",
+                _job.c.worker_id.in_([row.id for row in page_rows]),
+            )
+        )
+        for worker_id, tool_module_id in result:
+            running.setdefault(worker_id, []).append(tool_module_id)
+    cutoff = await worker_online_cutoff(session)
+    total = await session.scalar(select(func.count()).select_from(Worker))
+    items = [
+        WorkerResponse(
+            id=row.id,
+            name=row.name,
+            tool_modules=list(row.tool_modules),
+            tool_versions=[WorkerToolVersion.model_validate(item) for item in row.tool_versions],
+            cpu_percent=row.cpu_percent,
+            last_heartbeat_at=row.last_heartbeat_at,
+            created_at=row.created_at,
+            is_online=is_worker_online(row, cutoff),
+            running_job_count=len(running.get(row.id, [])),
+            running_tool_module_ids=sorted(set(running.get(row.id, [])), key=str),
+        )
+        for row in page_rows
+    ]
+    next_cursor = encode_cursor(page_rows[-1].name, page_rows[-1].id) if len(rows) > size else None
+    return Page[WorkerResponse](items=items, next_cursor=next_cursor, total=total or 0)
+
+
+async def register_worker(session: AsyncSession, *, actor: User, name: str) -> Worker:
+    if await session.scalar(select(Worker.id).where(Worker.name == name)) is not None:
+        raise ConflictError(
+            detail="a worker with this name exists",
+            errors=[{"field": "name", "code": "already_exists"}],
+        )
+    worker = Worker(name=name)
+    session.add(worker)
+    try:
+        async with session.begin_nested():
+            await session.flush()
+    except IntegrityError as err:
+        raise ConflictError(detail="a worker with this name exists") from err
+    await session.refresh(worker)
+    await audit.record(
+        session,
+        action="worker_registered",
+        user_id=actor.id,
+        resource_type="worker",
+        resource_id=worker.id,
+        detail={"name": name},
+    )
+    return worker
+
+
+async def create_worker_token(
+    session: AsyncSession, *, actor: User, worker_id: uuid.UUID
+) -> WorkerTokenCreatedResponse:
+    """Issue a token. The plain value is returned here once and never stored (G7)."""
+    worker = await session.get(Worker, worker_id)
+    if worker is None:
+        raise NotFoundError(detail="worker does not exist")
+    token = secrets.token_urlsafe(WORKER_TOKEN_BYTES)
+    row = WorkerToken(worker_id=worker.id, token_hash=hash_worker_token(token), created_by=actor.id)
+    session.add(row)
+    await session.flush()
+    await session.refresh(row)
+    await audit.record(
+        session,
+        action="worker_token_created",
+        user_id=actor.id,
+        resource_type="worker_token",
+        resource_id=row.id,
+        detail={"worker_id": str(worker.id)},
+    )
+    return WorkerTokenCreatedResponse(
+        id=row.id, worker_id=worker.id, token=token, created_at=row.created_at
+    )
+
+
+async def revoke_worker_token(
+    session: AsyncSession, *, actor: User, worker_token_id: uuid.UUID
+) -> None:
+    """Revoke a token. Revoking an already revoked token changes nothing."""
+    row = await session.get(WorkerToken, worker_token_id, with_for_update=True)
+    if row is None:
+        raise NotFoundError(detail="worker token does not exist")
+    if row.revoked_at is not None:
+        return
+    row.revoked_at = datetime.now(UTC)
+    await audit.record(
+        session,
+        action="worker_token_revoked",
+        user_id=actor.id,
+        resource_type="worker_token",
+        resource_id=row.id,
+        detail={"worker_id": str(row.worker_id)},
+    )
+
+
+def _reject_worker(cause: str) -> UnauthenticatedError:
+    # The cause goes to the log; the response stays the same for every cause.
+    log.info("worker_authentication_rejected", cause=cause)
+    return UnauthenticatedError(detail=_WORKER_UNAUTHENTICATED)
+
+
+async def authenticate_worker(session: AsyncSession, authorization: str | None) -> Worker:
+    """Resolve `Authorization: Bearer <token>` to a worker, or raise 401."""
+    if authorization is None or not authorization.lower().startswith(_BEARER_PREFIX):
+        raise _reject_worker("no_token")
+    token = authorization[len(_BEARER_PREFIX) :].strip()
+    if not token:
+        raise _reject_worker("no_token")
+    row = (
+        await session.execute(
+            select(WorkerToken, Worker)
+            .join(Worker, Worker.id == WorkerToken.worker_id)
+            .where(WorkerToken.token_hash == hash_worker_token(token))
+        )
+    ).first()
+    if row is None:
+        raise _reject_worker("unknown_token")
+    worker_token, worker = row
+    if worker_token.revoked_at is not None:
+        raise _reject_worker("revoked_token")
+    worker_token.last_used_at = datetime.now(UTC)
+    structlog.contextvars.bind_contextvars(worker_id=str(worker.id))
+    return worker
+
+
+async def current_worker(
+    session: DbDep, authorization: Annotated[str | None, Header()] = None
+) -> Worker:
+    """Dependency of every `/api/v1/worker/` route: the token, never a session."""
+    return await authenticate_worker(session, authorization)
+
+
+CurrentWorker = Annotated[Worker, Depends(current_worker)]
+
+
+async def record_worker_heartbeat(
+    session: AsyncSession, *, worker: Worker, heartbeat: WorkerHeartbeat
+) -> None:
+    cutoff = await worker_online_cutoff(session)
+    came_online = not is_worker_online(worker, cutoff)
+    worker.tool_modules = list(heartbeat.tool_modules)
+    worker.tool_versions = [tool.model_dump(mode="json") for tool in heartbeat.tools]
+    worker.cpu_percent = heartbeat.cpu_percent
+    worker.last_heartbeat_at = datetime.now(UTC)
+    if came_online:
+        realtime.queue_worker_event(session, worker_id=worker.id, is_online=True)
+
+
+async def store_worker_logs(session: AsyncSession, *, worker: Worker, batch: WorkerLogBatch) -> int:
+    """Write a log batch of the worker to reconos_log. Returns the rows written.
+
+    A record may name only a job this worker claimed. Any other job ID is
+    dropped from the row, so a worker cannot attach lines to another job's log.
+    """
+    job_ids = {record.job_id for record in batch.records if record.job_id is not None}
+    owned: dict[uuid.UUID, uuid.UUID] = {}
+    if job_ids:
+        result = await session.execute(
+            select(_job.c.id, _job.c.program_id).where(
+                _job.c.id.in_(job_ids), _job.c.worker_id == worker.id
+            )
+        )
+        owned = dict(result.all())
+    rows: list[dict[str, Any]] = []
+    for record in batch.records:
+        job_id = record.job_id if record.job_id in owned else None
+        context = dict(mask_credentials(None, record.event, dict(record.context)))
+        if record.job_id is not None and job_id is None:
+            context["job_id_rejected"] = True
+        rows.append(
+            {
+                "logged_at": record.logged_at,
+                "level": record.level.value,
+                "service": "worker",
+                "event": record.event,
+                "job_id": job_id,
+                "program_id": owned.get(job_id) if job_id is not None else None,
+                "worker_id": worker.id,
+                "context": context,
+            }
+        )
+    await write_app_log_rows(rows)
+    return len(rows)

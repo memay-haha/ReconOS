@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -121,9 +121,9 @@ stateDiagram-v2
 | `running` | Worker đang chạy tool module |
 | `completed` | Tool module chạy xong, output thô đã gửi về |
 | `failed` | Tool module lỗi hoặc quá thời gian |
-| `cancelled` | Bị từ chối duyệt, bị hủy, hoặc mục tiêu ra khỏi scope lúc giao |
+| `cancelled` | Bị từ chối duyệt, bị hủy, hoặc mục tiêu ra khỏi scope lúc giao. Job đang `running` bị hủy giữ `finished_at` rỗng tới khi worker dừng công cụ, gửi output đã có và gọi finish |
 
-- Lưu trữ program: không tạo job mới, lịch quét định kỳ ngừng, job `pending_approval`, `queued` chuyển `cancelled`. Job `dispatched`, `running` chạy tiếp đến xong. Dữ liệu giữ nguyên, chỉ đọc. Cách lưu trữ và xóa cứng: [database.md](../data/database.md).
+- Lưu trữ program: không tạo job mới, lịch quét định kỳ ngừng, job `pending_approval`, `queued` chuyển `cancelled` ở lượt giao kế tiếp của dispatcher, `status_reason` là `Program archived.`. Job `dispatched`, `running` chạy tiếp đến xong. Dữ liệu giữ nguyên, chỉ đọc. Cách lưu trữ và xóa cứng: [database.md](../data/database.md).
 - Tạm dừng program không phải trạng thái job. Dispatcher không giao job `queued` của program tạm dừng. Job `dispatched`, `running` chạy tiếp đến xong.
 - Chuyển trạng thái program: tạm dừng `active` sang `paused`, tiếp tục `paused` sang `active`, lưu trữ `active` hoặc `paused` sang `archived`. Không bỏ lưu trữ được. Chuyển khác trả `409 conflict`.
 - Program `archived` chỉ đọc: không sửa program, không thêm, sửa, xóa proxy. Gán, bỏ gán User vẫn được vì thao tác này quyết định ai đọc dữ liệu đã lưu trữ.

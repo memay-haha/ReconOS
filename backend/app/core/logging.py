@@ -1,8 +1,9 @@
 """structlog setup shared by the API, dispatcher, background worker and Beat.
 
 Format, levels, context fields and masking: .claude/rules/logging.md.
-Writing records into the reconos_log database arrives with the log sink in a
-later batch; for now every process writes JSON to stdout.
+Every process writes JSON to stdout. Log batches sent by workers are written
+to reconos_log through `write_app_log_rows`; the sink for the core processes'
+own records arrives in a later batch.
 """
 
 import logging
@@ -11,7 +12,10 @@ from collections.abc import Mapping, MutableMapping
 from typing import Any
 from urllib.parse import urlsplit
 
+import sqlalchemy as sa
 import structlog
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 # A field whose name contains one of these never reaches an output.
 MASKED_SUBSTRINGS = [
@@ -36,6 +40,9 @@ def _should_mask(name: str) -> bool:
 def _mask_value(value: object) -> object:
     if isinstance(value, dict):
         return {k: (MASK if _should_mask(str(k)) else _mask_value(v)) for k, v in value.items()}
+    # Arrays are walked too: .claude/rules/logging.md.
+    if isinstance(value, list | tuple):
+        return [_mask_value(item) for item in value]
     return value
 
 
@@ -76,3 +83,34 @@ def configure_logging(level: str = "info") -> None:
         logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
         cache_logger_on_first_use=True,
     )
+
+
+# reconos_log has its own migrations and no ORM model: docs/data/schema.md.
+_app_log = sa.table(
+    "app_log",
+    sa.column("logged_at", sa.DateTime(timezone=True)),
+    sa.column("level", sa.Text),
+    sa.column("service", sa.Text),
+    sa.column("event", sa.Text),
+    sa.column("request_id", PG_UUID(as_uuid=True)),
+    sa.column("job_id", PG_UUID(as_uuid=True)),
+    sa.column("program_id", PG_UUID(as_uuid=True)),
+    sa.column("worker_id", PG_UUID(as_uuid=True)),
+    sa.column("context", JSONB),
+)
+
+
+async def write_app_log_rows(rows: list[dict[str, Any]]) -> None:
+    """Insert already masked rows into reconos_log in one statement.
+
+    Used for the log batches workers send: docs/data/database.md, section CSDL
+    log. It commits on its own connection, so the rows stay even when the
+    calling request later fails.
+    """
+    if not rows:
+        return
+    # Imported here: app.core.db imports modules that log at import time.
+    from app.core.db import get_log_engine
+
+    async with get_log_engine().begin() as connection:
+        await connection.execute(sa.insert(_app_log), rows)

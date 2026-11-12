@@ -9,6 +9,7 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import HTTPConnection
 
 from app.core.config import Settings, get_settings
 from app.core.db import get_engine, session_scope
@@ -26,14 +27,17 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 DbDep = Annotated[AsyncSession, Depends(get_db)]
 
 
-async def csrf_guard(request: Request, settings: SettingsDep) -> None:
+async def csrf_guard(connection: HTTPConnection, settings: SettingsDep) -> None:
     """Reject a cross-site mutating request, for every route the app serves.
 
     Declared on the application so a handler added later inherits it. A
     hand-written call per handler is one line a new handler can forget, and a
     forgotten one is CSRF-open with nothing to catch it: docs/api/architecture.md.
+    A WebSocket handshake has no method to test: its endpoint checks `Origin`
+    itself before accepting, docs/architecture/request-flow.md.
     """
-    enforce_csrf(request, settings)
+    if isinstance(connection, Request):
+        enforce_csrf(connection, settings)
 
 
 async def current_user(request: Request, session: DbDep, settings: SettingsDep) -> User:

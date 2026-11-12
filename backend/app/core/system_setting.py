@@ -19,6 +19,11 @@ DEFAULT_SETTINGS: dict[str, int] = {
     "login_max_failures_per_account": 5,
     "login_max_failures_per_ip": 20,
     "login_failure_window_minutes": 15,
+    "dispatcher_poll_seconds": 30,
+    "job_heartbeat_seconds": 30,
+    "job_heartbeat_timeout_minutes": 5,
+    "upload_max_bytes": 10 * 1024**3,
+    "queue_capacity": 1000,
 }
 # configuration.md promises an edit applies within 60 seconds.
 SETTING_CACHE_SECONDS = 60

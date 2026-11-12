@@ -185,21 +185,6 @@ function fullHealth() {
   };
 }
 
-const toolRows = [
-  ['subfinder', ['osmedeus-domain-lite', 'osmedeus-general'], 'v2.6.6'],
-  ['dnsx', ['osmedeus-domain-lite', 'osmedeus-general'], 'v1.2.1'],
-  ['httpx', ['osmedeus-domain-lite', 'osmedeus-general'], 'v1.6.9'],
-  ['nuclei', ['nuclei', 'osmedeus-general'], 'v3.3.5'],
-  ['gowitness', ['gowitness'], 'v3.0.5'],
-  ['sqlmap', ['sqlmap'], null],
-].map(([name, modules, version]) => ({
-  name: name as string,
-  tool_modules: modules as string[],
-  status: version === null ? 'missing' : 'installed',
-  installed:
-    version === null ? [] : [{ worker_name: 'worker-recon-01', version: version as string }],
-}));
-
 const DIAGNOSTIC_OUTPUT = [
   '[*] Starting ReconOS diagnostic checks',
   '[OK] api: responding (4 ms)',
@@ -234,7 +219,6 @@ const s15Routes: MockRoute[] = [
         .map((c) => ({ ...c, checked_at: new Date().toISOString() })),
     });
   }),
-  route('GET /tools', () => HttpResponse.json(page(toolRows))),
   route('POST /system/diagnostics', () => {
     diagnosticRun = {
       id: crypto.randomUUID(),

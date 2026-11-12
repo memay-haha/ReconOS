@@ -47,6 +47,26 @@ export const IMPLEMENTED: readonly string[] = [
   'POST /programs/:program_id/proxies',
   'PATCH /proxies/:proxy_id',
   'DELETE /proxies/:proxy_id',
+  // Batch 4: job, tool module, raw output, dispatcher.
+  'GET /jobs',
+  'POST /jobs',
+  'POST /jobs/bulk-create',
+  'POST /jobs/bulk-retry',
+  'POST /jobs/cleanup',
+  'GET /jobs/:job_id',
+  'POST /jobs/:job_id/cancel',
+  'POST /jobs/:job_id/retry',
+  'POST /jobs/:job_id/prioritize',
+  'GET /jobs/:job_id/raw-outputs',
+  'GET /raw-outputs/:raw_output_id',
+  'GET /raw-outputs/:raw_output_id/content',
+  'GET /tool-modules',
+  'GET /tool-modules/stats',
+  'PATCH /tool-modules/:tool_module_id',
+  'GET /tools',
+  'POST /dispatcher/wake',
+  'GET /dispatcher/status',
+  'GET /workers',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

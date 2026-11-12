@@ -27,15 +27,21 @@ services:
 
   redis:
     image: redis:8
-    # Persistence on: the queue must survive a restart. ACL per account arrives
-    # with the worker in batch 4 of docs/roadmap.md
-    command: ["redis-server", "--appendonly", "yes"]
+    # Persistence on: the queue must survive a restart. Accounts `default` (core)
+    # and `worker` come from infras/redis/acl.conf. An empty worker password
+    # leaves the `worker` account disabled.
+    entrypoint: ["sh", "/etc/reconos/redis/render-acl.sh"]
+    environment:
+      RECONOS_REDIS_PASSWORD: ${RECONOS_REDIS_PASSWORD:-}
+      RECONOS_REDIS_WORKER_PASSWORD: ${RECONOS_REDIS_WORKER_PASSWORD:-}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
+      - ../redis:/etc/reconos/redis:ro
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # The core password, when set, is read inside the container only.
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$RECONOS_REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
       interval: 5s
       timeout: 5s
       retries: 20

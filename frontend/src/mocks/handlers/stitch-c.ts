@@ -2,8 +2,6 @@ import { HttpResponse } from 'msw';
 
 import { PLACEHOLDER_PNG } from '../data/part-d';
 import {
-  GOWITNESS_ID,
-  gowitnessJobs,
   SAMPLE_HTML,
   type SampleScreenshot,
   screenshotSamples,
@@ -198,16 +196,4 @@ export const stitchCRoutes: readonly MockRoute[] = [
   route('GET /technologies', () => HttpResponse.json(page(technologies))),
   // Only gowitness job lists are answered here; any other `GET /jobs` falls through to the
   // older handler, since MSW tries the next match when a resolver returns nothing.
-  route('GET /jobs', ({ request }) => {
-    const search = new URL(request.url).searchParams;
-    if (!search.getAll('tool_module_id').includes(GOWITNESS_ID)) return undefined;
-    const statuses = search.getAll('status');
-    const programId = search.get('program_id');
-    const rows = gowitnessJobs.filter(
-      (j) =>
-        (statuses.length === 0 || statuses.includes(j.status)) &&
-        (programId === null || j.program_id === programId),
-    );
-    return HttpResponse.json(page([...rows].reverse()));
-  }),
 ];

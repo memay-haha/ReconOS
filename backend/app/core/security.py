@@ -25,6 +25,7 @@ from fastapi import Request
 from sqlalchemy import ColumnElement, column, select, table, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
+from starlette.requests import HTTPConnection
 from zxcvbn import zxcvbn
 
 from app.core import audit
@@ -164,12 +165,15 @@ class AllPrograms:
 ALL_PROGRAMS: Final = AllPrograms()
 
 
-async def load_current_user(request: Request, session: AsyncSession, settings: Settings) -> User:
+async def load_current_user(
+    request: HTTPConnection, session: AsyncSession, settings: Settings
+) -> User:
     """Resolve the session cookie to an account, or raise UnauthenticatedError.
 
     Every rejection raises the same error with the same detail, so the response
     cannot tell a caller an unknown cookie from an expired session or a locked
     account. The specific cause goes to the server log as the `cause` field.
+    Takes any connection, so the WebSocket handshake checks the same cookie.
     """
     session_id = request.cookies.get(session_cookie(settings).name)
     if session_id is None:
