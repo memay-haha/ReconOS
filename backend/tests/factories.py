@@ -5,6 +5,7 @@ without a fixture. Names use reserved documentation values only.
 """
 
 import itertools
+import json
 import secrets
 import uuid
 import zipfile
@@ -14,8 +15,13 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.asset import service as asset_service
 from app.core.crypto import encrypt
+from app.finding import service as finding_service
+from app.finding.models import Finding
+from app.finding.schemas import FindingBatch
 from app.job.models import Job
+from app.parser.nuclei import finding_from_line
 from app.program.models import Program, ProgramStatus, ProgramUser, Proxy
 from app.raw_output.models import RawOutput
 from app.scope.models import ScopeRule
@@ -159,6 +165,17 @@ async def tool_module_named(session: AsyncSession, name: str) -> ToolModule:
     return row
 
 
+async def tool_module_without_parser(session: AsyncSession) -> ToolModule:
+    """A tool module row no parser claims: every seeded tool module has one since batch 6."""
+    row = await session.scalar(select(ToolModule).where(ToolModule.name == "no-parser-test"))
+    if row is None:
+        row = ToolModule(name="no-parser-test")
+        session.add(row)
+        await session.flush()
+        await session.refresh(row)
+    return row
+
+
 async def make_raw_output(
     session: AsyncSession,
     job: Job,
@@ -189,3 +206,48 @@ def zip_directory(source: Path, target: Path) -> Path:
             if path.is_file():
                 archive.write(path, path.relative_to(source).as_posix())
     return target
+
+
+async def make_findings(
+    session: AsyncSession,
+    program: Program,
+    lines: list[dict[str, object]],
+    *,
+    job: Job | None = None,
+    raw_output: RawOutput | None = None,
+    tool_module: str = "nuclei",
+) -> list[Finding]:
+    """Findings written the way the parser writes them, from nuclei result objects."""
+    batch = FindingBatch(
+        findings=[finding_from_line(json.dumps(line), tool_module) for line in lines]
+    )
+    origin = asset_service.Provenance(
+        program_id=program.id,
+        job_id=job.id if job else None,
+        raw_output_id=raw_output.id if raw_output else None,
+    )
+    rules = await asset_service.load_scope_rules(session, program.id)
+    await finding_service.ingest(session, batch, origin, rules)
+    keys = [record.dedup_key for record in batch.findings]
+    rows = {
+        row.dedup_key: row
+        for row in await session.scalars(
+            select(Finding).where(Finding.program_id == program.id, Finding.dedup_key.in_(keys))
+        )
+    }
+    return [rows[key] for key in dict.fromkeys(keys)]
+
+
+def nuclei_line(
+    template_id: str = "git-config",
+    matched_at: str = "https://a.example.com/.git/config",
+    severity: str = "medium",
+    **extra: object,
+) -> dict[str, object]:
+    """One nuclei JSONL result; documentation hosts only."""
+    return {
+        "template-id": template_id,
+        "info": {"name": f"{template_id} finding", "severity": severity},
+        "matched-at": matched_at,
+        **extra,
+    }

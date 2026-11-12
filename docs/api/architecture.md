@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.24 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -130,7 +130,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | `GET /user-sessions` | `username`, `display_name` |
 | `GET /jobs`, `GET /jobs/{job_id}` | `created_by_username`, `worker_name`, `tool_module_name`, `status_changed_at`: giá trị mới nhất trong `created_at`, `approved_at`, `dispatched_at`, `started_at`, `finished_at`. Cột `priority` trả dạng `low`, `normal`, `high`, cột `tool_version` trả nguyên. `sort` nhận `created_at`, `-created_at`, `-status_changed_at`, `-priority` |
 | `GET /workers` | `is_online`, `running_job_count`, `running_tool_module_ids`. Cột `cpu_percent`, `tool_versions` trả nguyên như worker báo |
-| `GET /findings`, `GET /findings/{finding_id}` | `tool_module_name`, `asset`: `type`, `name`, `ip`, `port`, `service_name`. `matcher`. Riêng chi tiết thêm `description`, `remediation`, `request`, `response`, `in_scope`, `scope_rule`: giá trị In-Scope đầu tiên khớp tài sản, `NULL` khi không khớp |
+| `GET /findings`, `GET /findings/{finding_id}` | `program_name`, `tool_module_name`, `asset`: `type`, `id`, `name`, `ip`, `port`, `service_name`. `matcher`, `triaged_by_username`. `tags`: danh sách `tag_id`, `key`, `value` lấy từ `finding_tag` và `tag`, sắp theo `key` rồi `value`. Riêng chi tiết thêm `description`, `remediation`, `request`, `response`, `detail`, `in_scope`, `scope_rule`: giá trị In-Scope đầu tiên khớp tài sản, `NULL` khi không khớp. `allowed_triage_statuses`: trạng thái triage finding chuyển được từ trạng thái hiện tại theo [business-flow.md](../architecture/business-flow.md) |
 | `GET /screenshots` | `technologies`: `name`, `category`. `similar_group`, `similar_count`. `retry_job_status` |
 | `GET /screenshots/{screenshot_id}` | Như danh sách, thêm `worker_name`, `html_size`, `html_sha256`, `security_headers`: object 5 header, giá trị `true` khi có mặt, `security_headers_passed`, `security_headers_total` |
 | `GET /tool-modules` | `title`, `description`, `group`, `runs_on`, `tools`, `output_types`, `param_schema` lấy từ mã. `last_job_at`, `jobs_24h`, `finding_count`, `engine_status`, `disabled_reason`, `estimated_seconds` |
@@ -142,6 +142,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 - `last_job_finished_at`, `last_job_at`: `finished_at` lớn nhất của job `completed`.
 - `scope_coverage`: tỉ lệ domain `in_scope` trên tổng domain, `NULL` khi chưa có domain. `assets_new_today`: tài sản có `first_seen_at` trong 24 giờ.
 - `ip_resolved_count`: số IP có ít nhất một service. `service_port_count`: số cổng khác nhau. `has_findings`: domain có ít nhất một finding mở.
+- Finding của một domain, dùng cho `finding_counts`, `has_findings`, `with_findings`, `with_critical`, `GET /findings?domain_id=`, dòng hoạt động: finding gắn chính domain, gắn URL có `url.domain_id` là domain, hoặc gắn service trên IP domain phân giải ra qua `domain_ip`. Finding gắn thẳng IP không tính cho domain.
 - `similar_group`: số thứ tự nhóm cùng `perception_hash` trong bộ lọc hiện tại, xếp theo `captured_at` sớm nhất của nhóm. `similar_count`: số screenshot trong nhóm, `1` là duy nhất.
 - `retry_job_status`: trạng thái job gowitness mới nhất có mục tiêu là `final_url`, tạo sau `captured_at`. `NULL` khi chưa có.
 - `security_headers` có khóa là tên header viết thường: `strict-transport-security`, `content-security-policy`, `x-frame-options`, `x-content-type-options`, `permissions-policy` trong `http_headers`.
@@ -256,7 +257,7 @@ Response tổng hợp:
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}`. Một ID không tồn tại hoặc không xem được: `404`, không program nào đổi |
 | `POST /programs/{program_id}/pause`, `resume`, `archive` | Chuyển trạng thái theo [business-flow.md](../architecture/business-flow.md). Trạng thái hiện tại không cho phép: `409 conflict` |
 | `POST`, `PATCH /programs/{program_id}` | Body `name`, `platform`, `platform_url`, `platform_handle`, `bounty_type` (mặc định `bounty`), `description`. Trường lạ, kể cả `status`: `422`. `platform_url` chỉ nhận `http`, `https`, sai thì mã `url_invalid`. `PATCH` gửi `null` cho `name`, `bounty_type`: mã `null_not_allowed`. Program `archived`: `409 conflict` |
-| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng `finding`, `screenshot` trả `0` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md). `last_job_finished_at`: `finished_at` mới nhất của job thuộc program |
+| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng `screenshot` trả `0` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md). `last_job_finished_at`: `finished_at` mới nhất của job thuộc program |
 | `POST /programs/{program_id}/users` | Body `user_id`. Chỉ gán tài khoản vai trò `user`. Tài khoản không tồn tại: `422`, `errors` có `user_id` mã `not_found`. Vai trò khác: mã `role_not_assignable`. Đã gán: `409 conflict`. Gán, bỏ gán vẫn làm được khi program `archived` |
 | `GET /programs/{program_id}/users`, `GET /programs/{program_id}/proxies` | Một thứ tự duy nhất: `sort` chỉ nhận `-assigned_at`, `-created_at` |
 | `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy. Xóa proxy mà job chưa kết thúc còn dùng: `409 conflict`. Job đã kết thúc giữ lịch sử, `proxy_id` về `NULL` |
@@ -265,11 +266,15 @@ Response tổng hợp:
 | `GET /ips`, `GET /urls`, `GET /services` | `sort`: `-last_seen_at` mặc định, `last_seen_at`, `first_seen_at`, `-first_seen_at` |
 | `GET /asset-events` | `sort`: `-created_at` mặc định, `created_at`. Sự kiện của domain đã xóa mềm không hiện |
 | `GET /technologies`, `GET /tags` | Danh mục dùng chung, không thuộc program: mọi vai trò đọc đủ. `sort` của `/technologies`: `name` mặc định, `-name`. `sort` của `/tags`: `key` mặc định, `-key`, rồi theo `value` |
-| `GET /domains/{domain_id}/activity` | Mới trước. Dòng `asset_event` có `title` là `Discovered` hoặc `Changed` kèm tên cột đã đổi |
+| `GET /domains/{domain_id}/activity` | Mới trước. Dòng `asset_event` có `title` là `Discovered` hoặc `Changed` kèm tên cột đã đổi. Dòng `finding` có `at` là `first_seen_at`, `title` là tên finding |
 | `GET /<tài sản>/export` | `csv` có header, `jsonl` mỗi dòng một object, `md` một bảng. Cột: cột của dòng danh sách. Header `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff` |
 | `POST /tags` | Body `key` tối đa 100 ký tự, `value` tối đa 255, bỏ khoảng trắng hai đầu. Trùng cặp `key`, `value`: `409 conflict`, `code` là `already_exists`. Mọi vai trò tạo được, chỉ Superadmin, Admin xóa |
 | `POST /asset-tags` | Body `tag_id` và đúng một trong `domain_id`, `ip_id`, `url_id`, `service_id`, sai thì `422`. Tài sản đã có tag: `409`, `code` là `already_exists`. Tài sản không thấy được hoặc tag không tồn tại: `404`. Program `archived`: `409 conflict`. Gỡ tag theo cùng quy tắc |
 | `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids`. Tất cả hoặc không: một tài sản không thấy được thì `404`. Tài sản đã có tag giữ nguyên |
+| `PUT /findings/{finding_id}/tags` | Body `tag_ids`, tối đa 100 ID, ID lặp tính một lần, thay toàn bộ tag của finding. Mảng rỗng gỡ hết tag. Mỗi tag thêm hoặc gỡ ghi một dòng nhật ký thao tác. Finding không thấy được hoặc một tag không tồn tại: `404`. Program `archived`: `409 conflict`. Trả `204`. Mọi vai trò gắn được trên program được gán |
+| `GET /findings`, `/findings/summary`, `/findings/export` | Lọc `program_id`, `triage_status` lặp, `severity` lặp, `domain_id`, `job_id`, `tool_module_id` lặp (tool module của job tạo finding), `tag_id`, `q`. `sort` của danh sách: `-last_seen_at` mặc định, `last_seen_at`, `-first_seen_at`, `first_seen_at`, `-severity`, `severity`. Thứ tự severity: `critical`, `high`, `medium`, `low`, `info`. Export: cột của dòng danh sách, `asset` ghi phẳng thành `asset_type`, `asset_name` |
+| `PATCH /findings/{finding_id}` | Body `triage_status`, `duplicate_of_id`, trường lạ `422`. Chuyển theo bảng trong [business-flow.md](../architecture/business-flow.md), sai bảng: `409 conflict`, `errors` với `field` là `triage_status`, `code` là `invalid_transition`. `duplicate_of_id` sai: `422`, `field` là `duplicate_of_id`, `code` là `missing`, `same_finding`, `not_found` (không tồn tại, không thấy được, khác program), `duplicate_chain` (đích là `duplicate`), `not_allowed` (gửi kèm trạng thái khác `duplicate`). Finding đang có finding khác trỏ tới chuyển sang `duplicate`: `409`, `code` là `has_duplicates`. Program `archived`: `409 conflict`. Trả chi tiết finding |
+| `POST /findings/bulk-triage` | Body `ids` tối đa 500, `triage_status` khác `duplicate`. Một ID không thấy được: `404`. Một finding chuyển sai bảng: `409`. Không finding nào đổi khi lỗi. Mỗi finding đổi ghi một dòng nhật ký `finding_triaged`. Trả `204` |
 | `POST /raw-outputs/{raw_output_id}/reparse` | Superadmin, Admin. Đặt `parse_status = pending`, gửi lại task `parse`: [database.md](../data/database.md). Tool module không có parser hoặc program `archived`: `409 conflict` |
 | `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |
 | `GET /system-settings/{key}` | Superadmin đọc mọi key. Admin, User chỉ đọc key có cột Đọc công khai trong [configuration.md](../ops/configuration.md) |
@@ -297,7 +302,7 @@ Response tổng hợp:
 | `type` | Khi nào |
 |---|---|
 | `job.status_changed` | Job đổi trạng thái. `data` gồm `job_id`, `status` |
-| `finding.created` | Parser tạo finding mới |
+| `finding.created` | Parser tạo finding mới. Một sự kiện mỗi output thô, `data` gồm `job_id`, `count`: số finding mới, `by_severity`: số finding mới theo severity |
 | `asset.discovered` | Parser tạo tài sản mới. Một sự kiện mỗi output thô, `data` gồm `job_id` và số tài sản mới `domain`, `ip`, `url`, `service` |
 | `alert.created` | Có cảnh báo mới |
 | `worker.status_changed` | Worker bắt đầu gửi heartbeat hoặc mất heartbeat. `program_id` là `null`, `data` gồm `worker_id`, `is_online` |

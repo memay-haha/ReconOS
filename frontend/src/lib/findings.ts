@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError, apiRequest } from './api-client';
 import { type Page, type Poll, withQuery } from './page';
@@ -33,46 +33,45 @@ export const SEVERITY_LABEL: Readonly<Record<Severity, string>> = {
   info: 'Info',
 };
 
-export interface Finding {
+/** A row of `GET /findings`: the columns plus the computed fields of docs/api/architecture.md.
+ * Every text field comes from raw output: render it as text, never as HTML. */
+export interface FindingRow {
   readonly id: string;
   readonly program_id: string;
-  readonly job_id: string;
-  readonly raw_output_id: string;
-  readonly domain_id: string | null;
-  readonly ip_id: string | null;
-  readonly url_id: string | null;
-  readonly service_id: string | null;
+  readonly program_name: string;
+  /** Null once the source job or raw output is gone. */
+  readonly job_id: string | null;
+  readonly raw_output_id: string | null;
+  readonly tool_module_name: string | null;
+  readonly dedup_key: string;
   readonly name: string;
   readonly template_id: string | null;
   readonly severity: Severity;
   readonly matched_at: string | null;
-  /** Untrusted text from the target: render as text, never as HTML. */
   readonly evidence: string | null;
   readonly cve: readonly string[];
-  readonly detail: Readonly<Record<string, unknown>> | null;
+  /** What the template matched on (D2). */
+  readonly matcher: string | null;
+  readonly asset: FindingAsset;
   readonly triage_status: TriageStatus;
   readonly duplicate_of_id: string | null;
   readonly triaged_by: string | null;
+  readonly triaged_by_username: string | null;
   readonly triaged_at: string | null;
   readonly first_seen_at: string;
   readonly last_seen_at: string;
+  /** Sorted by key then value. */
+  readonly tags: readonly FindingTag[];
 }
 
 /** The asset a finding sits on, as `GET /findings` names it. Untrusted text from the target. */
 export interface FindingAsset {
   readonly type: 'domain' | 'ip' | 'url' | 'service';
+  readonly id: string;
   readonly name: string;
   readonly ip: string | null;
   readonly port: number | null;
   readonly service_name: string | null;
-}
-
-/** A row of `GET /findings`: the columns plus the computed fields of docs/api/architecture.md. */
-export interface FindingRow extends Finding {
-  readonly tool_module_name: string;
-  readonly asset: FindingAsset | null;
-  /** What the template matched on (D2). Untrusted text. */
-  readonly matcher: string | null;
 }
 
 /** `GET /findings/{finding_id}`: the row plus the keys of `finding.detail` (D2) and the scope
@@ -82,9 +81,21 @@ export interface FindingDetail extends FindingRow {
   readonly remediation: string | null;
   readonly request: string | null;
   readonly response: string | null;
+  readonly detail: Readonly<Record<string, unknown>>;
   readonly in_scope: boolean;
   readonly scope_rule: string | null;
+  /** Statuses the backend lets this finding move to now, by the triage lifecycle. */
+  readonly allowed_triage_statuses: readonly TriageStatus[];
 }
+
+export interface FindingTag {
+  readonly tag_id: string;
+  readonly key: string;
+  readonly value: string;
+}
+
+/** docs/api/architecture.md: `PUT /findings/{finding_id}/tags` takes at most 100 tags. */
+export const FINDING_TAGS_MAX = 100;
 
 export interface FindingFilter {
   readonly programId?: string | null;
@@ -191,15 +202,37 @@ export interface FindingTriageBody {
   readonly duplicate_of_id?: string | null;
 }
 
+/** A triage change moves the open counts (`finding_counts`, `has_findings`) of programs and
+ * domains, the dashboard and the sidebar badge of new findings, not just the finding lists. */
+const TRIAGE_ROOTS = [findingKeys.all[0], 'nav-count', 'programs', 'domains', 'dashboard'] as const;
+
+function invalidateTriageCounts(client: QueryClient): Promise<void[]> {
+  return Promise.all(TRIAGE_ROOTS.map((root) => client.invalidateQueries({ queryKey: [root] })));
+}
+
 export function usePatchFinding() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ findingId, body }: { findingId: string; body: FindingTriageBody }) =>
-      apiRequest<Finding>(`/findings/${findingId}`, {
+      apiRequest<FindingDetail>(`/findings/${findingId}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: findingKeys.all }),
+    onSuccess: () => invalidateTriageCounts(client),
+  });
+}
+
+/** Replaces every tag of one finding; an empty list removes them all. */
+export function useSetFindingTags() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ findingId, tagIds }: { findingId: string; tagIds: readonly string[] }) =>
+      apiRequest<void>(`/findings/${encodeURIComponent(findingId)}/tags`, {
+        method: 'PUT',
+        body: JSON.stringify({ tag_ids: tagIds }),
+      }),
+    onSuccess: (_data, { findingId }) =>
+      client.invalidateQueries({ queryKey: findingDetailKey(findingId) }),
   });
 }
 
@@ -211,7 +244,7 @@ export function useBulkTriage() {
   return useMutation({
     mutationFn: (body: { readonly ids: readonly string[]; readonly triage_status: TriageStatus }) =>
       apiRequest<void>('/findings/bulk-triage', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => client.invalidateQueries({ queryKey: findingKeys.all }),
+    onSuccess: () => invalidateTriageCounts(client),
   });
 }
 

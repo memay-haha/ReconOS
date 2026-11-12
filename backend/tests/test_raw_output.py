@@ -21,7 +21,13 @@ from app.raw_output import service
 from app.raw_output.models import RawOutput
 from app.tool_module.models import ToolModule
 from app.user.models import Worker
-from tests.factories import assign, make_job, make_program, make_worker, nuclei
+from tests.factories import (
+    assign,
+    make_job,
+    make_program,
+    make_worker,
+    tool_module_without_parser,
+)
 
 API = "/api/v1"
 HEADERS = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
@@ -35,7 +41,8 @@ async def program(db_session: AsyncSession) -> Program:
 
 @pytest_asyncio.fixture
 async def tool(db_session: AsyncSession) -> ToolModule:
-    return await nuclei(db_session)
+    # No parser claims it, so uploads stay `no_parser` and queue nothing.
+    return await tool_module_without_parser(db_session)
 
 
 @pytest_asyncio.fixture
@@ -81,7 +88,7 @@ async def test_upload_stores_bytes_then_metadata_without_a_parser(
     assert row.sha256 == hashlib.sha256(PAYLOAD).hexdigest()
     assert row.size_bytes == len(PAYLOAD)
     assert row.content_type == "application/x-ndjson"
-    # No parser is registered for nuclei yet, so no parse task is due (G8).
+    # No parser is registered for this tool module, so no parse task is due (G8).
     assert row.parse_status == "no_parser"
 
     # The same name again: 200, nothing overwritten.

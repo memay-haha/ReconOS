@@ -1350,8 +1350,11 @@ paths:
       - {name: finding_id, in: path, required: true, schema: {type: string, format: uuid}}
     put:
       tags: [tag]
-      summary: "Đặt danh sách tag của finding"
+      summary: "Đặt danh sách tag của finding: thay toàn bộ bằng tag_ids, tag không tồn tại 404, program archived 409"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/FindingTagsSet'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -1363,27 +1366,33 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
-        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+        - {name: sort, in: query, schema: {type: string, enum: [-last_seen_at, last_seen_at, -first_seen_at, first_seen_at, -severity, severity], default: -last_seen_at}}
+        - $ref: '#/components/parameters/finding_triage_status'
         - $ref: '#/components/parameters/program_id'
-        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
-        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/finding_severity'
+        - $ref: '#/components/parameters/finding_domain_id'
+        - $ref: '#/components/parameters/finding_job_id'
+        - $ref: '#/components/parameters/finding_tool_module_id'
+        - $ref: '#/components/parameters/finding_tag_id'
         - $ref: '#/components/parameters/q'
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Finding'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /findings/export:
     get:
       tags: [finding]
-      summary: "Xuất finding"
+      summary: "Xuất finding theo bộ lọc của danh sách. Cột: cột của dòng danh sách, asset ghi phẳng thành asset_type, asset_name"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/format'
         - $ref: '#/components/parameters/ids'
-        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+        - $ref: '#/components/parameters/finding_triage_status'
         - $ref: '#/components/parameters/program_id'
-        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
-        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/finding_severity'
+        - $ref: '#/components/parameters/finding_domain_id'
+        - $ref: '#/components/parameters/finding_job_id'
+        - $ref: '#/components/parameters/finding_tool_module_id'
+        - $ref: '#/components/parameters/finding_tag_id'
         - $ref: '#/components/parameters/q'
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
@@ -1391,16 +1400,19 @@ paths:
   /findings/summary:
     get:
       tags: [finding]
-      summary: "Số liệu S20 theo bộ lọc"
+      summary: "Số liệu S20 theo bộ lọc, mặc định mọi trạng thái triage"
       x-roles: [superadmin, admin, user]
       parameters:
-        - {name: triage_status, in: query, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+        - $ref: '#/components/parameters/finding_triage_status'
         - $ref: '#/components/parameters/program_id'
-        - {name: severity, in: query, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
-        - {name: domain_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/finding_severity'
+        - $ref: '#/components/parameters/finding_domain_id'
+        - $ref: '#/components/parameters/finding_job_id'
+        - $ref: '#/components/parameters/finding_tool_module_id'
+        - $ref: '#/components/parameters/finding_tag_id'
         - $ref: '#/components/parameters/q'
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Số liệu, content: {application/json: {schema: {$ref: '#/components/schemas/FindingSummary'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /findings/{finding_id}:
     parameters:
@@ -1410,20 +1422,26 @@ paths:
       summary: "Chi tiết finding, thêm description, remediation, request, response, in_scope, scope_rule"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Finding, content: {application/json: {schema: {$ref: '#/components/schemas/FindingDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [finding]
-      summary: "Triage finding"
+      summary: "Triage finding theo bảng chuyển trạng thái của business-flow.md. Chuyển không hợp lệ hoặc program archived: 409"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/FindingTriage'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Finding sau khi đổi, content: {application/json: {schema: {$ref: '#/components/schemas/FindingDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /findings/bulk-triage:
     post:
       tags: [finding]
-      summary: "Triage hàng loạt, body ids và triage_status theo api/architecture.md"
+      summary: "Triage hàng loạt, tất cả hoặc không. Không nhận duplicate"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/FindingBulkTriage'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -1800,6 +1818,12 @@ components:
     q: {name: q, in: query, schema: {type: string}, description: "Chuỗi con không phân biệt hoa thường, cột tìm theo api/architecture.md"}
     ids: {name: ids, in: query, schema: {type: array, maxItems: 500, items: {type: string, format: uuid}}, description: "Chỉ xuất các dòng này"}
     format: {name: format, in: query, schema: {type: string, enum: [csv, jsonl, md], default: csv}}
+    finding_triage_status: {name: triage_status, in: query, style: form, explode: true, schema: {type: array, items: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}}}
+    finding_severity: {name: severity, in: query, style: form, explode: true, schema: {type: array, items: {type: string, enum: [critical, high, medium, low, info]}}}
+    finding_domain_id: {name: domain_id, in: query, schema: {type: string, format: uuid}, description: "Finding của domain, của URL thuộc domain, của service trên IP domain phân giải ra"}
+    finding_job_id: {name: job_id, in: query, schema: {type: string, format: uuid}}
+    finding_tool_module_id: {name: tool_module_id, in: query, style: form, explode: true, schema: {type: array, items: {type: string, format: uuid}}}
+    finding_tag_id: {name: tag_id, in: query, schema: {type: string, format: uuid}}
   schemas:
     PageMeta:
       type: object
@@ -2174,6 +2198,92 @@ components:
         tag_id: {type: string, format: uuid}
         asset_type: {type: string, enum: [domain, ip, url, service]}
         ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+    FindingAsset:
+      type: object
+      description: "Tài sản của finding. name: tên domain, địa chỉ IP, URL, hoặc ip:port của service"
+      required: [type, id, name]
+      properties:
+        type: {type: string, enum: [domain, ip, url, service]}
+        id: {type: string, format: uuid}
+        name: {type: string}
+        ip: {type: [string, 'null']}
+        port: {type: [integer, 'null']}
+        service_name: {type: [string, 'null']}
+    FindingTag:
+      type: object
+      properties:
+        tag_id: {type: string, format: uuid}
+        key: {type: string}
+        value: {type: string}
+    Finding:
+      type: object
+      description: "Mọi trường chữ lấy từ output thô, hiển thị dạng văn bản"
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        program_name: {type: string}
+        job_id: {type: [string, 'null'], format: uuid}
+        raw_output_id: {type: [string, 'null'], format: uuid}
+        tool_module_name: {type: [string, 'null']}
+        dedup_key: {type: string}
+        name: {type: string}
+        template_id: {type: [string, 'null']}
+        severity: {type: string, enum: [critical, high, medium, low, info]}
+        matched_at: {type: [string, 'null']}
+        evidence: {type: [string, 'null']}
+        cve: {type: array, items: {type: string}}
+        matcher: {type: [string, 'null']}
+        asset: {$ref: '#/components/schemas/FindingAsset'}
+        triage_status: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}
+        duplicate_of_id: {type: [string, 'null'], format: uuid}
+        triaged_by: {type: [string, 'null'], format: uuid}
+        triaged_by_username: {type: [string, 'null']}
+        triaged_at: {type: [string, 'null'], format: date-time}
+        first_seen_at: {type: string, format: date-time}
+        last_seen_at: {type: string, format: date-time}
+        tags: {type: array, items: {$ref: '#/components/schemas/FindingTag'}}
+    FindingDetail:
+      allOf:
+        - {$ref: '#/components/schemas/Finding'}
+        - type: object
+          properties:
+            description: {type: [string, 'null']}
+            remediation: {type: [string, 'null']}
+            request: {type: [string, 'null']}
+            response: {type: [string, 'null']}
+            detail: {type: object, description: "finding.detail đủ khóa, kể cả khóa riêng của công cụ: schema.md"}
+            in_scope: {type: boolean}
+            scope_rule: {type: [string, 'null'], description: "Giá trị In-Scope đầu tiên khớp tài sản"}
+            allowed_triage_statuses: {type: array, items: {type: string}, description: "Trạng thái chuyển được từ trạng thái hiện tại"}
+    FindingSummary:
+      type: object
+      properties:
+        total: {type: integer}
+        by_severity: {type: object, properties: {critical: {type: integer}, high: {type: integer}, medium: {type: integer}, low: {type: integer}, info: {type: integer}}}
+        by_triage_status: {type: object, properties: {new: {type: integer}, confirmed: {type: integer}, false_positive: {type: integer}, duplicate: {type: integer}, reported: {type: integer}, resolved: {type: integer}}}
+        by_program: {type: array, items: {type: object, properties: {program_id: {type: string, format: uuid}, name: {type: string}, count: {type: integer}}}}
+        new_24h_by_severity: {type: object, properties: {critical: {type: integer}, high: {type: integer}, medium: {type: integer}, low: {type: integer}, info: {type: integer}}}
+    FindingTriage:
+      type: object
+      required: [triage_status]
+      additionalProperties: false
+      description: "duplicate_of_id bắt buộc khi triage_status là duplicate, cấm với trạng thái khác"
+      properties:
+        triage_status: {type: string, enum: [new, confirmed, false_positive, duplicate, reported, resolved]}
+        duplicate_of_id: {type: [string, 'null'], format: uuid}
+    FindingBulkTriage:
+      type: object
+      required: [ids, triage_status]
+      additionalProperties: false
+      properties:
+        ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+        triage_status: {type: string, enum: [new, confirmed, false_positive, reported, resolved]}
+    FindingTagsSet:
+      type: object
+      required: [tag_ids]
+      additionalProperties: false
+      properties:
+        tag_ids: {type: array, maxItems: 100, items: {type: string, format: uuid}}
     Ids:
       type: object
       required: [ids]

@@ -19,6 +19,7 @@ import { formatMoment } from '@/lib/format-moment';
 
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, FIELD } from '../system/modal';
 import { loadErrorText, saveErrorText } from '../system/states';
+import { FindingTags } from './finding-tags';
 import { BADGE, SEVERITY_TONE, TRIAGE_DOT } from './tones';
 
 const FOCUSABLE =
@@ -30,7 +31,7 @@ const SMALL_BUTTON =
   'inline-flex items-center gap-1 rounded-sm border border-border bg-surface px-2 py-0.5 font-body-code text-caption text-fg-muted hover:bg-surface-2 hover:text-fg focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60';
 const STATUS =
   'flex items-center gap-1.5 rounded-sm border px-3 py-1.5 font-body-code text-caption';
-const STATUS_OFF = `${STATUS} border-border bg-surface text-fg-muted hover:bg-surface-2`;
+const STATUS_OFF = `${STATUS} border-border bg-surface text-fg-muted hover:bg-surface-2 disabled:opacity-50 disabled:hover:bg-surface`;
 const STATUS_ON = `${STATUS} border-info-bd bg-info-soft font-semibold text-info ring-2 ring-ring`;
 
 function Icon({ name }: { name: string }): ReactElement {
@@ -104,6 +105,9 @@ function Body({
   const fields = fieldErrorsOf(patch.error);
   const general = patch.isError && Object.keys(fields).length === 0;
   const curl = f.request === null ? null : curlOf(f.request, f.matched_at);
+  // The backend names the moves the lifecycle allows; the frontend only greys out the rest.
+  const reachable = (s: TriageStatus) =>
+    s === f.triage_status || f.allowed_triage_statuses.includes(s);
 
   useEffect(() => onBusy(patch.isPending), [onBusy, patch.isPending]);
 
@@ -145,6 +149,7 @@ function Body({
                 key={s}
                 type="button"
                 aria-pressed={status === s}
+                disabled={!reachable(s)}
                 onClick={() => {
                   setStatus(s);
                   setNote(null);
@@ -190,14 +195,20 @@ function Body({
           <Meta term="Timestamp Discovered">{formatMoment(f.first_seen_at)}</Meta>
           <Meta term="Last Seen">{formatMoment(f.last_seen_at)}</Meta>
           <Meta term="Raw Output">
-            <a
-              href={`/api/v1/raw-outputs/${f.raw_output_id}/content`}
-              className="text-primary underline hover:no-underline"
-            >
-              Download raw output
-            </a>
+            {f.raw_output_id === null ? (
+              'Deleted'
+            ) : (
+              <a
+                href={`/api/v1/raw-outputs/${encodeURIComponent(f.raw_output_id)}/content`}
+                className="text-primary underline hover:no-underline"
+              >
+                Download raw output
+              </a>
+            )}
           </Meta>
         </dl>
+
+        <FindingTags f={f} />
 
         <div>
           <h3 className="mb-1 text-panel-title font-semibold text-fg">Vulnerability Synopsis</h3>
@@ -281,7 +292,11 @@ function Body({
           )}
           <button
             type="button"
-            disabled={patch.isPending || f.triage_status === 'false_positive'}
+            disabled={
+              patch.isPending ||
+              f.triage_status === 'false_positive' ||
+              !reachable('false_positive')
+            }
             onClick={() => {
               setStatus('false_positive');
               save('false_positive');
@@ -394,14 +409,18 @@ export function FindingDrawer({
                   <span aria-hidden="true">•</span>
                   <span>
                     Job:{' '}
-                    <Link
-                      href={`/queue?job=${encodeURIComponent(f.job_id)}`}
-                      className="text-info hover:underline"
-                      title={f.job_id}
-                    >
-                      {f.job_id.slice(0, 8)}
-                    </Link>{' '}
-                    ({f.tool_module_name})
+                    {f.job_id === null ? (
+                      'Deleted'
+                    ) : (
+                      <Link
+                        href={`/queue?job=${encodeURIComponent(f.job_id)}`}
+                        className="text-info hover:underline"
+                        title={f.job_id}
+                      >
+                        {f.job_id.slice(0, 8)}
+                      </Link>
+                    )}{' '}
+                    ({f.tool_module_name ?? 'unknown tool module'})
                   </span>
                 </p>
               )}

@@ -27,6 +27,8 @@ export function findingDetail(id: string, overrides: Record<string, unknown> = {
     response: 'HTTP/1.1 200 OK\n\n<script>alert(1)</script>',
     in_scope: true,
     scope_rule: '*.example.com',
+    tags: [{ tag_id: 't1', key: 'env', value: 'prod' }],
+    allowed_triage_statuses: ['confirmed', 'false_positive', 'duplicate'],
     ...overrides,
   };
 }

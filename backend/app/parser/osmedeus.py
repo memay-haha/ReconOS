@@ -9,8 +9,8 @@ member is opened by its exact name and read line by line, so a hostile member
 name (absolute, `..`) is simply never opened. Bytes read are counted against
 MAX_UNPACKED_BYTES whatever the zip headers claim.
 
-Nuclei results in the package become findings once the finding table exists
-(batch 6); until then they are counted as skipped.
+Nuclei results in the package become findings through the nuclei line reader
+of app/parser/nuclei.py, keyed by this Osmedeus tool module's name.
 """
 
 import ipaddress
@@ -33,15 +33,18 @@ from app.asset.schemas import (
     TechnologyRecord,
     UrlRecord,
 )
+from app.finding.schemas import FindingBatch, FindingRecord
 from app.parser.base import (
     BATCH_RECORDS,
     MAX_ARCHIVE_MEMBERS,
     MAX_UNPACKED_BYTES,
+    Batch,
     ParseDataError,
     Parser,
     ParseStats,
     read_lines,
 )
+from app.parser.nuclei import finding_from_line
 from contracts.tool_modules.osmedeus import MANIFEST_FILENAME, OsmedeusManifest
 
 MAX_MANIFEST_BYTES: Final = 1024 * 1024
@@ -59,7 +62,7 @@ class _BadLineError(ValueError):
     """One line that does not fit its file format: dropped and counted."""
 
 
-Record = DomainRecord | IpRecord | ServiceRecord | UrlRecord
+Record = DomainRecord | IpRecord | ServiceRecord | UrlRecord | FindingRecord
 
 
 class _Budget:
@@ -242,33 +245,42 @@ def _httpx_line(line: str) -> list[Record]:
     return records
 
 
-def _nuclei_line(_: str) -> list[Record]:
-    return []
+def _nuclei_line(line: str, tool_module: str) -> list[Record]:
+    return [finding_from_line(line, tool_module)]
 
 
-LineReader = Callable[[str], list[Record]]
+# A line and the tool module of the job, which keys findings: app/parser/nuclei.py.
+LineReader = Callable[[str, str], list[Record]]
+
+
+def _plain(read: Callable[[str], list[Record]]) -> LineReader:
+    """A reader of assets, which do not depend on the tool module."""
+    return lambda line, _: read(line)
+
 
 # Files of a workspace and how to read them. `{workspace}` is the workspace
 # name of the run, read from the manifest. A missing file is skipped.
-WORKSPACE_FILES: Final[tuple[tuple[str, LineReader | None], ...]] = (
-    ("subdomain/final-{workspace}.txt", _domain_line),
-    ("probing/dns-json-{workspace}.txt", _dnsx_line),
-    ("probing/http-{workspace}.txt", _url_line),
-    ("fingerprint/http-fingerprint-{workspace}.jsonl", _httpx_line),
-    ("ipspace/ip-{workspace}.txt", _ip_line),
-    ("portscan/open-ports-{workspace}.txt", _open_port_line),
-    ("portscan/http-port-fingerprint-{workspace}.jsonl", _httpx_line),
-    # Findings: batch 6. Listed so the skip is counted, not silent.
-    ("vulnscan/nuclei-jsonl-{workspace}.txt", None),
+WORKSPACE_FILES: Final[tuple[tuple[str, LineReader], ...]] = (
+    ("subdomain/final-{workspace}.txt", _plain(_domain_line)),
+    ("probing/dns-json-{workspace}.txt", _plain(_dnsx_line)),
+    ("probing/http-{workspace}.txt", _plain(_url_line)),
+    ("fingerprint/http-fingerprint-{workspace}.jsonl", _plain(_httpx_line)),
+    ("ipspace/ip-{workspace}.txt", _plain(_ip_line)),
+    ("portscan/open-ports-{workspace}.txt", _plain(_open_port_line)),
+    ("portscan/http-port-fingerprint-{workspace}.jsonl", _plain(_httpx_line)),
+    ("vulnscan/nuclei-jsonl-{workspace}.txt", _nuclei_line),
 )
 
 
 class _Collector:
     def __init__(self) -> None:
         self.batch = IngestBatch()
+        self.findings = FindingBatch()
 
     def add(self, record: Record) -> None:
-        if isinstance(record, DomainRecord):
+        if isinstance(record, FindingRecord):
+            self.findings.findings.append(record)
+        elif isinstance(record, DomainRecord):
             self.batch.domains.append(record)
         elif isinstance(record, IpRecord):
             self.batch.ips.append(record)
@@ -278,17 +290,22 @@ class _Collector:
             self.batch.urls.append(record)
 
     def full(self) -> bool:
-        return len(self.batch) >= BATCH_RECORDS
+        return len(self.batch) + len(self.findings) >= BATCH_RECORDS
 
-    def take(self) -> IngestBatch:
+    def take(self) -> Iterator[Batch]:
+        """The batches collected so far: assets first, so findings find their rows."""
         batch, self.batch = self.batch, IngestBatch()
-        return batch
+        findings, self.findings = self.findings, FindingBatch()
+        if len(batch):
+            yield batch
+        if len(findings):
+            yield findings
 
 
 class OsmedeusParser(Parser):
     """Shared by every Osmedeus workflow: one subclass per tool module names it."""
 
-    def parse(self, path: Path, stats: ParseStats) -> Iterator[IngestBatch]:
+    def parse(self, path: Path, stats: ParseStats, tool_module: str) -> Iterator[Batch]:
         try:
             archive = zipfile.ZipFile(path)
         except (zipfile.BadZipFile, OSError) as err:
@@ -308,23 +325,18 @@ class OsmedeusParser(Parser):
                     member = f"{run.index}/{template.format(workspace=run.workspace)}"
                     if member not in present:
                         continue
-                    if reader is None:
-                        stats.skip("nuclei")
-                        continue
                     with archive.open(member) as stream:
                         for line in read_lines(_CountingReader(stream, budget), stats):
                             try:
-                                records = reader(line)
+                                records = reader(line, tool_module)
                             except ValueError, ValidationError:
                                 stats.dropped += 1
                                 continue
                             for record in records:
                                 collector.add(record)
                             if collector.full():
-                                yield collector.take()
-            last = collector.take()
-            if len(last):
-                yield last
+                                yield from collector.take()
+            yield from collector.take()
 
     @staticmethod
     def _manifest(archive: zipfile.ZipFile, present: set[str], budget: _Budget) -> OsmedeusManifest:

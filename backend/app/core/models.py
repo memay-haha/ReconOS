@@ -19,11 +19,12 @@ from app.core.db import Base
 from app.core.identity import User, UserSession
 from app.core.system_setting import SystemSetting
 from app.engine.models import Engine, EngineVariable
+from app.finding.models import Finding
 from app.job.models import Job
 from app.program.models import Program, ProgramUser, Proxy
 from app.raw_output.models import RawOutput
 from app.scope.models import ScopeRule
-from app.tag.models import AssetTag, Tag
+from app.tag.models import AssetTag, FindingTag, Tag
 from app.tool_module.models import ToolModule
 from app.user.models import LoginAttempt, Worker, WorkerToken
 
@@ -36,6 +37,8 @@ __all__ = [
     "DomainIp",
     "Engine",
     "EngineVariable",
+    "Finding",
+    "FindingTag",
     "Ip",
     "Job",
     "LoginAttempt",

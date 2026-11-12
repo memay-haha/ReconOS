@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -146,6 +146,7 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 - Cờ gowitness cho các trường trên chưa kiểm chứng trên phiên bản gowitness đang dùng: nợ 42 trong [tech-debt.md](../tech-debt.md).
 - httpx ghi ngày hết hạn chứng chỉ TLS, parser ghi `url.tls_not_after`.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
+- Parser `nuclei` (`app/parser/nuclei.py`) đọc mọi output thô của job nuclei. `stdout.txt` cùng JSONL với `nuclei.jsonl`, chuỗi khử trùng lặp gộp lại. Dòng không phải JSON của `stderr.txt` bị bỏ và đếm. Trường đọc, giới hạn độ dài, tài sản của finding: [schema.md](../data/schema.md).
 - `nuclei`: `-list`, `-jsonl`, `-output nuclei.jsonl`, `-silent`, `-no-color`, `-disable-update-check`, `-rate-limit`, `-concurrency`, `-timeout`, `-retries`, `-severity`, `-tags`, `-exclude-tags`, `-proxy`. Tham số `rate`, `threads`, `timeout`, `retries`, `severity`, `tags`, `exclude_tags`. Phiên bản lấy từ `nuclei -version`.
 
 ### Gọi engine
@@ -231,7 +232,7 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 - Thời hạn mặc định do migration ghi: `domain-lite` 240 phút, `general` 720 phút, `domain-extensive` 1.200 phút.
 - Parser Osmedeus đọc gói `osmedeus.zip` theo mục Gói `osmedeus.zip` ở trên. Mỗi workflow một file parser `osmedeus_<workflow>.py` kế thừa lớp chung `app/parser/osmedeus.py`.
 - Parser chỉ mở mục có tên đúng `<index>/<đường dẫn>` lấy từ `manifest.json`, không giải nén ra đĩa. Mục khác trong gói, kể cả mục có đường dẫn tuyệt đối hoặc `..`, không bao giờ được mở.
-- `probing/dns-<workspace>.txt` không đọc: cùng nội dung với `dns-json`. `vulnscan/nuclei-jsonl-<workspace>.txt` chờ bảng `finding` của đợt 6, parser đếm là bỏ qua.
+- `probing/dns-<workspace>.txt` không đọc: cùng nội dung với `dns-json`. `vulnscan/nuclei-jsonl-<workspace>.txt` đọc bằng bộ đọc dòng của parser `nuclei`, finding mang `dedup_key` mở đầu bằng tên tool module Osmedeus.
 - Dòng sai định dạng bị bỏ và đếm vào log `parse_completed`. Gói không phải zip, thiếu hoặc sai `manifest.json`: `parse_status = failed`, không thử lại: [system.md](../architecture/system.md).
 - Ảnh chụp do httpx trong Osmedeus tạo chỉ nằm trong output thô. Parser không tạo `screenshot` từ ảnh này.
 

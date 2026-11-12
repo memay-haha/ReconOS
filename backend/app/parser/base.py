@@ -1,12 +1,14 @@
 """Base class of every parser: backend/CLAUDE.md, section Parser.
 
-A parser turns one stored raw output into batches of records. It never sees
+A parser turns one stored raw output into batches of records: assets for the
+asset service, findings for the finding service. It never sees
 the database or MinIO: the parser service downloads the file to a private
 temporary copy, hands the parser that path, and writes what it yields. So a
 parser cannot change the stored object (G8).
 
 Raw output is untrusted: a parser checks types and lengths through the ingest
-records of app/asset/schemas.py and drops a line that does not fit, reads line
+records of app/asset/schemas.py and app/finding/schemas.py and drops a line
+that does not fit, reads line
 by line, and stops at the limits below: .claude/rules/security.md.
 """
 
@@ -18,6 +20,7 @@ from pathlib import Path
 from typing import ClassVar, Protocol
 
 from app.asset.schemas import IngestBatch
+from app.finding.schemas import FindingBatch
 
 # Records per yielded batch: the asset service upserts each batch in bulk.
 BATCH_RECORDS = 1000
@@ -27,6 +30,9 @@ MAX_LINE_BYTES = 1024 * 1024
 MAX_UNPACKED_BYTES = 2 * 1024 * 1024 * 1024
 # Members of one archive.
 MAX_ARCHIVE_MEMBERS = 100_000
+
+# What a parser yields: assets, or findings with the asset each sits on.
+Batch = IngestBatch | FindingBatch
 
 
 class ParseDataError(Exception):
@@ -56,8 +62,12 @@ class Parser(ABC):
     tool_modules: ClassVar[tuple[str, ...]]
 
     @abstractmethod
-    def parse(self, path: Path, stats: ParseStats) -> Iterator[IngestBatch]:
-        """Yield batches of records found in the file at `path`."""
+    def parse(self, path: Path, stats: ParseStats, tool_module: str) -> Iterator[Batch]:
+        """Yield batches of records found in the file at `path`.
+
+        `tool_module` is the tool module of the job, one of `tool_modules`: it
+        opens every `dedup_key` the parser computes.
+        """
 
 
 def dedup_key(tool_module: str, *parts: str) -> str:

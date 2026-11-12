@@ -32,6 +32,25 @@ function standard(call: Call): Response | undefined {
     return json(page([{ id: 'd1', name: 'api.example.com', program_id: 'p1' }]));
   if (call.path.startsWith('/tool-modules'))
     return json(page([{ id: 't2', name: 'nuclei', group: 'scan', is_enabled: true }]));
+  if (call.path.startsWith('/tags'))
+    return json(
+      page([
+        {
+          id: 't1',
+          key: 'env',
+          value: 'prod',
+          created_by: null,
+          created_at: '2026-10-01T00:00:00Z',
+        },
+        {
+          id: 't2',
+          key: 'tier',
+          value: 'auth',
+          created_by: null,
+          created_at: '2026-10-01T00:00:00Z',
+        },
+      ]),
+    );
   if (call.path.startsWith('/findings/summary')) return json(SUMMARY);
   if (call.path.startsWith('/findings/f')) {
     const id = call.path.split('/')[2] ?? '';
@@ -299,6 +318,55 @@ describe('S20 findings explorer', () => {
         triage_status: 'false_positive',
         duplicate_of_id: null,
       }),
+    );
+  });
+
+  it('greys out the statuses the backend does not allow from here', async () => {
+    open();
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Finding f1' }));
+    const dialog = await screen.findByRole('dialog');
+    await within(dialog).findByText('Vulnerability Synopsis');
+    expect(within(dialog).getByRole('button', { name: 'Reported' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Resolved' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Confirmed' })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: 'New (current)' })).toBeEnabled();
+  });
+
+  it('names a refused triage move instead of a generic conflict', async () => {
+    open((call) =>
+      call.method === 'PATCH'
+        ? problem(409, 'conflict', [{ field: 'triage_status', code: 'invalid_transition' }])
+        : standard(call),
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Change status of Finding f1' }),
+    );
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Resolved' }));
+    expect(
+      await screen.findByText(
+        'The finding cannot move to this triage status from its current one.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('adds and removes a tag by sending the whole set', async () => {
+    const { calls } = open((call) => (call.method === 'PUT' ? noContent() : standard(call)));
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Finding f1' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('env: prod')).toBeInTheDocument();
+    await within(dialog).findByRole('option', { name: 'tier: auth' });
+    expect(within(dialog).queryByRole('option', { name: 'env: prod' })).toBeNull();
+    await userEvent.selectOptions(within(dialog).getByLabelText('Tag to add'), 't2');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add tag' }));
+    await vi.waitFor(() =>
+      expect(calls.find((c) => c.method === 'PUT')).toMatchObject({
+        path: '/findings/f1/tags',
+        body: { tag_ids: ['t1', 't2'] },
+      }),
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove tag env: prod' }));
+    await vi.waitFor(() =>
+      expect(calls.filter((c) => c.method === 'PUT').at(-1)?.body).toEqual({ tag_ids: [] }),
     );
   });
 

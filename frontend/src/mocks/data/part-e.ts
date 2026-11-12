@@ -1,5 +1,4 @@
 import type { Engine, EngineVariable } from '@/lib/engines';
-import type { Finding } from '@/lib/findings';
 import type { AppLog } from '@/lib/logs';
 import type { SystemHealth, SystemSetting } from '@/lib/system';
 
@@ -122,43 +121,3 @@ export const engineVariables: EngineVariable[] = ['GITHUB_TOKEN', 'SHODAN_API_KE
     updated_at: '2026-11-03T08:00:00Z',
   }),
 );
-
-function finding(
-  n: number,
-  name: string,
-  severity: Finding['severity'],
-  triage: Finding['triage_status'],
-  matchedAt: string,
-): Finding {
-  return {
-    id: `0190d000-0000-7000-8000-00000000000${n}`,
-    program_id: programs[n % 2]?.id ?? '',
-    job_id: `0190e200-0000-7000-8000-00000000000${n}`,
-    raw_output_id: `0190e300-0000-7000-8000-00000000000${n}`,
-    domain_id: null,
-    ip_id: null,
-    url_id: `0190e400-0000-7000-8000-00000000000${n}`,
-    service_id: null,
-    name,
-    template_id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    severity,
-    matched_at: matchedAt,
-    evidence: `HTTP/1.1 200 OK\nContent-Type: application/json\n\n{"sample": ${n}}`,
-    cve: severity === 'critical' ? ['CVE-2024-0001'] : [],
-    detail: null,
-    triage_status: triage,
-    duplicate_of_id: null,
-    triaged_by: null,
-    triaged_at: null,
-    first_seen_at: '2026-11-03T04:00:00Z',
-    last_seen_at: '2026-11-05T01:00:00Z',
-  };
-}
-
-export const findings: Finding[] = [
-  finding(1, 'Spring Boot Actuator Env Exposure', 'critical', 'new', 'https://api.example.com/env'),
-  finding(2, 'Exposed Git Directory', 'high', 'confirmed', 'https://dev.example.com/.git/HEAD'),
-  finding(3, 'Open Redirect', 'medium', 'new', 'https://auth.example.org/login?next='),
-  finding(4, 'Missing Security Headers', 'low', 'reported', 'https://www.example.com/'),
-  finding(5, 'Technology Detected: nginx', 'info', 'false_positive', 'https://cdn.example.com/'),
-];

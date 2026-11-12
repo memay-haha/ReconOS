@@ -2,8 +2,8 @@ import { HttpResponse } from 'msw';
 
 import { domains, ips, services, urls } from '../data/part-c';
 import { dashboardSummary } from '../data/part-d';
-import { findings } from '../data/part-e';
 import { programs, toolModules } from '../data/programs';
+import { findingSamples } from '../data/stitch-f';
 import { alerts } from '../data/stitch-a';
 import { type MockRoute, page, route } from './helpers';
 
@@ -97,7 +97,7 @@ export const stitchARoutes: readonly MockRoute[] = [
       ...urls
         .filter((u) => contains(u.url, q))
         .map((u) => ({ type: 'url', id: u.id, label: u.url, program_id: u.program_id })),
-      ...findings
+      ...findingSamples
         .filter((f) => contains(f.name, q))
         .map((f) => ({ type: 'finding', id: f.id, label: f.name, program_id: f.program_id })),
       ...toolModules

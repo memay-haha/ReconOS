@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -96,7 +96,7 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `finding` | Finding và trạng thái triage | Liên kết một tài sản. `raw_output_id`: output thô tạo finding lần đầu. `duplicate_of_id`: có giá trị khi `triage_status` là `duplicate`. `detail`: trường riêng của công cụ, khóa theo bảng dưới |
+| `finding` | Finding và trạng thái triage | Liên kết một tài sản. `job_id`, `raw_output_id`: job và output thô tạo finding lần đầu. `duplicate_of_id`: có giá trị khi và chỉ khi `triage_status` là `duplicate`, ràng buộc CHECK, không trỏ về chính nó. `triaged_by`, `triaged_at`: lần triage gần nhất. `cve`: mảng mã CVE viết hoa. `detail`: trường riêng của công cụ, khóa theo bảng dưới |
 | `tag` | Danh mục tag key-value dùng chung | Một cặp `key`, `value` là một tag |
 | `asset_tag` | Tag gắn vào tài sản | Liên kết một tài sản |
 | `finding_tag` | Tag gắn vào finding | |
@@ -119,7 +119,10 @@
 | `engine.settings` của Osmedeus | `scan_preset`: `quick`, `balanced`, `deep`, mặc định `balanced`. Runner đổi thành `tactic` của lượt chạy: [external-services.md](../integrations/external-services.md) |
 | `engine.settings` của Vigolium | `llm_provider`, `llm_model`, `llm_base_url` |
 
-- Parser `nuclei` ghi `matcher` từ `matcher-name`, `description`, `remediation` từ `info`, `request`, `response` từ trường cùng tên của nuclei.
+- Parser `nuclei` ghi `matcher` từ `matcher-name`, `description`, `remediation` từ `info`, `request`, `response` từ trường cùng tên của nuclei. Khóa riêng: `type`, `reference`, `tags`, `cwe`, `cvss_score`, `extracted_results`.
+- Parser `nuclei` cắt giá trị dài thay vì bỏ dòng: `request`, `response` 64 KiB, `description`, `remediation` 8 KiB, `evidence` 4 KiB, mảng 50 phần tử. `template-id` quá 255 ký tự hoặc `matched-at` quá 2.048 ký tự thì bỏ dòng.
+- `finding.severity` lấy từ `info.severity` của nuclei. `unknown` hoặc giá trị lạ ghi `info`. `evidence`: `extracted-results` nối bằng xuống dòng.
+- Tài sản của finding nuclei lấy từ `matched-at`: URL `http`, `https` bỏ query và fragment thành `url`, `host:port` thành `service` trên IP của host hoặc trường `ip`, địa chỉ IP thành `ip`, tên thành `domain`. Gói `osmedeus.zip` đọc `vulnscan/nuclei-jsonl-<workspace>.txt` theo cùng cách, `dedup_key` mở đầu bằng tên tool module Osmedeus.
 - Cách gowitness xuất các trường này: [external-services.md](../integrations/external-services.md).
 
 ### CSDL log

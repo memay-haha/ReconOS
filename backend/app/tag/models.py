@@ -1,8 +1,9 @@
 """Tables owned by the tag module: docs/data/schema.md.
 
 `tag` is a key-value catalogue shared by every program. `asset_tag` points at
-one asset; the asset tables sit three tiers up, so they are named by string and
-their models never imported: .claude/rules/design-patterns.md.
+one asset, `finding_tag` at one finding. The asset and finding tables sit
+higher up, so they are named by string and their models never imported:
+.claude/rules/design-patterns.md.
 """
 
 import uuid
@@ -72,6 +73,23 @@ class AssetTag(Base):
     ip_id: Mapped[uuid.UUID | None] = _asset_fk("ip")
     url_id: Mapped[uuid.UUID | None] = _asset_fk("url")
     service_id: Mapped[uuid.UUID | None] = _asset_fk("service")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()")
+    )
+
+
+class FindingTag(Base):
+    __tablename__ = "finding_tag"
+
+    # The finding table sits four tiers up: named, never imported. Deleting
+    # either side removes the link.
+    finding_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("finding.id", ondelete="CASCADE"), primary_key=True
+    )
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tag.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")

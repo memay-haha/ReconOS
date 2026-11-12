@@ -146,7 +146,7 @@ class DomainRowResponse(DomainResponse):
     ips: list[str]
     url_count: int
     service_count: int
-    # The finding table arrives in batch 6: tech-debt.md, debt 47.
+    # Open findings of the domain: docs/api/architecture.md.
     finding_counts: FindingCounts = Field(default_factory=FindingCounts)
     has_findings: bool = False
     asn: int | None = None

@@ -9,7 +9,6 @@ import { stitchBRoutes } from './stitch-b';
 import { stitchCRoutes } from './stitch-c';
 import { stitchDRoutes } from './stitch-d';
 import { stitchERoutes } from './stitch-e';
-import { stitchFRoutes } from './stitch-f';
 
 export type { MockRoute } from './helpers';
 
@@ -23,7 +22,6 @@ export const mockRoutes: readonly MockRoute[] = [
   ...stitchCRoutes,
   ...stitchDRoutes,
   ...stitchERoutes,
-  ...stitchFRoutes,
   ...sharedRoutes,
   ...partBRoutes,
   ...partCRoutes,

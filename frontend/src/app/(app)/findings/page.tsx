@@ -3,6 +3,8 @@
 import { type ReactElement, Suspense, useDeferredValue, useEffect, useRef, useState } from 'react';
 
 import { Pagination, useCursorStack } from '@/components/pagination';
+import { fieldErrorsOf } from '@/lib/api-client';
+import { fieldErrorText } from '@/lib/field-error-text';
 import { useQueryParam } from '@/lib/url-params';
 import { useDomains } from '@/lib/domains';
 import {
@@ -60,6 +62,12 @@ const SEG_ON: Readonly<Record<Severity, string>> = {
   low: `${SEG} bg-info-soft font-semibold text-info`,
   info: `${SEG} bg-neutral-soft font-semibold text-fg`,
 };
+
+/** A refused move names `triage_status`; any other failure reads as a plain save error. */
+function triageErrorText(error: unknown): string {
+  const code = fieldErrorsOf(error).triage_status;
+  return code === undefined ? saveErrorText(error) : fieldErrorText(code);
+}
 
 /** Every status but False positive: what Hide False Positives sends as `triage_status` (C2). */
 const WITHOUT_FP = TRIAGE_STATUSES.filter((s) => s !== 'false_positive');
@@ -247,9 +255,10 @@ function FindingsScreen(): ReactElement {
       { programId: string; toolModuleId: string; targets: Set<string> }
     >();
     for (const f of selected.values()) {
-      const toolModuleId = modules.get(f.tool_module_name);
-      const target = f.matched_at ?? f.asset?.name;
-      if (toolModuleId === undefined || target === undefined) continue;
+      const toolModuleId =
+        f.tool_module_name === null ? undefined : modules.get(f.tool_module_name);
+      const target = f.matched_at ?? f.asset.name;
+      if (toolModuleId === undefined) continue;
       const key = `${f.program_id}:${toolModuleId}`;
       const group = groups.get(key) ?? {
         programId: f.program_id,
@@ -499,12 +508,12 @@ function FindingsScreen(): ReactElement {
       )}
       {bulk.isError && (
         <p role="alert" className="text-body-default text-crit">
-          {saveErrorText(bulk.error)} No finding was changed.
+          {triageErrorText(bulk.error)} No finding was changed.
         </p>
       )}
       {patch.isError && (
         <p role="alert" className="text-body-default text-crit">
-          {saveErrorText(patch.error)}
+          {triageErrorText(patch.error)}
         </p>
       )}
       {createJob.isError && (
