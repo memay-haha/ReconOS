@@ -16,7 +16,7 @@ docs/data/database.md, section Upsert và khử trùng lặp.
 
 import uuid
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final, Literal
 
@@ -134,6 +134,9 @@ class IngestOutcome:
     # Findings whose asset value could not be read: dropped, counted in the log.
     dropped: int
     new_by_severity: dict[str, int]
+    # (id, severity, name) of each finding this batch created, for the alert rule
+    # of the parser. Empty when every finding was seen before.
+    new_findings: list[tuple[uuid.UUID, str, str]] = field(default_factory=list)
 
 
 async def ingest(
@@ -178,6 +181,7 @@ async def ingest(
     created = 0
     seen = 0
     new_by_severity: dict[str, int] = {}
+    new_findings: list[tuple[uuid.UUID, str, str]] = []
     ordered = [rows[key] for key in sorted(rows)]
     for start in range(0, len(ordered), UPSERT_CHUNK):
         chunk = ordered[start : start + UPSERT_CHUNK]
@@ -190,11 +194,17 @@ async def ingest(
         stmt = upsert.on_conflict_do_update(
             index_elements=[Finding.program_id, Finding.dedup_key],
             set_={"last_seen_at": func.now()},
-        ).returning(Finding.severity, literal_column("(xmax = 0)", Boolean).label("created"))
-        for severity, is_new in await session.execute(stmt):
+        ).returning(
+            Finding.id,
+            Finding.severity,
+            Finding.name,
+            literal_column("(xmax = 0)", Boolean).label("created"),
+        )
+        for finding_id, severity, name, is_new in await session.execute(stmt):
             if is_new:
                 created += 1
                 new_by_severity[severity] = new_by_severity.get(severity, 0) + 1
+                new_findings.append((finding_id, severity, name))
             else:
                 seen += 1
     return IngestOutcome(
@@ -202,6 +212,7 @@ async def ingest(
         assets=assets,
         dropped=dropped,
         new_by_severity=new_by_severity,
+        new_findings=new_findings,
     )
 
 

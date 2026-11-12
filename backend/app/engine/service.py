@@ -7,9 +7,11 @@ never returned, logged or audited (G7). Public API for the modules above (job):
 tool_module reads job: docs/architecture/dependency-graph.md.
 """
 
+import time
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 import structlog
@@ -523,3 +525,48 @@ async def engine_spec_for(session: AsyncSession, engine_name: str) -> EngineSpec
             "settings": row.settings,
         }
     )
+
+
+# ---------------------------------------------------------------- health for S15
+
+
+@dataclass(frozen=True)
+class EngineHealth:
+    status: Literal["ok", "degraded", "down"]
+    latency_ms: int | None
+    version: str | None
+    # Why the engine is not `ok`: a fixed English sentence, no URL, no key.
+    message: str | None
+
+
+async def health_check(session: AsyncSession, engine_name: str) -> EngineHealth:
+    """One health check of `GET /system/health`: reach the engine, keep `ok_since`.
+
+    A disabled engine or one without a connection is `down` without a call.
+    `ok_since` starts at the first `ok` of a run and clears on any other result:
+    docs/data/schema.md.
+    """
+    row = await session.scalar(select(Engine).where(Engine.name == engine_name))
+    if row is None:
+        return EngineHealth("down", None, None, "Engine is not registered.")
+    if not row.is_enabled:
+        return EngineHealth("down", None, row.version, "Engine is disabled.")
+    if not row.base_url or row.api_key_encrypted is None:
+        return EngineHealth("down", None, row.version, "Engine has no connection set.")
+    started = time.monotonic()
+    structlog.contextvars.bind_contextvars(engine=row.name)
+    try:
+        version = await _adapter(row).check()
+    except EngineUnavailableError as error:
+        row.ok_since = None
+        await session.flush()
+        return EngineHealth("down", None, row.version, error.detail or "Engine did not answer.")
+    finally:
+        structlog.contextvars.unbind_contextvars("engine")
+    latency = int((time.monotonic() - started) * 1000)
+    if row.ok_since is None:
+        row.ok_since = _now()
+    if version is not None:
+        row.version = version
+    await session.flush()
+    return EngineHealth("ok", latency, row.version, None)

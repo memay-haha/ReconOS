@@ -20,6 +20,7 @@ TASK_MODULES: Final = (
     "app.background.parse_tasks",
     "app.background.asset_tasks",
     "app.background.program_tasks",
+    "app.background.system_tasks",
     "app.background.schedule_tasks",
 )
 

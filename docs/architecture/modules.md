@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -52,6 +52,8 @@
 - `core/` không phải module nghiệp vụ: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime.
 - `core` giữ bảng danh tính `user`, `user_session` và phần kiểm tra đăng nhập, vai trò. Lý do: [dependency-graph.md](dependency-graph.md).
 - `core` cũng giữ bảng `audit_log` và hai hàm ghi nhật ký, vì phần kiểm tra vai trò ghi lại yêu cầu bị từ chối.
+- `core` giữ bảng `system_setting` và endpoint `/system-settings`, vì mọi tầng đọc ngưỡng vận hành. `dashboard` chỉ đọc nên không sửa ngưỡng.
+- `alert` nhận cảnh báo từ `job` khi job chuyển sang `failed`, `pending_approval` và từ `parser` khi có finding `critical`, `high` mới hoặc tài sản mới.
 - Module chỉ gọi module khác qua `service.py`. Chiều phụ thuộc cho phép: [dependency-graph.md](dependency-graph.md).
 - Cơ chế xác thực của `user`: [authentication.md](../security/authentication.md). Quyền: [authorization.md](../security/authorization.md).
 

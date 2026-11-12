@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.15 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -47,10 +47,10 @@
 | Đường dẫn | Vai trò |
 |---|---|
 | `app/main.py` | Khởi tạo FastAPI, gắn router các module |
-| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime, gửi task nền sau commit trong `tasks.py`. `realtime_router.py` giữ endpoint WebSocket `/api/v1/ws`, vì endpoint này không thuộc module nghiệp vụ nào |
+| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime, gửi task nền sau commit trong `tasks.py`. `realtime_router.py` giữ endpoint WebSocket `/api/v1/ws`, `system_setting_router.py` giữ endpoint `/system-settings`, vì hai nhóm endpoint này không thuộc module nghiệp vụ nào |
 | `app/<module>/` | Một module nghiệp vụ. Tên thư mục theo tên trong mã của [glossary](../appendix/glossary.md) |
 | `app/dispatcher/` | Mã của tiến trình dispatcher, chạy bằng `python -m app.dispatcher` |
-| `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py` chỉ dựng app và liệt kê file task trong `TASK_MODULES`, lịch Celery Beat trong `beat.py`. Task theo nhóm, mỗi nhóm một file gọi service của module: `parse_tasks.py`, `asset_tasks.py`, `program_tasks.py`, `schedule_tasks.py`. `runtime.py` chạy một đơn vị công việc trong session riêng |
+| `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py` chỉ dựng app và liệt kê file task trong `TASK_MODULES`, lịch Celery Beat trong `beat.py`. Task theo nhóm, mỗi nhóm một file gọi service của module: `parse_tasks.py`, `asset_tasks.py`, `program_tasks.py`, `schedule_tasks.py`, `system_tasks.py` cho lần chẩn đoán và heartbeat của Beat. `runtime.py` chạy một đơn vị công việc trong session riêng |
 | `app/parser/` | Lớp cơ sở `base.py`, parser một file một công cụ hoặc một engine như `osmedeus.py`, đăng ký trong `registry.py`. `service.py` chạy một lượt parse |
 | `migrations/` | Migration Alembic của CSDL chính |
 | `migrations_log/` | Migration Alembic của CSDL log `reconos_log` |

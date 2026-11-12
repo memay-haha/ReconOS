@@ -281,7 +281,14 @@ async def test_parse_writes_assets_marks_scope_and_is_idempotent(
     )
     assert events == 12
     sent = take_pending_events(db_session)
-    assert [event["type"] for event in sent] == ["asset.discovered", "finding.created"]
+    # The only finding is info, so no finding_new; one asset_new for the job:
+    # docs/data/schema.md, alert.alert_type.
+    assert [event["type"] for event in sent] == [
+        "asset.discovered",
+        "finding.created",
+        "alert.created",
+    ]
+    assert sent[2]["data"]["alert_type"] == "asset_new"
     assert sent[0]["data"]["job_id"] == str(osmedeus_job.id)
     # The nuclei result of the package, keyed by this Osmedeus tool module.
     finding = await db_session.scalar(

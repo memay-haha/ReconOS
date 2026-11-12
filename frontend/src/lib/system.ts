@@ -37,12 +37,19 @@ export interface SystemHealth {
 /** How often S15 re-reads the health snapshot on its own (the mockup's TICK 30s). */
 export const HEALTH_POLL_MS = 30_000;
 
-/** A row of `system_setting`. `value` is jsonb; the documented keys hold numbers. */
+/** A threshold of docs/ops/configuration.md: every documented key, stored or not. */
 export interface SystemSetting {
   readonly key: string;
-  readonly value: unknown;
+  readonly value: number;
+  readonly default: number;
+  /** Inclusive bounds the backend enforces; the form only hints them. */
+  readonly minimum: number;
+  readonly maximum: number;
+  /** Admin and User may read it (column Đọc công khai). */
+  readonly is_public: boolean;
+  /** Both null while the key still uses its default. */
   readonly updated_by: string | null;
-  readonly updated_at: string;
+  readonly updated_at: string | null;
 }
 
 export const systemKeys = {

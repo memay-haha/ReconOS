@@ -13,6 +13,7 @@ import pytest_asyncio
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.alert.models import Alert
 from app.asset.models import Domain, Ip, Service, Url
 from app.asset.schemas import DomainRecord, IpRecord, ServiceRecord, UrlRecord
 from app.core.realtime import take_pending_events
@@ -242,7 +243,22 @@ async def test_parse_writes_findings_on_assets_and_is_idempotent(
     assert found["tech-detect"].url_id == outside.id
 
     sent = take_pending_events(db_session)
-    assert [event["type"] for event in sent] == ["asset.discovered", "finding.created"]
+    # One finding_new for the critical and high findings of the file, one
+    # asset_new for the job: docs/data/schema.md, alert.alert_type.
+    assert [event["type"] for event in sent] == [
+        "asset.discovered",
+        "finding.created",
+        "alert.created",
+        "alert.created",
+    ]
+    assert [event["data"]["alert_type"] for event in sent[2:]] == ["finding_new", "asset_new"]
+    alerts = {
+        row.alert_type: row
+        for row in await db_session.scalars(select(Alert).where(Alert.job_id == nuclei_job.id))
+    }
+    # A single critical or high finding links the alert to that finding.
+    assert alerts["finding_new"].finding_id == found["CVE-2021-44228"].id
+    assert alerts["finding_new"].message.startswith("New critical finding from nuclei: ")
     assert sent[1]["program_id"] == str(scoped_program.id)
     assert sent[1]["data"] == {
         "job_id": str(nuclei_job.id),

@@ -28,6 +28,8 @@ from app.core.config import Settings, get_settings
 PARSE_RAW_OUTPUT_TASK: Final = "reconos.parse_raw_output"
 RECOMPUTE_IN_SCOPE_TASK: Final = "reconos.recompute_in_scope"
 PURGE_PROGRAM_OBJECTS_TASK: Final = "reconos.purge_program_objects"
+RUN_DIAGNOSTICS_TASK: Final = "reconos.run_diagnostics"
+BEAT_HEARTBEAT_TASK: Final = "reconos.beat_heartbeat"
 RUN_DUE_SCHEDULES_TASK: Final = "reconos.run_due_schedules"
 
 # Queues of the background process: docs/architecture/system.md.

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, status
 
+from app.alert.router import router as alert_router
 from app.asset.router import router as asset_router
 from app.audit_log.router import router as audit_log_router
 from app.core.config import get_settings
@@ -13,6 +14,8 @@ from app.core.deps import csrf_guard
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.core.realtime_router import router as realtime_router
+from app.core.system_setting_router import router as system_setting_router
+from app.dashboard.router import router as dashboard_router
 from app.dispatcher.router import router as dispatcher_router
 from app.engine.router import router as engine_router
 from app.finding.router import router as finding_router
@@ -88,3 +91,6 @@ app.include_router(schedule_router)
 app.include_router(report_router)
 app.include_router(dispatcher_router)
 app.include_router(realtime_router)
+app.include_router(alert_router)
+app.include_router(dashboard_router)
+app.include_router(system_setting_router)

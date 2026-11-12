@@ -38,6 +38,10 @@ const TEXT: ReadonlyMap<string, string> = new Map([
   // Raised by backend/app/report/service.py
   ['not_confirmed', 'Only confirmed findings can go into a report.'],
   ['report_submitted', 'A submitted report keeps only its platform report ID editable.'],
+  // Raised by backend/app/core/system_setting.py for a threshold
+  ['out_of_range', 'Value is outside the allowed range.'],
+  ['setting_conflict', 'Value conflicts with a related threshold.'],
+  ['int_type', 'Enter a whole number.'],
   // 409 conflict names the field that clashes with an existing row
   ['already_exists', 'This value already exists.'],
   // Pydantic reports these as the failure type

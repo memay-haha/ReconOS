@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.15 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.16 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -53,7 +53,7 @@
 | `audit_log` | Nhật ký thao tác (G7) | Tối đa một trong `user_id`, `worker_id` có giá trị. Cả hai là `NULL`: thao tác của hệ thống. Cột `user_id` không có khóa ngoại: nhật ký chỉ thêm dòng, phải ghi được cả từ transaction khác |
 | `system_setting` | Ngưỡng vận hành Superadmin sửa trên UI | `key`: tên thiết lập. Danh sách tên thiết lập và giá trị mặc định: [configuration.md](../ops/configuration.md) |
 | `saved_filter` | Bộ lọc đã lưu của một tài khoản | `screen`: màn hình danh sách, ví dụ `domains`. `params`: object tham số lọc theo tên tham số của endpoint danh sách. Chỉ chủ sở hữu đọc, xóa |
-| `diagnostic_run` | Lần chẩn đoán trên S15 | `output`: kết quả từng dòng dạng văn bản, không chứa thông tin xác thực, đường dẫn, PID. `exit_code`: `0` khi mọi kiểm tra đạt, `1` khi có kiểm tra không đạt |
+| `diagnostic_run` | Lần chẩn đoán trên S15 | `output`: kết quả từng dòng dạng văn bản, không chứa thông tin xác thực, đường dẫn, PID. `exit_code`: `0` khi mọi kiểm tra đạt, `1` khi có kiểm tra không đạt, `NULL` khi và chỉ khi `status` là `running`, ràng buộc CHECK |
 
 - `core` giữ `user`, `user_session` vì mọi module ở mọi tầng đều cần biết ai đang đăng nhập: [dependency-graph.md](../architecture/dependency-graph.md). Nghiệp vụ tài khoản vẫn thuộc module `user`.
 - `core` giữ `audit_log` và hai hàm ghi vì phần kiểm tra vai trò trong `core` ghi lại yêu cầu bị từ chối. Phần đọc nhật ký vẫn thuộc module `audit_log`.
@@ -102,7 +102,7 @@
 | `finding_tag` | Tag gắn vào finding | |
 | `report` | Báo cáo của program | `body`: Markdown, mặc định chuỗi rỗng. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay. `submitted_at`: có giá trị khi và chỉ khi `status` là `submitted`, ràng buộc CHECK. Xóa cứng program xóa báo cáo |
 | `report_finding` | Finding trong báo cáo | Khóa chính (`report_id`, `finding_id`). Một finding nằm được trong nhiều báo cáo. Xóa báo cáo hoặc finding xóa dòng |
-| `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id` |
+| `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id`. Mỗi job tối đa một dòng cho mỗi loại `job_pending_approval`, `job_failed`, `asset_new`: index duy nhất từng phần trên `alert_type`, `job_id`. `program_id` là `NULL`: cảnh báo toàn hệ thống, chỉ Superadmin, Admin thấy. `message`: câu tiếng Anh tối đa 500 ký tự, chứa dữ liệu mục tiêu nên giao diện hiển thị dạng văn bản |
 | `alert_read` | Tài khoản đã đọc cảnh báo | Không có dòng: chưa đọc |
 
 - Liên kết một tài sản: 4 cột `domain_id`, `ip_id`, `url_id`, `service_id`, đúng một cột có giá trị. Chi tiết: [database.md](database.md).
@@ -167,7 +167,8 @@ CSDL `reconos_log` riêng, không nằm trong [erd.mermaid](erd.mermaid). Một 
 | `diagnostic_run.status` | `running`, `passed`, `failed` |
 
 - Ý nghĩa trạng thái job, trạng thái triage: [business-flow.md](../architecture/business-flow.md).
-- `alert` loại `finding_new` chỉ sinh với severity `critical`, `high`.
+- `alert` loại `finding_new` chỉ sinh với severity `critical`, `high`. Một dòng mỗi output thô có finding mới ở hai mức này: đúng một finding thì `finding_id` trỏ finding đó, nhiều finding thì `finding_id` là `NULL`.
+- `alert` loại `job_failed`, `job_pending_approval` sinh khi job chuyển sang `failed`, `pending_approval`, kể cả job mới tạo ở `pending_approval`.
 - `alert` loại `cert_expiring` sinh khi parser ghi `url.tls_not_after` còn dưới `cert_expiring_days` ngày, mỗi URL một lần cho mỗi giá trị `tls_not_after`.
 
 ### Ràng buộc duy nhất

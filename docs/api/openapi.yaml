@@ -1572,7 +1572,7 @@ paths:
   /dashboard/summary:
     get:
       tags: [dashboard]
-      summary: "Số liệu tổng hợp S02, trường theo api/architecture.md"
+      summary: "Số liệu tổng hợp S02 và badge sidebar, trường theo api/architecture.md. Cache Redis 30 giây"
       x-roles: [superadmin, admin, user]
       parameters:
         - {name: window, in: query, schema: {type: string, enum: [24h, 7d, 30d], default: 24h}, description: "Khoảng thời gian cho programs_new, assets_new"}
@@ -1704,10 +1704,13 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [system]
-      summary: "Sửa một ngưỡng vận hành"
+      summary: "Sửa một ngưỡng vận hành. Sai kiểu 422 int_type, ngoài miền out_of_range, cặp ngưỡng mâu thuẫn setting_conflict"
       x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/SystemSettingPatch'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Thành công, content: {application/json: {schema: {$ref: '#/components/schemas/SystemSetting'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /logs:
     get:
@@ -2193,6 +2196,24 @@ components:
               size_bytes: {type: [integer, 'null']}
               duration_ms: {type: [integer, 'null']}
               remote_ip: {type: [string, 'null']}
+    SystemSetting:
+      type: object
+      description: "Mọi key trong configuration.md, kể cả key chưa sửa"
+      properties:
+        key: {type: string}
+        value: {type: integer}
+        default: {type: integer}
+        minimum: {type: integer}
+        maximum: {type: integer}
+        is_public: {type: boolean}
+        updated_by: {type: [string, 'null'], format: uuid, description: "NULL khi key dùng mặc định"}
+        updated_at: {type: [string, 'null'], format: date-time, description: "NULL khi key dùng mặc định"}
+    SystemSettingPatch:
+      type: object
+      required: [value]
+      additionalProperties: false
+      properties:
+        value: {type: integer}
     Alert:
       type: object
       properties:
