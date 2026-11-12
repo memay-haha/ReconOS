@@ -30,10 +30,20 @@ from app.core.errors import (
 )
 from app.core.identity import User
 from app.core.pagination import MAX_LIMIT, Page, decode_cursor, encode_cursor
-from app.engine.adapters import ADAPTERS, EngineAdapter, EngineWorkflowDetail, EngineWorkflowItem
+from app.engine.adapters import (
+    ADAPTERS,
+    EngineAdapter,
+    EngineCheckResult,
+    EngineModule,
+    EngineWorkflowDetail,
+    EngineWorkflowItem,
+    LlmConfig,
+)
 from app.engine.models import Engine, EngineVariable
 from app.engine.schemas import (
     ENGINE_SETTINGS,
+    EngineModulePage,
+    EngineModulesPatch,
     EnginePage,
     EngineResponse,
     EngineSettings,
@@ -308,6 +318,77 @@ async def get_workflow(
 ) -> EngineWorkflowDetail:
     row = await get_engine(session, engine_id)
     return await _adapter(row).workflow(name)
+
+
+# ---------------------------------------------------------------- native modules, checks
+
+
+def _module_page(items: list[EngineModule]) -> EngineModulePage:
+    items.sort(key=lambda item: (item.kind, item.name))
+    return EngineModulePage(items=items, total=len(items))
+
+
+async def list_modules(session: AsyncSession, engine_id: uuid.UUID) -> EngineModulePage:
+    row = await get_engine(session, engine_id)
+    with structlog.contextvars.bound_contextvars(engine=row.name):
+        return _module_page(await _adapter(row).modules())
+
+
+async def update_modules(
+    session: AsyncSession, *, actor: User, engine_id: uuid.UUID, changes: EngineModulesPatch
+) -> EngineModulePage:
+    """Switch native modules on the engine itself: ReconOS stores no copy."""
+    row = await get_engine(session, engine_id)
+    wanted = {change.name: change.is_enabled for change in changes.modules}
+    with structlog.contextvars.bound_contextvars(engine=row.name):
+        items = await _adapter(row).set_modules(wanted)
+    await audit.record(
+        session,
+        action="engine_modules_updated",
+        user_id=actor.id,
+        resource_type=RESOURCE,
+        resource_id=row.id,
+        detail={"modules": wanted},
+    )
+    log.info("engine_modules_updated", engine=row.name, changed=len(wanted))
+    return _module_page(items)
+
+
+async def validate_engine(session: AsyncSession, engine_id: uuid.UUID) -> EngineCheckResult:
+    row = await get_engine(session, engine_id)
+    with structlog.contextvars.bound_contextvars(engine=row.name):
+        return await _adapter(row).validate()
+
+
+async def verify_model(
+    session: AsyncSession, *, actor: User, engine_id: uuid.UUID
+) -> EngineCheckResult:
+    """Hand the stored LLM settings to the engine, then read its agent check.
+
+    The engine keeps the settings it was given: the result describes them.
+    """
+    row = await get_engine(session, engine_id)
+    adapter = _adapter(row)
+    settings = row.settings
+    llm = LlmConfig(
+        provider=settings.get("llm_provider"),
+        model=settings.get("llm_model"),
+        base_url=settings.get("llm_base_url"),
+        api_key=decrypt(row.llm_api_key_encrypted, context=LLM_API_KEY_CONTEXT)
+        if row.llm_api_key_encrypted is not None
+        else None,
+    )
+    with structlog.contextvars.bound_contextvars(engine=row.name):
+        result = await adapter.verify_model(llm)
+    await audit.record(
+        session,
+        action="engine_model_verified",
+        user_id=actor.id,
+        resource_type=RESOURCE,
+        resource_id=row.id,
+        detail={"ok": result.ok},
+    )
+    return result
 
 
 # ---------------------------------------------------------------- variables

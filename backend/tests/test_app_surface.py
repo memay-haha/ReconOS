@@ -113,6 +113,11 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("GET", "/engines/{engine_id}/variables"),
     ("PUT", "/engines/{engine_id}/variables/{key}"),
     ("DELETE", "/engines/{engine_id}/variables/{key}"),
+    # Batch 9, Vigolium native modules and checks.
+    ("GET", "/engines/{engine_id}/modules"),
+    ("PATCH", "/engines/{engine_id}/modules"),
+    ("POST", "/engines/{engine_id}/validate"),
+    ("POST", "/engines/{engine_id}/verify-model"),
     # Batch 5, asset, tag and parse.
     ("POST", "/raw-outputs/{raw_output_id}/reparse"),
     ("GET", "/domains"),

@@ -236,17 +236,6 @@ const s15Routes: MockRoute[] = [
 
 // ---- S16 Osmedeus, S17 Vigolium ----------------------------------------------------------
 
-const moduleRows = [
-  ['cve-2024-deep-check', 'active', true],
-  ['graphql-introspection', 'active', true],
-  ['header-audit', 'passive', true],
-  ['open-redirect', 'active', false],
-  ['sqli-error-based', 'active', true],
-  ['ssrf-detector', 'active', true],
-  ['tls-weak-cipher', 'passive', true],
-  ['xss-scanner', 'active', true],
-].map(([name, kind, is_enabled]) => ({ name, kind, is_enabled, description: null }));
-
 const engineLogs = [
   ['osmedeus', 'engine_health_ok', 'info', 2],
   ['osmedeus', 'engine_run_created', 'info', 9],
@@ -281,22 +270,6 @@ const s16Routes: MockRoute[] = [
       .map(({ module, ...s }) => ({ ...s, tool_module_name: module?.name ?? '' }));
     return HttpResponse.json(page(rows));
   }),
-  route('GET /engines/:engine_id/modules', () => HttpResponse.json(page(moduleRows))),
-  route('PATCH /engines/:engine_id/modules', async ({ request }) => {
-    const body = (await request.json()) as { modules: { name: string; is_enabled: boolean }[] };
-    for (const change of body.modules) {
-      const row = moduleRows.find((m) => m.name === change.name);
-      if (row !== undefined) row.is_enabled = change.is_enabled;
-    }
-    return HttpResponse.json(page(moduleRows));
-  }),
-  route('POST /engines/:engine_id/validate', () =>
-    HttpResponse.json({
-      ok: true,
-      issues: [{ level: 'advisory', message: 'Health check latency 420 ms is above 300 ms.' }],
-    }),
-  ),
-  route('POST /engines/:engine_id/verify-model', () => HttpResponse.json({ ok: true, issues: [] })),
   route('GET /logs', ({ request }) => {
     const query = new URL(request.url).searchParams;
     const engine = query.get('engine');
