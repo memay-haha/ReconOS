@@ -276,6 +276,17 @@ _finding = table(
     column("triage_status", Text),
     column("first_seen_at"),
 )
+# screenshot sits one tier up too: read by table name, live rows only (D5).
+_screenshot = table(
+    "screenshot",
+    column("id", PG_UUID(as_uuid=True)),
+    column("url_id", PG_UUID(as_uuid=True)),
+    column("job_id", PG_UUID(as_uuid=True)),
+    column("title", Text),
+    column("final_url", Text),
+    column("captured_at"),
+    column("deleted_at"),
+)
 # Closed triage states; any other is an open finding: docs/api/architecture.md.
 CLOSED_TRIAGE = ("false_positive", "duplicate", "resolved")
 
@@ -609,9 +620,9 @@ async def domain_activity(
     limit: int,
     cursor: str | None,
 ) -> Page[DomainActivityResponse]:
-    """The domain timeline, newest first: asset events and findings of the domain.
+    """The domain timeline, newest first: asset events, findings and screenshots.
 
-    Screenshots join in batch 7: tech-debt.md, debt 47.
+    A screenshot belongs to the domain through its URL (`url.domain_id`).
     """
     domain = await _visible_domain(session, viewer, domain_id)
     events = select(
@@ -632,7 +643,20 @@ async def domain_activity(
         null().cast(JSONB),
         _finding.c.name,
     ).where(_of_domain(domain.id))
-    timeline = union_all(events, findings).subquery()
+    screenshots = (
+        select(
+            literal("screenshot"),
+            _screenshot.c.id,
+            _screenshot.c.captured_at,
+            _screenshot.c.job_id,
+            null().cast(Text),
+            null().cast(JSONB),
+            func.coalesce(_screenshot.c.title, _screenshot.c.final_url),
+        )
+        .join(Url, Url.id == _screenshot.c.url_id)
+        .where(Url.domain_id == domain.id, _screenshot.c.deleted_at.is_(None))
+    )
+    timeline = union_all(events, findings, screenshots).subquery()
     stmt = (
         select(timeline, ToolModule.name.label("tool_module_name"))
         .outerjoin(Job, Job.id == timeline.c.job_id)
@@ -650,6 +674,8 @@ async def domain_activity(
     for row in page_rows:
         if row.kind == "finding":
             title = row.name
+        elif row.kind == "screenshot":
+            title = f"Screenshot: {row.name}" if row.name else "Screenshot"
         else:
             changed = ", ".join(sorted(row.diff)) if row.diff else ""
             title = _EVENT_TITLES[row.event_type] + (f": {changed}" if changed else "")

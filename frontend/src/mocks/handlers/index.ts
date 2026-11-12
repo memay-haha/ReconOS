@@ -6,7 +6,6 @@ import { partERoutes } from './part-e';
 import { sharedRoutes } from './shared';
 import { stitchARoutes } from './stitch-a';
 import { stitchBRoutes } from './stitch-b';
-import { stitchCRoutes } from './stitch-c';
 import { stitchDRoutes } from './stitch-d';
 import { stitchERoutes } from './stitch-e';
 
@@ -19,7 +18,6 @@ export type { MockRoute } from './helpers';
 export const mockRoutes: readonly MockRoute[] = [
   ...stitchARoutes,
   ...stitchBRoutes,
-  ...stitchCRoutes,
   ...stitchDRoutes,
   ...stitchERoutes,
   ...sharedRoutes,

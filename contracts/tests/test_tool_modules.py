@@ -44,3 +44,21 @@ def test_nuclei_param_schema_is_a_closed_object() -> None:
 def test_nuclei_rejects_params_outside_the_allowlist(params: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
         NucleiParams.model_validate(params)
+
+
+def test_gowitness_is_a_recon_tool_module_with_bounded_params() -> None:
+    from contracts.tool_modules import GowitnessParams
+
+    spec = TOOL_MODULES["gowitness"]
+    assert spec.group is ToolGroup.RECON
+    assert spec.params is GowitnessParams
+    assert GowitnessParams().window_width == 1440
+    schema = GowitnessParams.model_json_schema()
+    assert schema["additionalProperties"] is False
+    assert set(schema["properties"]) == {
+        "threads",
+        "timeout",
+        "delay",
+        "window_width",
+        "window_height",
+    }

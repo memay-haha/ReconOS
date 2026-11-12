@@ -147,6 +147,15 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("PATCH", "/findings/{finding_id}"),
     ("POST", "/findings/bulk-triage"),
     ("PUT", "/findings/{finding_id}/tags"),
+    # Batch 7: screenshots.
+    ("GET", "/screenshots"),
+    ("GET", "/screenshots/summary"),
+    ("GET", "/screenshots/{screenshot_id}"),
+    ("DELETE", "/screenshots/{screenshot_id}"),
+    ("GET", "/screenshots/{screenshot_id}/image"),
+    ("GET", "/screenshots/{screenshot_id}/html"),
+    ("GET", "/screenshots/{screenshot_id}/network"),
+    ("GET", "/screenshots/{screenshot_id}/har"),
 }
 # Reachable with a worker token only: docs/integrations/external-services.md.
 WORKER_PREFIX = "/worker/"

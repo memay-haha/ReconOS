@@ -21,6 +21,7 @@ from typing import ClassVar, Protocol
 
 from app.asset.schemas import IngestBatch
 from app.finding.schemas import FindingBatch
+from app.screenshot.schemas import ScreenshotBatch
 
 # Records per yielded batch: the asset service upserts each batch in bulk.
 BATCH_RECORDS = 1000
@@ -31,8 +32,8 @@ MAX_UNPACKED_BYTES = 2 * 1024 * 1024 * 1024
 # Members of one archive.
 MAX_ARCHIVE_MEMBERS = 100_000
 
-# What a parser yields: assets, or findings with the asset each sits on.
-Batch = IngestBatch | FindingBatch
+# What a parser yields: assets, findings or screenshots with the asset each sits on.
+Batch = IngestBatch | FindingBatch | ScreenshotBatch
 
 
 class ParseDataError(Exception):
@@ -61,6 +62,14 @@ class Parser(ABC):
     # Tool module names this parser reads, as registered in contracts/.
     tool_modules: ClassVar[tuple[str, ...]]
 
+    def accepts(self, filename: str) -> bool:
+        """Whether this raw output file holds records. Others are marked `no_parser`.
+
+        A tool module may upload files that only carry evidence, like the PNG
+        files of gowitness: they are kept (G8) but never parsed.
+        """
+        return True
+
     @abstractmethod
     def parse(self, path: Path, stats: ParseStats, tool_module: str) -> Iterator[Batch]:
         """Yield batches of records found in the file at `path`.
@@ -84,14 +93,18 @@ class Readable(Protocol):
     def readline(self, size: int = -1, /) -> bytes: ...
 
 
-def read_lines(stream: Readable, stats: ParseStats) -> Iterator[str]:
-    """Decoded lines of a binary stream, dropping any line over MAX_LINE_BYTES."""
+def read_lines(stream: Readable, stats: ParseStats, *, limit: int | None = None) -> Iterator[str]:
+    """Decoded lines of a binary stream, dropping any line over `limit` bytes.
+
+    `limit` defaults to MAX_LINE_BYTES, read at call time.
+    """
+    limit = MAX_LINE_BYTES if limit is None else limit
     readline = stream.readline
     while True:
-        raw: bytes = readline(MAX_LINE_BYTES + 1)
+        raw: bytes = readline(limit + 1)
         if not raw:
             return
-        if len(raw) > MAX_LINE_BYTES and not raw.endswith(b"\n"):
+        if len(raw) > limit and not raw.endswith(b"\n"):
             stats.dropped += 1
             # Drain the rest of the oversized line.
             while raw and not raw.endswith(b"\n"):

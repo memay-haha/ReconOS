@@ -2039,8 +2039,8 @@ components:
         id: {type: string, format: uuid}
         program_id: {type: string, format: uuid}
         url_id: {type: string, format: uuid}
-        job_id: {type: string, format: uuid}
-        raw_output_id: {type: string, format: uuid}
+        job_id: {type: [string, 'null'], format: uuid}
+        raw_output_id: {type: [string, 'null'], format: uuid, description: "Ảnh PNG trong output thô, null khi chụp lỗi"}
         final_url: {type: [string, 'null']}
         status_code: {type: [integer, 'null']}
         title: {type: [string, 'null']}
@@ -2134,7 +2134,7 @@ components:
           items:
             type: object
             properties:
-              method: {type: string}
+              method: {type: [string, 'null'], description: "gowitness 3.2.2 không ghi method"}
               url: {type: string}
               status_code: {type: [integer, 'null']}
               content_type: {type: [string, 'null']}

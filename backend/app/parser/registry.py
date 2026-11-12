@@ -11,6 +11,7 @@ app/background/celery_app.py.
 from typing import Final
 
 from app.parser.base import Parser
+from app.parser.gowitness import GowitnessParser
 from app.parser.nuclei import NucleiParser
 from app.parser.osmedeus_domain_extensive import OsmedeusDomainExtensiveParser
 from app.parser.osmedeus_domain_lite import OsmedeusDomainLiteParser
@@ -22,6 +23,7 @@ PARSERS: Final[tuple[Parser, ...]] = (
     OsmedeusDomainLiteParser(),
     OsmedeusGeneralParser(),
     OsmedeusDomainExtensiveParser(),
+    GowitnessParser(),
 )
 
 _BY_TOOL_MODULE: dict[str, Parser] = {}

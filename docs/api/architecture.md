@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.27 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -143,8 +143,9 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 - `scope_coverage`: tỉ lệ domain `in_scope` trên tổng domain, `NULL` khi chưa có domain. `assets_new_today`: tài sản có `first_seen_at` trong 24 giờ.
 - `ip_resolved_count`: số IP có ít nhất một service. `service_port_count`: số cổng khác nhau. `has_findings`: domain có ít nhất một finding mở.
 - Finding của một domain, dùng cho `finding_counts`, `has_findings`, `with_findings`, `with_critical`, `GET /findings?domain_id=`, dòng hoạt động: finding gắn chính domain, gắn URL có `url.domain_id` là domain, hoặc gắn service trên IP domain phân giải ra qua `domain_ip`. Finding gắn thẳng IP không tính cho domain.
-- `similar_group`: số thứ tự nhóm cùng `perception_hash` trong bộ lọc hiện tại, xếp theo `captured_at` sớm nhất của nhóm. `similar_count`: số screenshot trong nhóm, `1` là duy nhất.
-- `retry_job_status`: trạng thái job gowitness mới nhất có mục tiêu là `final_url`, tạo sau `captured_at`. `NULL` khi chưa có.
+- `similar_group`: số thứ tự nhóm cùng `perception_hash` trong bộ lọc hiện tại, xếp theo `captured_at` sớm nhất của nhóm. Chỉ nhóm từ 2 screenshot có số, còn lại `NULL`. `similar_count`: số screenshot trong nhóm, `1` là duy nhất.
+- `retry_job_status`: trạng thái job mới nhất cùng tool module, cùng program, có mục tiêu là `final_url` hoặc `final_url` bỏ `/` cuối, tạo sau `captured_at`, khác job đã chụp. `NULL` khi chưa có.
+- `GET /screenshots` nhận `sort`: `-captured_at` mặc định, `captured_at`, `perception_hash`. Screenshot không có `perception_hash` đứng cuối.
 - `security_headers` có khóa là tên header viết thường: `strict-transport-security`, `content-security-policy`, `x-frame-options`, `x-content-type-options`, `permissions-policy` trong `http_headers`.
 - `is_online`: `last_heartbeat_at` mới hơn `job_heartbeat_timeout_minutes`, cùng ngưỡng dispatcher dùng để chuyển job mất heartbeat sang `failed`. `workers_online` đếm worker `is_online`.
 - `engine_status`: `status` của thành phần engine trong `GET /system/health`, `NULL` khi tool module không chạy trên engine. `disabled_reason`: `off` khi tắt, `engine_disabled`, `engine_down`, `not_installed` khi không worker online nào cài, `NULL` khi sẵn sàng.
@@ -233,8 +234,8 @@ Response tổng hợp:
 | Hàng loạt | `POST /<tài nguyên>/bulk-<thao tác>`, tối đa 500 ID. Tất cả thành công, hoặc không dòng nào thay đổi. Body gồm `ids` và trường của thao tác, ví dụ `POST /findings/bulk-triage` nhận `ids`, `triage_status`. `duplicate` không nhận trong thao tác hàng loạt vì cần `duplicate_of_id` riêng từng finding |
 | Xuất dữ liệu | `GET /<tài nguyên>/export?format=csv\|jsonl\|md`, cùng tham số lọc như danh sách, trả dạng stream. `ids` lặp lại, tối đa 500, chỉ xuất các dòng đó. Có cho `domains`, `ips`, `urls`, `services`, `findings`, `users` |
 | Tải output thô | `GET /raw-outputs/{raw_output_id}/content`, luôn `Content-Disposition: attachment` |
-| Ảnh screenshot | `GET /screenshots/{screenshot_id}/image`, kèm header `X-Content-Type-Options: nosniff` |
-| Dữ liệu trang của screenshot | `/html` trả `text/plain`, kèm `nosniff`, UI chỉ hiện dạng văn bản. `/network` trả object có khóa `network_log`. `/har` dựng file HAR 1.2 từ `network_log`, `Content-Disposition: attachment` |
+| Ảnh screenshot | `GET /screenshots/{screenshot_id}/image`, kèm header `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`. Chỉ trả output thô có ID trong `screenshot.raw_output_id`, cùng job. Kiểu ảnh lấy từ byte đầu file: PNG, JPEG. File khác, hoặc screenshot không có ảnh: `404` |
+| Dữ liệu trang của screenshot | `/html` trả `screenshot.html` dạng `text/plain`, kèm `nosniff` và CSP như ảnh, UI chỉ hiện dạng văn bản. Không có HTML: `404`. `/network` trả object có khóa `network_log`. `/har` dựng file HAR 1.2 từ `network_log`, `Content-Disposition: attachment` |
 
 - Backend API đọc file từ MinIO rồi stream cho trình duyệt. ❌ Không trả URL trực tiếp tới MinIO.
 - Xuất CSV: thêm dấu `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`.
@@ -257,7 +258,7 @@ Response tổng hợp:
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}`. Một ID không tồn tại hoặc không xem được: `404`, không program nào đổi |
 | `POST /programs/{program_id}/pause`, `resume`, `archive` | Chuyển trạng thái theo [business-flow.md](../architecture/business-flow.md). Trạng thái hiện tại không cho phép: `409 conflict` |
 | `POST`, `PATCH /programs/{program_id}` | Body `name`, `platform`, `platform_url`, `platform_handle`, `bounty_type` (mặc định `bounty`), `description`. Trường lạ, kể cả `status`: `422`. `platform_url` chỉ nhận `http`, `https`, sai thì mã `url_invalid`. `PATCH` gửi `null` cho `name`, `bounty_type`: mã `null_not_allowed`. Program `archived`: `409 conflict` |
-| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng `screenshot` trả `0` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md). `last_job_finished_at`: `finished_at` mới nhất của job thuộc program |
+| `GET /programs` | `sort` mặc định `name`. `screenshot_count`: số screenshot chưa xóa mềm của program. `last_job_finished_at`: `finished_at` mới nhất của job thuộc program |
 | `POST /programs/{program_id}/users` | Body `user_id`. Chỉ gán tài khoản vai trò `user`. Tài khoản không tồn tại: `422`, `errors` có `user_id` mã `not_found`. Vai trò khác: mã `role_not_assignable`. Đã gán: `409 conflict`. Gán, bỏ gán vẫn làm được khi program `archived` |
 | `GET /programs/{program_id}/users`, `GET /programs/{program_id}/proxies` | Một thứ tự duy nhất: `sort` chỉ nhận `-assigned_at`, `-created_at` |
 | `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy. Xóa proxy mà job chưa kết thúc còn dùng: `409 conflict`. Job đã kết thúc giữ lịch sử, `proxy_id` về `NULL` |

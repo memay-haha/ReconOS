@@ -10,14 +10,19 @@ ARG NUCLEI_VERSION=3.11.1
 ARG NUCLEI_SHA256=ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6
 ARG NUCLEI_TEMPLATES_VERSION=10.5.2
 ARG NUCLEI_TEMPLATES_SHA256=016b7abbf931d4d1a851a5a568e44510dc61691dc8a5202e3b24e701515ec574
+ARG GOWITNESS_VERSION=3.2.2
+ARG GOWITNESS_SHA256=063ac21063ec96992a9bd7216bf05b3e96afa01a05e1a908490a2b42f573a12a
 ADD --checksum=sha256:${NUCLEI_SHA256} \
     https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_amd64.zip \
     /tmp/nuclei.zip
 ADD --checksum=sha256:${NUCLEI_TEMPLATES_SHA256} \
     https://github.com/projectdiscovery/nuclei-templates/archive/refs/tags/v${NUCLEI_TEMPLATES_VERSION}.tar.gz \
     /tmp/nuclei-templates.tar.gz
+ADD --checksum=sha256:${GOWITNESS_SHA256} \
+    https://github.com/sensepost/gowitness/releases/download/${GOWITNESS_VERSION}/gowitness-${GOWITNESS_VERSION}-linux-amd64 \
+    /opt/tools/gowitness
 RUN python -I -c "import zipfile; zipfile.ZipFile('/tmp/nuclei.zip').extract('nuclei', '/opt/tools')" \
-    && chmod 0755 /opt/tools/nuclei \
+    && chmod 0755 /opt/tools/nuclei /opt/tools/gowitness \
     && mkdir -p /opt/nuclei-templates \
     && tar -xzf /tmp/nuclei-templates.tar.gz -C /opt/nuclei-templates --strip-components=1
 
@@ -30,6 +35,11 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
     RECONOS_WORKER_WORKDIR=/var/lib/reconos/jobs
 COPY --from=uv /uv /usr/local/bin/uv
+# Headless browser for gowitness, from the signed Debian archive. The runner
+# passes its path: workers/worker/runners/gowitness.py.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends chromium fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /srv
 
 COPY pyproject.toml uv.lock ./

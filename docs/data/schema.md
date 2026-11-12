@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -89,7 +89,7 @@
 | `url` | URL đã phát hiện kèm metadata HTTP | `domain_id` có giá trị khi host là domain, `ip_id` khi host là IP. `url_hash`: SHA-256 của `url` đã chuẩn hóa. `tls_not_after`: ngày hết hạn chứng chỉ TLS do httpx báo |
 | `technology` | Danh mục công nghệ dùng chung | `category`: framework, web server, CDN, thư viện |
 | `url_technology` | Công nghệ phát hiện trên URL | `version`: `NULL` khi không nhận diện được |
-| `screenshot` | Metadata screenshot của gowitness | `raw_output_id`: file ảnh trong output thô. `html_raw_output_id`: HTML của trang trong output thô. `perception_hash`: gom ảnh giống nhau trên S06. `is_failed`: chụp lỗi. `width`, `height`, `device_scale`: độ phân giải chụp. `remote_ip`: IP máy chủ trả lời. `duration_ms`: thời gian chụp. `tls`, `network_log`, `console_log`, `cookies`: dữ liệu gowitness theo bảng dưới. `deleted_at`: xóa mềm |
+| `screenshot` | Metadata screenshot của gowitness | `raw_output_id`: file ảnh PNG trong output thô, `NULL` khi chụp lỗi. `html_raw_output_id`: `gowitness.jsonl`, file output thô chứa HTML của trang. `html`: bản sao HTML để S07 hiện, cắt ở 2 MiB. `perception_hash`: gom ảnh giống nhau trên S06. `is_failed`: chụp lỗi hoặc không có ảnh. `width`, `height`: tham số job `window_width`, `window_height`. `device_scale`: luôn `1`. `remote_ip`: IP máy chủ trả lời `final_url`. `duration_ms`: từ lúc bắt đầu chụp tới response cuối trong network log. `tls`, `network_log`, `console_log`, `cookies`: dữ liệu gowitness theo bảng dưới. `http_headers`: header của response, `set-cookie` chỉ giữ tên cookie (G7). `deleted_at`: xóa mềm |
 | `asset_event` | Sự kiện tài sản: phát hiện, thay đổi | Liên kết một tài sản. `diff`: object theo tên cột đã đổi, mỗi cột `old`, `new`. `NULL` với sự kiện `discovered` |
 
 ### Finding và báo cáo
@@ -113,9 +113,9 @@
 |---|---|
 | `finding.detail` | Mọi parser ghi đủ 5 khóa, giá trị `NULL` khi output thô không có: `matcher`, `description`, `remediation`, `request`, `response`. Khóa riêng của công cụ ghi thêm bên cạnh |
 | `screenshot.tls` | `protocol`, `cipher`, `issuer`, `subject`, `san`: mảng tên, `not_before`, `not_after` |
-| `screenshot.network_log` | Mảng `method`, `url`, `status_code`, `content_type`, `size_bytes`, `duration_ms`, `remote_ip` |
-| `screenshot.console_log` | Mảng `level`, `message`, `at` |
-| `screenshot.cookies` | Mảng `name`, `domain`, `path`, `expires`, `secure`, `http_only`, `same_site`. ❌ Không lưu giá trị cookie (G7) |
+| `screenshot.network_log` | Mảng `method`, `url`, `status_code`, `content_type`, `size_bytes`, `duration_ms`, `remote_ip`, tối đa 500 phần tử. gowitness 3.2.2 không ghi `method`, `size_bytes`, `duration_ms`: giá trị `NULL` |
+| `screenshot.console_log` | Mảng `level`, `message`, `at`, tối đa 200 phần tử. `level` bỏ tiền tố `console.`. `at` là `NULL` vì gowitness không ghi |
+| `screenshot.cookies` | Mảng `name`, `domain`, `path`, `expires`, `secure`, `http_only`, `same_site`, tối đa 100 phần tử. `same_site` là `NULL` vì gowitness 3.2.2 không ghi. ❌ Không lưu giá trị cookie (G7) |
 | `engine.settings` của Osmedeus | `scan_preset`: `quick`, `balanced`, `deep`, mặc định `balanced`. Runner đổi thành `tactic` của lượt chạy: [external-services.md](../integrations/external-services.md) |
 | `engine.settings` của Vigolium | `llm_provider`, `llm_model`, `llm_base_url` |
 
@@ -182,7 +182,8 @@ CSDL `reconos_log` riêng, không nằm trong [erd.mermaid](erd.mermaid). Một 
 | `ip` | `program_id`, `address` | Khóa tự nhiên |
 | `service` | `ip_id`, `port`, `transport` | Khóa tự nhiên |
 | `url` | `program_id`, `url_hash` | Khóa tự nhiên |
-| `screenshot` | `raw_output_id` | Parse lại không tạo bản trùng |
+| `screenshot` | `job_id`, `url_id` | Khóa upsert: parse lại cập nhật dòng cũ, giữ `deleted_at` |
+| `screenshot` | `raw_output_id` | Một ảnh thuộc một screenshot |
 | `finding` | `program_id`, `dedup_key` | Chuỗi khử trùng lặp |
 | `tag` | `key`, `value` | Danh mục tag dùng chung |
 | `saved_filter` | `user_id`, `screen`, `name` | Tên bộ lọc không trùng trong một màn hình |

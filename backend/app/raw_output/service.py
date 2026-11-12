@@ -275,6 +275,7 @@ class ParseTarget:
     job_id: uuid.UUID
     program_id: uuid.UUID
     tool_module: str
+    filename: str
 
 
 async def claim_for_parse(session: AsyncSession, raw_output_id: uuid.UUID) -> ParseTarget | None:
@@ -304,7 +305,22 @@ async def claim_for_parse(session: AsyncSession, raw_output_id: uuid.UUID) -> Pa
         job_id=row.job_id,
         program_id=program_id,
         tool_module=tool_module_name,
+        filename=row.filename,
     )
+
+
+async def ids_by_filename(
+    session: AsyncSession, job_id: uuid.UUID, filenames: set[str]
+) -> dict[str, uuid.UUID]:
+    """Raw outputs of one job by file name: a parser links the files a line names."""
+    if not filenames:
+        return {}
+    rows = await session.execute(
+        select(RawOutput.filename, RawOutput.id).where(
+            RawOutput.job_id == job_id, RawOutput.filename.in_(sorted(filenames))
+        )
+    )
+    return {str(filename): row_id for filename, row_id in rows.tuples()}
 
 
 # Short English reason kept in parse_error; never a path or a value from the file.
