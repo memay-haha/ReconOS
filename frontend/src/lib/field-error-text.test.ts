@@ -1,3 +1,7 @@
+// @vitest-environment node
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { fieldErrorText } from './field-error-text';
@@ -18,6 +22,16 @@ describe('fieldErrorText', () => {
     expect(fieldErrorText('string_too_short')).toBe('Value is too short.');
     expect(fieldErrorText('string_too_long')).toBe('Value is too long.');
     expect(fieldErrorText('enum')).toMatch(/allowed list/);
+  });
+
+  it('words every scope value code the backend raises', () => {
+    const source = readFileSync(
+      fileURLToPath(new URL('../../../backend/app/scope/matching.py', import.meta.url)),
+      'utf8',
+    );
+    const codes = [...source.matchAll(/InvalidScopeValueError\("(\w+)"\)/g)].map((m) => m[1]);
+    expect(codes.length).toBeGreaterThan(10);
+    for (const code of codes) expect(fieldErrorText(code ?? ''), code).not.toBe('Invalid value.');
   });
 
   it('falls back instead of showing the raw code to the reader', () => {

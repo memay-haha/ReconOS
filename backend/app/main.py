@@ -7,9 +7,12 @@ from fastapi import APIRouter, Depends, FastAPI, status
 
 from app.audit_log.router import router as audit_log_router
 from app.core.config import get_settings
+from app.core.crypto import get_keyring
 from app.core.deps import csrf_guard
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
+from app.program.router import router as program_router
+from app.scope.router import router as scope_router
 from app.user.router import router as user_router
 
 API_PREFIX = "/api/v1"
@@ -21,6 +24,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # startup rather than on the first request: docs/ops/configuration.md
     settings = get_settings()
     configure_logging(settings.log_level)
+    # A malformed RECONOS_ENCRYPTION_KEYS stops startup, not the first proxy write.
+    get_keyring()
     yield
 
 
@@ -56,3 +61,5 @@ async def health() -> None:
 app.include_router(api_router)
 app.include_router(user_router)
 app.include_router(audit_log_router)
+app.include_router(program_router)
+app.include_router(scope_router)

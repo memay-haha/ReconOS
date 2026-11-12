@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.3 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -71,8 +71,23 @@ Mục tiêu hợp lệ khi khớp **ít nhất một** In-Scope và **không kh�
 | CIDR `198.51.100.0/24` | IP nằm trong dải. Mục tiêu CIDR khớp khi cả dải nằm trong dải của rule |
 | URL `https://example.com/api/` | Mục tiêu URL có cùng scheme, host, cổng, và đường dẫn bắt đầu bằng đường dẫn của rule |
 
-- Mục tiêu CIDR mà một phần dải khớp Out-of-Scope: không hợp lệ.
+- Mục tiêu CIDR mà một phần dải khớp Out-of-Scope: không hợp lệ. Mục tiêu CIDR nằm vắt qua hai In-Scope CIDR, không nằm trọn trong rule nào: không hợp lệ.
 - Mục tiêu domain không so khớp với scope rule dạng CIDR. ReconOS không phân giải DNS để kiểm tra scope.
+- Mục tiêu URL có host là IP khớp scope rule CIDR chứa IP đó.
+- Scope rule URL chỉ khớp mục tiêu URL. Mục tiêu domain, IP, CIDR không khớp scope rule URL, kể cả Out-of-Scope.
+- Mục tiêu hợp lệ có một trong 4 dạng: domain, IP, CIDR, URL `http` hoặc `https`. Dạng khác bị từ chối, không đoán.
+
+**Chuẩn hóa trước khi so khớp:** backend lưu scope rule và mục tiêu job ở dạng chuẩn hóa, đúng chuỗi đã kiểm tra.
+
+| Thành phần | Quy tắc |
+|---|---|
+| Domain | Chữ thường, bỏ một dấu `.` cuối. Chỉ nhận ASCII: domain quốc tế nhập dạng punycode `xn--...`. Nhãn cuối toàn chữ số như `127.1`, `2130706433` bị từ chối vì trình phân giải đọc thành IP |
+| IP, CIDR | IPv4-mapped IPv6 như `::ffff:198.51.100.7` so khớp như IPv4. CIDR có bit host như `198.51.100.7/24` bị từ chối. Từ chối IP kèm zone `%eth0` |
+| URL | Scheme, host chữ thường. Cổng mặc định 80, 443 khi không ghi. Đường dẫn: giải mã ký tự không dành riêng như `%61`, bỏ đoạn `.` và `..`. Từ chối URL có tài khoản `user@`, đường dẫn có `\`, `%2F`, `%5C`. Bỏ qua query và fragment khi so khớp. Scope rule URL không được có query, fragment |
+
+- Mã lỗi khi giá trị scope rule hoặc mục tiêu không đọc được: [api/architecture.md](../api/architecture.md).
+- Scope rule đã lưu không đọc được, ví dụ dữ liệu cũ trước khi siết chuẩn hóa: In-Scope bị bỏ qua, Out-of-Scope làm program không nhận mục tiêu nào cho tới khi sửa rule.
+- Program `archived`: scope rule chỉ đọc. Program `paused` vẫn sửa được scope rule.
 - Kiểm tra ở hai thời điểm:
   1. Khi tạo job. Mục tiêu không hợp lệ thì từ chối tạo job (G5).
   2. Khi dispatcher giao job. Mục tiêu không còn hợp lệ thì chuyển job sang `cancelled`, ghi lý do.
@@ -110,6 +125,8 @@ stateDiagram-v2
 
 - Lưu trữ program: không tạo job mới, lịch quét định kỳ ngừng, job `pending_approval`, `queued` chuyển `cancelled`. Job `dispatched`, `running` chạy tiếp đến xong. Dữ liệu giữ nguyên, chỉ đọc. Cách lưu trữ và xóa cứng: [database.md](../data/database.md).
 - Tạm dừng program không phải trạng thái job. Dispatcher không giao job `queued` của program tạm dừng. Job `dispatched`, `running` chạy tiếp đến xong.
+- Chuyển trạng thái program: tạm dừng `active` sang `paused`, tiếp tục `paused` sang `active`, lưu trữ `active` hoặc `paused` sang `archived`. Không bỏ lưu trữ được. Chuyển khác trả `409 conflict`.
+- Program `archived` chỉ đọc: không sửa program, không thêm, sửa, xóa proxy. Gán, bỏ gán User vẫn được vì thao tác này quyết định ai đọc dữ liệu đã lưu trữ.
 - Thử lại job `failed` hoặc `cancelled`: tạo job mới liên kết job cũ. Job cũ giữ nguyên trạng thái và output thô. Job mới được kiểm tra lại scope và đi lại luồng duyệt nếu thuộc nhóm khai thác.
 - Ưu tiên, giới hạn đồng thời và tốc độ khi giao: [system.md](system.md).
 

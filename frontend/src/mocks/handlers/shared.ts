@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { programs, toolModules } from '../data/programs';
+import { toolModules } from '../data/programs';
 import { users } from '../data/users';
 import { type MockRoute, page, route } from './helpers';
 
@@ -10,16 +10,6 @@ export const sharedRoutes: readonly MockRoute[] = [
   // Spelled with a path parameter on purpose: it is in IMPLEMENTED, so
   // registry.test.ts proves the parameter spelling lines up with the filter.
   route('GET /users/:user_id', () => HttpResponse.json(users[0])),
-  route('GET /programs', () => HttpResponse.json(page(programs))),
-  route('GET /programs/:program_id', ({ params }) => {
-    const found = programs.find((p) => p.id === params.program_id);
-    return found === undefined
-      ? HttpResponse.json(
-          { type: 'about:blank', title: 'Not Found', status: 404, code: 'not_found' },
-          { status: 404, headers: { 'content-type': 'application/problem+json' } },
-        )
-      : HttpResponse.json(found);
-  }),
   route('GET /tool-modules', () => HttpResponse.json(page(toolModules))),
   route('GET /workers', () =>
     HttpResponse.json(

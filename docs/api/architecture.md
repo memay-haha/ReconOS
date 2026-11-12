@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.18 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.20 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -120,7 +120,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | Endpoint | Trường |
 |---|---|
 | `GET /programs`, `GET /programs/{program_id}` | `in_scope_rule_count`, `out_of_scope_rule_count`, `domain_count`, `ip_count`, `url_count`, `service_count`, `finding_counts`, `last_job_finished_at`, `scope_coverage`, `assets_new_today`: `domain`, `url`, `ip_resolved_count`, `service_port_count`, `screenshot_count`, `created_by_username` |
-| `GET /programs/{program_id}/scope-rules` | `matched_domain_count`: số domain của program khớp rule |
+| `GET /programs/{program_id}/scope-rules` | `matched_domain_count`: số domain của program khớp rule. Chưa trả cho tới khi có bảng `domain`: [tech-debt.md](../tech-debt.md) |
 | `GET /domains`, `GET /domains/{domain_id}` | `ips`: danh sách địa chỉ IP, `url_count`, `service_count`, `finding_counts`, `has_findings`, `asn`, `asn_org` của IP đầu tiên trong `ips`. Riêng `GET /domains/{domain_id}` có thêm `tags`: danh sách `id` của `asset_tag`, `tag_id`, `key`, `value`. `ip_records`: danh sách `address`, `record_type`. `service_ports`: các cổng của service trên IP của domain, tăng dần |
 | `GET /asset-events` | `asset_type`, `asset_name`, `program_name`, `tool_module_name`. Sự kiện của IP thêm `asn`, `asn_org` |
 | `GET /domains/{domain_id}/activity` | Gộp sự kiện tài sản, finding, screenshot của domain, mới trước. Mỗi dòng `kind` (`asset_event`, `finding`, `screenshot`), `id`, `at`, `title`, `tool_module_name`, `job_id` |
@@ -214,7 +214,7 @@ Response tổng hợp:
 | 409 | `conflict` | Vi phạm ràng buộc duy nhất, kèm `errors` với `code` là `already_exists` cho trường bị trùng. Chuyển trạng thái không hợp lệ |
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
 | 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường |
-| 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5) |
+| 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5). `errors` từng mục tiêu: `code` là `target_out_of_scope`, hoặc `invalid_target` khi mục tiêu không phải domain, IP, CIDR, URL đọc được |
 | 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
 | 500 | `internal_error` | Lỗi không lường trước. `detail` không chứa stack trace |
@@ -241,10 +241,19 @@ Response tổng hợp:
 |---|---|
 | `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body |
 | `POST /jobs/{job_id}/prioritize`, `POST /dispatcher/wake`, `POST /jobs/cleanup`, `POST /jobs/bulk-retry` | Dispatch Now, Dispatch All, Cleanup, Retry Failed: [business-flow.md](../architecture/business-flow.md). `cleanup` trả số job đã hủy |
+| `GET /programs/{program_id}/scope-rules` | `sort`: `created_at` mặc định, `-created_at` |
+| `POST /programs/{program_id}/scope-rules`, `POST …/scope-rules/bulk-create`, `PATCH /scope-rules/{scope_rule_id}` | Body `scope_type`, `rule_type`, `value`, `reason`. `value` lưu dạng chuẩn hóa: [business-flow.md](../architecture/business-flow.md). Giá trị không đọc được: `422 validation_error`, `errors` với `field` là `value` hoặc `items.<i>.value`, `code` là một trong `invalid_length`, `not_ascii`, `control_character`, `invalid_domain`, `invalid_ip`, `invalid_url`, `invalid_path`, `encoded_slash`, `unsupported_scheme`, `credentials_in_url`, `invalid_port`, `wildcard_target`, `wrong_rule_form`, `query_in_rule`. Out-of-Scope thiếu `reason`: `code` là `missing`. Trùng scope rule sau chuẩn hóa: `409 conflict`, `code` là `already_exists`. Program `archived`: `409 conflict`. `bulk-create` tối đa 200 phần tử, tất cả hoặc không |
+| `POST /programs/{program_id}/scope-check` | Body `targets`, tối đa 200. Trả `items` theo thứ tự body: `target`, `normalized_target`, `in_scope`, `verdict`, `rule_value`. `verdict` nhận `in_scope`, `invalid_target`, `no_in_scope_match`, `out_of_scope_match`. `rule_value`: In-Scope đầu tiên khớp, hoặc Out-of-Scope đã loại mục tiêu. Không ghi dữ liệu |
 | `POST /schedules/{schedule_id}/run` | Tạo ngay một job từ lịch, kiểm scope, không đổi `next_run_at` |
 | `GET /schedules` | Lịch của mọi program tài khoản xem được. Lọc `engine_id`: lịch có tool module chạy trên engine đó. Mỗi dòng thêm `program_name`, `tool_module_name`. Dùng cho tab Schedules của S16 |
 | `DELETE /domains/{domain_id}`, `POST /domains/bulk-delete`, `DELETE /screenshots/{screenshot_id}`, `DELETE /users/{user_id}` | Xóa mềm. Superadmin không xóa chính mình |
-| `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}` |
+| `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}`. Một ID không tồn tại hoặc không xem được: `404`, không program nào đổi |
+| `POST /programs/{program_id}/pause`, `resume`, `archive` | Chuyển trạng thái theo [business-flow.md](../architecture/business-flow.md). Trạng thái hiện tại không cho phép: `409 conflict` |
+| `POST`, `PATCH /programs/{program_id}` | Body `name`, `platform`, `platform_url`, `platform_handle`, `bounty_type` (mặc định `bounty`), `description`. Trường lạ, kể cả `status`: `422`. `platform_url` chỉ nhận `http`, `https`, sai thì mã `url_invalid`. `PATCH` gửi `null` cho `name`, `bounty_type`: mã `null_not_allowed`. Program `archived`: `409 conflict` |
+| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng của đợt sau trả `0` hoặc `null` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md) |
+| `POST /programs/{program_id}/users` | Body `user_id`. Chỉ gán tài khoản vai trò `user`. Tài khoản không tồn tại: `422`, `errors` có `user_id` mã `not_found`. Vai trò khác: mã `role_not_assignable`. Đã gán: `409 conflict`. Gán, bỏ gán vẫn làm được khi program `archived` |
+| `GET /programs/{program_id}/users`, `GET /programs/{program_id}/proxies` | Một thứ tự duy nhất: `sort` chỉ nhận `-assigned_at`, `-created_at` |
+| `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy |
 | `POST /users/{user_id}/revoke-sessions`, `POST /users/bulk-revoke-sessions` | Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi |
 | `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids` |
 | `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |

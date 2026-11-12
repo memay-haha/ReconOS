@@ -1,6 +1,6 @@
 # Đồ thị phụ thuộc
 
-> Phiên bản: 1.4 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 12: Đồ thị phụ thuộc
 > Liên quan: [modules.md](modules.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -102,6 +102,7 @@ flowchart BT
 | Output thô đã lưu cần parse | `raw_output` gửi task parse theo tên task. `parser` nhận task, không bị `raw_output` import |
 | Finding liên kết output thô cùng tầng | Chỉ khóa ngoại tới bảng output thô. `finding` không gọi `raw_output` |
 | Model cần khóa ngoại tới tầng trên | Khai báo khóa ngoại bằng tên bảng dạng chuỗi, không import model của tầng trên |
+| `core` lọc program theo `program_user`. `program` đếm scope rule cho danh sách program | Đọc bảng tầng trên bằng `sqlalchemy.table()` với tên bảng, tên cột dạng chuỗi, chỉ đọc. Không import model, không gọi service của tầng trên |
 | Danh sách nhật ký thao tác cần tên tài khoản | `audit_log` join bảng `user` theo cột UUID `user_id`, cột này không có khóa ngoại. `audit_log` không gọi `user`. Response của đợt 2a chưa có trường tên tài khoản |
 
 ### Phụ thuộc bên ngoài

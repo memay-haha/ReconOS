@@ -54,11 +54,13 @@ async def record(
     resource_id: uuid.UUID | None = None,
     detail: dict[str, Any] | None = None,
     ip_address: str | None = None,
+    program_id: uuid.UUID | None = None,
 ) -> None:
     session.add(
         AuditLog(
             action=action,
             user_id=user_id,
+            program_id=program_id,
             resource_type=resource_type,
             resource_id=resource_id,
             detail=detail,

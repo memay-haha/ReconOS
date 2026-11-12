@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.4 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -108,6 +108,7 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 
 - Cột thông tin xác thực: `proxy.url_encrypted`, `engine.api_key_encrypted`, `engine_variable.value_encrypted`.
 - Backend mã hóa trước khi ghi, giải mã khi gửi cho worker hoặc engine. Khóa mã hóa và thuật toán: [security.md](../../.claude/rules/security.md).
+- Giá trị lưu gồm: phiên bản định dạng 1 byte, độ dài ID khóa 1 byte, ID khóa, nonce 12 byte, bản mã kèm tag. Associated data gồm tên bảng và tên cột, ví dụ `proxy.url_encrypted`, nên bản mã chép sang cột khác không giải mã được. Mã: `backend/app/core/crypto.py`.
 - Mật khẩu, session ID, token worker chỉ lưu giá trị băm: [authentication.md](../security/authentication.md).
 - ❌ API không trả cột thông tin xác thực. UI chỉ hiển thị giá trị đã che (G7).
 - ❌ Không ghi thông tin xác thực vào `audit_log.detail`, `asset_event.diff`, `job.params`. Khi đổi thông tin xác thực, nhật ký thao tác chỉ ghi tên cột đã đổi.
@@ -118,7 +119,7 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 |---|---|
 | Program | Lưu trữ: `status = archived`, ghi `archived_at`. Chỉ Superadmin xóa cứng được |
 | Dữ liệu của program đã lưu trữ | Giữ nguyên, chỉ đọc. Không tạo job, `schedule` không chạy |
-| Xóa cứng program | Xóa dây chuyền mọi dòng có `program_id`, xóa object MinIO theo tiền tố `<program_id>/`. `audit_log.program_id` đặt `NULL` |
+| Xóa cứng program | Xóa dây chuyền mọi dòng có `program_id`, xóa object MinIO theo tiền tố `<program_id>/`. `audit_log.program_id` đặt `NULL`. Nhật ký thao tác `program_deleted` giữ ID program ở `resource_id`, tên program ở `detail` |
 | Tài khoản | Khóa, hoặc xóa mềm bằng `deleted_at`. Giữ liên kết người thực hiện |
 | Token worker | Không xóa, ghi `revoked_at` |
 | Scope rule, tag, proxy, `schedule` | Xóa cứng, ghi nhật ký thao tác |

@@ -1,10 +1,11 @@
 import json
+import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import Request
-from sqlalchemy import select, text
+from sqlalchemy import select, text, true
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Settings
@@ -16,8 +17,10 @@ from app.core.security import (
     hash_session_id,
     load_current_user,
     new_session_id,
+    program_visible_to,
     require_roles,
 )
+from app.program.models import Program, ProgramUser
 
 SettingsFactory = Callable[..., Settings]
 RequestFactory = Callable[..., Request]
@@ -236,7 +239,43 @@ async def test_rejection_causes_are_indistinguishable(
     assert len(set(bodies)) == 1
 
 
-async def test_program_filter_skeleton(user_factory: UserFactory) -> None:
-    assert await allowed_program_ids(await user_factory(role=UserRole.SUPERADMIN)) is ALL_PROGRAMS
-    assert await allowed_program_ids(await user_factory(role=UserRole.ADMIN)) is ALL_PROGRAMS
-    assert await allowed_program_ids(await user_factory(role=UserRole.USER)) == frozenset()
+async def test_admin_roles_see_every_program(
+    db_session: AsyncSession, user_factory: UserFactory
+) -> None:
+    for role in (UserRole.SUPERADMIN, UserRole.ADMIN):
+        account = await user_factory(role=role)
+        assert await allowed_program_ids(db_session, account) is ALL_PROGRAMS
+        assert program_visible_to(account, Program.id).compare(true())
+
+
+async def test_user_sees_only_assigned_programs(
+    db_session: AsyncSession, user_factory: UserFactory
+) -> None:
+    account = await user_factory(role=UserRole.USER)
+    other = await user_factory(role=UserRole.USER)
+    assigned = Program(name=f"assigned-{uuid.uuid4()}", bounty_type="bounty")
+    hidden = Program(name=f"hidden-{uuid.uuid4()}", bounty_type="vdp")
+    db_session.add_all([assigned, hidden])
+    await db_session.flush()
+    db_session.add_all(
+        [
+            ProgramUser(program_id=assigned.id, user_id=account.id),
+            ProgramUser(program_id=hidden.id, user_id=other.id),
+        ]
+    )
+    await db_session.flush()
+
+    assert await allowed_program_ids(db_session, account) == frozenset({assigned.id})
+    visible = await db_session.scalars(
+        select(Program.id).where(
+            Program.id.in_([assigned.id, hidden.id]), program_visible_to(account, Program.id)
+        )
+    )
+    assert set(visible.all()) == {assigned.id}
+
+
+async def test_user_without_assignment_sees_nothing(
+    db_session: AsyncSession, user_factory: UserFactory
+) -> None:
+    account = await user_factory(role=UserRole.USER)
+    assert await allowed_program_ids(db_session, account) == frozenset()

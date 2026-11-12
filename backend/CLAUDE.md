@@ -58,6 +58,7 @@ Chạy từ gốc repo sau `make init`:
 | `uv run alembic -c backend/alembic.ini upgrade head` | Chạy migration CSDL chính |
 | `uv run alembic -c backend/alembic.ini -n log upgrade head` | Chạy migration CSDL log |
 | `uv run --directory backend python -m app.bootstrap` | Tạo tài khoản Superadmin đầu tiên từ biến môi trường |
+| `uv run --directory backend python -m app.core.crypto reencrypt` | Mã hóa lại mọi cột `_encrypted` bằng khóa đầu tiên của `RECONOS_ENCRYPTION_KEYS`: [configuration.md](../docs/ops/configuration.md) |
 | `uv run alembic -c backend/alembic.ini revision --autogenerate -m "<mô tả>"` | Tạo migration, đọc lại trước khi commit |
 | `uv run pytest backend/tests` | Test backend |
 | `uv run uvicorn app.main:app --reload --app-dir backend` | Chạy Backend API khi phát triển |

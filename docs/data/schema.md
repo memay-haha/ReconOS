@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.7 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -62,7 +62,7 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `program` | Program bug bounty hoặc VDP (Vulnerability Disclosure Program) | `platform`: HackerOne, Bugcrowd, Intigriti hoặc program tự vận hành. `archived_at`: thời điểm lưu trữ. `platform_handle`: mã program trên nền tảng, ví dụ `uber`, nhập tay. Số scope rule, số tài sản, số finding không phải cột: [api/architecture.md](../api/architecture.md) |
+| `program` | Program bug bounty hoặc VDP (Vulnerability Disclosure Program) | `platform`: HackerOne, Bugcrowd, Intigriti hoặc program tự vận hành. `archived_at`: thời điểm lưu trữ, có giá trị khi và chỉ khi `status` là `archived`, ràng buộc CHECK. `platform_handle`: mã program trên nền tảng, ví dụ `uber`, nhập tay. Số scope rule, số tài sản, số finding không phải cột: [api/architecture.md](../api/architecture.md) |
 | `program_user` | Gán User vào program | Admin, Superadmin không cần dòng gán |
 | `scope_rule` | Scope rule In-Scope, Out-of-Scope | `reason`: bắt buộc khi `scope_type` là `out_of_scope` |
 | `proxy` | Proxy của program | `url_encrypted`: URL proxy, có thể chứa tên đăng nhập và mật khẩu |
