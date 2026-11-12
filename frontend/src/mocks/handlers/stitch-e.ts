@@ -1,8 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { appLogs, engines, systemHealth, systemSettings } from '../data/part-e';
-import { programs, schedules } from '../data/stitch-d';
-import { toolModuleRows } from '../data/stitch-f';
+import { appLogs, systemHealth, systemSettings } from '../data/part-e';
 import { users } from '../data/users';
 import { type MockRoute, page, route } from './helpers';
 
@@ -236,17 +234,6 @@ const s15Routes: MockRoute[] = [
 
 // ---- S16 Osmedeus, S17 Vigolium ----------------------------------------------------------
 
-const moduleRows = [
-  ['cve-2024-deep-check', 'active', true],
-  ['graphql-introspection', 'active', true],
-  ['header-audit', 'passive', true],
-  ['open-redirect', 'active', false],
-  ['sqli-error-based', 'active', true],
-  ['ssrf-detector', 'active', true],
-  ['tls-weak-cipher', 'passive', true],
-  ['xss-scanner', 'active', true],
-].map(([name, kind, is_enabled]) => ({ name, kind, is_enabled, description: null }));
-
 const engineLogs = [
   ['osmedeus', 'engine_health_ok', 'info', 2],
   ['osmedeus', 'engine_run_created', 'info', 9],
@@ -267,36 +254,6 @@ const engineLogs = [
 }));
 
 const s16Routes: MockRoute[] = [
-  // P4: schedules whose tool module runs on the engine, with both names joined.
-  route('GET /schedules', ({ request }) => {
-    const engineId = new URL(request.url).searchParams.get('engine_id');
-    const engineName = engines.find((e) => e.id === engineId)?.name;
-    const rows = schedules
-      .map((s) => ({
-        ...s,
-        module: toolModuleRows.find((m) => m.id === s.tool_module_id),
-        program_name: programs.find((p) => p.id === s.program_id)?.name ?? '',
-      }))
-      .filter((s) => engineId === null || s.module?.runs_on === engineName)
-      .map(({ module, ...s }) => ({ ...s, tool_module_name: module?.name ?? '' }));
-    return HttpResponse.json(page(rows));
-  }),
-  route('GET /engines/:engine_id/modules', () => HttpResponse.json(page(moduleRows))),
-  route('PATCH /engines/:engine_id/modules', async ({ request }) => {
-    const body = (await request.json()) as { modules: { name: string; is_enabled: boolean }[] };
-    for (const change of body.modules) {
-      const row = moduleRows.find((m) => m.name === change.name);
-      if (row !== undefined) row.is_enabled = change.is_enabled;
-    }
-    return HttpResponse.json(page(moduleRows));
-  }),
-  route('POST /engines/:engine_id/validate', () =>
-    HttpResponse.json({
-      ok: true,
-      issues: [{ level: 'advisory', message: 'Health check latency 420 ms is above 300 ms.' }],
-    }),
-  ),
-  route('POST /engines/:engine_id/verify-model', () => HttpResponse.json({ ok: true, issues: [] })),
   route('GET /logs', ({ request }) => {
     const query = new URL(request.url).searchParams;
     const engine = query.get('engine');

@@ -34,6 +34,10 @@ const TEXT: ReadonlyMap<string, string> = new Map([
   ['not_found', 'The selected item no longer exists.'],
   // Raised by backend/app/finding/service.py: the move is not in the triage lifecycle
   ['invalid_transition', 'The finding cannot move to this triage status from its current one.'],
+  ['reported_by_report', 'A finding becomes reported only when a report holding it is submitted.'],
+  // Raised by backend/app/report/service.py
+  ['not_confirmed', 'Only confirmed findings can go into a report.'],
+  ['report_submitted', 'A submitted report keeps only its platform report ID editable.'],
   // 409 conflict names the field that clashes with an existing row
   ['already_exists', 'This value already exists.'],
   // Pydantic reports these as the failure type

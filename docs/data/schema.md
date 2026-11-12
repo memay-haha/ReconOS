@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.15 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -36,7 +36,7 @@
 | Khu vực | Module: bảng |
 |---|---|
 | Tài khoản và vận hành | `core`: `user`, `user_session`, `system_setting`, `audit_log`. `user`: `login_attempt`, `worker`, `worker_token`, `saved_filter`. `dashboard`: `diagnostic_run` |
-| Program và scope | `program`: `program`, `program_user`, `proxy`. `scope`: `scope_rule`. `job`: `schedule` |
+| Program và scope | `program`: `program`, `program_user`, `proxy`. `scope`: `scope_rule`. `schedule`: `schedule` |
 | Tool module và job | `tool_module`: `tool_module`. `engine`: `engine`, `engine_variable`. `job`: `job`. `raw_output`: `raw_output` |
 | Tài sản | `asset`: `domain`, `ip`, `domain_ip`, `service`, `url`, `technology`, `url_technology`, `asset_event`. `screenshot`: `screenshot` |
 | Finding và báo cáo | `finding`: `finding`. `tag`: `tag`, `asset_tag`, `finding_tag`. `report`: `report`, `report_finding`. `alert`: `alert`, `alert_read` |
@@ -66,7 +66,7 @@
 | `program_user` | Gán User vào program | Admin, Superadmin không cần dòng gán |
 | `scope_rule` | Scope rule In-Scope, Out-of-Scope | `reason`: bắt buộc khi `scope_type` là `out_of_scope` |
 | `proxy` | Proxy của program | `url_encrypted`: URL proxy, có thể chứa tên đăng nhập và mật khẩu |
-| `schedule` | Lịch quét định kỳ | `target`, `params`: mục tiêu và tham số của job do lịch sinh ra. `next_run_at`: lần chạy kế tiếp |
+| `schedule` | Lịch quét định kỳ | `target`: mục tiêu dạng chuẩn đã qua kiểm tra scope khi lưu, kiểm lại mỗi lần chạy. `params`: tham số người dùng chọn, `default_params` của tool module điền lúc chạy. `interval_minutes`: từ 15 đến 525.600, ràng buộc CHECK. `next_run_at`: lần chạy kế tiếp, luôn có giá trị. `last_run_at`: lần gần nhất lịch tạo được job. Xóa program: xóa lịch theo |
 
 ### Tool module và job
 
@@ -75,7 +75,7 @@
 | `tool_module` | Cấu hình tool module, mỗi tool module đăng ký trong mã có một dòng | `name`: khớp tên đăng ký trong mã. `timeout_minutes`: thời hạn chạy một job. `rate_limit_per_minute` là `NULL`: không giới hạn tốc độ. `default_params`: chỉ khóa người vận hành chọn, mặc định còn lại nằm trong schema. Nhóm công cụ và schema tham số nằm trong mã |
 | `engine` | Kết nối tới Osmedeus, Vigolium | Mỗi engine có tool module chạy trên đó một dòng, migration tạo, giao diện không thêm engine. `base_url` rỗng, `is_enabled` là `false`, `api_key_encrypted` là `NULL` tới khi Superadmin nhập kết nối. Bật engine cần đủ `base_url` và API key. `settings`: cấu hình trên S16, S17, trừ thông tin xác thực, khóa theo bảng dưới. `llm_api_key_encrypted`: API key LLM của Vigolium, chỉ ghi. `version`, `last_tested_at`, `last_test_ok`: kết quả lần kiểm tra kết nối gần nhất. `api_key_updated_at`: lần đổi API key gần nhất. `ok_since`: lần healthcheck `ok` đầu tiên của chuỗi `ok` hiện tại, `NULL` khi lần gần nhất không `ok` |
 | `engine_variable` | Biến engine trên S16 | `value_encrypted`: giá trị đã mã hóa |
-| `job` | Job và trạng thái job | `target`: mục tiêu đã kiểm tra scope. `created_by` là `NULL`: job do `schedule` sinh. `worker_id`: ghi khi worker báo nhận. `last_heartbeat_at`: heartbeat gần nhất của job. `retry_of_job_id`: job cũ khi thử lại. `status_reason`: lý do hủy, từ chối, lỗi. `priority`: `0`, `1`, `2` ứng với `low`, `normal`, `high` của API. `tool_version`: phiên bản công cụ worker báo khi kết thúc job. `proxy_id`: xóa proxy thì đặt `NULL`, chỉ xóa được khi không còn job chưa kết thúc dùng proxy. `schedule_id` chưa có khóa ngoại tới khi có bảng `schedule`: nợ 50 trong [tech-debt.md](../tech-debt.md) |
+| `job` | Job và trạng thái job | `target`: mục tiêu đã kiểm tra scope. `created_by` là `NULL`: job do `schedule` sinh. `worker_id`: ghi khi worker báo nhận. `last_heartbeat_at`: heartbeat gần nhất của job. `retry_of_job_id`: job cũ khi thử lại. `status_reason`: lý do hủy, từ chối, lỗi. `priority`: `0`, `1`, `2` ứng với `low`, `normal`, `high` của API. `tool_version`: phiên bản công cụ worker báo khi kết thúc job. `proxy_id`: xóa proxy thì đặt `NULL`, chỉ xóa được khi không còn job chưa kết thúc dùng proxy. `schedule_id`: khóa ngoại tới `schedule`, xóa lịch thì đặt `NULL`, job giữ lịch sử |
 | `raw_output` | Metadata output thô, nội dung trong MinIO | `object_key`: khóa object trong MinIO. `sha256`: kiểm tra nguyên vẹn |
 
 ### Tài sản
@@ -100,8 +100,8 @@
 | `tag` | Danh mục tag key-value dùng chung | Một cặp `key`, `value` là một tag |
 | `asset_tag` | Tag gắn vào tài sản | Liên kết một tài sản |
 | `finding_tag` | Tag gắn vào finding | |
-| `report` | Báo cáo của program | `body`: Markdown. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay |
-| `report_finding` | Finding trong báo cáo | |
+| `report` | Báo cáo của program | `body`: Markdown, mặc định chuỗi rỗng. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay. `submitted_at`: có giá trị khi và chỉ khi `status` là `submitted`, ràng buộc CHECK. Xóa cứng program xóa báo cáo |
+| `report_finding` | Finding trong báo cáo | Khóa chính (`report_id`, `finding_id`). Một finding nằm được trong nhiều báo cáo. Xóa báo cáo hoặc finding xóa dòng |
 | `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id` |
 | `alert_read` | Tài khoản đã đọc cảnh báo | Không có dòng: chưa đọc |
 

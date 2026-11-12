@@ -178,6 +178,21 @@ describe('S20 findings explorer', () => {
     expect(await screen.findByText('Marked 2 findings false positive.')).toBeInTheDocument();
   });
 
+  it('drafts a report from the selection and links it (batch 11)', async () => {
+    const { calls } = open((call) =>
+      call.method === 'POST' && call.path === '/reports' ? json({ id: 'r9' }) : standard(call),
+    );
+    await screen.findByText('Finding f1');
+    await userEvent.click(screen.getByRole('button', { name: 'Bulk Triage' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create Report' }));
+    expect(await screen.findByRole('link', { name: 'Open the report' })).toHaveAttribute(
+      'href',
+      '/reports/r9',
+    );
+    const post = calls.find((c) => c.path === '/reports');
+    expect(post?.body).toMatchObject({ finding_ids: ['f1', 'f2'] });
+  });
+
   it('says nothing changed when the bulk call fails', async () => {
     open((call) => (call.method === 'POST' ? problem(409, 'conflict') : standard(call)));
     await screen.findByText('Finding f1');
@@ -218,12 +233,14 @@ describe('S20 findings explorer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Change status of Finding f1' }));
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: 'Duplicate' })).toBeNull();
-    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Reported' }));
+    // Reported comes only from submitting a report (batch 11).
+    expect(within(menu).queryByRole('menuitem', { name: 'Reported' })).toBeNull();
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Resolved' }));
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')).toEqual({
         method: 'PATCH',
         path: '/findings/f1',
-        body: { triage_status: 'reported', duplicate_of_id: null },
+        body: { triage_status: 'resolved', duplicate_of_id: null },
       }),
     );
   });

@@ -2,6 +2,7 @@
 
 import { type ReactElement, type RefObject, useState } from 'react';
 
+import { fieldErrorsOf } from '@/lib/api-client';
 import {
   type Engine,
   type EngineCheckResult,
@@ -222,6 +223,14 @@ function Toggle({
   );
 }
 
+/** The engine refuses to switch off the last module of a kind: an empty list may run them all. */
+export function moduleErrorText(error: unknown): string {
+  if (fieldErrorsOf(error).modules === 'module_required') {
+    return 'Keep at least one active and one passive module enabled.';
+  }
+  return 'Could not change the module. Try again later.';
+}
+
 /** Native modules read live from Vigolium (D3-B). Counts, then the first enabled modules by
  * name (M41); Manage All opens the whole list. */
 export function ModulesPanel({ engine }: { engine: Engine }): ReactElement {
@@ -304,7 +313,7 @@ export function ModulesPanel({ engine }: { engine: Engine }): ReactElement {
           </div>
           {patch.isError && (
             <p role="alert" className="text-body-default text-crit">
-              Could not change the module. Try again later.
+              {moduleErrorText(patch.error)}
             </p>
           )}
         </>

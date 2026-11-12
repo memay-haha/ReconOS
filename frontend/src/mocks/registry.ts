@@ -76,6 +76,11 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /engines/:engine_id/variables',
   'PUT /engines/:engine_id/variables/:key',
   'DELETE /engines/:engine_id/variables/:key',
+  // Batch 9: Vigolium native modules and checks (S17).
+  'GET /engines/:engine_id/modules',
+  'PATCH /engines/:engine_id/modules',
+  'POST /engines/:engine_id/validate',
+  'POST /engines/:engine_id/verify-model',
   // Batch 5: assets, tags and parse (S03, S04, S05).
   'GET /domains',
   'GET /domains/export',
@@ -110,6 +115,24 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /findings/:finding_id',
   'PATCH /findings/:finding_id',
   'PUT /findings/:finding_id/tags',
+  // Batch 12: periodic scans (S09, Schedules tab of S16).
+  'GET /programs/:program_id/schedules',
+  'POST /programs/:program_id/schedules',
+  'GET /schedules',
+  'PATCH /schedules/:schedule_id',
+  'DELETE /schedules/:schedule_id',
+  'POST /schedules/:schedule_id/run',
+  // Batch 11: reports.
+  'GET /reports',
+  'POST /reports',
+  'GET /reports/:report_id',
+  'PATCH /reports/:report_id',
+  'DELETE /reports/:report_id',
+  'POST /reports/:report_id/submit',
+  'GET /reports/:report_id/export',
+  // Batch 8: approval of exploit jobs (S10).
+  'POST /jobs/:job_id/approve',
+  'POST /jobs/:job_id/reject',
   // Batch 7: screenshots (S06, S07).
   'GET /screenshots',
   'GET /screenshots/summary',

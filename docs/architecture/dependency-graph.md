@@ -1,6 +1,6 @@
 # Đồ thị phụ thuộc
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 12: Đồ thị phụ thuộc
 > Liên quan: [modules.md](modules.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -50,7 +50,7 @@ Module ở tầng trên được phép gọi `service.py` của module ở tần
 | 3 | `program`, `tool_module`, `engine` | Tầng 0 đến 2 |
 | 4 | `scope` | Tầng 0 đến 3 |
 | 5 | `asset`, `job` | Tầng 0 đến 4 |
-| 6 | `raw_output`, `screenshot`, `finding` | Tầng 0 đến 5 |
+| 6 | `raw_output`, `screenshot`, `finding`, `schedule` | Tầng 0 đến 5 |
 | 7 | `parser`, `dispatcher`, `report` | Tầng 0 đến 6 |
 | 8 | `dashboard` | Tầng 0 đến 7, chỉ đọc |
 
@@ -76,6 +76,7 @@ flowchart BT
     job["job"] --> scope
     job --> tool
     raw["raw_output"] --> job
+    schedule["schedule"] --> job
     screenshot["screenshot"] --> asset
     finding["finding"] --> asset
     parser["parser"] --> screenshot
@@ -102,7 +103,7 @@ flowchart BT
 | Output thô đã lưu cần parse | `raw_output` xếp task parse theo tên task bằng `queue_task`, gửi sau commit. `parser` nhận task, không bị `raw_output` import. `parser` tự đăng ký tool module có parser qua `register_parser` của `raw_output` khi import |
 | Xóa cứng program cần xóa object MinIO | `program` xếp task `reconos.purge_program_objects` theo tên. Task nằm trong `app/background/`, gọi `delete_prefix` của `app/core/storage.py` |
 | Finding liên kết output thô cùng tầng | Chỉ khóa ngoại tới bảng output thô. `finding` không gọi `raw_output` |
-| Model cần khóa ngoại tới tầng trên | Khai báo khóa ngoại bằng tên bảng dạng chuỗi, không import model của tầng trên |
+| Model cần khóa ngoại tới tầng trên | Khai báo khóa ngoại bằng tên bảng dạng chuỗi, không import model của tầng trên. Ví dụ `job.schedule_id` tới `schedule` |
 | `core` lọc program theo `program_user`. `program` đếm scope rule, tài sản, job cho danh sách program. `scope` đếm domain khớp rule. `tag` kiểm tra tài sản và trạng thái program khi gắn tag | Đọc bảng tầng trên bằng `sqlalchemy.table()` với tên bảng, tên cột dạng chuỗi, chỉ đọc. Không import model, không gọi service của tầng trên |
 | Danh sách nhật ký thao tác cần tên tài khoản | `audit_log` join bảng `user` theo cột UUID `user_id`, cột này không có khóa ngoại. `audit_log` không gọi `user`. Response của đợt 2a chưa có trường tên tài khoản |
 

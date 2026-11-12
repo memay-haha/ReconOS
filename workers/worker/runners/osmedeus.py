@@ -11,15 +11,13 @@ import math
 import time
 import zipfile
 from collections.abc import Callable, Iterator
-from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from types import TracebackType
 from typing import IO, Any, ClassVar, Final
 
 import httpx
 import structlog
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict
 
 from contracts.job_status import FinishStatus, JobHeartbeatAction
 from contracts.tasks import EngineSpec, JobSpec
@@ -35,12 +33,9 @@ from contracts.tool_modules.osmedeus import (
     workspace_name,
 )
 from worker.runners.base import Runner, RunResult
+from worker.runners.engine_client import EngineClient, EngineError
 
 API_KEY_HEADER: Final = "x-osm-api-key"
-MAX_RETRIES: Final = 5
-BACKOFF_BASE_SECONDS: Final = 1.0
-BACKOFF_MAX_SECONDS: Final = 30.0
-TIMEOUT: Final = httpx.Timeout(connect=10.0, read=60.0, write=60.0, pool=10.0)
 # The engine zips the whole workspace before it answers.
 DOWNLOAD_TIMEOUT: Final = httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0)
 DOWNLOAD_CHUNK_BYTES: Final = 1024 * 1024
@@ -55,16 +50,6 @@ TERMINAL: Final = frozenset(
 RESERVED_PARAMS: Final = frozenset({"target", "space_name", "tactic", "threads_hold"})
 
 log = structlog.get_logger(__name__)
-
-
-class EngineError(Exception):
-    """The engine refused a call or stayed unreachable after retries.
-
-    The message names the call and the problem only: no URL, key or body.
-    """
-
-    def __init__(self, action: str, problem: str) -> None:
-        super().__init__(f"engine {problem} on {action}")
 
 
 class PackageTooLargeError(Exception):
@@ -95,68 +80,13 @@ class _ServerInfo(BaseModel):
     version: str | None = None
 
 
-def _backoff(attempt: int) -> float:
-    return float(min(BACKOFF_BASE_SECONDS * 2.0**attempt, BACKOFF_MAX_SECONDS))
+class OsmedeusClient(EngineClient):
+    """REST client of one Osmedeus server."""
 
+    engine = ENGINE
 
-class OsmedeusClient(AbstractContextManager["OsmedeusClient"]):
-    """REST client of one engine. Retries network errors and 5xx only."""
-
-    def __init__(
-        self,
-        engine: EngineSpec,
-        *,
-        transport: httpx.BaseTransport | None = None,
-        sleep: Callable[[float], None] = time.sleep,
-    ) -> None:
-        self._sleep = sleep
-        self._http = httpx.Client(
-            base_url=engine.base_url.rstrip("/"),
-            headers={API_KEY_HEADER: engine.api_key.get_secret_value()},
-            timeout=TIMEOUT,
-            transport=transport,
-            follow_redirects=False,
-        )
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        self._http.close()
-
-    def _send(self, request: Callable[[], httpx.Response], action: str) -> httpx.Response:
-        for attempt in range(MAX_RETRIES + 1):
-            try:
-                response = request()
-            except httpx.TransportError as exc:
-                if attempt == MAX_RETRIES:
-                    raise EngineError(action, "unreachable") from exc
-                log.warning("engine_call_retry", engine=ENGINE, action=action, attempt=attempt + 1)
-                self._sleep(_backoff(attempt))
-                continue
-            if response.status_code < 500:
-                return response
-            if attempt == MAX_RETRIES:
-                break
-            log.warning(
-                "engine_call_retry",
-                engine=ENGINE,
-                action=action,
-                attempt=attempt + 1,
-                status=response.status_code,
-            )
-            self._sleep(_backoff(attempt))
-        raise EngineError(action, "kept failing")
-
-    def _json[M: BaseModel](self, response: httpx.Response, model: type[M], action: str) -> M:
-        if response.status_code >= 400:
-            raise EngineError(action, f"status {response.status_code}")
-        try:
-            return model.model_validate_json(response.content)
-        except ValidationError as exc:
-            raise EngineError(action, "unexpected body") from exc
+    def auth_headers(self, api_key: str) -> dict[str, str]:
+        return {API_KEY_HEADER: api_key}
 
     def version(self) -> str | None:
         response = self._send(lambda: self._http.get("/server-info"), "server_info")

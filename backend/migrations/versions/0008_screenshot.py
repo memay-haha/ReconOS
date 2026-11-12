@@ -2,10 +2,10 @@
 
 Table: docs/data/schema.md, following app/screenshot/models.py. One
 `tool_module` row for `gowitness`, registered in contracts/: docs/data/database.md,
-section Migration. Batch 7 starts from 0006; the batch merge chains it.
+section Migration. Chained after 0009 when batch 7 merged with dev.
 
 Revision ID: 0008
-Revises: 0006
+Revises: 0009
 Create Date: 2026-11-12 18:51:40.237882+00:00
 
 """
@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '0008'
-down_revision: Union[str, Sequence[str], None] = '0006'
+down_revision: Union[str, Sequence[str], None] = '0009'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

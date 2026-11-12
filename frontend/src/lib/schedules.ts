@@ -5,24 +5,33 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from './api-client';
 import { type Page, withQuery } from './page';
 
-/** A row of `schedule`: docs/data/schema.md. The jobs it creates carry `created_by` null. */
+/** A row of `GET /programs/{id}/schedules` and `GET /schedules`: the `schedule` table
+ * (docs/data/schema.md) with both names joined. The jobs Celery Beat creates carry
+ * `created_by` null. */
 export interface Schedule {
   readonly id: string;
   readonly program_id: string;
+  readonly program_name: string;
   readonly tool_module_id: string;
+  readonly tool_module_name: string;
   readonly target: readonly string[];
   readonly params: Readonly<Record<string, unknown>>;
   readonly interval_minutes: number;
   readonly is_enabled: boolean;
   readonly created_by: string | null;
   readonly last_run_at: string | null;
-  readonly next_run_at: string | null;
+  readonly next_run_at: string;
   readonly created_at: string;
 }
+
+/** Bounds of `interval_minutes`, checked again by the backend: docs/data/schema.md. */
+export const MIN_INTERVAL_MINUTES = 15;
+export const MAX_INTERVAL_MINUTES = 525_600;
 
 export interface ScheduleBody {
   readonly tool_module_id: string;
   readonly target: readonly string[];
+  readonly params?: Readonly<Record<string, unknown>>;
   readonly interval_minutes: number;
   readonly is_enabled?: boolean;
 }
@@ -36,12 +45,8 @@ export function formatInterval(minutes: number): string {
   return `${COUNT.format(minutes)} min`;
 }
 
-/** `GET /schedules?engine_id=` adds both names to every row; `GET /programs/{id}/schedules`
- * does not promise them. */
-export interface ScheduleRow extends Schedule {
-  readonly program_name?: string;
-  readonly tool_module_name?: string;
-}
+/** Kept for the S16 tab, which reads the same row. */
+export type ScheduleRow = Schedule;
 
 /** One program's schedules, or every schedule whose tool module runs on an engine (S16). */
 export type ScheduleFilter = { readonly programId: string } | { readonly engineId: string };
@@ -87,10 +92,11 @@ export function useCreateSchedule(programId: string) {
   );
 }
 
-/** Also turns a schedule on or off: `PATCH` with `is_enabled`. */
+/** Also turns a schedule on or off: `PATCH` with `is_enabled`. The tool module stays. */
 export function useUpdateSchedule() {
-  return useScheduleMutation(({ id, body }: { id: string; body: Partial<ScheduleBody> }) =>
-    apiRequest<Schedule>(`/schedules/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  return useScheduleMutation(
+    ({ id, body }: { id: string; body: Partial<Omit<ScheduleBody, 'tool_module_id'>> }) =>
+      apiRequest<Schedule>(`/schedules/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   );
 }
 

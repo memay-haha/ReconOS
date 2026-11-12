@@ -69,3 +69,4 @@ Chạy từ gốc repo sau `make init`:
 | `uv run uvicorn app.main:app --reload --app-dir backend` | Chạy Backend API khi phát triển |
 | `uv run --directory backend python -m app.dispatcher` | Chạy dispatcher |
 | `uv run --directory backend celery -A app.background.celery_app worker -Q parse,schedule` | Chạy tiến trình nền |
+| `uv run --directory backend celery -A app.background.celery_app beat` | Chạy Celery Beat: gửi task `reconos.run_due_schedules` mỗi 60 giây |

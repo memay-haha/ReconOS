@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { type ReactElement, Suspense, useDeferredValue, useEffect, useRef, useState } from 'react';
 
 import { Pagination, useCursorStack } from '@/components/pagination';
 import { fieldErrorsOf } from '@/lib/api-client';
 import { fieldErrorText } from '@/lib/field-error-text';
+import { useCreateReport } from '@/lib/reports';
 import { useQueryParam } from '@/lib/url-params';
 import { useDomains } from '@/lib/domains';
 import {
@@ -162,7 +164,10 @@ function FindingsScreen(): ReactElement {
   const [programId, setProgramId] = useState(useQueryParam('program_id') ?? '');
   const [domainId, setDomainId] = useState('');
   const [severity, setSeverity] = useState<readonly Severity[]>([]);
-  const [triage, setTriage] = useState<TriageStatus | ''>('');
+  const triageParam = useQueryParam('triage_status');
+  const [triage, setTriage] = useState<TriageStatus | ''>(
+    TRIAGE_STATUSES.find((s) => s === triageParam) ?? '',
+  );
   const [hideFp, setHideFp] = useState(false);
   const [limit, setLimit] = useState(10);
   const [selected, setSelected] = useState<ReadonlyMap<string, FindingRow>>(new Map());
@@ -173,6 +178,8 @@ function FindingsScreen(): ReactElement {
   const domains = useDomains({ programId, limit: 200 }, null, { enabled: programId !== '' });
   const toolModules = useToolModules();
   const bulk = useBulkTriage();
+  const createReport = useCreateReport();
+  const [newReportId, setNewReportId] = useState<string | null>(null);
   const patch = usePatchFinding();
   const copy = useCopyFindingMarkdown();
   const createJob = useCreateJob();
@@ -240,6 +247,31 @@ function FindingsScreen(): ReactElement {
           setNote(
             `Marked ${COUNT.format(ids.length)} ${ids.length === 1 ? 'finding' : 'findings'} ${TRIAGE_LABEL[status].toLowerCase()}.`,
           );
+          setSelected(new Map());
+        },
+      },
+    );
+  };
+
+  /** Batch 11: a draft report from the selection. One program per report, and only confirmed
+   * findings: the backend refuses anything else and the screen shows why. */
+  const startReport = () => {
+    const first = [...selected.values()][0];
+    if (first === undefined || programsInBatch !== 1) return;
+    setNote(null);
+    setNewReportId(null);
+    createReport.mutate(
+      {
+        program_id: first.program_id,
+        title:
+          ids.length === 1
+            ? first.name
+            : `${first.program_name}: ${COUNT.format(ids.length)} findings`,
+        finding_ids: ids,
+      },
+      {
+        onSuccess: (report) => {
+          setNewReportId(report.id);
           setSelected(new Map());
         },
       },
@@ -487,6 +519,22 @@ function FindingsScreen(): ReactElement {
               </span>
               False Positive
             </button>
+            <button
+              type="button"
+              onClick={startReport}
+              disabled={
+                createReport.isPending || programsInBatch !== 1 || selected.size > BULK_TRIAGE_MAX
+              }
+              title={
+                programsInBatch === 1
+                  ? 'Draft a report from the selected confirmed findings'
+                  : 'A report holds findings of one program'
+              }
+              className={BULK_BUTTON}
+            >
+              <Icon name="summarize" />
+              {createReport.isPending ? 'Creating…' : 'Create Report'}
+            </button>
             <a href={findingExportHref(filter, 'csv', ids)} download className={BULK_BUTTON}>
               <Icon name="file_download" />
               Export
@@ -514,6 +562,21 @@ function FindingsScreen(): ReactElement {
       {patch.isError && (
         <p role="alert" className="text-body-default text-crit">
           {triageErrorText(patch.error)}
+        </p>
+      )}
+      {newReportId !== null && (
+        <p role="status" className="text-body-default text-good">
+          Draft report created.{' '}
+          <Link href={`/reports/${newReportId}`} className="font-semibold underline">
+            Open the report
+          </Link>
+        </p>
+      )}
+      {createReport.isError && (
+        <p role="alert" className="text-body-default text-crit">
+          {fieldErrorsOf(createReport.error).finding_ids === 'not_confirmed'
+            ? 'Only confirmed findings go into a report. Confirm the selection first.'
+            : saveErrorText(createReport.error)}
         </p>
       )}
       {createJob.isError && (

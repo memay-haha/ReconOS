@@ -93,6 +93,9 @@ class Runner(ABC):
     output_files: ClassVar[tuple[str, ...]] = ()
     # Files holding credentials, removed as soon as the tool stops (G7).
     secret_files: ClassVar[tuple[str, ...]] = ()
+    # Exit codes that mean the tool ran to the end. Some tools exit 1 to say
+    # "findings reported", which is a success for the job.
+    success_exit_codes: ClassVar[frozenset[int]] = frozenset({0})
 
     @classmethod
     def spec(cls) -> ToolModuleSpec:
@@ -160,7 +163,7 @@ class Runner(ABC):
                     return RunResult(FinishStatus.FAILED, "tool exceeded the job time limit")
                 code = process.wait(timeout=min(job.heartbeat_seconds, remaining))
                 if code is not None:
-                    if code == 0:
+                    if code in self.success_exit_codes:
                         return RunResult(FinishStatus.COMPLETED)
                     return RunResult(FinishStatus.FAILED, f"tool exited with code {code}")
                 if heartbeat() is JobHeartbeatAction.CANCEL:

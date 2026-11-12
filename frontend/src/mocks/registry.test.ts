@@ -41,12 +41,13 @@ describe('IMPLEMENTED', () => {
     expect(IMPLEMENTED).toContain('GET /findings');
     expect(IMPLEMENTED).toContain('GET /dispatcher/status');
     expect(IMPLEMENTED).toContain('GET /domains');
+    expect(IMPLEMENTED).toContain('POST /jobs/:job_id/approve');
+    expect(IMPLEMENTED).toContain('POST /jobs/:job_id/reject');
   });
 
   it('does not claim an endpoint the backend has not built', () => {
     expect(IMPLEMENTED).not.toContain('GET /alerts');
     expect(IMPLEMENTED).not.toContain('GET /jobs/:job_id/logs');
-    expect(IMPLEMENTED).not.toContain('POST /jobs/:job_id/approve');
   });
 
   it('names only operations the contract defines, so a typo cannot hide a mock', () => {

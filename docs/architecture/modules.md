@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -37,7 +37,8 @@
 | `tag` | Tag tùy biến gắn vào tài sản, finding (G2) | |
 | `tool_module` | Danh mục tool module, cấu hình trong CSDL. Danh sách công cụ và phiên bản worker báo | S15, S18 |
 | `engine` | Cấu hình kết nối, biến engine, `settings` của Osmedeus, Vigolium. Đọc workflow, native module qua REST của engine | S16, S17 |
-| `job` | Tạo job đơn lẻ và hàng loạt, kiểm tra scope trước khi tạo, trạng thái, duyệt, ưu tiên, dọn hàng đợi. Lịch quét định kỳ, chạy ngay một lịch và task `schedule` tạo job định kỳ | S09, S10 |
+| `job` | Tạo job đơn lẻ và hàng loạt, kiểm tra scope trước khi tạo, trạng thái, duyệt, ưu tiên, dọn hàng đợi. Tạo job từ lịch qua `create_scheduled_job` | S09, S10 |
+| `schedule` | Lịch quét định kỳ của program, chạy ngay một lịch, chọn lịch đến hạn cho task `schedule`. Mọi job do lịch sinh đi qua service của `job` (G5) | S09, S16 |
 | `dispatcher` | Giao job cho worker: [system.md](system.md) | S10, S15 |
 | `raw_output` | Nhận, lưu, tra cứu, tải về output thô (G8) | |
 | `parser` | Chọn parser theo tool module, chạy parser trong tiến trình nền. Không sở hữu bảng: ghi tài sản qua service của `asset`, trạng thái parse qua service của `raw_output` | |
