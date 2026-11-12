@@ -8,21 +8,22 @@ so a module never re-implements either: docs/security/authorization.md.
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from sqlalchemy import (
     ColumnElement,
     DateTime,
     Integer,
+    Row,
     ScalarSelect,
     Select,
+    TableClause,
     and_,
-    cast,
     column,
+    distinct,
     func,
     literal,
-    null,
     or_,
     select,
     table,
@@ -47,6 +48,7 @@ from app.core.pagination import (
     encode_cursor,
 )
 from app.core.security import program_visible_to
+from app.core.tasks import PARSE_QUEUE, PURGE_PROGRAM_OBJECTS_TASK, queue_task
 from app.program.models import Program, ProgramStatus, ProgramUser, Proxy
 from app.program.schemas import (
     ProgramAction,
@@ -81,12 +83,66 @@ def _rule_count(scope_type: str) -> ScalarSelect[int]:
 
 _IN_SCOPE_RULE_COUNT = _rule_count("in_scope")
 _OUT_OF_SCOPE_RULE_COUNT = _rule_count("out_of_scope")
-# The domain, finding and job tables arrive in later batches. Until then the
-# sort keys and filters built on them read as "nothing yet", so the endpoint
-# already accepts every documented parameter: docs/api/openapi.yaml.
-_DOMAIN_COUNT: ColumnElement[int] = literal(0, Integer)
+
+# Asset tables belong to asset, two tiers up, and job to job: read by table
+# name only, docs/architecture/dependency-graph.md. Computed fields:
+# docs/api/architecture.md.
+_domain = table(
+    "domain",
+    column("program_id"),
+    column("deleted_at"),
+    column("in_scope"),
+    column("first_seen_at"),
+)
+_ip = table("ip", column("program_id"))
+_url = table("url", column("program_id"), column("first_seen_at"))
+_service = table("service", column("program_id"), column("ip_id"), column("port"))
+_job_finished = table("job", column("program_id"), column("finished_at"))
+_DAY = timedelta(hours=24)
+
+
+def _per_program(
+    source: TableClause, aggregate: ColumnElement[Any], *where: ColumnElement[bool]
+) -> ScalarSelect[Any]:
+    return (
+        select(aggregate)
+        .select_from(source)
+        .where(source.c.program_id == Program.id, *where)
+        .correlate(Program)
+        .scalar_subquery()
+    )
+
+
+_live_domain = _domain.c.deleted_at.is_(None)
+_DOMAIN_COUNT = _per_program(_domain, func.count(), _live_domain)
+_DOMAIN_IN_SCOPE_COUNT = _per_program(
+    _domain, func.count(), _live_domain, _domain.c.in_scope.is_(True)
+)
+_DOMAIN_NEW_TODAY = _per_program(
+    _domain, func.count(), _live_domain, _domain.c.first_seen_at >= func.now() - _DAY
+)
+_IP_COUNT = _per_program(_ip, func.count())
+_URL_COUNT = _per_program(_url, func.count())
+_URL_NEW_TODAY = _per_program(_url, func.count(), _url.c.first_seen_at >= func.now() - _DAY)
+_SERVICE_COUNT = _per_program(_service, func.count())
+_IP_RESOLVED_COUNT = _per_program(_service, func.count(distinct(_service.c.ip_id)))
+_SERVICE_PORT_COUNT = _per_program(_service, func.count(distinct(_service.c.port)))
+_LAST_JOB_FINISHED_AT = _per_program(_job_finished, func.max(_job_finished.c.finished_at))
+# The finding and screenshot tables arrive in batches 6 and 7: tech-debt.md, debt 47.
 _FINDING_CRITICAL_COUNT: ColumnElement[int] = literal(0, Integer)
-_LAST_JOB_FINISHED_AT: ColumnElement[datetime] = cast(null(), DateTime(timezone=True))
+
+_COMPUTED: dict[str, Any] = {
+    "domain_count": _DOMAIN_COUNT,
+    "domain_in_scope_count": _DOMAIN_IN_SCOPE_COUNT,
+    "domain_new_today": _DOMAIN_NEW_TODAY,
+    "ip_count": _IP_COUNT,
+    "url_count": _URL_COUNT,
+    "url_new_today": _URL_NEW_TODAY,
+    "service_count": _SERVICE_COUNT,
+    "ip_resolved_count": _IP_RESOLVED_COUNT,
+    "service_port_count": _SERVICE_PORT_COUNT,
+    "last_job_finished_at": _LAST_JOB_FINISHED_AT,
+}
 # Stands in for "never" so a descending keyset over a nullable time stays total.
 _NEVER = datetime(1, 1, 1, tzinfo=UTC)
 
@@ -184,28 +240,43 @@ async def get_writable_program(
     return program
 
 
-def _row_select() -> Select[Program, int, int, str]:
+def _row_select() -> Select[Any]:
     return (
         select(
             Program,
             _IN_SCOPE_RULE_COUNT.label("in_scope_rule_count"),
             _OUT_OF_SCOPE_RULE_COUNT.label("out_of_scope_rule_count"),
             User.username.label("created_by_username"),
+            *(expression.label(name) for name, expression in _COMPUTED.items()),
         )
         .select_from(Program)
         .outerjoin(User, User.id == Program.created_by)
     )
 
 
-def _row(
-    program: Program, in_scope: int, out_of_scope: int, username: str | None
-) -> ProgramRowResponse:
+def _row(row: Row[Any]) -> ProgramRowResponse:
+    fields = row._mapping
+    domains = fields["domain_count"] or 0
     return ProgramRowResponse.model_validate(
         {
-            **ProgramResponse.model_validate(program).model_dump(),
-            "in_scope_rule_count": in_scope,
-            "out_of_scope_rule_count": out_of_scope,
-            "created_by_username": username,
+            **ProgramResponse.model_validate(fields[Program]).model_dump(),
+            "in_scope_rule_count": fields["in_scope_rule_count"],
+            "out_of_scope_rule_count": fields["out_of_scope_rule_count"],
+            "created_by_username": fields["created_by_username"],
+            "domain_count": domains,
+            "ip_count": fields["ip_count"] or 0,
+            "url_count": fields["url_count"] or 0,
+            "service_count": fields["service_count"] or 0,
+            "ip_resolved_count": fields["ip_resolved_count"] or 0,
+            "service_port_count": fields["service_port_count"] or 0,
+            "last_job_finished_at": fields["last_job_finished_at"],
+            "scope_coverage": (
+                round(fields["domain_in_scope_count"] / domains, 4) if domains else None
+            ),
+            "assets_new_today": {
+                "domain": fields["domain_new_today"] or 0,
+                "url": fields["url_new_today"] or 0,
+            },
         }
     )
 
@@ -220,7 +291,7 @@ async def get_program_row(
     ).first()
     if row is None:
         raise NotFoundError(detail="program does not exist")
-    return _row(row[0], row[1], row[2], row[3])
+    return _row(row)
 
 
 def _list_filter(
@@ -304,10 +375,12 @@ async def list_programs(
     total = await session.scalar(select(func.count()).select_from(Program).where(where)) or 0
     page_rows = rows[:size]
     next_cursor = (
-        _encode_sort_cursor(page_rows[-1][4], page_rows[-1][0].id) if len(rows) > size else None
+        _encode_sort_cursor(page_rows[-1].sort_value, page_rows[-1][0].id)
+        if len(rows) > size
+        else None
     )
     return Page[ProgramRowResponse](
-        items=[_row(r[0], r[1], r[2], r[3]) for r in page_rows],
+        items=[_row(r) for r in page_rows],
         next_cursor=next_cursor,
         total=total,
     )
@@ -422,7 +495,8 @@ async def delete_programs(
 ) -> None:
     """Hard delete. Rows with a program_id go with it through ON DELETE CASCADE.
 
-    The audit trail stays, detached from the program: docs/data/database.md.
+    The audit trail stays, detached from the program. The raw output objects are
+    removed by a background task after the commit: docs/data/database.md.
     """
     programs = await _locked_programs(session, viewer=actor, program_ids=program_ids)
     ids = [program.id for program in programs]
@@ -441,6 +515,15 @@ async def delete_programs(
     for program in programs:
         await session.delete(program)
     await session.flush()
+    for program_id in ids:
+        # The rows go now; the MinIO objects under `<program_id>/` go in the
+        # background once this commits, retried on failure: docs/data/database.md.
+        queue_task(
+            session,
+            PURGE_PROGRAM_OBJECTS_TASK,
+            queue=PARSE_QUEUE,
+            kwargs={"program_id": str(program_id)},
+        )
 
 
 # --- assigned Users -------------------------------------------------------------

@@ -52,6 +52,31 @@ async def delete_object(key: str, settings: Settings | None = None) -> None:
         await client.delete_object(Bucket=bucket, Key=key)
 
 
+# S3 DeleteObjects takes at most 1000 keys per call.
+_BAD_PREFIX = "prefix must name one folder"
+_DELETE_BATCH = 1000
+
+
+async def delete_prefix(prefix: str, settings: Settings | None = None) -> int:
+    """Delete every object under `prefix`. Only for a program hard delete (G8).
+
+    Returns the number of objects removed. Running it again removes nothing
+    more, so a retry is safe.
+    """
+    if not prefix.endswith("/") or prefix == "/":
+        raise ValueError(_BAD_PREFIX)
+    removed = 0
+    async with object_storage(settings) as (client, bucket):
+        paginator = client.get_paginator("list_objects_v2")
+        async for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            keys = [{"Key": item["Key"]} for item in page.get("Contents", [])]
+            for start in range(0, len(keys), _DELETE_BATCH):
+                batch = keys[start : start + _DELETE_BATCH]
+                await client.delete_objects(Bucket=bucket, Delete={"Objects": batch, "Quiet": True})
+                removed += len(batch)
+    return removed
+
+
 # S3 multipart parts must be at least 5 MiB, except the last one.
 PART_SIZE = 8 * 1024 * 1024
 

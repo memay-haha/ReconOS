@@ -50,6 +50,7 @@ export function EngineConnection({
   children?: ReactNode;
 }): ReactElement {
   const [baseUrl, setBaseUrl] = useState(engine.base_url);
+  const [enabled, setEnabled] = useState(engine.is_enabled);
   const [saved, setSaved] = useState(false);
   // Uncontrolled, so the key never sits in a React value attribute: .claude/rules/security.md.
   const keyRef = useRef<HTMLInputElement>(null);
@@ -64,6 +65,7 @@ export function EngineConnection({
     const apiKey = keyRef.current?.value ?? '';
     const body: EnginePatchBody = {
       base_url: baseUrl,
+      is_enabled: enabled,
       ...(apiKey === '' ? {} : { api_key: apiKey }),
       ...extra?.(),
     };
@@ -139,6 +141,16 @@ export function EngineConnection({
           ? 'The key has not been changed since the engine was added.'
           : `Key changed ${formatMoment(keyChanged)}. Write-only: it is never shown again.`}
       </p>
+      <label className="flex items-center gap-space-sm text-body-default text-fg">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+          className="h-4 w-4 accent-primary-container"
+        />
+        Engine enabled: jobs of its tool modules run on it
+      </label>
+      <FieldError errors={fields} field="is_enabled" />
       {children}
       {general && (
         <p role="alert" className="text-body-default text-crit">

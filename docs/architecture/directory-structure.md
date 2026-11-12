@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -47,11 +47,11 @@
 | Đường dẫn | Vai trò |
 |---|---|
 | `app/main.py` | Khởi tạo FastAPI, gắn router các module |
-| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime. `realtime_router.py` giữ endpoint WebSocket `/api/v1/ws`, vì endpoint này không thuộc module nghiệp vụ nào |
+| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime, gửi task nền sau commit trong `tasks.py`. `realtime_router.py` giữ endpoint WebSocket `/api/v1/ws`, vì endpoint này không thuộc module nghiệp vụ nào |
 | `app/<module>/` | Một module nghiệp vụ. Tên thư mục theo tên trong mã của [glossary](../appendix/glossary.md) |
 | `app/dispatcher/` | Mã của tiến trình dispatcher, chạy bằng `python -m app.dispatcher` |
-| `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py`, lịch trong `beat.py`, task trong `tasks.py` gọi service của module |
-| `app/parser/` | Parser, một file một công cụ, đăng ký trong `registry.py` |
+| `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py` chỉ dựng app và liệt kê file task trong `TASK_MODULES`, lịch trong `beat.py`. Task theo nhóm, mỗi nhóm một file gọi service của module: `parse_tasks.py`, `asset_tasks.py`, `program_tasks.py`. `runtime.py` chạy một đơn vị công việc trong session riêng |
+| `app/parser/` | Lớp cơ sở `base.py`, parser một file một công cụ hoặc một engine như `osmedeus.py`, đăng ký trong `registry.py`. `service.py` chạy một lượt parse |
 | `migrations/` | Migration Alembic của CSDL chính |
 | `migrations_log/` | Migration Alembic của CSDL log `reconos_log` |
 | `tests/` | Test của backend |
@@ -59,7 +59,7 @@
 - Mỗi module tự chứa: `router.py` là endpoint, `service.py` là nghiệp vụ, `models.py` là model SQLAlchemy, `schemas.py` là schema Pydantic.
 - Module không sở hữu bảng nào thì không có `models.py`. Bảng mà mọi tầng đều cần nằm trong `app/core/`: [dependency-graph.md](dependency-graph.md).
 - Module chỉ gọi module khác qua `service.py`.
-- Module được có file riêng cho phần thuần không truy cập CSDL, ví dụ `app/scope/matching.py` so khớp scope. Module khác vẫn gọi qua `service.py` của module đó.
+- Module được có file riêng cho phần không truy cập CSDL hoặc phần lớn tách khỏi `service.py`, ví dụ `app/scope/matching.py` so khớp scope, `app/engine/adapters.py` gọi REST của từng engine, `app/asset/ingest.py` upsert tài sản, `app/asset/export.py` định dạng file xuất. Module khác vẫn gọi qua `service.py` của module đó.
 - `app/core/models.py` import model của mọi module để Alembic tạo migration.
 - Danh sách module và trách nhiệm: [modules.md](modules.md).
 - Mã backend chạy thành nhiều tiến trình: Backend API, dispatcher, tiến trình nền, Celery Beat. Vai trò từng tiến trình: [system.md](system.md).
@@ -74,7 +74,7 @@
 | `worker/client.py` | Gọi API backend: báo trạng thái job, gửi output thô, gửi log theo lô |
 | `worker/heartbeat.py` | Heartbeat worker: tool module, phiên bản công cụ, tải CPU |
 | `worker/logging.py` | Cấu hình structlog, bộ đệm log gửi về Backend API |
-| `worker/runners/` | Runner, một file một công cụ, gọi công cụ qua tiến trình con. `base.py` giữ lớp cơ sở và bảng đăng ký, `__init__.py` import từng runner |
+| `worker/runners/` | Runner, một file một tool module, gọi công cụ qua tiến trình con hoặc gọi REST của engine. `base.py` giữ lớp cơ sở và bảng đăng ký, `__init__.py` import từng runner. `osmedeus.py` giữ lớp chung của mọi runner `osmedeus_<workflow>.py`, không đăng ký tool module nào |
 | `tests/` | Test của worker |
 
 - ❌ Không import `backend/`. Không truy cập CSDL. Không parse output.
@@ -87,10 +87,10 @@
 | `contracts/raw_output.py` | Tên file, `Content-Type`, trạng thái parse của output thô |
 | `contracts/job_status.py` | Trạng thái job, trả lời heartbeat job, body finish |
 | `contracts/worker.py` | Heartbeat worker, log theo lô |
-| `contracts/tool_modules/` | Schema tham số và nhóm của tool module, một file một tool module, đăng ký trong `__init__.py` |
+| `contracts/tool_modules/` | Schema tham số và nhóm của tool module, một file một tool module, đăng ký trong `__init__.py`. `osmedeus.py` giữ schema tham số, tên workspace và model gói output thô chung của mọi tool module `osmedeus-<workflow>` |
 | `tests/` | Test của contract |
 
-- Chỉ chứa schema Pydantic và hằng số. ❌ Không chứa logic, không chứa model CSDL.
+- Chỉ chứa schema Pydantic, hằng số và hàm dựng tên dùng chung cho cả hai phía. ❌ Không chứa logic nghiệp vụ, không chứa model CSDL.
 - Nội dung contract: [external-services.md](../integrations/external-services.md).
 
 ### `frontend/`

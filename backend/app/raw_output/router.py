@@ -21,13 +21,19 @@ from app.user.service import CurrentWorker
 router = APIRouter(prefix="/api/v1", tags=["raw_output"])
 
 _readers = require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.USER)
+_operators = require_roles(UserRole.SUPERADMIN, UserRole.ADMIN)
 
 
 async def reader(request: Request, user: CurrentUser) -> User:
     return await _readers(user, request)
 
 
+async def operator(request: Request, user: CurrentUser) -> User:
+    return await _operators(user, request)
+
+
 Reader = Annotated[User, Depends(reader)]
+Operator = Annotated[User, Depends(operator)]
 
 
 @router.get("/jobs/{job_id}/raw-outputs", response_model=Page[RawOutputResponse])
@@ -67,6 +73,11 @@ async def download_raw_output(
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+@router.post("/raw-outputs/{raw_output_id}/reparse", status_code=204)
+async def reparse_raw_output(raw_output_id: uuid.UUID, actor: Operator, session: DbDep) -> None:
+    await service.request_reparse(session, actor=actor, raw_output_id=raw_output_id)
 
 
 @router.put("/worker/jobs/{job_id}/raw-outputs/{filename}", tags=["worker_contract"])

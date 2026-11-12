@@ -1,20 +1,11 @@
 import { HttpResponse } from 'msw';
 
 import { domains, ips, services, urls } from '../data/part-c';
-import { assetEvents, dashboardSummary } from '../data/part-d';
+import { dashboardSummary } from '../data/part-d';
 import { findings } from '../data/part-e';
 import { programs, toolModules } from '../data/programs';
 import { alerts } from '../data/stitch-a';
-import { allDomains } from '../data/stitch-b';
-import { jobs } from '../data/stitch-d';
 import { type MockRoute, page, route } from './helpers';
-
-/** The completed recon job that found the sample domains. */
-function discoveryJob() {
-  return jobs.find(
-    (j) => j.tool_module_name === 'osmedeus-domain-lite' && j.status === 'completed',
-  );
-}
 
 function contains(text: string | null | undefined, q: string): boolean {
   return (text ?? '').toLowerCase().includes(q);
@@ -134,75 +125,6 @@ export const stitchARoutes: readonly MockRoute[] = [
       assets_closed: { service: 74 * scale },
       findings_near_sla: 3,
     });
-  }),
-  // Tool module of the job on every event, ASN on IP events. Every event points at a job
-  // GET /jobs/:job_id knows (stitch-d), so S05 can name its discovery source. A domain with
-  // no sample event gets a discovery event, so every domain of stitch-b has a source.
-  route('GET /asset-events', ({ request }) => {
-    const search = new URL(request.url).searchParams;
-    const programId = search.get('program_id');
-    const domainId = search.get('domain_id');
-    const recon = discoveryJob();
-    const scan = jobs.find((j) => j.tool_module_name === 'nuclei') ?? recon;
-    const ip = ips[0];
-    const base = assetEvents.map((e, i) => ({
-      ...e,
-      job_id: i < 3 ? (recon?.id ?? e.job_id) : (scan?.id ?? e.job_id),
-      tool_module_name:
-        i < 3 ? (recon?.tool_module_name ?? null) : (scan?.tool_module_name ?? null),
-      asn: null as number | null,
-      asn_org: null as string | null,
-    }));
-    const ipEvent =
-      ip === undefined || assetEvents[0] === undefined
-        ? []
-        : [
-            {
-              ...assetEvents[0],
-              id: '0190d600-0000-7000-8000-0000000000ff',
-              domain_id: null,
-              ip_id: ip.id,
-              event_type: 'discovered' as const,
-              job_id: recon?.id ?? null,
-              diff: null,
-              created_at: new Date(Date.now() - 90_000).toISOString(),
-              asset_type: 'ip' as const,
-              asset_name: ip.address,
-              tool_module_name: recon?.tool_module_name ?? null,
-              asn: ip.asn,
-              asn_org: ip.asn_org,
-            },
-          ];
-    let rows = [...base, ...ipEvent];
-    if (domainId !== null && !rows.some((e) => e.domain_id === domainId)) {
-      const domain = allDomains().find((d) => d.id === domainId);
-      if (domain !== undefined && assetEvents[0] !== undefined) {
-        rows.push({
-          ...assetEvents[0],
-          id: `${domain.id.slice(0, 24)}ffffffffffff`,
-          program_id: domain.program_id,
-          domain_id: domain.id,
-          event_type: 'discovered',
-          job_id: recon?.id ?? null,
-          raw_output_id: null,
-          diff: null,
-          created_at: domain.first_seen_at,
-          asset_type: 'domain',
-          asset_name: domain.name,
-          program_name: programs.find((p) => p.id === domain.program_id)?.name ?? '',
-          tool_module_name: recon?.tool_module_name ?? null,
-          asn: null,
-          asn_org: null,
-        });
-      }
-    }
-    rows = rows
-      .filter((e) => programId === null || e.program_id === programId)
-      .filter((e) => domainId === null || e.domain_id === domainId);
-    const ascending = search.get('sort') === 'created_at';
-    rows.sort((x, y) => (ascending ? 1 : -1) * x.created_at.localeCompare(y.created_at));
-    const limit = Number(search.get('limit') ?? rows.length);
-    return HttpResponse.json({ ...page(rows.slice(0, limit)), total: rows.length });
   }),
   route('GET /alerts', ({ request }) => {
     const search = new URL(request.url).searchParams;

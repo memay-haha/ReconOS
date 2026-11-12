@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -73,7 +73,7 @@
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
 | `tool_module` | Cấu hình tool module, mỗi tool module đăng ký trong mã có một dòng | `name`: khớp tên đăng ký trong mã. `timeout_minutes`: thời hạn chạy một job. `rate_limit_per_minute` là `NULL`: không giới hạn tốc độ. `default_params`: chỉ khóa người vận hành chọn, mặc định còn lại nằm trong schema. Nhóm công cụ và schema tham số nằm trong mã |
-| `engine` | Kết nối tới Osmedeus, Vigolium | `settings`: cấu hình trên S16, S17, trừ thông tin xác thực, khóa theo bảng dưới. `llm_api_key_encrypted`: API key LLM của Vigolium, chỉ ghi. `version`, `last_tested_at`, `last_test_ok`: kết quả lần kiểm tra kết nối gần nhất. `api_key_updated_at`: lần đổi API key gần nhất. `ok_since`: lần healthcheck `ok` đầu tiên của chuỗi `ok` hiện tại, `NULL` khi lần gần nhất không `ok` |
+| `engine` | Kết nối tới Osmedeus, Vigolium | Mỗi engine có tool module chạy trên đó một dòng, migration tạo, giao diện không thêm engine. `base_url` rỗng, `is_enabled` là `false`, `api_key_encrypted` là `NULL` tới khi Superadmin nhập kết nối. Bật engine cần đủ `base_url` và API key. `settings`: cấu hình trên S16, S17, trừ thông tin xác thực, khóa theo bảng dưới. `llm_api_key_encrypted`: API key LLM của Vigolium, chỉ ghi. `version`, `last_tested_at`, `last_test_ok`: kết quả lần kiểm tra kết nối gần nhất. `api_key_updated_at`: lần đổi API key gần nhất. `ok_since`: lần healthcheck `ok` đầu tiên của chuỗi `ok` hiện tại, `NULL` khi lần gần nhất không `ok` |
 | `engine_variable` | Biến engine trên S16 | `value_encrypted`: giá trị đã mã hóa |
 | `job` | Job và trạng thái job | `target`: mục tiêu đã kiểm tra scope. `created_by` là `NULL`: job do `schedule` sinh. `worker_id`: ghi khi worker báo nhận. `last_heartbeat_at`: heartbeat gần nhất của job. `retry_of_job_id`: job cũ khi thử lại. `status_reason`: lý do hủy, từ chối, lỗi. `priority`: `0`, `1`, `2` ứng với `low`, `normal`, `high` của API. `tool_version`: phiên bản công cụ worker báo khi kết thúc job. `proxy_id`: xóa proxy thì đặt `NULL`, chỉ xóa được khi không còn job chưa kết thúc dùng proxy. `schedule_id` chưa có khóa ngoại tới khi có bảng `schedule`: nợ 50 trong [tech-debt.md](../tech-debt.md) |
 | `raw_output` | Metadata output thô, nội dung trong MinIO | `object_key`: khóa object trong MinIO. `sha256`: kiểm tra nguyên vẹn |
@@ -83,14 +83,14 @@
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
 | `domain` | Domain, subdomain | `apex`: domain gốc. `is_wildcard`: domain trả lời DNS cho mọi subdomain. `deleted_at`: xóa mềm. Số URL, số service, số finding không phải cột: [api/architecture.md](../api/architecture.md) |
-| `ip` | Địa chỉ IPv4, IPv6 | `cdn_name` là `NULL`: không thuộc CDN. `asn_org`: tổ chức sở hữu ASN (Autonomous System Number) |
+| `ip` | Địa chỉ IPv4, IPv6 | `address`: `inet` không kèm mặt nạ, IPv6 ánh xạ IPv4 lưu dạng IPv4. `cdn_name` là `NULL`: không thuộc CDN. `asn_org`: tổ chức sở hữu ASN (Autonomous System Number). `asn`: `bigint` vì ASN 32 bit vượt `int` |
 | `domain_ip` | Domain phân giải ra IP | Khóa chính gồm `record_type`: bản ghi A và AAAA tách riêng |
-| `service` | Cổng mở trên IP | `name`: tên dịch vụ như `https`. `product`, `version`: phần mềm nhận diện được. `closed_at`: lần quét cổng sau trên IP không thấy cổng, `NULL` khi còn mở |
+| `service` | Cổng mở trên IP | `port`: 0 đến 65535, ràng buộc CHECK. `name`: tên dịch vụ như `https`. `product`, `version`: phần mềm nhận diện được. `closed_at`: lần quét cổng sau trên IP không thấy cổng, `NULL` khi còn mở |
 | `url` | URL đã phát hiện kèm metadata HTTP | `domain_id` có giá trị khi host là domain, `ip_id` khi host là IP. `url_hash`: SHA-256 của `url` đã chuẩn hóa. `tls_not_after`: ngày hết hạn chứng chỉ TLS do httpx báo |
 | `technology` | Danh mục công nghệ dùng chung | `category`: framework, web server, CDN, thư viện |
 | `url_technology` | Công nghệ phát hiện trên URL | `version`: `NULL` khi không nhận diện được |
 | `screenshot` | Metadata screenshot của gowitness | `raw_output_id`: file ảnh trong output thô. `html_raw_output_id`: HTML của trang trong output thô. `perception_hash`: gom ảnh giống nhau trên S06. `is_failed`: chụp lỗi. `width`, `height`, `device_scale`: độ phân giải chụp. `remote_ip`: IP máy chủ trả lời. `duration_ms`: thời gian chụp. `tls`, `network_log`, `console_log`, `cookies`: dữ liệu gowitness theo bảng dưới. `deleted_at`: xóa mềm |
-| `asset_event` | Sự kiện tài sản: phát hiện, thay đổi | Liên kết một tài sản. `diff`: cột đã đổi, giá trị cũ và mới |
+| `asset_event` | Sự kiện tài sản: phát hiện, thay đổi | Liên kết một tài sản. `diff`: object theo tên cột đã đổi, mỗi cột `old`, `new`. `NULL` với sự kiện `discovered` |
 
 ### Finding và báo cáo
 
@@ -116,7 +116,7 @@
 | `screenshot.network_log` | Mảng `method`, `url`, `status_code`, `content_type`, `size_bytes`, `duration_ms`, `remote_ip` |
 | `screenshot.console_log` | Mảng `level`, `message`, `at` |
 | `screenshot.cookies` | Mảng `name`, `domain`, `path`, `expires`, `secure`, `http_only`, `same_site`. ❌ Không lưu giá trị cookie (G7) |
-| `engine.settings` của Osmedeus | `scan_preset`: `quick`, `balanced`, `deep`, mặc định `balanced` |
+| `engine.settings` của Osmedeus | `scan_preset`: `quick`, `balanced`, `deep`, mặc định `balanced`. Runner đổi thành `tactic` của lượt chạy: [external-services.md](../integrations/external-services.md) |
 | `engine.settings` của Vigolium | `llm_provider`, `llm_model`, `llm_base_url` |
 
 - Parser `nuclei` ghi `matcher` từ `matcher-name`, `description`, `remediation` từ `info`, `request`, `response` từ trường cùng tên của nuclei.

@@ -22,6 +22,7 @@ from app.scope.schemas import (
     ScopeRuleBulkCreateResponse,
     ScopeRuleCreateRequest,
     ScopeRuleResponse,
+    ScopeRuleRowResponse,
     ScopeRuleSort,
     ScopeRuleUpdateRequest,
 )
@@ -38,7 +39,7 @@ async def scope_editor(request: Request, user: CurrentUser) -> User:
 ScopeEditor = Annotated[User, Depends(scope_editor)]
 
 
-@router.get("/programs/{program_id}/scope-rules", response_model=Page[ScopeRuleResponse])
+@router.get("/programs/{program_id}/scope-rules", response_model=Page[ScopeRuleRowResponse])
 async def list_scope_rules(
     program_id: uuid.UUID,
     viewer: CurrentUser,
@@ -46,7 +47,7 @@ async def list_scope_rules(
     limit: int = DEFAULT_LIMIT,
     cursor: str | None = None,
     sort: ScopeRuleSort = "created_at",
-) -> Page[ScopeRuleResponse]:
+) -> Page[ScopeRuleRowResponse]:
     return await service.list_rules(
         session, viewer=viewer, program_id=program_id, limit=limit, cursor=cursor, sort=sort
     )

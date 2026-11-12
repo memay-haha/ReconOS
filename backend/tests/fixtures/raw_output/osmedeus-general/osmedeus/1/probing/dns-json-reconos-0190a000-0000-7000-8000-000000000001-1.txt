@@ -1,0 +1,5 @@
+{"host":"a.example.com","a":["192.0.2.10"],"status_code":"NOERROR","resolver":["198.51.100.53:53"]}
+{"host":"b.example.com","status_code":"NXDOMAIN"}
+{"host":"outside.example.org","a":["203.0.113.5"],"cname":["edge.example.net"],"status_code":"NOERROR"}
+{broken json
+["not", "an", "object"]

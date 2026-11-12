@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
-from app.core import realtime
+from app.core import realtime, tasks
 from app.core.config import Settings, get_settings
 
 # Alembic autogenerate produces stable constraint names only with a convention.
@@ -65,8 +65,8 @@ async def session_scope(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     """One unit of work: commit when the body returns, roll back when it raises.
 
     Used by the request dependency, the dispatcher loop and background tasks.
-    Realtime events queued on the session are published after the commit, and
-    dropped on rollback: docs/architecture/request-flow.md.
+    Realtime events and background tasks queued on the session go out after
+    the commit, and are dropped on rollback: docs/architecture/request-flow.md.
     """
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
@@ -74,10 +74,12 @@ async def session_scope(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
             yield session
         except Exception:
             realtime.take_pending_events(session)
+            tasks.take_pending_tasks(session)
             await session.rollback()
             raise
         await session.commit()
         await realtime.publish_events(realtime.take_pending_events(session))
+        await tasks.send_tasks(tasks.take_pending_tasks(session))
 
 
 @lru_cache

@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -77,7 +77,7 @@ flowchart LR
 | Upload lại | Cùng `job_id` và `filename`: không tạo dòng mới, không ghi đè nội dung đã lưu. Hai upload cùng tên chạy đồng thời xếp hàng qua advisory lock của transaction, upload sau thấy dòng đã có |
 | Dung lượng | Stream lên MinIO theo từng phần 8 MiB, tính SHA-256 trong lúc ghi. Vượt `upload_max_bytes` thì hủy upload, không để lại object |
 | Thời hạn giữ | Vĩnh viễn. Chỉ mất khi xóa cứng program |
-| Parse lại | Đặt `parse_status = pending`, gửi lại task `parse`. Nội dung trong MinIO không đổi |
+| Parse lại | Superadmin, Admin gọi `POST /raw-outputs/{raw_output_id}/reparse`: đặt `parse_status = pending`, gửi lại task `parse`. Nội dung trong MinIO không đổi. Tool module không có parser hoặc program `archived`: `409 conflict` |
 
 - ❌ Parser không sửa, không xóa object output thô.
 - Screenshot: file ảnh là output thô của job gowitness. `screenshot` chỉ lưu metadata và trỏ tới `raw_output`.
@@ -97,12 +97,18 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 - Tài sản thấy lại không đổi: chỉ cập nhật `last_seen_at`, không ghi `asset_event`.
 - `dedup_key` do parser của từng tool module tính, bắt đầu bằng tên tool module. 💡 Ví dụ: nuclei dùng `template-id` và `matched-at`.
 - Finding trùng `program_id` và `dedup_key`: cập nhật `last_seen_at`, giữ `triage_status`. Vòng đời finding: [business-flow.md](../architecture/business-flow.md).
-- `url` chuẩn hóa trước khi tính `url_hash`: scheme và host viết thường, bỏ cổng mặc định, bỏ fragment.
+- `url` chuẩn hóa trước khi tính `url_hash`: scheme và host viết thường, bỏ cổng mặc định, bỏ fragment. Path rỗng thành `/`. Chỉ nhận `http`, `https`.
+- Cột mô tả công cụ không báo giữ giá trị đã lưu: giá trị `NULL`, `dns_status = unknown`, `is_wildcard = false` không ghi đè giá trị đã có. Công cụ báo ít trường hơn không xóa kết quả của công cụ trước.
+- Trùng khóa trong cùng một lô: gộp thành một dòng trước khi upsert, giá trị khác `NULL` sau cùng thắng.
+- Domain đã xóa mềm parser thấy lại: chỉ cập nhật `last_seen_at`, giữ `deleted_at`, không ghi `asset_event`.
+- `apex` của domain: giá trị của scope rule In-Scope loại domain hoặc wildcard dài nhất phủ tên đó. Không có rule nào phủ: hai nhãn cuối của tên. Backend không có danh sách hậu tố công khai, nợ 52 trong [tech-debt.md](../tech-debt.md).
+- Host của URL là tên thì tạo domain cho host đó. IP trong bản ghi domain, service, URL tạo dòng `ip` nếu chưa có.
+- Ghi theo lô tối đa 500 dòng mỗi câu `INSERT`, sắp theo khóa tự nhiên để hai lượt parse cùng program khóa dòng theo cùng thứ tự.
 
 ### Đánh dấu scope
 
 - `in_scope` của tài sản tính khi parser ghi, theo quy tắc so khớp trong [business-flow.md](../architecture/business-flow.md).
-- Scope rule đổi: task của module `asset` tính lại `in_scope` cho mọi tài sản của program.
+- Scope rule đổi: module `scope` xếp task `reconos.recompute_in_scope` theo tên, gửi sau khi commit. Task của module `asset` tính lại `in_scope` cho mọi tài sản của program, chạy lại cho cùng kết quả.
 - `in_scope` của IP, service tính theo địa chỉ IP. `in_scope` của URL tính theo host, so với scope rule loại URL, domain, wildcard.
 
 ### Thông tin xác thực
@@ -130,8 +136,8 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 | `audit_log` | Chỉ thêm. ❌ Không sửa, không xóa |
 
 - Xóa mềm: [ADR xóa mềm](../decisions/adr-soft-delete.md).
-- Khóa ngoại tới `program` dùng `ON DELETE CASCADE`. `raw_output.job_id` cũng dùng `ON DELETE CASCADE` để xóa cứng program tới được output thô qua job. `job.proxy_id` dùng `ON DELETE SET NULL`: job đã kết thúc giữ lịch sử khi xóa proxy. Khóa ngoại khác dùng `RESTRICT` mặc định.
-- Xóa cứng chạy trong tiến trình nền: xóa dòng trong PostgreSQL trước, xóa object MinIO sau. Lỗi xóa object thì thử lại, không khôi phục dòng đã xóa.
+- Khóa ngoại tới `program` dùng `ON DELETE CASCADE`. Khóa ngoại từ `domain_ip`, `service`, `url`, `url_technology`, `asset_event`, `asset_tag` tới bảng tài sản và từ `asset_tag` tới `tag` cũng dùng `ON DELETE CASCADE`. `raw_output.job_id` cũng dùng `ON DELETE CASCADE` để xóa cứng program tới được output thô qua job. `job.proxy_id` dùng `ON DELETE SET NULL`: job đã kết thúc giữ lịch sử khi xóa proxy. Khóa ngoại khác dùng `RESTRICT` mặc định.
+- Xóa cứng: request xóa dòng trong PostgreSQL, xếp task `reconos.purge_program_objects` gửi sau khi commit. Tiến trình nền xóa object MinIO theo tiền tố `<program_id>/`. Lỗi xóa object thì thử lại tối đa 5 lần, backoff 30, 60, 120, 240, 480 giây, không khôi phục dòng đã xóa.
 
 ### CSDL log
 

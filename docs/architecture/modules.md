@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -32,7 +32,7 @@
 |---|---|---|
 | `program` | Program, điều khoản, tạm dừng, tiếp tục, lưu trữ program, gán User vào program, proxy của program | S08, S09, S11 |
 | `scope` | Scope rule In-Scope, Out-of-Scope. So khớp mục tiêu với scope (G5) | S09, S11 |
-| `asset` | Domain, IP, URL, service, công nghệ của URL, sự kiện tài sản và liên kết chéo giữa chúng (G3). Xóa mềm domain | S03, S04, S05 |
+| `asset` | Domain, IP, URL, service, công nghệ của URL, sự kiện tài sản và liên kết chéo giữa chúng (G3). Upsert tài sản cho parser, task tính lại `in_scope` khi scope rule đổi. Xóa mềm domain, xuất danh sách | S03, S04, S05 |
 | `screenshot` | Screenshot do parser của gowitness tạo. Xóa mềm screenshot | S06, S07 |
 | `tag` | Tag tùy biến gắn vào tài sản, finding (G2) | |
 | `tool_module` | Danh mục tool module, cấu hình trong CSDL. Danh sách công cụ và phiên bản worker báo | S15, S18 |
@@ -40,7 +40,7 @@
 | `job` | Tạo job đơn lẻ và hàng loạt, kiểm tra scope trước khi tạo, trạng thái, duyệt, ưu tiên, dọn hàng đợi. Lịch quét định kỳ, chạy ngay một lịch và task `schedule` tạo job định kỳ | S09, S10 |
 | `dispatcher` | Giao job cho worker: [system.md](system.md) | S10, S15 |
 | `raw_output` | Nhận, lưu, tra cứu, tải về output thô (G8) | |
-| `parser` | Chọn parser theo tool module, chạy parser trong tiến trình nền | |
+| `parser` | Chọn parser theo tool module, chạy parser trong tiến trình nền. Không sở hữu bảng: ghi tài sản qua service của `asset`, trạng thái parse qua service của `raw_output` | |
 | `finding` | Finding, severity, triage (G6) | S20 |
 | `report` | Báo cáo từ finding, truy vết về output thô (G6) | |
 | `dashboard` | Số liệu tổng hợp, tình trạng hệ thống, tìm toàn cục. Bảng `diagnostic_run` của lần chẩn đoán | S02, S15, header |
@@ -63,7 +63,7 @@ Tool module bọc **một công cụ** hoặc **một workflow của engine**. M
 | Schema tham số | `contracts/tool_modules/<tool module>.py` | Tham số cho phép, kiểu, miền giá trị. Dùng chung cho backend kiểm tra và runner dựng lệnh. `param_schema` của `GET /tool-modules` sinh từ model này |
 | Nhóm | `contracts/tool_modules/<tool module>.py` | Recon, quét hoặc khai thác. Cùng file khai báo tiêu đề, mô tả, `runs_on`, công cụ, `output_types` |
 | Runner | `workers/worker/runners/<tool module>.py` | Dựng lệnh từ tham số đã kiểm tra, chạy công cụ, thu output thô |
-| Parser | `backend/app/parser/<tool module>.py` | Đọc output thô, tạo tài sản và finding. Không bắt buộc: thiếu parser thì output thô vẫn lưu và tải về được (G8) |
+| Parser | `backend/app/parser/<tool module>.py` | Đọc output thô, tạo tài sản và finding. Không bắt buộc: thiếu parser thì output thô vẫn lưu và tải về được (G8). Một lớp parser phục vụ được nhiều tool module cùng định dạng output thô, ví dụ `OsmedeusParser` cho 3 workflow Osmedeus |
 | Cấu hình | CSDL, Superadmin sửa trên S18 | Bật, tắt. Tham số mặc định trong miền của schema. Giới hạn số job đồng thời và tốc độ |
 
 - Mã quyết định tool module **có thể làm gì**. CSDL chỉ chọn trong phạm vi mã cho phép.

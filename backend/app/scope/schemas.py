@@ -48,6 +48,13 @@ class ScopeRuleResponse(BaseModel):
     created_at: datetime
 
 
+class ScopeRuleRowResponse(ScopeRuleResponse):
+    """A row of GET /programs/{program_id}/scope-rules: the rule plus fields computed on read."""
+
+    # Live domains of the program the rule matches: docs/api/architecture.md.
+    matched_domain_count: int
+
+
 class ScopeRuleBulkCreateResponse(BaseModel):
     items: list[ScopeRuleResponse]
 

@@ -1,0 +1,1 @@
+{"template-id":"tech-detect","matched-at":"https://a.example.com","info":{"severity":"info"}}

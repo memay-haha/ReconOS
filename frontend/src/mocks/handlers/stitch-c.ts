@@ -193,7 +193,6 @@ export const stitchCRoutes: readonly MockRoute[] = [
       },
     });
   }),
-  route('GET /technologies', () => HttpResponse.json(page(technologies))),
   // Only gowitness job lists are answered here; any other `GET /jobs` falls through to the
   // older handler, since MSW tries the next match when a resolver returns nothing.
 ];

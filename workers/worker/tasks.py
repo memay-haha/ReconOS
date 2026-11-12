@@ -78,7 +78,7 @@ def execute_job(
             JobFinish(
                 status=result.status,
                 status_reason=result.reason,
-                tool_version=_tool_version(job, tools),
+                tool_version=result.tool_version or _tool_version(job, tools),
             ),
         )
         log.info("job_finished", status=result.status.value)

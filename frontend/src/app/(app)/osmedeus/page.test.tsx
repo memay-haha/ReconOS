@@ -56,7 +56,11 @@ describe('S16 Osmedeus settings', () => {
       expect(calls.find((c) => c.method === 'PATCH')).toEqual({
         method: 'PATCH',
         path: '/engines/e1',
-        body: { base_url: ENGINE.base_url, settings: { scan_preset: 'balanced' } },
+        body: {
+          base_url: ENGINE.base_url,
+          is_enabled: ENGINE.is_enabled,
+          settings: { scan_preset: 'balanced' },
+        },
       }),
     );
     expect(await screen.findByText('Changes saved.')).toBeInTheDocument();
@@ -72,6 +76,7 @@ describe('S16 Osmedeus settings', () => {
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
         base_url: ENGINE.base_url,
+        is_enabled: ENGINE.is_enabled,
         api_key: 'not-a-real-key',
         settings: { scan_preset: 'balanced' },
       }),
@@ -153,6 +158,7 @@ describe('S16 Osmedeus settings', () => {
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
         base_url: ENGINE.base_url,
+        is_enabled: ENGINE.is_enabled,
         settings: { scan_preset: 'deep' },
       }),
     );
@@ -301,6 +307,7 @@ describe('S17 Vigolium settings', () => {
     await vi.waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
         base_url: VIGOLIUM.base_url,
+        is_enabled: VIGOLIUM.is_enabled,
         settings: { llm_provider: 'openai-compatible', llm_model: 'model-x', llm_base_url: '' },
         llm_api_key: 'not-a-real-llm-key',
       }),

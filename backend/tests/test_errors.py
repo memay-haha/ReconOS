@@ -9,6 +9,7 @@ from app.core.errors import (
     BadRequestError,
     ConflictError,
     CurrentPasswordIncorrectError,
+    EngineUnavailableError,
     ForbiddenError,
     InternalError,
     NotFoundError,
@@ -35,6 +36,7 @@ ERROR_TABLE = [
     (CurrentPasswordIncorrectError, 422, "current_password_incorrect"),
     (RateLimitedError, 429, "rate_limited"),
     (InternalError, 500, "internal_error"),
+    (EngineUnavailableError, 502, "engine_unavailable"),
 ]
 
 

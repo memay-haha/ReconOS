@@ -1,0 +1,9 @@
+{
+  "tool_module": "osmedeus-general",
+  "flow": "general",
+  "engine_version": "v5.1.2",
+  "runs": [
+    {"index": 1, "target": "example.com", "workspace": "reconos-0190a000-0000-7000-8000-000000000001-1", "run_uuid": "run-0001", "status": "completed", "has_output": true},
+    {"index": 2, "target": "example.org", "workspace": "reconos-0190a000-0000-7000-8000-000000000001-2", "run_uuid": null, "status": "missing", "has_output": false}
+  ]
+}

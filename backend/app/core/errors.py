@@ -143,6 +143,14 @@ class InternalError(AppError):
     title = "Internal error"
 
 
+class EngineUnavailableError(AppError):
+    """The engine did not answer, refused the API key or answered something unreadable."""
+
+    status = 502
+    code = "engine_unavailable"
+    title = "Engine unavailable"
+
+
 def _problem_response(error: AppError) -> JSONResponse:
     headers: dict[str, str] | None = None
     if isinstance(error, RateLimitedError):

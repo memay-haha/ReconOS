@@ -21,6 +21,8 @@ export interface Engine {
   readonly version?: string | null;
   readonly last_tested_at?: string | null;
   readonly last_test_ok?: boolean | null;
+  /** Whether an API key is stored. The key itself is never returned. */
+  readonly has_api_key?: boolean;
   /** Last change of the engine API key, not of any other field. */
   readonly api_key_updated_at?: string | null;
   /** Vigolium: whether an LLM API key is stored. The key itself is never returned. */
