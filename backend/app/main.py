@@ -20,6 +20,7 @@ from app.job.router import router as job_router
 from app.parser import registry as _parser_registry  # noqa: F401  # registers parsers before any upload
 from app.program.router import router as program_router
 from app.raw_output.router import router as raw_output_router
+from app.report.router import router as report_router
 from app.schedule.router import router as schedule_router
 from app.scope.router import router as scope_router
 from app.tag.router import router as tag_router
@@ -82,5 +83,6 @@ app.include_router(asset_router)
 app.include_router(finding_router)
 app.include_router(tag_router)
 app.include_router(schedule_router)
+app.include_router(report_router)
 app.include_router(dispatcher_router)
 app.include_router(realtime_router)

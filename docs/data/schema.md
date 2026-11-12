@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -100,8 +100,8 @@
 | `tag` | Danh mục tag key-value dùng chung | Một cặp `key`, `value` là một tag |
 | `asset_tag` | Tag gắn vào tài sản | Liên kết một tài sản |
 | `finding_tag` | Tag gắn vào finding | |
-| `report` | Báo cáo của program | `body`: Markdown. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay |
-| `report_finding` | Finding trong báo cáo | |
+| `report` | Báo cáo của program | `body`: Markdown, mặc định chuỗi rỗng. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay. `submitted_at`: có giá trị khi và chỉ khi `status` là `submitted`, ràng buộc CHECK. Xóa cứng program xóa báo cáo |
+| `report_finding` | Finding trong báo cáo | Khóa chính (`report_id`, `finding_id`). Một finding nằm được trong nhiều báo cáo. Xóa báo cáo hoặc finding xóa dòng |
 | `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id` |
 | `alert_read` | Tài khoản đã đọc cảnh báo | Không có dòng: chưa đọc |
 

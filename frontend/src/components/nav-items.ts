@@ -61,6 +61,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         part: 'Part E',
         badge: { path: '/findings?triage_status=new', field: 'total', tone: 'crit' },
       },
+      // S21, no mockup: reports sit next to the findings they are made from.
+      { label: 'Reports', href: '/reports', icon: 'summarize', part: 'S21' },
     ],
   },
   {

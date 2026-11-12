@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -22,7 +22,7 @@
 ## 📍 Ở đâu
 
 - Module: [modules.md](modules.md). Quyền từng bước: [authorization.md](../security/authorization.md).
-- Màn hình: S08, S09, S11 program và scope. S10 hàng đợi. S18 tool module. S03 đến S07 tài sản, screenshot. S20 finding.
+- Màn hình: S08, S09, S11 program và scope. S10 hàng đợi. S18 tool module. S03 đến S07 tài sản, screenshot. S20 finding. S21 báo cáo.
 
 ## ⚙️ Làm như thế nào
 
@@ -54,7 +54,7 @@ flowchart LR
 | Chạy tool module, gửi output thô | Worker | S10 |
 | Lưu output thô, parse | Backend API, tiến trình nền | |
 | Triage finding | Admin, Superadmin, User trên program được gán | S20 |
-| Tạo báo cáo | Admin, Superadmin, User trên program được gán | |
+| Tạo báo cáo | Admin, Superadmin, User trên program được gán | S20, S21 |
 
 - Tạo job từ nhiều tài sản đã chọn trên S03, S04: chỉ khi mọi tài sản thuộc cùng một program, vì một job thuộc một program.
 
@@ -195,7 +195,7 @@ stateDiagram-v2
 
 - Chuyển ngoài bảng: `409 conflict`, trạng thái giữ nguyên. Đổi sang chính trạng thái hiện tại: không đổi gì, không ghi nhật ký.
 - `duplicate` cần `duplicate_of_id`: finding khác cùng program, không phải `duplicate`. Finding đang có finding khác trỏ tới không chuyển sang `duplicate` được. Rời `duplicate` thì xóa `duplicate_of_id`.
-- Chuyển sang `reported` bằng tay được khi chưa có module `report`. Khi có, nộp báo cáo cũng chuyển finding sang `reported` theo mục Báo cáo.
+- Chỉ nộp báo cáo mới chuyển finding sang `reported`, theo mục Báo cáo. Triage bằng tay sang `reported`, kể cả hàng loạt: `409 conflict` mã `reported_by_report`. Dòng `confirmed` sang `reported` vẫn giữ trong bảng để chỉ bước chuyển. Lý do: mỗi finding `reported` truy được về báo cáo đã nộp (G6).
 - Triage hàng loạt: tất cả hoặc không. Một finding chuyển sai bảng thì không finding nào đổi. Không nhận `duplicate`.
 - Finding của program `archived` chỉ đọc: triage, gắn tag trả `409 conflict`.
 
@@ -204,5 +204,19 @@ stateDiagram-v2
 1. Chọn finding `confirmed` của một program.
 2. Tạo báo cáo trong ReconOS, đính kèm bằng chứng từ output thô.
 3. Đánh dấu báo cáo đã nộp. Finding trong báo cáo chuyển sang `reported`.
+
+| Trạng thái báo cáo | Nghĩa |
+|---|---|
+| `draft` | Đang soạn, sửa được mọi trường, xóa được |
+| `submitted` | Đã nộp lên nền tảng bug bounty. Chỉ sửa được `platform_report_ref`, không xóa |
+
+- Một báo cáo thuộc một program, gồm ít nhất một finding của program đó. Finding thêm vào phải đang `confirmed`. Một finding nằm được trong nhiều báo cáo nháp.
+- Finding đã trong báo cáo nháp rồi rời `confirmed` vẫn nằm trong báo cáo. Nộp báo cáo khi còn finding không `confirmed`: `409 conflict`, không finding nào đổi. Người dùng xác nhận lại finding hoặc bỏ finding khỏi báo cáo.
+- Nộp báo cáo: tất cả hoặc không. Mỗi finding chuyển sang `reported` ghi một dòng nhật ký `finding_triaged` kèm `report_id`. Báo cáo ghi `report_submitted`.
+- Chỉ `draft` sang `submitted`, không chiều ngược lại.
+- Bằng chứng là output thô tạo finding lần đầu. Báo cáo chỉ tham chiếu `raw_output`: tên file, SHA-256, đường tải qua Backend API. ❌ Không đọc, sửa, sao chép object output thô (G8).
+- `platform_report_ref` nhập tay, thường biết sau khi nộp trên nền tảng, nên vẫn sửa được khi đã nộp.
+- Báo cáo của program `archived` chỉ đọc.
+- Nhật ký thao tác: `report_created`, `report_updated`, `report_deleted`, `report_submitted`.
 
 - Gửi báo cáo lên nền tảng bug bounty nằm ngoài phạm vi: [overview.md](overview.md).

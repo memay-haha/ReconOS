@@ -103,12 +103,20 @@ describe('Sidebar against the mockup', () => {
         )
         .filter((l) => !DROPPED.includes(l)),
     }));
-    // Raw Outputs and Audit Log have no mockup; they are asserted on their own below.
+    // Raw Outputs, Audit Log and Reports have no mockup; they are asserted on their own below.
+    const unmocked = ['Raw Outputs', 'Audit Log', 'Reports'];
     const mine = NAV_GROUPS.map((g) => ({
       heading: g.heading,
-      labels: g.items.map((i) => i.label).filter((l) => l !== 'Raw Outputs' && l !== 'Audit Log'),
+      labels: g.items.map((i) => i.label).filter((l) => !unmocked.includes(l)),
     }));
     expect(mine).toEqual(fromMockup);
+  });
+
+  it('places Reports after Findings in Recon (batch 11, no mockup)', () => {
+    const recon = NAV_GROUPS.find((g) => g.heading === 'Recon');
+    const labels = recon?.items.map((i) => i.label) ?? [];
+    expect(labels.slice(-2)).toEqual(['Findings', 'Reports']);
+    expect(recon?.items.at(-1)).toMatchObject({ icon: 'summarize', href: '/reports' });
   });
 
   it('places the two screens with no mockup in their groups, with their icons', () => {

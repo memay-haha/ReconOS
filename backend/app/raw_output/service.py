@@ -6,7 +6,7 @@ parse task: docs/data/database.md, section Lưu output thô. Nothing here parses
 """
 
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -210,6 +210,23 @@ async def get_raw_output(
     if row is None:
         raise NotFoundError(detail="raw output does not exist")
     return row[0], row[1]
+
+
+async def describe_many(
+    session: AsyncSession, *, viewer: User, ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, RawOutputResponse]:
+    """Metadata of the visible raw outputs among `ids`, for evidence references (G6).
+
+    Only the row is read: the stored object is never opened or changed (G8).
+    """
+    if not ids:
+        return {}
+    rows = await session.scalars(
+        select(RawOutput)
+        .join(Job, Job.id == RawOutput.job_id)
+        .where(RawOutput.id.in_(list(set(ids))), program_visible_to(viewer, Job.program_id))
+    )
+    return {row.id: RawOutputResponse.model_validate(row) for row in rows}
 
 
 async def open_content(
