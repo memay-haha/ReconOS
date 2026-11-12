@@ -23,6 +23,7 @@ from app.raw_output.router import router as raw_output_router
 from app.report.router import router as report_router
 from app.schedule.router import router as schedule_router
 from app.scope.router import router as scope_router
+from app.screenshot.router import router as screenshot_router
 from app.tag.router import router as tag_router
 from app.tool_module.router import router as tool_module_router
 from app.user.router import router as user_router
@@ -81,6 +82,7 @@ app.include_router(job_router)
 app.include_router(raw_output_router)
 app.include_router(asset_router)
 app.include_router(finding_router)
+app.include_router(screenshot_router)
 app.include_router(tag_router)
 app.include_router(schedule_router)
 app.include_router(report_router)

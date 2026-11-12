@@ -12,6 +12,7 @@ from typing import Final
 
 from app.parser.base import Parser
 from app.parser.dalfox import DalfoxParser
+from app.parser.gowitness import GowitnessParser
 from app.parser.nuclei import NucleiParser
 from app.parser.osmedeus_domain_extensive import OsmedeusDomainExtensiveParser
 from app.parser.osmedeus_domain_lite import OsmedeusDomainLiteParser
@@ -28,6 +29,7 @@ PARSERS: Final[tuple[Parser, ...]] = (
     VigoliumParser(),
     SqlmapParser(),
     DalfoxParser(),
+    GowitnessParser(),
 )
 
 _BY_TOOL_MODULE: dict[str, Parser] = {}

@@ -8,6 +8,7 @@ from typing import Final
 
 from contracts.tool_modules.base import OutputType, ToolGroup, ToolModuleSpec, ToolParams
 from contracts.tool_modules.dalfox import DALFOX, DalfoxParams
+from contracts.tool_modules.gowitness import GOWITNESS, GowitnessParams
 from contracts.tool_modules.nuclei import NUCLEI, NucleiParams
 from contracts.tool_modules.osmedeus import OsmedeusParams
 from contracts.tool_modules.osmedeus_domain_extensive import OSMEDEUS_DOMAIN_EXTENSIVE
@@ -26,12 +27,14 @@ TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
         VIGOLIUM,
         SQLMAP,
         DALFOX,
+        GOWITNESS,
     )
 }
 
 __all__ = [
     "TOOL_MODULES",
     "DalfoxParams",
+    "GowitnessParams",
     "NucleiParams",
     "OsmedeusParams",
     "OutputType",

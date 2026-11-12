@@ -98,6 +98,7 @@ _url = table("url", column("program_id"), column("first_seen_at"))
 _service = table("service", column("program_id"), column("ip_id"), column("port"))
 _job_finished = table("job", column("program_id"), column("finished_at"))
 _finding = table("finding", column("program_id"), column("severity"), column("triage_status"))
+_screenshot = table("screenshot", column("program_id"), column("deleted_at"))
 _DAY = timedelta(hours=24)
 
 
@@ -136,7 +137,7 @@ _FINDING_COUNTS = {
     for severity in _SEVERITIES
 }
 _FINDING_CRITICAL_COUNT = _FINDING_COUNTS["critical"]
-# The screenshot table arrives in batch 7: tech-debt.md, debt 47.
+_SCREENSHOT_COUNT = _per_program(_screenshot, func.count(), _screenshot.c.deleted_at.is_(None))
 
 _COMPUTED: dict[str, Any] = {
     "domain_count": _DOMAIN_COUNT,
@@ -148,6 +149,7 @@ _COMPUTED: dict[str, Any] = {
     "service_count": _SERVICE_COUNT,
     "ip_resolved_count": _IP_RESOLVED_COUNT,
     "service_port_count": _SERVICE_PORT_COUNT,
+    "screenshot_count": _SCREENSHOT_COUNT,
     "last_job_finished_at": _LAST_JOB_FINISHED_AT,
     **{f"finding_{severity}": expression for severity, expression in _FINDING_COUNTS.items()},
 }
@@ -277,6 +279,7 @@ def _row(row: Row[Any]) -> ProgramRowResponse:
             "service_count": fields["service_count"] or 0,
             "ip_resolved_count": fields["ip_resolved_count"] or 0,
             "service_port_count": fields["service_port_count"] or 0,
+            "screenshot_count": fields["screenshot_count"] or 0,
             "last_job_finished_at": fields["last_job_finished_at"],
             "finding_counts": {
                 severity: fields[f"finding_{severity}"] or 0 for severity in _SEVERITIES

@@ -133,6 +133,15 @@ export const IMPLEMENTED: readonly string[] = [
   // Batch 8: approval of exploit jobs (S10).
   'POST /jobs/:job_id/approve',
   'POST /jobs/:job_id/reject',
+  // Batch 7: screenshots (S06, S07).
+  'GET /screenshots',
+  'GET /screenshots/summary',
+  'GET /screenshots/:screenshot_id',
+  'DELETE /screenshots/:screenshot_id',
+  'GET /screenshots/:screenshot_id/image',
+  'GET /screenshots/:screenshot_id/html',
+  'GET /screenshots/:screenshot_id/network',
+  'GET /screenshots/:screenshot_id/har',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

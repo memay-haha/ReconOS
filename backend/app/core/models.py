@@ -26,6 +26,7 @@ from app.raw_output.models import RawOutput
 from app.report.models import Report, ReportFinding
 from app.schedule.models import Schedule
 from app.scope.models import ScopeRule
+from app.screenshot.models import Screenshot
 from app.tag.models import AssetTag, FindingTag, Tag
 from app.tool_module.models import ToolModule
 from app.user.models import LoginAttempt, Worker, WorkerToken
@@ -52,6 +53,7 @@ __all__ = [
     "ReportFinding",
     "Schedule",
     "ScopeRule",
+    "Screenshot",
     "Service",
     "SystemSetting",
     "Tag",

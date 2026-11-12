@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -141,9 +141,13 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 | `sqlmap` | Khai thác | `sqlmap.zip`: `results.csv` ở gốc gói, thư mục output của sqlmap trong `output/` | Finding |
 | `dalfox` | Khai thác | `dalfox.jsonl`: dòng đầu `{"meta": ...}`, mỗi dòng sau một finding | Finding |
 
-- gowitness ghi JSONL, không dùng CSDL riêng của gowitness. Runner cấu hình gowitness ghi cả URL chụp lỗi vào JSONL. Parser tạo screenshot có `is_failed` cho URL đó.
-- Runner bật ghi đủ dữ liệu trang của gowitness: TLS, network log, console log, cookie, độ phân giải, IP máy chủ, thời gian chụp, HTML. HTML mỗi trang là một file output thô riêng, dòng JSONL ghi tên file ảnh và file HTML. Parser liên kết `screenshot.raw_output_id`, `html_raw_output_id` theo tên file, ghi các cột jsonb theo [schema.md](../data/schema.md), bỏ giá trị cookie (G7).
-- Cờ gowitness cho các trường trên chưa kiểm chứng trên phiên bản gowitness đang dùng: nợ 42 trong [tech-debt.md](../tech-debt.md).
+- gowitness 3.2.2 ghi JSONL, không dùng CSDL riêng của gowitness (G1). Mỗi dòng là một `Result`: `url`, `final_url`, `response_code`, `title`, `html`, `perception_hash`, `file_name`, `failed`, `failed_reason`, `probed_at`, `tls`, `technologies`, `headers`, `network`, `console`, `cookies`.
+- `gowitness`: `scan file`, `--file`, `--chrome-path /usr/bin/chromium`, `--threads`, `--timeout`, `--delay`, `--chrome-window-x`, `--chrome-window-y`, `--screenshot-path`, `--screenshot-format png`, `--write-jsonl`, `--write-jsonl-file gowitness.jsonl`, `--log-scan-errors`. Tham số `threads`, `timeout`, `delay`, `window_width`, `window_height`. Phiên bản lấy từ `gowitness version`.
+- Runner upload `stdout.txt`, `stderr.txt`, từng file PNG, rồi `gowitness.jsonl` sau cùng. File PNG có tên không khớp quy tắc tên file upload thì bỏ, ghi log `warning`. Job có proxy: runner finish `failed` vì gowitness chỉ nhận proxy trên dòng lệnh, nợ 66 trong [tech-debt.md](../tech-debt.md).
+- Parser `gowitness` (`app/parser/gowitness.py`) chỉ đọc `gowitness.jsonl`, dòng tới 16 MiB. File khác của job ghi `no_parser` qua `Parser.accepts`. Parser service tìm ảnh theo `file_name` trong output thô cùng job, ghi `screenshot.raw_output_id`. HTML nằm trong `gowitness.jsonl` nên `html_raw_output_id` trỏ tới file này, parser chép HTML vào `screenshot.html`.
+- URL tài sản là `url` gowitness được giao. `status_code`, `title` chỉ ghi vào URL tài sản khi `final_url` trùng `url`. Công nghệ gowitness nhận ra gắn vào URL tài sản. Cột jsonb, giới hạn độ dài: [schema.md](../data/schema.md). Bỏ giá trị cookie và giá trị `Set-Cookie` (G7).
+- `failed` là `true` khi có response mà không chụp được ảnh: parser tạo screenshot `is_failed`. Lỗi điều hướng như DNS, timeout không có dòng JSONL, chỉ có trong `stderr.txt`: nợ 65.
+- Trường trên lấy từ mã nguồn gowitness 3.2.2, chưa chạy thử trong image worker: nợ 42, 67.
 - httpx ghi ngày hết hạn chứng chỉ TLS, parser ghi `url.tls_not_after`.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
 - Parser `nuclei` (`app/parser/nuclei.py`) đọc mọi output thô của job nuclei. `stdout.txt` cùng JSONL với `nuclei.jsonl`, chuỗi khử trùng lặp gộp lại. Dòng không phải JSON của `stderr.txt` bị bỏ và đếm. Trường đọc, giới hạn độ dài, tài sản của finding: [schema.md](../data/schema.md).

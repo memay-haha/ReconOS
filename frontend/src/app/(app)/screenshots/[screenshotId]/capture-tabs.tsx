@@ -97,7 +97,7 @@ function NetworkTable({
                     {r.status_code ?? '—'}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-fg">{r.method}</td>
+                <td className="px-3 py-2 text-fg">{r.method ?? '—'}</td>
                 <td className="max-w-[420px] truncate px-3 py-2 text-fg" title={r.url}>
                   {pathOf(r.url, i === 0 ? null : first)}
                 </td>
@@ -205,7 +205,8 @@ export function CaptureTabs({
   cookies,
 }: {
   screenshotId: string;
-  rawOutputId: string;
+  /** null for a failed capture: no image raw output to download. */
+  rawOutputId: string | null;
   network: readonly NetworkEntry[];
   networkPending: boolean;
   networkFailed: boolean;
@@ -282,17 +283,19 @@ export function CaptureTabs({
           >
             HAR 1.2 Export
           </a>
-          <a
-            href={rawOutputContentHref(rawOutputId)}
-            download
-            title="Export Raw Output"
-            aria-label="Export Raw Output"
-            className={`flex rounded-sm p-1 text-fg-muted hover:bg-surface-3 hover:text-fg ${FOCUS}`}
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
-              file_download
-            </span>
-          </a>
+          {rawOutputId !== null && (
+            <a
+              href={rawOutputContentHref(rawOutputId)}
+              download
+              title="Export Raw Output"
+              aria-label="Export Raw Output"
+              className={`flex rounded-sm p-1 text-fg-muted hover:bg-surface-3 hover:text-fg ${FOCUS}`}
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+                file_download
+              </span>
+            </a>
+          )}
         </div>
       </div>
       <div

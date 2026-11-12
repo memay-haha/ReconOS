@@ -23,8 +23,9 @@ export interface Screenshot {
   readonly id: string;
   readonly program_id: string;
   readonly url_id: string;
-  readonly job_id: string;
-  readonly raw_output_id: string;
+  readonly job_id: string | null;
+  /** The PNG raw output; null when the capture failed and no image was saved. */
+  readonly raw_output_id: string | null;
   readonly final_url: string | null;
   readonly status_code: number | null;
   readonly title: string | null;
@@ -43,10 +44,6 @@ export interface Screenshot {
   readonly height: number | null;
 }
 
-/** Fields the Stitch pass added to the list row (M15, D1); older sample data lacks them. */
-export type ScreenshotListExtra =
-  'similar_group' | 'similar_count' | 'technologies' | 'retry_job_status' | 'width' | 'height';
-
 /** `screenshot.tls`: docs/data/schema.md. */
 export interface ScreenshotTls {
   readonly protocol: string | null;
@@ -60,7 +57,8 @@ export interface ScreenshotTls {
 
 /** One entry of `screenshot.network_log`. */
 export interface NetworkEntry {
-  readonly method: string;
+  /** gowitness does not record the method: null for every entry it wrote. */
+  readonly method: string | null;
   readonly url: string;
   readonly status_code: number | null;
   readonly content_type: string | null;
