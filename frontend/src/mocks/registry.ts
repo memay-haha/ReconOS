@@ -110,6 +110,14 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /findings/:finding_id',
   'PATCH /findings/:finding_id',
   'PUT /findings/:finding_id/tags',
+  // Batch 11: reports.
+  'GET /reports',
+  'POST /reports',
+  'GET /reports/:report_id',
+  'PATCH /reports/:report_id',
+  'DELETE /reports/:report_id',
+  'POST /reports/:report_id/submit',
+  'GET /reports/:report_id/export',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -75,7 +75,7 @@
 | Parse lại output thô | ✅ | ✅ | ❌ |
 | Triage finding | ✅ | ✅ | ✅ chỉ program được gán |
 | Gắn, gỡ tag finding | ✅ | ✅ | ✅ chỉ program được gán |
-| Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
+| Tạo, sửa, xóa báo cáo nháp, đánh dấu đã nộp, xuất báo cáo | ✅ | ✅ | ✅ chỉ program được gán |
 | Xem nhật ký thao tác trên S14 | ✅ | ✅ | ❌ |
 | Xem log ứng dụng | ✅ | ✅ | ✅ log của job thuộc program được gán |
 | Xóa log ứng dụng trên S15 | ✅ | ❌ | ❌ |

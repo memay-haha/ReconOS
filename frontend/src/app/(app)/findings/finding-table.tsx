@@ -15,8 +15,9 @@ import { formatMoment } from '@/lib/format-moment';
 import { CELL, HEAD, HEAD_ROW } from '../system/modal';
 import { BADGE, CHIP, ICON_BUTTON, SEVERITY_TONE, TRIAGE_DOT, TRIAGE_TONE } from './tones';
 
-/** `duplicate` needs the original finding, so it is set from the drawer only (N51). */
-const MENU_STATUSES = TRIAGE_STATUSES.filter((s) => s !== 'duplicate');
+/** `duplicate` needs the original finding, so it is set from the drawer only (N51). `reported`
+ * comes only from submitting a report (batch 11). */
+const MENU_STATUSES = TRIAGE_STATUSES.filter((s) => s !== 'duplicate' && s !== 'reported');
 
 /** "Port: 443 (https) • IP: 198.51.100.24", the second line under the matched target. */
 export function assetLine(asset: FindingAsset | null): string | null {

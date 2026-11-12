@@ -1426,7 +1426,7 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [finding]
-      summary: "Triage finding theo bảng chuyển trạng thái của business-flow.md. Chuyển không hợp lệ hoặc program archived: 409"
+      summary: "Triage finding theo bảng chuyển trạng thái của business-flow.md. Chuyển không hợp lệ, sang reported bằng tay, hoặc program archived: 409"
       x-roles: [superadmin, admin, user]
       requestBody:
         required: true
@@ -1448,56 +1448,77 @@ paths:
   /reports:
     get:
       tags: [report]
-      summary: "Danh sách báo cáo"
+      summary: "Danh sách báo cáo, không có body và finding. Mới tạo trước"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [-created_at, created_at], default: -created_at}}
+        - $ref: '#/components/parameters/program_id'
+        - {name: status, in: query, schema: {type: string, enum: [draft, submitted]}}
+        - {name: q, in: query, schema: {type: string, maxLength: 255}, description: "Chuỗi con của title, không phân biệt hoa thường"}
       responses:
         '200': {$ref: '#/components/responses/Page'}
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [report]
-      summary: "Tạo báo cáo từ finding `confirmed`"
+      summary: "Tạo báo cáo nháp từ finding `confirmed` cùng program. Program archived: 409"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ReportCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '201': {description: Báo cáo vừa tạo, content: {application/json: {schema: {$ref: '#/components/schemas/ReportDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /reports/{report_id}:
     parameters:
       - {name: report_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [report]
-      summary: "Chi tiết báo cáo"
+      summary: "Chi tiết báo cáo: body Markdown, finding kèm metadata output thô làm bằng chứng"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200': {description: Báo cáo, content: {application/json: {schema: {$ref: '#/components/schemas/ReportDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
     patch:
       tags: [report]
-      summary: "Sửa báo cáo nháp"
+      summary: "Sửa báo cáo. Báo cáo nháp nhận mọi trường, báo cáo đã nộp chỉ nhận platform_report_ref"
+      x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ReportUpdate'}}}
+      responses:
+        '200': {description: Báo cáo sau khi sửa, content: {application/json: {schema: {$ref: '#/components/schemas/ReportDetail'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [report]
+      summary: "Xóa báo cáo nháp. Báo cáo đã nộp: 409"
       x-roles: [superadmin, admin, user]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
   /reports/{report_id}/submit:
     parameters:
       - {name: report_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [report]
-      summary: "Đánh dấu đã nộp, finding chuyển `reported`"
+      summary: "Đánh dấu đã nộp, finding chuyển `reported`, tất cả hoặc không"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: false
+        content: {application/json: {schema: {$ref: '#/components/schemas/ReportSubmit'}}}
       responses:
-        '204': {description: Thành công}
+        '200': {description: Báo cáo đã nộp, content: {application/json: {schema: {$ref: '#/components/schemas/ReportDetail'}}}}
         default: {$ref: '#/components/responses/Problem'}
   /reports/{report_id}/export:
     parameters:
       - {name: report_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       tags: [report]
-      summary: "Xuất báo cáo Markdown"
+      summary: "Xuất báo cáo. md: cả báo cáo. csv, jsonl: finding của báo cáo kèm tên file, SHA-256 output thô"
       x-roles: [superadmin, admin, user]
+      parameters:
+        - {name: format, in: query, schema: {type: string, enum: [md, csv, jsonl], default: md}}
       responses:
         '200': {description: Stream file, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
         default: {$ref: '#/components/responses/Problem'}
@@ -2278,6 +2299,61 @@ components:
       properties:
         ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
         triage_status: {type: string, enum: [new, confirmed, false_positive, reported, resolved]}
+    Report:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        program_name: {type: string}
+        title: {type: string}
+        status: {type: string, enum: [draft, submitted]}
+        platform_report_ref: {type: [string, 'null'], description: "Mã báo cáo trên nền tảng bug bounty, nhập tay"}
+        finding_count: {type: integer}
+        severity_counts: {type: object, properties: {critical: {type: integer}, high: {type: integer}, medium: {type: integer}, low: {type: integer}, info: {type: integer}}}
+        created_by: {type: [string, 'null'], format: uuid}
+        created_by_username: {type: [string, 'null']}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        submitted_at: {type: [string, 'null'], format: date-time}
+    ReportDetail:
+      allOf:
+        - {$ref: '#/components/schemas/Report'}
+        - type: object
+          properties:
+            body: {type: string, description: "Markdown. Giao diện hiển thị không chạy HTML"}
+            findings:
+              type: array
+              description: "Severity cao trước. raw_output: metadata output thô làm bằng chứng, null khi đã mất"
+              items:
+                allOf:
+                  - {$ref: '#/components/schemas/Finding'}
+                  - type: object
+                    properties:
+                      raw_output: {oneOf: [{$ref: '#/components/schemas/RawOutput'}, {type: 'null'}]}
+    ReportCreate:
+      type: object
+      required: [program_id, title, finding_ids]
+      additionalProperties: false
+      properties:
+        program_id: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 255}
+        body: {type: string, maxLength: 200000, default: ''}
+        platform_report_ref: {type: [string, 'null'], maxLength: 255}
+        finding_ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+    ReportUpdate:
+      type: object
+      additionalProperties: false
+      description: "title, body, finding_ids không nhận null. finding_ids thay toàn bộ danh sách"
+      properties:
+        title: {type: string, minLength: 1, maxLength: 255}
+        body: {type: string, maxLength: 200000}
+        platform_report_ref: {type: [string, 'null'], maxLength: 255}
+        finding_ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
+    ReportSubmit:
+      type: object
+      additionalProperties: false
+      properties:
+        platform_report_ref: {type: [string, 'null'], maxLength: 255}
     FindingTagsSet:
       type: object
       required: [tag_ids]

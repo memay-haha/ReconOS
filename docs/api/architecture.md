@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.27 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -231,13 +231,13 @@ Response tổng hợp:
 | Loại | Quy ước |
 |---|---|
 | Hàng loạt | `POST /<tài nguyên>/bulk-<thao tác>`, tối đa 500 ID. Tất cả thành công, hoặc không dòng nào thay đổi. Body gồm `ids` và trường của thao tác, ví dụ `POST /findings/bulk-triage` nhận `ids`, `triage_status`. `duplicate` không nhận trong thao tác hàng loạt vì cần `duplicate_of_id` riêng từng finding |
-| Xuất dữ liệu | `GET /<tài nguyên>/export?format=csv\|jsonl\|md`, cùng tham số lọc như danh sách, trả dạng stream. `ids` lặp lại, tối đa 500, chỉ xuất các dòng đó. Có cho `domains`, `ips`, `urls`, `services`, `findings`, `users` |
+| Xuất dữ liệu | `GET /<tài nguyên>/export?format=csv\|jsonl\|md`, cùng tham số lọc như danh sách, trả dạng stream. `ids` lặp lại, tối đa 500, chỉ xuất các dòng đó. Có cho `domains`, `ips`, `urls`, `services`, `findings`, `users`. Một báo cáo: `GET /reports/{report_id}/export`, theo mục Thao tác riêng |
 | Tải output thô | `GET /raw-outputs/{raw_output_id}/content`, luôn `Content-Disposition: attachment` |
 | Ảnh screenshot | `GET /screenshots/{screenshot_id}/image`, kèm header `X-Content-Type-Options: nosniff` |
 | Dữ liệu trang của screenshot | `/html` trả `text/plain`, kèm `nosniff`, UI chỉ hiện dạng văn bản. `/network` trả object có khóa `network_log`. `/har` dựng file HAR 1.2 từ `network_log`, `Content-Disposition: attachment` |
 
 - Backend API đọc file từ MinIO rồi stream cho trình duyệt. ❌ Không trả URL trực tiếp tới MinIO.
-- Xuất CSV: thêm dấu `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`.
+- Xuất CSV: thêm dấu `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@`, tab, CR. Áp cho mọi export CSV, kể cả `findings` và báo cáo: `backend/app/asset/export.py`.
 
 ### Thao tác riêng
 
@@ -273,8 +273,15 @@ Response tổng hợp:
 | `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids`. Tất cả hoặc không: một tài sản không thấy được thì `404`. Tài sản đã có tag giữ nguyên |
 | `PUT /findings/{finding_id}/tags` | Body `tag_ids`, tối đa 100 ID, ID lặp tính một lần, thay toàn bộ tag của finding. Mảng rỗng gỡ hết tag. Mỗi tag thêm hoặc gỡ ghi một dòng nhật ký thao tác. Finding không thấy được hoặc một tag không tồn tại: `404`. Program `archived`: `409 conflict`. Trả `204`. Mọi vai trò gắn được trên program được gán |
 | `GET /findings`, `/findings/summary`, `/findings/export` | Lọc `program_id`, `triage_status` lặp, `severity` lặp, `domain_id`, `job_id`, `tool_module_id` lặp (tool module của job tạo finding), `tag_id`, `q`. `sort` của danh sách: `-last_seen_at` mặc định, `last_seen_at`, `-first_seen_at`, `first_seen_at`, `-severity`, `severity`. Thứ tự severity: `critical`, `high`, `medium`, `low`, `info`. Export: cột của dòng danh sách, `asset` ghi phẳng thành `asset_type`, `asset_name` |
-| `PATCH /findings/{finding_id}` | Body `triage_status`, `duplicate_of_id`, trường lạ `422`. Chuyển theo bảng trong [business-flow.md](../architecture/business-flow.md), sai bảng: `409 conflict`, `errors` với `field` là `triage_status`, `code` là `invalid_transition`. `duplicate_of_id` sai: `422`, `field` là `duplicate_of_id`, `code` là `missing`, `same_finding`, `not_found` (không tồn tại, không thấy được, khác program), `duplicate_chain` (đích là `duplicate`), `not_allowed` (gửi kèm trạng thái khác `duplicate`). Finding đang có finding khác trỏ tới chuyển sang `duplicate`: `409`, `code` là `has_duplicates`. Program `archived`: `409 conflict`. Trả chi tiết finding |
-| `POST /findings/bulk-triage` | Body `ids` tối đa 500, `triage_status` khác `duplicate`. Một ID không thấy được: `404`. Một finding chuyển sai bảng: `409`. Không finding nào đổi khi lỗi. Mỗi finding đổi ghi một dòng nhật ký `finding_triaged`. Trả `204` |
+| `PATCH /findings/{finding_id}` | Body `triage_status`, `duplicate_of_id`, trường lạ `422`. Chuyển theo bảng trong [business-flow.md](../architecture/business-flow.md), sai bảng: `409 conflict`, `errors` với `field` là `triage_status`, `code` là `invalid_transition`. `duplicate_of_id` sai: `422`, `field` là `duplicate_of_id`, `code` là `missing`, `same_finding`, `not_found` (không tồn tại, không thấy được, khác program), `duplicate_chain` (đích là `duplicate`), `not_allowed` (gửi kèm trạng thái khác `duplicate`). Finding đang có finding khác trỏ tới chuyển sang `duplicate`: `409`, `code` là `has_duplicates`. Sang `reported` bằng tay: `409`, `code` là `reported_by_report`, `allowed_triage_statuses` không chứa `reported`. Program `archived`: `409 conflict`. Trả chi tiết finding |
+| `POST /findings/bulk-triage` | Body `ids` tối đa 500, `triage_status` khác `duplicate`. Một ID không thấy được: `404`. Một finding chuyển sai bảng hoặc sang `reported`: `409`. Không finding nào đổi khi lỗi. Mỗi finding đổi ghi một dòng nhật ký `finding_triaged`. Trả `204` |
+| `GET /reports` | Lọc `program_id`, `status`, `q` (chuỗi con của `title`). `sort`: `-created_at` mặc định, `created_at`. Dòng: cột của `report` trừ `body`, thêm `program_name`, `created_by_username`, `finding_count`, `severity_counts` |
+| `POST /reports` | Body `program_id`, `title` 1 đến 255 ký tự, `body` Markdown tối đa 200.000 ký tự, `platform_report_ref` tối đa 255, chuỗi rỗng thành `null`, `finding_ids` 1 đến 500. Program không thấy được: `404`. Program `archived`: `409`. Finding không tồn tại, không thấy được, khác program: `422`, `field` là `finding_ids`, `code` là `not_found`. Finding không `confirmed`: `code` là `not_confirmed`. Trả `201` kèm chi tiết |
+| `GET /reports/{report_id}` | Cột của dòng danh sách, thêm `body`, `findings`. Mỗi finding là dòng của `GET /findings` thêm `raw_output`: metadata output thô làm bằng chứng như `GET /raw-outputs/{raw_output_id}`, `null` khi không còn. Severity cao trước |
+| `PATCH /reports/{report_id}` | Body như `POST` trừ `program_id`. `title`, `body`, `finding_ids` gửi `null`: mã `null_not_allowed`. `finding_ids` thay cả danh sách, finding mới thêm phải `confirmed`, finding đã có được giữ. Báo cáo `submitted` chỉ nhận `platform_report_ref`, trường khác: `409`, `code` là `report_submitted`. Program `archived`: `409`. Ghi `report_updated` |
+| `DELETE /reports/{report_id}` | Chỉ báo cáo `draft`. `submitted`: `409`, `field` là `status`, `code` là `report_submitted`. Ghi `report_deleted`. Trả `204` |
+| `POST /reports/{report_id}/submit` | Body tùy chọn `platform_report_ref`. Báo cáo đã nộp: `409`, `field` là `status`, `code` là `invalid_transition`. Còn finding không `confirmed`: `409`, `field` là `finding_ids`, `code` là `not_confirmed`, không finding nào đổi. Trả chi tiết báo cáo |
+| `GET /reports/{report_id}/export` | `format`: `md` mặc định, `csv`, `jsonl`. `md`: tiêu đề, thông tin báo cáo, `body`, rồi từng finding kèm tên file, SHA-256 của output thô và `evidence` trong khối code có hàng rào dài hơn mọi chuỗi backtick bên trong. Chữ lấy từ output thô được escape ký tự Markdown hoặc đặt trong code span. `csv`, `jsonl`: cột `id`, `name`, `severity`, `triage_status`, `asset_type`, `asset_name`, `matched_at`, `template_id`, `cve`, `raw_output_id`, `raw_output_filename`, `raw_output_sha256`. Tên file `report-<report_id>.<format>`, header như export tài sản |
 | `POST /raw-outputs/{raw_output_id}/reparse` | Superadmin, Admin. Đặt `parse_status = pending`, gửi lại task `parse`: [database.md](../data/database.md). Tool module không có parser hoặc program `archived`: `409 conflict` |
 | `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |
 | `GET /system-settings/{key}` | Superadmin đọc mọi key. Admin, User chỉ đọc key có cột Đọc công khai trong [configuration.md](../ops/configuration.md) |
