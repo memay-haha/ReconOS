@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { appLogs, engines, systemHealth, systemSettings } from '../data/part-e';
+import { engines } from '../data/part-e';
 import { programs, schedules } from '../data/stitch-d';
 import { toolModuleRows } from '../data/stitch-f';
 import { users } from '../data/users';
@@ -77,24 +77,6 @@ const permissions = [
   ['Read audit log', 'allow', 'deny', 'deny', null],
 ].map(([action, superadmin, admin, user, note]) => ({ action, superadmin, admin, user, note }));
 
-/** docs/ops/configuration.md: keys added after part E's sample list. */
-const settingRows = [
-  ...systemSettings,
-  ...(
-    [
-      ['finding_sla_days', 30],
-      ['queue_capacity', 1000],
-      ['user_idle_after_minutes', 15],
-      ['cert_expiring_days', 14],
-    ] as const
-  ).map(([key, value]) => ({
-    key,
-    value,
-    updated_by: null,
-    updated_at: '2026-11-01T00:00:00Z',
-  })),
-];
-
 const s12Routes: MockRoute[] = [
   route('GET /users', ({ request }) => {
     const url = new URL(request.url);
@@ -141,97 +123,6 @@ const s12Routes: MockRoute[] = [
     });
   }),
   route('GET /roles/permissions', () => HttpResponse.json({ items: permissions })),
-  // Every documented key, so a screen of another part reading a public key gets it too.
-  route('GET /system-settings/:key', ({ params }) => {
-    const found = settingRows.find((row) => row.key === params.key);
-    return found === undefined
-      ? HttpResponse.json(
-          { type: 'about:blank', title: 'Not Found', status: 404, code: 'not_found' },
-          { status: 404, headers: { 'content-type': 'application/problem+json' } },
-        )
-      : HttpResponse.json(found);
-  }),
-];
-
-// ---- S15 System Health & Tools -----------------------------------------------------------
-
-const componentExtra: Record<
-  string,
-  { version: string | null; detail: string | null; message: string | null }
-> = {
-  api: { version: '0.1.0', detail: null, message: null },
-  dispatcher: { version: '0.1.0', detail: null, message: null },
-  background: { version: '0.1.0', detail: null, message: null },
-  beat: { version: '0.1.0', detail: null, message: null },
-  postgres: { version: '16.4', detail: '18/100 connections', message: null },
-  reconos_log: { version: '16.4', detail: '4/100 connections', message: null },
-  redis: { version: '7.2.4', detail: '38.4 MB / 512 MB', message: null },
-  minio: { version: 'RELEASE.2024-10-13', detail: null, message: null },
-  osmedeus: { version: 'v5.1.2', detail: null, message: null },
-  vigolium: {
-    version: 'v0.5.3',
-    detail: null,
-    message: 'Health check latency 420 ms is above the 300 ms threshold.',
-  },
-};
-
-function fullHealth() {
-  const base = systemHealth();
-  return {
-    ...base,
-    components: base.components.map((c) => ({ ...c, ...componentExtra[c.name] })),
-    tools_installed: { installed: 5, total: 6 },
-    fleet_load: 0.42,
-  };
-}
-
-const DIAGNOSTIC_OUTPUT = [
-  '[*] Starting ReconOS diagnostic checks',
-  '[OK] api: responding (4 ms)',
-  '[OK] postgres: connection established (2 ms, 18/100 connections)',
-  '[OK] redis: PING -> PONG (1 ms)',
-  '[OK] minio: bucket reachable (6 ms)',
-  '[OK] osmedeus: engine test passed (v5.1.2)',
-  '[WARN] vigolium: latency 420 ms above threshold 300 ms',
-  '[OK] dispatcher: heartbeat 3s ago',
-  '[!] sqlmap: not installed on any online worker',
-  '[*] Diagnostics complete: 2 warnings',
-].join('\n');
-
-let diagnosticRun = {
-  id: '0190f900-0000-7000-8000-000000000001',
-  status: 'failed',
-  exit_code: 1,
-  output: DIAGNOSTIC_OUTPUT,
-  created_at: minutesAgo(14),
-  finished_at: minutesAgo(14),
-};
-
-const s15Routes: MockRoute[] = [
-  route('GET /system/health', ({ request }) => {
-    const component = new URL(request.url).searchParams.get('component');
-    const health = fullHealth();
-    if (component === null) return HttpResponse.json(health);
-    return HttpResponse.json({
-      ...health,
-      components: health.components
-        .filter((c) => c.name === component)
-        .map((c) => ({ ...c, checked_at: new Date().toISOString() })),
-    });
-  }),
-  route('POST /system/diagnostics', () => {
-    diagnosticRun = {
-      id: crypto.randomUUID(),
-      status: 'failed',
-      exit_code: 1,
-      output: DIAGNOSTIC_OUTPUT,
-      created_at: new Date().toISOString(),
-      finished_at: new Date().toISOString(),
-    };
-    return HttpResponse.json({ id: diagnosticRun.id, status: 'running' });
-  }),
-  route('GET /system/diagnostics/latest', () => HttpResponse.json(diagnosticRun)),
-  route('GET /system/diagnostics/:diagnostic_run_id', () => HttpResponse.json(diagnosticRun)),
 ];
 
 // ---- S16 Osmedeus, S17 Vigolium ----------------------------------------------------------
@@ -246,25 +137,6 @@ const moduleRows = [
   ['tls-weak-cipher', 'passive', true],
   ['xss-scanner', 'active', true],
 ].map(([name, kind, is_enabled]) => ({ name, kind, is_enabled, description: null }));
-
-const engineLogs = [
-  ['osmedeus', 'engine_health_ok', 'info', 2],
-  ['osmedeus', 'engine_run_created', 'info', 9],
-  ['osmedeus', 'engine_workflows_listed', 'info', 15],
-  ['vigolium', 'engine_health_slow', 'warning', 1],
-  ['vigolium', 'engine_scan_started', 'info', 20],
-].map(([engine, event, level, ago], i) => ({
-  id: `0190e000-0000-7000-8000-0000000001${i}0`,
-  logged_at: minutesAgo(ago as number),
-  level,
-  service: 'api',
-  event,
-  request_id: null,
-  job_id: null,
-  program_id: null,
-  worker_id: null,
-  context: { engine },
-}));
 
 const s16Routes: MockRoute[] = [
   // P4: schedules whose tool module runs on the engine, with both names joined.
@@ -297,23 +169,6 @@ const s16Routes: MockRoute[] = [
     }),
   ),
   route('POST /engines/:engine_id/verify-model', () => HttpResponse.json({ ok: true, issues: [] })),
-  route('GET /logs', ({ request }) => {
-    const query = new URL(request.url).searchParams;
-    const engine = query.get('engine');
-    if (engine !== null) {
-      return HttpResponse.json(page(engineLogs.filter((l) => l.context.engine === engine)));
-    }
-    const level = query.get('level');
-    const service = query.get('service');
-    return HttpResponse.json(
-      page(
-        appLogs.filter(
-          (l) =>
-            (level === null || l.level === level) && (service === null || l.service === service),
-        ),
-      ),
-    );
-  }),
 ];
 
-export const stitchERoutes: readonly MockRoute[] = [...s12Routes, ...s15Routes, ...s16Routes];
+export const stitchERoutes: readonly MockRoute[] = [...s12Routes, ...s16Routes];

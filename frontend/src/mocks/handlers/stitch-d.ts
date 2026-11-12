@@ -46,20 +46,4 @@ export const stitchDRoutes: readonly MockRoute[] = [
       schedule_id: found.id,
     });
   }),
-
-  // Jobs and the dispatcher
-
-  // Public settings S09 reads (N30).
-  route('GET /system-settings/:key', ({ params }) => {
-    const values: Readonly<Record<string, number>> = {
-      log_retention_days: 30,
-      queue_capacity: 1000,
-      finding_sla_days: 30,
-    };
-    const key = String(params.key);
-    const value = values[key];
-    return value === undefined
-      ? problem(404, 'not_found')
-      : HttpResponse.json({ key, value, updated_at: '2026-11-01T00:00:00Z', updated_by: null });
-  }),
 ];

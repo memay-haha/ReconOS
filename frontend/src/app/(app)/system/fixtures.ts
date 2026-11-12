@@ -38,8 +38,22 @@ export const WORKER = {
 export const SETTING = {
   key: 'log_retention_days',
   value: 30,
+  default: 30,
+  minimum: 1,
+  maximum: 365,
+  is_public: true,
   updated_by: null,
   updated_at: '2026-11-01T00:00:00Z',
+};
+
+/** A key never edited: the backend lists it with its default and no update time. */
+export const DEFAULT_SETTING = {
+  ...SETTING,
+  key: 'queue_capacity',
+  value: 1000,
+  default: 1000,
+  maximum: 1000000,
+  updated_at: null,
 };
 
 export const LOG = {

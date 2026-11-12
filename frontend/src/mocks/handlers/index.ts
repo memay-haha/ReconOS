@@ -2,7 +2,6 @@ import type { MockRoute } from './helpers';
 import { partBRoutes } from './part-b';
 import { partCRoutes } from './part-c';
 import { partDRoutes } from './part-d';
-import { partERoutes } from './part-e';
 import { sharedRoutes } from './shared';
 import { stitchARoutes } from './stitch-a';
 import { stitchBRoutes } from './stitch-b';
@@ -26,5 +25,4 @@ export const mockRoutes: readonly MockRoute[] = [
   ...partBRoutes,
   ...partCRoutes,
   ...partDRoutes,
-  ...partERoutes,
 ];

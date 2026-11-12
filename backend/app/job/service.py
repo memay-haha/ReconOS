@@ -37,6 +37,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.alert import service as alert_service
 from app.core import audit, realtime
 from app.core.db import notify_dispatcher
 from app.core.errors import (
@@ -137,6 +138,7 @@ async def _transition(
         realtime.queue_job_event(
             session, job_id=job.id, program_id=job.program_id, status=job.status
         )
+        await _raise_status_alert(session, job)
         log.info("job_status_changed", job_id=str(job.id), status=job.status)
     return job
 
@@ -160,7 +162,41 @@ async def _transition_many(
         realtime.queue_job_event(
             session, job_id=job.id, program_id=job.program_id, status=job.status
         )
+        await _raise_status_alert(session, job)
     return jobs
+
+
+# Statuses that ring the bell: docs/data/schema.md, alert.alert_type.
+_STATUS_ALERTS = {
+    S.FAILED.value: alert_service.AlertType.JOB_FAILED,
+    S.PENDING_APPROVAL.value: alert_service.AlertType.JOB_PENDING_APPROVAL,
+}
+
+
+async def _raise_status_alert(session: AsyncSession, job: Job) -> None:
+    """Every status change and every new job passes here, whichever path made it.
+
+    So the approval flow, the dispatcher's stale-job sweep and a worker's finish
+    all raise `job_failed`, `job_pending_approval` without a call of their own.
+    """
+    alert_type = _STATUS_ALERTS.get(job.status)
+    if alert_type is None:
+        return
+    tool = await session.scalar(select(ToolModule.name).where(ToolModule.id == job.tool_module_id))
+    first = job.target[0] if job.target else ""
+    more = f" and {len(job.target) - 1} more" if len(job.target) > 1 else ""
+    if alert_type is alert_service.AlertType.JOB_FAILED:
+        reason = f": {job.status_reason}" if job.status_reason else ""
+        message = f"{tool} job on {first}{more} failed{reason}"
+    else:
+        message = f"{tool} job on {first}{more} is waiting for approval"
+    await alert_service.raise_alert(
+        session,
+        alert_type=alert_type,
+        program_id=job.program_id,
+        message=message,
+        job_id=job.id,
+    )
 
 
 # ---------------------------------------------------------------- reading
@@ -366,6 +402,7 @@ async def _insert(
     await session.flush()
     await session.refresh(job)
     realtime.queue_job_event(session, job_id=job.id, program_id=program_id, status=job.status)
+    await _raise_status_alert(session, job)
     await audit.record(
         session,
         action="job_created",

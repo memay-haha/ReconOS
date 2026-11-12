@@ -59,7 +59,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/findings',
         icon: 'pest_control',
         part: 'Part E',
-        badge: { path: '/findings?triage_status=new', field: 'total', tone: 'crit' },
+        // Debt 35: every badge reads the one cached summary instead of three lists.
+        badge: {
+          path: '/dashboard/summary?window=24h',
+          field: 'findings_triage_new',
+          tone: 'crit',
+        },
       },
     ],
   },
@@ -72,7 +77,11 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/queue',
         icon: 'dns',
         part: 'Part B',
-        badge: { path: '/jobs?status=queued', field: 'total', tone: 'warn' },
+        badge: {
+          path: '/dashboard/summary?window=24h',
+          field: 'jobs_by_status.queued',
+          tone: 'warn',
+        },
       },
       { label: 'Manage', href: '/manage', icon: 'tune', part: 'Part B' },
       { label: 'Raw Outputs', href: null, icon: 'description', part: 'Part B' },

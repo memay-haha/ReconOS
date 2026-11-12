@@ -194,5 +194,15 @@ def test_every_task_is_registered_on_the_background_app() -> None:
         tasks.PARSE_RAW_OUTPUT_TASK,
         tasks.RECOMPUTE_IN_SCOPE_TASK,
         tasks.PURGE_PROGRAM_OBJECTS_TASK,
+        tasks.RUN_DIAGNOSTICS_TASK,
+        tasks.BEAT_HEARTBEAT_TASK,
     ):
         assert name in celery.tasks
+
+
+def test_beat_sends_its_heartbeat_to_the_schedule_queue() -> None:
+    from app.background.celery_app import app as celery
+
+    entry = celery.conf.beat_schedule["beat-heartbeat"]
+    assert entry["task"] == tasks.BEAT_HEARTBEAT_TASK
+    assert entry["options"]["queue"] == tasks.SCHEDULE_QUEUE

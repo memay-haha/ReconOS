@@ -4,6 +4,7 @@ Every module imports its models here so `alembic revision --autogenerate` sees
 the full schema: docs/data/database.md.
 """
 
+from app.alert.models import Alert, AlertRead
 from app.asset.models import (
     AssetEvent,
     Domain,
@@ -18,6 +19,7 @@ from app.core.audit import AuditLog
 from app.core.db import Base
 from app.core.identity import User, UserSession
 from app.core.system_setting import SystemSetting
+from app.dashboard.models import DiagnosticRun
 from app.engine.models import Engine, EngineVariable
 from app.finding.models import Finding
 from app.job.models import Job
@@ -29,10 +31,13 @@ from app.tool_module.models import ToolModule
 from app.user.models import LoginAttempt, Worker, WorkerToken
 
 __all__ = [
+    "Alert",
+    "AlertRead",
     "AssetEvent",
     "AssetTag",
     "AuditLog",
     "Base",
+    "DiagnosticRun",
     "Domain",
     "DomainIp",
     "Engine",

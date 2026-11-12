@@ -19,7 +19,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 - Tạo đủ file cho mỗi module trong `app/<module>/`: `router.py`, `service.py`, `models.py`, `schemas.py`. Module không sở hữu bảng nào thì bỏ `models.py`. Danh sách module: [modules.md](../docs/architecture/modules.md).
 - Import model mới vào `app/core/models.py` để Alembic phát hiện.
-- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `deps.py`, `identity.py`, `audit.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `pagination.py`, `storage.py`, `system_setting.py`, `realtime.py`, `realtime_router.py`, `tasks.py`.
+- Đặt mã dùng chung trong `app/core/`: `config.py`, `db.py`, `deps.py`, `identity.py`, `audit.py`, `security.py`, `crypto.py`, `errors.py`, `logging.py`, `pagination.py`, `storage.py`, `system_setting.py`, `system_setting_router.py`, `realtime.py`, `realtime_router.py`, `tasks.py`.
 - Đẩy sự kiện realtime bằng `queue_event`, `queue_job_event`, `queue_worker_event` của `app/core/realtime.py` trong cùng transaction với thay đổi. `session_scope` publish sau commit: [system.md](../docs/architecture/system.md).
 - Ghi nhật ký thao tác qua `app/core/audit.py`. Module `audit_log` chỉ giữ phần đọc: [dependency-graph.md](../docs/architecture/dependency-graph.md).
 - Viết migration CSDL chính trong `migrations/`, migration CSDL log trong `migrations_log/`. Bảng `app_log` phân vùng theo ngày nên migration viết tay, không autogenerate.

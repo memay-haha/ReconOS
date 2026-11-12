@@ -360,3 +360,48 @@ async def test_disabled_engine_is_not_handed_out(
     await db_session.flush()
     assert await service.engine_spec_for(db_session, "osmedeus") is None
     assert await service.engine_spec_for(db_session, "unknown") is None
+
+
+# ---------------------------------------------------------------- health for S15
+
+
+async def test_health_check_keeps_ok_since_across_ok_results(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    superadmin: User,
+    osmedeus: Engine,
+    engine_api: None,
+) -> None:
+    assert (await service.health_check(db_session, "osmedeus")).status == "down"
+    await _configure(client, osmedeus)
+    assert (await service.health_check(db_session, "osmedeus")).message == "Engine is disabled."
+    await _configure(client, osmedeus, is_enabled=True)
+
+    first = await service.health_check(db_session, "osmedeus")
+
+    assert first.status == "ok"
+    assert first.version == "v5.1.2"
+    assert first.latency_ms is not None
+    since = osmedeus.ok_since
+    assert since is not None
+    await service.health_check(db_session, "osmedeus")
+    assert osmedeus.ok_since == since
+
+
+async def test_health_check_of_a_refusing_engine_clears_ok_since(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    superadmin: User,
+    osmedeus: Engine,
+    engine_api: None,
+) -> None:
+    await _configure(client, osmedeus, api_key="wrong-key", is_enabled=True)
+    osmedeus.ok_since = osmedeus.updated_at
+    await db_session.flush()
+
+    result = await service.health_check(db_session, "osmedeus")
+
+    assert result.status == "down"
+    assert result.message == "engine refused the API key"
+    assert osmedeus.ok_since is None
+    assert (await service.health_check(db_session, "nonexistent")).status == "down"

@@ -142,11 +142,17 @@ describe('Sidebar against the mockup', () => {
   });
 
   it('counts unreviewed findings and queued jobs, as the mockup means', () => {
-    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) =>
+    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) => (i.badge ? [i.badge] : []));
+    expect(badges.map((b) => b.field)).toEqual(
+      expect.arrayContaining(['findings_triage_new', 'jobs_by_status.queued']),
+    );
+  });
+
+  it('reads every badge from one summary request (debt 35)', () => {
+    const paths = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) =>
       i.badge ? [i.badge.path] : [],
     );
-    expect(badges).toContain('/findings?triage_status=new');
-    expect(badges).toContain('/jobs?status=queued');
+    expect(new Set(paths)).toEqual(new Set(['/dashboard/summary?window=24h']));
   });
 
   it('counts domains new in 24 hours beside Domains (decision M2)', () => {

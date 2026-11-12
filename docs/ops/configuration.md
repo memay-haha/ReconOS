@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -136,23 +136,25 @@ Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong mô
 
 Lưu trong `system_setting`, Superadmin sửa trên UI. Thiếu tên thiết lập thì dùng giá trị mặc định. Cột Đọc công khai ✅: Admin, User đọc được qua `GET /system-settings/{key}`.
 
-| Tên thiết lập | Mặc định | Đọc công khai | Ý nghĩa |
-|---|---|---|---|
-| `session_idle_timeout_minutes` | 30 |  | Số phút không hoạt động trước khi phiên hết hạn |
-| `session_absolute_timeout_hours` | 12 |  | Thời hạn tối đa của một phiên |
-| `login_max_failures_per_account` | 5 |  | Số lần đăng nhập sai theo tài khoản trong khoảng thời gian đếm |
-| `login_max_failures_per_ip` | 20 |  | Số lần đăng nhập sai theo IP trong khoảng thời gian đếm |
-| `login_failure_window_minutes` | 15 |  | Khoảng thời gian đếm lần đăng nhập sai, cũng là thời gian từ chối tạm |
-| `dispatcher_poll_seconds` | 30 |  | Chu kỳ dispatcher quét bù sự kiện bị lỡ |
-| `job_heartbeat_seconds` | 30 |  | Chu kỳ worker gửi heartbeat job |
-| `job_heartbeat_timeout_minutes` | 5 |  | Không nhận heartbeat quá ngưỡng thì job chuyển sang `failed` |
-| `upload_max_bytes` | 10 GB |  | Kích thước tối đa một file output thô |
-| `parser_batch_size` | 1.000 |  | Số dòng mỗi lô upsert của parser |
-| `log_retention_days` | 30 | ✅ | Thời hạn giữ log trong CSDL log |
-| `finding_sla_days` | 30 | ✅ | Số ngày xử lý finding `confirmed`, `reported`. Finding có tuổi quá giá trị này trừ 2 ngày tính vào `findings_near_sla` |
-| `queue_capacity` | 1.000 | ✅ | Sức chứa hàng đợi hiển thị trên S10, mẫu số của Queue Depth Pressure. Không chặn tạo job |
-| `user_idle_after_minutes` | 15 | | Phiên còn hiệu lực có `last_seen_at` cũ hơn ngưỡng này hiện trạng thái Idle trên S12 |
-| `cert_expiring_days` | 14 | ✅ | Chứng chỉ TLS của URL hết hạn trong số ngày này thì sinh cảnh báo `cert_expiring` |
+| Tên thiết lập | Mặc định | Tối thiểu | Tối đa | Đọc công khai | Ý nghĩa |
+|---|---|---|---|---|---|
+| `session_idle_timeout_minutes` | 30 | 5 | 1.440 |  | Số phút không hoạt động trước khi phiên hết hạn |
+| `session_absolute_timeout_hours` | 12 | 1 | 168 |  | Thời hạn tối đa của một phiên |
+| `login_max_failures_per_account` | 5 | 3 | 100 |  | Số lần đăng nhập sai theo tài khoản trong khoảng thời gian đếm |
+| `login_max_failures_per_ip` | 20 | 5 | 1.000 |  | Số lần đăng nhập sai theo IP trong khoảng thời gian đếm |
+| `login_failure_window_minutes` | 15 | 1 | 1.440 |  | Khoảng thời gian đếm lần đăng nhập sai, cũng là thời gian từ chối tạm |
+| `dispatcher_poll_seconds` | 30 | 5 | 600 |  | Chu kỳ dispatcher quét bù sự kiện bị lỡ |
+| `job_heartbeat_seconds` | 30 | 5 | 600 |  | Chu kỳ worker gửi heartbeat job |
+| `job_heartbeat_timeout_minutes` | 5 | 1 | 1.440 |  | Không nhận heartbeat quá ngưỡng thì job chuyển sang `failed` |
+| `upload_max_bytes` | 10 GB | 1 MiB | 100 GiB |  | Kích thước tối đa một file output thô |
+| `parser_batch_size` | 1.000 | 100 | 10.000 |  | Số dòng mỗi lô upsert của parser |
+| `log_retention_days` | 30 | 1 | 365 | ✅ | Thời hạn giữ log trong CSDL log |
+| `finding_sla_days` | 30 | 3 | 365 | ✅ | Số ngày xử lý finding `confirmed`, `reported`. Finding có tuổi quá giá trị này trừ 2 ngày tính vào `findings_near_sla` |
+| `queue_capacity` | 1.000 | 1 | 1.000.000 | ✅ | Sức chứa hàng đợi hiển thị trên S10, mẫu số của Queue Depth Pressure. Không chặn tạo job |
+| `user_idle_after_minutes` | 15 | 1 | 1.440 | | Phiên còn hiệu lực có `last_seen_at` cũ hơn ngưỡng này hiện trạng thái Idle trên S12 |
+| `cert_expiring_days` | 14 | 1 | 365 | ✅ | Chứng chỉ TLS của URL hết hạn trong số ngày này thì sinh cảnh báo `cert_expiring` |
 
-- Backend ghi nhật ký thao tác mỗi lần đổi ngưỡng.
+- Giá trị là số nguyên trong khoảng Tối thiểu, Tối đa. Sai kiểu trả `422` mã `int_type`, ngoài khoảng trả mã `out_of_range`.
+- Hai cặp ngưỡng phụ thuộc nhau, vi phạm trả `422` mã `setting_conflict`: `job_heartbeat_timeout_minutes` × 60 không nhỏ hơn 2 × `job_heartbeat_seconds`, `session_idle_timeout_minutes` không lớn hơn `session_absolute_timeout_hours` × 60.
+- Backend ghi nhật ký thao tác `system_setting_updated` mỗi lần đổi ngưỡng, `detail` gồm `key`, giá trị cũ, giá trị mới.
 - `upload_max_bytes` cũng phải đặt ở reverse proxy: [deployment.md](deployment.md).

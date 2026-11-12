@@ -26,6 +26,7 @@ export const SUMMARY: DashboardSummary = {
   ],
   top_service_name: { name: 'https', ratio: 0.72 },
   findings_by_severity: { critical: 4, high: 18, medium: 42, low: 89, info: 156 },
+  findings_triage_new: 12,
   confirmed_cve_findings_24h: 3,
   jobs_by_status: {
     pending_approval: 5,

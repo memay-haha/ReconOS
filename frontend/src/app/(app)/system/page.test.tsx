@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DIAGNOSTIC, HEALTH, LOG, SETTING, TOOL } from './fixtures';
+import { DEFAULT_SETTING, DIAGNOSTIC, HEALTH, LOG, SETTING, TOOL } from './fixtures';
 import { latestDeleteDay } from './log-panel';
 import SystemPage from './page';
 import {
@@ -134,6 +134,23 @@ describe('S15 system health', () => {
         body: { value: 14 },
       }),
     );
+  });
+
+  it('lists a key on its default and hints the allowed range when editing', async () => {
+    open('superadmin', (call) =>
+      call.path.startsWith('/system-settings') && call.method === 'GET'
+        ? json(page([SETTING, DEFAULT_SETTING]))
+        : call.method === 'PATCH'
+          ? problem(422, 'validation_error', [{ field: 'value', code: 'out_of_range' }])
+          : standard(call),
+    );
+    const row = (await screen.findByText('queue_capacity')).closest('tr') as HTMLElement;
+    expect(within(row).getByText('Default')).toBeInTheDocument();
+    await userEvent.click(within(row).getByRole('button', { name: 'Edit queue_capacity' }));
+    expect(screen.getByText('Allowed 1 to 1,000,000. Default 1,000.')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '1000000');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Value is outside the allowed range.')).toBeInTheDocument();
   });
 
   it('translates a field error on a threshold', async () => {

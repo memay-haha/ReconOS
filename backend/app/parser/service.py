@@ -18,6 +18,7 @@ from pathlib import Path
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.alert import service as alert_service
 from app.asset import service as asset_service
 from app.asset.schemas import IngestResult
 from app.core.realtime import build_event, queue_event
@@ -29,6 +30,9 @@ from app.raw_output import service as raw_output_service
 from contracts.raw_output import ParseStatus
 
 log = structlog.get_logger()
+
+# Only these raise `finding_new`: docs/data/schema.md, section Giá trị liệt kê.
+ALERT_SEVERITIES = ("critical", "high")
 
 OpenStream = Callable[[str], AsyncIterator[bytes]]
 
@@ -78,6 +82,7 @@ async def parse_raw_output(
     found = IngestResult()
     findings = FindingIngestResult()
     new_by_severity: dict[str, int] = {}
+    severe: list[tuple[uuid.UUID, str, str]] = []
     with tempfile.TemporaryDirectory(prefix="reconos-parse-") as directory:
         path = await _download(open_stream, target.object_key, directory)
         for batch in parser.parse(path, stats, target.tool_module):
@@ -88,6 +93,7 @@ async def parse_raw_output(
                 stats.dropped += outcome.dropped
                 for severity, count in outcome.new_by_severity.items():
                     new_by_severity[severity] = new_by_severity.get(severity, 0) + count
+                severe.extend(row for row in outcome.new_findings if row[1] in ALERT_SEVERITIES)
             else:
                 found = found.add(await asset_service.ingest(session, batch, origin, rules))
     await raw_output_service.finish_parse(session, raw_output_id, status=ParseStatus.PARSED)
@@ -115,6 +121,9 @@ async def parse_raw_output(
                 },
             ),
         )
+    await _raise_alerts(
+        session, target.program_id, target.job_id, target.tool_module, found, severe
+    )
     log.info(
         "parse_completed",
         raw_output_id=str(raw_output_id),
@@ -127,6 +136,48 @@ async def parse_raw_output(
         duration_ms=int((time.monotonic() - started) * 1000),
     )
     return ParseOutcome(status=ParseStatus.PARSED, found=found, findings=findings)
+
+
+async def _raise_alerts(
+    session: AsyncSession,
+    program_id: uuid.UUID,
+    job_id: uuid.UUID,
+    tool_module: str,
+    found: IngestResult,
+    severe: list[tuple[uuid.UUID, str, str]],
+) -> None:
+    """`finding_new` once per parsed file, `asset_new` once per job: docs/data/schema.md."""
+    if len(severe) == 1:
+        finding_id, severity, name = severe[0]
+        await alert_service.raise_alert(
+            session,
+            alert_type=alert_service.AlertType.FINDING_NEW,
+            program_id=program_id,
+            message=f"New {severity} finding from {tool_module}: {name}",
+            finding_id=finding_id,
+            job_id=job_id,
+        )
+    elif severe:
+        counts = {level: sum(1 for row in severe if row[1] == level) for level in ALERT_SEVERITIES}
+        detail = ", ".join(f"{count} {level}" for level, count in counts.items() if count)
+        await alert_service.raise_alert(
+            session,
+            alert_type=alert_service.AlertType.FINDING_NEW,
+            program_id=program_id,
+            message=f"{len(severe)} new findings from {tool_module}: {detail}",
+            job_id=job_id,
+        )
+    if found.total:
+        counts_text = ", ".join(
+            f"{count} {kind}" for kind, count in found.model_dump().items() if count
+        )
+        await alert_service.raise_alert(
+            session,
+            alert_type=alert_service.AlertType.ASSET_NEW,
+            program_id=program_id,
+            message=f"New assets from {tool_module}: {counts_text}",
+            job_id=job_id,
+        )
 
 
 async def mark_failed(session: AsyncSession, raw_output_id: uuid.UUID, reason: str) -> None:

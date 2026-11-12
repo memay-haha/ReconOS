@@ -56,6 +56,8 @@ export interface DashboardSummary {
   }[];
   readonly top_service_name: { readonly name: string; readonly ratio: number } | null;
   readonly findings_by_severity: FindingCounts;
+  /** Findings still in triage status `new`: the S20 sidebar badge (debt 35). */
+  readonly findings_triage_new: number;
   readonly confirmed_cve_findings_24h: number;
   readonly jobs_by_status: Readonly<Record<JobStatus, number>>;
   readonly jobs_per_minute: number;

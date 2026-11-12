@@ -1,15 +1,7 @@
 import { HttpResponse } from 'msw';
 
-import { domains, ips, services, urls } from '../data/part-c';
-import { dashboardSummary } from '../data/part-d';
-import { programs, toolModules } from '../data/programs';
-import { findingSamples } from '../data/stitch-f';
-import { alerts } from '../data/stitch-a';
-import { type MockRoute, page, route } from './helpers';
-
-function contains(text: string | null | undefined, q: string): boolean {
-  return (text ?? '').toLowerCase().includes(q);
-}
+import { ips, services, urls } from '../data/part-c';
+import { type MockRoute, route } from './helpers';
 
 /** Decision N2: case-insensitive substring, `*` a wildcard. */
 function matchesQ(text: string, q: string | null): boolean {
@@ -82,66 +74,4 @@ export const stitchARoutes: readonly MockRoute[] = [
     ['port', 'transport', 'name', 'product', 'version'],
     (r) => `${r.name ?? ''} ${r.product ?? ''}`,
   ),
-  // Decision N1: programs, domains, URLs, findings, tool modules; substring, case-insensitive.
-  route('GET /search', ({ request }) => {
-    const search = new URL(request.url).searchParams;
-    const q = (search.get('q') ?? '').trim().toLowerCase();
-    const limit = Math.min(Number(search.get('limit') ?? 10), 50);
-    const rows = [
-      ...programs
-        .filter((p) => contains(p.name, q))
-        .map((p) => ({ type: 'program', id: p.id, label: p.name, program_id: p.id })),
-      ...domains
-        .filter((d) => contains(d.name, q))
-        .map((d) => ({ type: 'domain', id: d.id, label: d.name, program_id: d.program_id })),
-      ...urls
-        .filter((u) => contains(u.url, q))
-        .map((u) => ({ type: 'url', id: u.id, label: u.url, program_id: u.program_id })),
-      ...findingSamples
-        .filter((f) => contains(f.name, q))
-        .map((f) => ({ type: 'finding', id: f.id, label: f.name, program_id: f.program_id })),
-      ...toolModules
-        .filter((m) => contains(m.name, q))
-        .map((m) => ({ type: 'tool_module', id: m.id, label: m.name, program_id: null })),
-    ];
-    return HttpResponse.json({ items: q === '' ? [] : rows.slice(0, limit) });
-  }),
-  // Decision M3, M21: closed services and findings near their SLA join the summary.
-  // P3: `active_sync_ratio` comes from the shared summary, the same in every window.
-  route('GET /dashboard/summary', ({ request }) => {
-    const scale =
-      { '24h': 1, '7d': 6, '30d': 21 }[new URL(request.url).searchParams.get('window') ?? '24h'] ??
-      1;
-    const n = dashboardSummary.assets_new;
-    return HttpResponse.json({
-      ...dashboardSummary,
-      programs_new: scale === 1 ? 0 : dashboardSummary.programs_new,
-      assets_new: {
-        domain: n.domain * scale,
-        ip: n.ip * scale,
-        url: n.url * scale,
-        service: n.service * scale,
-      },
-      assets_closed: { service: 74 * scale },
-      findings_near_sla: 3,
-    });
-  }),
-  route('GET /alerts', ({ request }) => {
-    const search = new URL(request.url).searchParams;
-    const isRead = search.get('is_read');
-    const limit = Number(search.get('limit') ?? 50);
-    const rows = alerts
-      .filter((a) => isRead === null || String(a.is_read) === isRead)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return HttpResponse.json({ ...page(rows.slice(0, limit)), total: rows.length });
-  }),
-  route('POST /alerts/:alert_id/read', ({ params }) => {
-    const alert = alerts.find((a) => a.id === params.alert_id);
-    if (alert !== undefined) alert.is_read = true;
-    return new HttpResponse(null, { status: 204 });
-  }),
-  route('POST /alerts/read-all', () => {
-    for (const alert of alerts) alert.is_read = true;
-    return new HttpResponse(null, { status: 204 });
-  }),
 ];

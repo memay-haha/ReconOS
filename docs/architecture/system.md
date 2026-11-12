@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 4: Kiến trúc hệ thống
 > Liên quan: [overview.md](overview.md), [tech-stack.md](tech-stack.md), [directory-structure.md](directory-structure.md), [ADR chọn tech stack](../decisions/adr-tech-stack.md)
 
@@ -99,8 +99,8 @@ flowchart LR
 | Reverse proxy | `infras/` | Giải mã TLS, định tuyến tới frontend và Backend API |
 | Backend API | `backend/` | REST, WebSocket, xác thực, phân quyền, kiểm tra scope khi tạo job (G5), nhận output thô và lưu vào MinIO (G8) |
 | Dispatcher | `backend/app/dispatcher/` | Chọn job đến lượt, kiểm tra giới hạn, gửi task Celery cho worker. Một bản hoạt động, các bản khác chờ |
-| Tiến trình nền | `backend/` | Celery chạy mã backend. Queue `parse`: đọc output thô đã lưu, tạo hoặc cập nhật tài sản và finding, tính lại `in_scope`, xóa object của program đã xóa cứng. Queue `schedule`: tạo job quét định kỳ |
-| Celery Beat | `backend/` | Gửi task vào queue `schedule` theo lịch. Không tạo job, không giao job |
+| Tiến trình nền | `backend/` | Celery chạy mã backend. Queue `parse`: đọc output thô đã lưu, tạo hoặc cập nhật tài sản và finding, tính lại `in_scope`, xóa object của program đã xóa cứng, chạy lần chẩn đoán của S15. Queue `schedule`: tạo job quét định kỳ, ghi heartbeat của Celery Beat |
+| Celery Beat | `backend/` | Gửi task vào queue `schedule` theo lịch. Không tạo job, không giao job. Mỗi 30 giây gửi task `reconos.beat_heartbeat`, tiến trình nền ghi key Redis `reconos:beat:heartbeat`. `GET /system/health` báo `beat` là `degraded` khi key cũ hơn 60 giây, `down` khi cũ hơn 150 giây hoặc không có |
 | Worker | `workers/` | Nhận task job, chạy công cụ hoặc engine qua runner, gửi output thô về Backend API. Một đến nhiều máy |
 | Frontend | `frontend/` | Render giao diện, gọi API và WebSocket của backend |
 
@@ -131,8 +131,8 @@ flowchart LR
 | Backend API, tiến trình nền | Dispatcher | PostgreSQL `NOTIFY` | Báo có job mới, job vừa xong, thay đổi tạm dừng hoặc duyệt, đổi độ ưu tiên, yêu cầu giao ngay |
 | Dispatcher | Worker | Task Celery qua Redis | Tham số job theo contract |
 | Worker | Backend API | HTTPS | Trạng thái job, upload nội dung output thô theo contract |
-| Backend API | Tiến trình nền | Task Celery qua Redis, queue `parse` | Định danh output thô cần parse |
-| Celery Beat | Tiến trình nền | Task Celery qua Redis, queue `schedule` | Lịch quét đến hạn |
+| Backend API | Tiến trình nền | Task Celery qua Redis, queue `parse` | Định danh output thô cần parse, định danh lần chẩn đoán |
+| Celery Beat | Tiến trình nền | Task Celery qua Redis, queue `schedule` | Lịch quét đến hạn, heartbeat của Beat |
 | Mọi tiến trình lõi | Backend API | Redis pub/sub | Sự kiện đổi trạng thái để đẩy qua WebSocket |
 
 - Contract worker ↔ backend, gồm endpoint và định dạng upload output thô: [external-services.md](../integrations/external-services.md).

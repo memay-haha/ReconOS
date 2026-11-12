@@ -34,6 +34,10 @@ const TEXT: ReadonlyMap<string, string> = new Map([
   ['not_found', 'The selected item no longer exists.'],
   // Raised by backend/app/finding/service.py: the move is not in the triage lifecycle
   ['invalid_transition', 'The finding cannot move to this triage status from its current one.'],
+  // Raised by backend/app/core/system_setting.py for a threshold
+  ['out_of_range', 'Value is outside the allowed range.'],
+  ['setting_conflict', 'Value conflicts with a related threshold.'],
+  ['int_type', 'Enter a whole number.'],
   // 409 conflict names the field that clashes with an existing row
   ['already_exists', 'This value already exists.'],
   // Pydantic reports these as the failure type
