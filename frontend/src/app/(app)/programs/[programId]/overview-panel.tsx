@@ -199,11 +199,9 @@ function FeedRow({
 function SeedFeeds({
   programId,
   canManage,
-  moduleNames,
 }: {
   programId: string;
   canManage: boolean;
-  moduleNames: ReadonlyMap<string, string>;
 }): ReactElement {
   const schedules = useSchedules({ programId });
   const rows = schedules.data?.items ?? [];
@@ -241,9 +239,7 @@ function SeedFeeds({
             <FeedRow
               key={schedule.id}
               schedule={schedule}
-              moduleName={
-                moduleNames.get(schedule.tool_module_id) ?? shortId(schedule.tool_module_id)
-              }
+              moduleName={schedule.tool_module_name}
               canManage={canManage}
             />
           ))}
@@ -461,7 +457,7 @@ export function OverviewPanel({
               canManage={editable}
             />
           )}
-          <SeedFeeds programId={program.id} canManage={editable} moduleNames={moduleNames} />
+          <SeedFeeds programId={program.id} canManage={editable} />
         </div>
       </div>
       <ScanHistory program={program} moduleNames={moduleNames} showLogLink={showLogLink} />

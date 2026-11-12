@@ -1,6 +1,5 @@
 import type { Job, JobStatus } from '@/lib/jobs';
 import type { ProgramRow } from '@/lib/programs';
-import type { Schedule } from '@/lib/schedules';
 import type { Worker } from '@/lib/workers';
 
 import { programs as basePrograms, toolModules } from './programs';
@@ -191,38 +190,6 @@ export const programs: ProgramRow[] = [
 ];
 
 const P = (index: number) => programs[index]?.id ?? '';
-
-let scheduleSeq = 100;
-function schedule(
-  programIndex: number,
-  module: string,
-  target: string,
-  everyMinutes: number,
-  lastRunAgoMs: number | null,
-  enabled = true,
-): Schedule {
-  scheduleSeq += 1;
-  return {
-    id: `0190e000-0000-7000-8000-000000000${scheduleSeq}`,
-    program_id: P(programIndex),
-    tool_module_id: tm(module),
-    target: [target],
-    params: {},
-    interval_minutes: everyMinutes,
-    is_enabled: enabled,
-    created_by: ME,
-    last_run_at: lastRunAgoMs === null ? null : ago(lastRunAgoMs),
-    next_run_at: enabled ? ago(-everyMinutes * 60_000) : null,
-    created_at: ago(30 * 24 * HOUR),
-  };
-}
-
-export const schedules: Schedule[] = [
-  schedule(0, 'osmedeus-domain-lite', '*.example.com', 360, 0.75 * HOUR),
-  schedule(0, 'gowitness', '*.example.com', 1440, 4 * HOUR),
-  schedule(0, 'nuclei', '*.api.example.com', 10080, null, false),
-  schedule(2, 'osmedeus-domain-lite', '*.acme.example.net', 720, 2 * HOUR),
-];
 
 export interface MockWorker extends Worker {
   readonly tool_modules: readonly string[];
@@ -456,7 +423,8 @@ export const jobs: Job[] = PLAN.map((plan, index) => {
     target: [plan.target],
     params: plan.params ?? {},
     proxy_id: null,
-    schedule_id: fromSchedule ? (schedules[0]?.id ?? null) : null,
+    // A schedule id with no schedule row: GET /schedules is served by the backend.
+    schedule_id: fromSchedule ? '0190e000-0000-7000-8000-000000000101' : null,
     retry_of_job_id: null,
     worker_id: plan.worker === undefined ? null : (workers[plan.worker]?.id ?? null),
     created_by: fromSchedule ? null : plan.byMe === true ? ME : 'ops-lead-id',

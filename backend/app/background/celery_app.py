@@ -11,6 +11,7 @@ from typing import Final
 from celery import Celery
 from celery.signals import worker_process_init
 
+from app.background.beat import BEAT_SCHEDULE
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.tasks import PARSE_QUEUE, broker_url
@@ -19,6 +20,7 @@ TASK_MODULES: Final = (
     "app.background.parse_tasks",
     "app.background.asset_tasks",
     "app.background.program_tasks",
+    "app.background.schedule_tasks",
 )
 
 
@@ -36,6 +38,10 @@ def build_app() -> Celery:
         # A task is acknowledged after it ran, so a crash mid-parse redelivers it.
         task_acks_late=True,
         worker_prefetch_multiplier=1,
+        beat_schedule=BEAT_SCHEDULE,
+        # Beat only ticks; the schedule table knows when each scan is due, so
+        # two Beat processes cost a skipped duplicate tick, never a second job.
+        timezone="UTC",
     )
     return celery
 

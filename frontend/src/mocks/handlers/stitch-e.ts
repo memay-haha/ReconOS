@@ -1,8 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { appLogs, engines, systemHealth, systemSettings } from '../data/part-e';
-import { programs, schedules } from '../data/stitch-d';
-import { toolModuleRows } from '../data/stitch-f';
+import { appLogs, systemHealth, systemSettings } from '../data/part-e';
 import { users } from '../data/users';
 import { type MockRoute, page, route } from './helpers';
 
@@ -256,20 +254,6 @@ const engineLogs = [
 }));
 
 const s16Routes: MockRoute[] = [
-  // P4: schedules whose tool module runs on the engine, with both names joined.
-  route('GET /schedules', ({ request }) => {
-    const engineId = new URL(request.url).searchParams.get('engine_id');
-    const engineName = engines.find((e) => e.id === engineId)?.name;
-    const rows = schedules
-      .map((s) => ({
-        ...s,
-        module: toolModuleRows.find((m) => m.id === s.tool_module_id),
-        program_name: programs.find((p) => p.id === s.program_id)?.name ?? '',
-      }))
-      .filter((s) => engineId === null || s.module?.runs_on === engineName)
-      .map(({ module, ...s }) => ({ ...s, tool_module_name: module?.name ?? '' }));
-    return HttpResponse.json(page(rows));
-  }),
   route('GET /logs', ({ request }) => {
     const query = new URL(request.url).searchParams;
     const engine = query.get('engine');

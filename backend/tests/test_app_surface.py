@@ -152,6 +152,13 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("PATCH", "/findings/{finding_id}"),
     ("POST", "/findings/bulk-triage"),
     ("PUT", "/findings/{finding_id}/tags"),
+    # Batch 12: periodic scans.
+    ("GET", "/programs/{program_id}/schedules"),
+    ("POST", "/programs/{program_id}/schedules"),
+    ("GET", "/schedules"),
+    ("PATCH", "/schedules/{schedule_id}"),
+    ("DELETE", "/schedules/{schedule_id}"),
+    ("POST", "/schedules/{schedule_id}/run"),
 }
 # Reachable with a worker token only: docs/integrations/external-services.md.
 WORKER_PREFIX = "/worker/"

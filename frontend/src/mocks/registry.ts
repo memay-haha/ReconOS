@@ -115,6 +115,13 @@ export const IMPLEMENTED: readonly string[] = [
   'GET /findings/:finding_id',
   'PATCH /findings/:finding_id',
   'PUT /findings/:finding_id/tags',
+  // Batch 12: periodic scans (S09, Schedules tab of S16).
+  'GET /programs/:program_id/schedules',
+  'POST /programs/:program_id/schedules',
+  'GET /schedules',
+  'PATCH /schedules/:schedule_id',
+  'DELETE /schedules/:schedule_id',
+  'POST /schedules/:schedule_id/run',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

@@ -41,6 +41,10 @@ class Job(Base):
         # Scan History on S05: the jobs whose target holds an asset.
         Index("ix_job_target", "target", postgresql_using="gin"),
         Index("ix_job_program_id_created_at", "program_id", text("created_at DESC")),
+        # Deleting a schedule sets schedule_id to NULL on its jobs.
+        Index(
+            "ix_job_schedule_id", "schedule_id", postgresql_where=text("schedule_id IS NOT NULL")
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -64,8 +68,11 @@ class Job(Base):
     proxy_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("proxy.id", ondelete="SET NULL")
     )
-    # The schedule table arrives with periodic scans; its foreign key with it.
-    schedule_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # Named by table: schedule sits a tier above job. Deleting a schedule keeps
+    # the history of the jobs it created.
+    schedule_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("schedule.id", ondelete="SET NULL")
+    )
     retry_of_job_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("job.id")
     )

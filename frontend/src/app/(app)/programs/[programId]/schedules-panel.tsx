@@ -8,6 +8,8 @@ import { fieldErrorsOf } from '@/lib/api-client';
 import { formatMoment } from '@/lib/format-moment';
 import {
   formatInterval,
+  MAX_INTERVAL_MINUTES,
+  MIN_INTERVAL_MINUTES,
   type Schedule,
   useCreateSchedule,
   useDeleteSchedule,
@@ -97,7 +99,8 @@ function ScheduleForm({
         <input
           id="schedule-interval"
           type="number"
-          min={1}
+          min={MIN_INTERVAL_MINUTES}
+          max={MAX_INTERVAL_MINUTES}
           value={interval}
           onChange={(e) => setIntervalMinutes(e.target.value)}
           className={FIELD}
@@ -163,7 +166,6 @@ export function SchedulesPanel({
 }): ReactElement {
   const { cursor, canGoBack, goNext, goBack } = useCursorStack();
   const schedules = useSchedules({ programId }, cursor);
-  const moduleName = new Map(toolModules.map((m) => [m.id, m.name]));
 
   return (
     <div className={`${PANEL} flex flex-col gap-space-md p-space-md`}>
@@ -195,12 +197,10 @@ export function SchedulesPanel({
             <tbody className="divide-y divide-border">
               {schedules.data.items.map((s) => (
                 <tr key={s.id}>
-                  <td className={TD}>{moduleName.get(s.tool_module_id) ?? s.tool_module_id}</td>
+                  <td className={TD}>{s.tool_module_name}</td>
                   <td className={`${TD} break-all font-body-code`}>{s.target.join(', ')}</td>
                   <td className={TD}>{formatInterval(s.interval_minutes)}</td>
-                  <td className={TD}>
-                    {s.next_run_at === null ? '-' : formatMoment(s.next_run_at)}
-                  </td>
+                  <td className={TD}>{s.is_enabled ? formatMoment(s.next_run_at) : '-'}</td>
                   <td className={TD}>
                     {s.last_run_at === null ? 'Never' : formatMoment(s.last_run_at)}
                   </td>

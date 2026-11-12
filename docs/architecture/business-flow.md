@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -129,6 +129,15 @@ stateDiagram-v2
 - Program `archived` chỉ đọc: không sửa program, không thêm, sửa, xóa proxy. Gán, bỏ gán User vẫn được vì thao tác này quyết định ai đọc dữ liệu đã lưu trữ.
 - Thử lại job `failed` hoặc `cancelled`: tạo job mới liên kết job cũ. Job cũ giữ nguyên trạng thái và output thô. Job mới được kiểm tra lại scope và đi lại luồng duyệt nếu thuộc nhóm khai thác.
 - Ưu tiên, giới hạn đồng thời và tốc độ khi giao: [system.md](system.md).
+
+### Lịch quét định kỳ
+
+| Thao tác | Ai làm | Quy tắc |
+|---|---|---|
+| Tạo lịch | Admin, Superadmin trên S09 | Kiểm như tạo job: tool module bật, `params` khớp `param_schema`, mọi mục tiêu In-Scope (G5). Lưu mục tiêu dạng chuẩn. Tool module nhóm `exploit`: `422` mã `tool_module_not_schedulable`, vì job do Beat sinh không có người tạo để chặn tự duyệt. Program `archived`: `409`. `interval_minutes` từ 15 đến 525.600. Lần chạy đầu cách lúc tạo một chu kỳ |
+| Sửa, bật, tắt, xóa lịch | Admin, Superadmin trên S09 | Không đổi tool module. Đổi `target`, `params`: kiểm lại như lúc tạo. Đổi chu kỳ hoặc bật lại: `next_run_at` tính lại từ lúc sửa. Xóa lịch: job đã sinh giữ lịch sử, `schedule_id` về `NULL`. Program `archived`: `409` |
+| Chạy ngay một lịch | Admin, Superadmin trên S09 | Tạo một job như job từ API, `created_by` là người bấm. Không đổi `next_run_at`. Program không `active`: `409` |
+| Chạy lịch đến hạn | Tiến trình nền | Chỉ lịch đang bật của program `active`. Job nhận `created_by` là `NULL`, `priority` là `normal`, `params` gộp `default_params` lúc chạy. Kiểm lại scope, tham số, tool module mỗi lần. Bị từ chối: không tạo job, ghi `audit_log` hành động `schedule_run_failed` kèm mã lỗi, vẫn dời `next_run_at`. Mốc bị lỡ, kể cả khi program tạm dừng, không chạy bù từng mốc: lượt chạy đầu sau khi tiếp tục tạo một job rồi dời tới mốc kế tiếp |
 
 ### Độ ưu tiên và điều khiển hàng đợi
 
