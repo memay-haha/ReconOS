@@ -18,6 +18,7 @@ from app.tag.schemas import (
     AssetTagBulkCreateRequest,
     AssetTagCreateRequest,
     AssetTagResponse,
+    FindingTagsRequest,
     TagCreateRequest,
     TagResponse,
     TagSort,
@@ -81,3 +82,12 @@ async def bulk_tag_assets(body: AssetTagBulkCreateRequest, actor: Reader, sessio
 @router.delete("/asset-tags/{asset_tag_id}", status_code=204)
 async def untag_asset(asset_tag_id: uuid.UUID, actor: Reader, session: DbDep) -> None:
     await service.untag_asset(session, actor=actor, asset_tag_id=asset_tag_id)
+
+
+@router.put("/findings/{finding_id}/tags", status_code=204)
+async def set_finding_tags(
+    finding_id: uuid.UUID, body: FindingTagsRequest, actor: Reader, session: DbDep
+) -> None:
+    await service.set_finding_tags(
+        session, actor=actor, finding_id=finding_id, tag_ids=body.tag_ids
+    )

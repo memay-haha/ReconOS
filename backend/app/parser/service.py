@@ -1,18 +1,18 @@
-"""Parse one stored raw output into assets: docs/architecture/system.md, section
-Luồng output thô và parse.
+"""Parse one stored raw output into assets and findings: docs/architecture/system.md,
+section Luồng output thô và parse.
 
 Runs in the background process, after the raw output is stored (G8). The file
 is copied from MinIO to a private temporary file, read only; the object itself
 is never written or deleted. The parse of one raw output is one transaction:
-either every asset of the file is written and the row moves to `parsed`, or
-nothing is written and the task retries.
+either every asset and finding of the file is written and the row moves to
+`parsed`, or nothing is written and the task retries.
 """
 
 import tempfile
 import time
 import uuid
 from collections.abc import AsyncIterator, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import structlog
@@ -21,6 +21,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.asset import service as asset_service
 from app.asset.schemas import IngestResult
 from app.core.realtime import build_event, queue_event
+from app.finding import service as finding_service
+from app.finding.schemas import FindingBatch, FindingIngestResult
 from app.parser.base import ParseDataError, ParseStats
 from app.parser.registry import parser_for
 from app.raw_output import service as raw_output_service
@@ -35,6 +37,7 @@ OpenStream = Callable[[str], AsyncIterator[bytes]]
 class ParseOutcome:
     status: ParseStatus | None
     found: IngestResult
+    findings: FindingIngestResult = field(default_factory=FindingIngestResult)
 
 
 async def _download(open_stream: OpenStream, object_key: str, directory: str) -> Path:
@@ -73,10 +76,20 @@ async def parse_raw_output(
     rules = await asset_service.load_scope_rules(session, target.program_id)
     stats = ParseStats()
     found = IngestResult()
+    findings = FindingIngestResult()
+    new_by_severity: dict[str, int] = {}
     with tempfile.TemporaryDirectory(prefix="reconos-parse-") as directory:
         path = await _download(open_stream, target.object_key, directory)
-        for batch in parser.parse(path, stats):
-            found = found.add(await asset_service.ingest(session, batch, origin, rules))
+        for batch in parser.parse(path, stats, target.tool_module):
+            if isinstance(batch, FindingBatch):
+                outcome = await finding_service.ingest(session, batch, origin, rules)
+                found = found.add(outcome.assets)
+                findings = findings.add(outcome.findings)
+                stats.dropped += outcome.dropped
+                for severity, count in outcome.new_by_severity.items():
+                    new_by_severity[severity] = new_by_severity.get(severity, 0) + count
+            else:
+                found = found.add(await asset_service.ingest(session, batch, origin, rules))
     await raw_output_service.finish_parse(session, raw_output_id, status=ParseStatus.PARSED)
     if found.total:
         # One event per parsed file, gathered by job on the browser side.
@@ -88,6 +101,20 @@ async def parse_raw_output(
                 {"job_id": str(target.job_id), **found.model_dump()},
             ),
         )
+    if findings.created:
+        # One event per parsed file, like asset.discovered: docs/api/architecture.md.
+        queue_event(
+            session,
+            build_event(
+                "finding.created",
+                target.program_id,
+                {
+                    "job_id": str(target.job_id),
+                    "count": findings.created,
+                    "by_severity": new_by_severity,
+                },
+            ),
+        )
     log.info(
         "parse_completed",
         raw_output_id=str(raw_output_id),
@@ -95,9 +122,11 @@ async def parse_raw_output(
         dropped=stats.dropped,
         skipped=stats.skipped_kinds,
         new_assets=found.model_dump(),
+        new_findings=findings.created,
+        findings_seen_again=findings.seen_again,
         duration_ms=int((time.monotonic() - started) * 1000),
     )
-    return ParseOutcome(status=ParseStatus.PARSED, found=found)
+    return ParseOutcome(status=ParseStatus.PARSED, found=found, findings=findings)
 
 
 async def mark_failed(session: AsyncSession, raw_output_id: uuid.UUID, reason: str) -> None:

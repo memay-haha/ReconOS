@@ -38,12 +38,13 @@ describe('IMPLEMENTED', () => {
     expect(IMPLEMENTED).toContain('GET /programs');
     expect(IMPLEMENTED).toContain('POST /programs/:program_id/proxies');
     expect(IMPLEMENTED).toContain('GET /jobs');
+    expect(IMPLEMENTED).toContain('GET /findings');
     expect(IMPLEMENTED).toContain('GET /dispatcher/status');
     expect(IMPLEMENTED).toContain('GET /domains');
   });
 
   it('does not claim an endpoint the backend has not built', () => {
-    expect(IMPLEMENTED).not.toContain('GET /findings');
+    expect(IMPLEMENTED).not.toContain('GET /alerts');
     expect(IMPLEMENTED).not.toContain('GET /jobs/:job_id/logs');
     expect(IMPLEMENTED).not.toContain('POST /jobs/:job_id/approve');
   });
@@ -62,7 +63,7 @@ describe('handlersFor', () => {
   });
 
   it('builds a handler for an endpoint the backend has not built', () => {
-    expect(builtKeys(IMPLEMENTED)).toContain('GET /findings');
+    expect(builtKeys(IMPLEMENTED)).toContain('GET /alerts');
   });
 
   it('filters a route with a path parameter when its IMPLEMENTED entry is present', () => {

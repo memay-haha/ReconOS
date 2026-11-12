@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import { appLogs, findings, systemHealth, systemSettings } from '../data/part-e';
+import { appLogs, systemHealth, systemSettings } from '../data/part-e';
 import { type MockRoute, page, route } from './helpers';
 
 function notFound() {
@@ -51,42 +51,4 @@ export const partERoutes: readonly MockRoute[] = [
     if (before === null) return invalid('before', 'missing');
     return new HttpResponse(null, { status: 204 });
   }),
-  route('GET /findings', ({ request }) => {
-    const query = new URL(request.url).searchParams;
-    const severities = query.getAll('severity');
-    const triage = query.get('triage_status');
-    const program = query.get('program_id');
-    return HttpResponse.json(
-      page(
-        findings.filter(
-          (f) =>
-            (severities.length === 0 || severities.includes(f.severity)) &&
-            (triage === null || f.triage_status === triage) &&
-            (program === null || f.program_id === program),
-        ),
-      ),
-    );
-  }),
-  route('GET /findings/export', () =>
-    HttpResponse.text(findings.map((f) => JSON.stringify(f)).join('\n'), {
-      headers: { 'content-disposition': 'attachment; filename="findings.jsonl"' },
-    }),
-  ),
-  route('GET /findings/:finding_id', ({ params }) => {
-    const found = findings.find((f) => f.id === params.finding_id);
-    return found === undefined ? notFound() : HttpResponse.json(found);
-  }),
-  route('PATCH /findings/:finding_id', async ({ params, request }) => {
-    const found = findings.find((f) => f.id === params.finding_id);
-    if (found === undefined) return notFound();
-    const body = (await request.json()) as {
-      triage_status: string;
-      duplicate_of_id?: string | null;
-    };
-    if (body.triage_status === 'duplicate' && !body.duplicate_of_id) {
-      return invalid('duplicate_of_id', 'missing');
-    }
-    return HttpResponse.json({ ...found, ...body, triaged_at: new Date().toISOString() });
-  }),
-  route('POST /findings/bulk-triage', () => new HttpResponse(null, { status: 204 })),
 ];

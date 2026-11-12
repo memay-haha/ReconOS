@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -96,7 +96,8 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 - Tài sản mới hoặc đổi cột mô tả: ghi `asset_event` loại `discovered` hoặc `changed`, kèm `job_id`, `raw_output_id`, `diff`.
 - Tài sản thấy lại không đổi: chỉ cập nhật `last_seen_at`, không ghi `asset_event`.
 - `dedup_key` do parser của từng tool module tính, bắt đầu bằng tên tool module. 💡 Ví dụ: nuclei dùng `template-id` và `matched-at`.
-- Finding trùng `program_id` và `dedup_key`: cập nhật `last_seen_at`, giữ `triage_status`. Vòng đời finding: [business-flow.md](../architecture/business-flow.md).
+- Finding trùng `program_id` và `dedup_key`: cập nhật `last_seen_at`, giữ `triage_status`, `job_id`, `raw_output_id` và nội dung của lần đầu. Trùng trong cùng một lô: giữ dòng đầu. Vòng đời finding: [business-flow.md](../architecture/business-flow.md).
+- Parser ghi tài sản của finding trước, qua service `asset`, rồi tìm dòng tài sản theo khóa tự nhiên để gắn finding. Giá trị tài sản không chuẩn hóa được: bỏ finding, đếm vào số dòng bỏ của log parse.
 - `url` chuẩn hóa trước khi tính `url_hash`: scheme và host viết thường, bỏ cổng mặc định, bỏ fragment. Path rỗng thành `/`. Chỉ nhận `http`, `https`.
 - Cột mô tả công cụ không báo giữ giá trị đã lưu: giá trị `NULL`, `dns_status = unknown`, `is_wildcard = false` không ghi đè giá trị đã có. Công cụ báo ít trường hơn không xóa kết quả của công cụ trước.
 - Trùng khóa trong cùng một lô: gộp thành một dòng trước khi upsert, giá trị khác `NULL` sau cùng thắng.

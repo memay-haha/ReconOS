@@ -102,6 +102,14 @@ export const IMPLEMENTED: readonly string[] = [
   'POST /asset-tags/bulk-create',
   'DELETE /asset-tags/:asset_tag_id',
   'POST /raw-outputs/:raw_output_id/reparse',
+  // Batch 6: findings, triage and finding tags (S20).
+  'GET /findings',
+  'GET /findings/export',
+  'GET /findings/summary',
+  'POST /findings/bulk-triage',
+  'GET /findings/:finding_id',
+  'PATCH /findings/:finding_id',
+  'PUT /findings/:finding_id/tags',
 ];
 
 export function handlersFor(implemented: readonly string[]): RequestHandler[] {

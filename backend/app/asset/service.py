@@ -5,7 +5,10 @@ programs assigned to it (G7), and every domain read filters `deleted_at IS NULL`
 docs/decisions/adr-soft-delete.md. Writes from tools arrive through `ingest`
 (called by the parser) and are documented in app/asset/ingest.py.
 
-Finding counts read as zero until the finding table exists: tech-debt.md, debt 47.
+The finding table sits one tier up, so it is read by table name only, never
+imported: docs/architecture/dependency-graph.md. The findings of a domain are
+those on the domain, on one of its URLs, or on a service of an IP it resolves
+to: `domain_asset_clause`.
 """
 
 import uuid
@@ -18,22 +21,30 @@ import structlog
 from sqlalchemy import (
     ColumnElement,
     Select,
+    Text,
     and_,
+    column,
     distinct,
-    false,
+    exists,
     func,
     literal,
+    null,
     or_,
     select,
+    table,
     true,
     tuple_,
+    union_all,
     update,
 )
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, aliased
 
 from app.asset import export
 from app.asset import ingest as ingest_module
+from app.asset.ingest import Located as Located
 from app.asset.ingest import Provenance as Provenance
 from app.asset.models import (
     AssetEvent,
@@ -51,6 +62,7 @@ from app.asset.schemas import (
     AssetSort,
     DomainActivityResponse,
     DomainDetailResponse,
+    DomainRecord,
     DomainRowResponse,
     DomainSort,
     DomainSummaryResponse,
@@ -59,13 +71,16 @@ from app.asset.schemas import (
     ExportFormat,
     IngestBatch,
     IngestResult,
+    IpRecord,
     IpRecordResponse,
     IpResponse,
     ProgramStatusFilter,
+    ServiceRecord,
     ServiceResponse,
     TechnologyResponse,
     TechnologySort,
     UrlDetailResponse,
+    UrlRecord,
     UrlResponse,
     UrlTechnologyResponse,
 )
@@ -77,6 +92,7 @@ from app.core.pagination import MAX_LIMIT, Page, decode_cursor, decode_time_curs
 from app.core.security import program_visible_to
 from app.job.models import Job
 from app.program.models import Program, ProgramStatus
+from app.program.schemas import FindingCounts
 from app.scope.matching import Rule
 from app.tag.models import AssetTag, Tag
 from app.tool_module.models import ToolModule
@@ -89,6 +105,8 @@ EXPORT_BATCH = 1000
 
 
 # ---------------------------------------------------------------- ingest, recompute
+
+SortExpression = ColumnElement[Any] | InstrumentedAttribute[Any]
 
 
 async def load_scope_rules(session: AsyncSession, program_id: uuid.UUID) -> list[Rule]:
@@ -103,6 +121,51 @@ async def ingest(
     return await ingest_module.ingest(session, batch, origin, rules)
 
 
+async def locate(
+    session: AsyncSession,
+    program_id: uuid.UUID,
+    records: Sequence[DomainRecord | IpRecord | ServiceRecord | UrlRecord],
+) -> list[Located | None]:
+    """The asset row each ingest record landed on, in order: app/asset/ingest.py."""
+    return await ingest_module.locate(session, program_id, records)
+
+
+def render_export(
+    fmt: ExportFormat, columns: Sequence[str], rows: Sequence[dict[str, Any]]
+) -> Iterator[str]:
+    """The export file format shared by every list that exports: app/asset/export.py."""
+    return export.render(fmt, columns, rows)
+
+
+def export_headers(resource: str, fmt: ExportFormat) -> tuple[str, dict[str, str]]:
+    """Media type and headers of an export download: docs/api/architecture.md."""
+    return export.MEDIA_TYPES[fmt], {
+        "Content-Disposition": f'attachment; filename="{export.filename(resource, fmt)}"',
+        "X-Content-Type-Options": "nosniff",
+    }
+
+
+def domain_asset_clause(
+    domain_id: ColumnElement[uuid.UUID] | InstrumentedAttribute[uuid.UUID] | uuid.UUID,
+    *,
+    domain_column: SortExpression,
+    url_column: SortExpression,
+    service_column: SortExpression,
+) -> ColumnElement[bool]:
+    """Rows that link an asset of the domain: the domain itself, one of its URLs,
+    or a service on an IP the domain resolves to, as `/services?domain_id=` reads.
+    """
+    return or_(
+        domain_column == domain_id,
+        url_column.in_(select(Url.id).where(Url.domain_id == domain_id)),
+        service_column.in_(
+            select(Service.id)
+            .join(DomainIp, DomainIp.ip_id == Service.ip_id)
+            .where(DomainIp.domain_id == domain_id)
+        ),
+    )
+
+
 async def recompute_in_scope(session: AsyncSession, program_id: uuid.UUID) -> int:
     """Re-mark every asset of the program after its scope rules changed."""
     changed = await ingest_module.recompute_in_scope(session, program_id)
@@ -111,9 +174,6 @@ async def recompute_in_scope(session: AsyncSession, program_id: uuid.UUID) -> in
 
 
 # ---------------------------------------------------------------- shared helpers
-
-
-SortExpression = ColumnElement[Any] | InstrumentedAttribute[Any]
 
 
 def _clamp(limit: int) -> int:
@@ -204,6 +264,72 @@ def _ids_clause(
 # ---------------------------------------------------------------- domains
 
 
+_finding = table(
+    "finding",
+    column("id", PG_UUID(as_uuid=True)),
+    column("domain_id", PG_UUID(as_uuid=True)),
+    column("url_id", PG_UUID(as_uuid=True)),
+    column("service_id", PG_UUID(as_uuid=True)),
+    column("job_id", PG_UUID(as_uuid=True)),
+    column("name", Text),
+    column("severity", Text),
+    column("triage_status", Text),
+    column("first_seen_at"),
+)
+# Closed triage states; any other is an open finding: docs/api/architecture.md.
+CLOSED_TRIAGE = ("false_positive", "duplicate", "resolved")
+
+
+def _of_domain(
+    domain_id: ColumnElement[uuid.UUID] | InstrumentedAttribute[uuid.UUID] | uuid.UUID,
+) -> ColumnElement[bool]:
+    return domain_asset_clause(
+        domain_id,
+        domain_column=_finding.c.domain_id,
+        url_column=_finding.c.url_id,
+        service_column=_finding.c.service_id,
+    )
+
+
+def _has_open_finding(severity: str | None = None) -> ColumnElement[bool]:
+    clauses = [_of_domain(Domain.id), _finding.c.triage_status.not_in(CLOSED_TRIAGE)]
+    if severity is not None:
+        clauses.append(_finding.c.severity == severity)
+    return exists(select(_finding.c.id).where(*clauses).correlate(Domain))
+
+
+async def _open_finding_counts(
+    session: AsyncSession, ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, FindingCounts]:
+    """Open findings per domain and severity, each finding counted once per domain."""
+    if not ids:
+        return {}
+    open_finding = _finding.c.triage_status.not_in(CLOSED_TRIAGE)
+    direct = select(
+        _finding.c.domain_id.label("domain_id"), _finding.c.id, _finding.c.severity
+    ).where(_finding.c.domain_id.in_(ids), open_finding)
+    via_url = (
+        select(Url.domain_id.label("domain_id"), _finding.c.id, _finding.c.severity)
+        .join(Url, Url.id == _finding.c.url_id)
+        .where(Url.domain_id.in_(ids), open_finding)
+    )
+    via_service = (
+        select(DomainIp.domain_id.label("domain_id"), _finding.c.id, _finding.c.severity)
+        .join(Service, Service.id == _finding.c.service_id)
+        .join(DomainIp, DomainIp.ip_id == Service.ip_id)
+        .where(DomainIp.domain_id.in_(ids), open_finding)
+    )
+    pairs = direct.union(via_url, via_service).subquery()
+    counts: dict[uuid.UUID, dict[str, int]] = {}
+    for domain_id, severity, count in await session.execute(
+        select(pairs.c.domain_id, pairs.c.severity, func.count()).group_by(
+            pairs.c.domain_id, pairs.c.severity
+        )
+    ):
+        counts.setdefault(domain_id, {})[severity] = count
+    return {domain_id: FindingCounts(**found) for domain_id, found in counts.items()}
+
+
 def _domain_visible(viewer: User) -> ColumnElement[bool]:
     return and_(Domain.deleted_at.is_(None), program_visible_to(viewer, Domain.program_id))
 
@@ -230,9 +356,9 @@ def _domain_where(viewer: User, flt: DomainFilter) -> ColumnElement[bool]:
         clauses.append(Domain.in_scope.is_(flt.in_scope))
     if flt.q:
         clauses.append(_search(Domain.name, flt.q, wildcard=True))
-    if flt.has_findings:
-        # No finding table before batch 6: no domain has a finding yet.
-        clauses.append(false())
+    if flt.has_findings is not None:
+        found = _has_open_finding()
+        clauses.append(found if flt.has_findings else ~found)
     if flt.first_seen_at_from is not None:
         clauses.append(Domain.first_seen_at >= flt.first_seen_at_from)
     if flt.program_status is not None:
@@ -255,6 +381,7 @@ async def _domain_rows(session: AsyncSession, domains: Sequence[Domain]) -> list
     addresses: dict[uuid.UUID, list[tuple[str, int | None, str | None]]] = {}
     url_counts: dict[uuid.UUID, int] = {}
     service_counts: dict[uuid.UUID, int] = {}
+    finding_counts = await _open_finding_counts(session, ids)
     if ids:
         for domain_id, address, asn, asn_org in await session.execute(
             select(DomainIp.domain_id, func.host(Ip.address), Ip.asn, Ip.asn_org)
@@ -292,6 +419,7 @@ async def _domain_rows(session: AsyncSession, domains: Sequence[Domain]) -> list
     for domain in domains:
         found = addresses.get(domain.id, [])
         first = found[0] if found else None
+        counts = finding_counts.get(domain.id, FindingCounts())
         rows.append(
             DomainRowResponse.model_validate(
                 {
@@ -299,6 +427,8 @@ async def _domain_rows(session: AsyncSession, domains: Sequence[Domain]) -> list
                     "ips": [address for address, _, _ in found],
                     "url_count": url_counts.get(domain.id, 0),
                     "service_count": service_counts.get(domain.id, 0),
+                    "finding_counts": counts,
+                    "has_findings": any(counts.model_dump().values()),
                     "asn": first[1] if first else None,
                     "asn_org": first[2] if first else None,
                 }
@@ -368,6 +498,8 @@ async def domain_summary(
                 func.count().filter(
                     Domain.first_seen_at >= week_start, Domain.first_seen_at < day_ago
                 ),
+                func.count().filter(_has_open_finding()),
+                func.count().filter(_has_open_finding("critical")),
             ).where(_domain_where(viewer, flt))
         )
     ).one()
@@ -377,8 +509,8 @@ async def domain_summary(
         resolved=row[2],
         resolved_new_24h=row[3],
         unresolved=row[4],
-        with_findings=0,
-        with_critical=0,
+        with_findings=row[7],
+        with_critical=row[8],
         new_24h=row[5],
         new_daily_avg_7d=round(row[6] / 7, 2),
     )
@@ -477,43 +609,62 @@ async def domain_activity(
     limit: int,
     cursor: str | None,
 ) -> Page[DomainActivityResponse]:
-    """The domain timeline, newest first. Only asset events exist before batches 6, 7."""
+    """The domain timeline, newest first: asset events and findings of the domain.
+
+    Screenshots join in batch 7: tech-debt.md, debt 47.
+    """
     domain = await _visible_domain(session, viewer, domain_id)
-    where = AssetEvent.domain_id == domain.id
+    events = select(
+        literal("asset_event").label("kind"),
+        AssetEvent.id.label("id"),
+        AssetEvent.created_at.label("at"),
+        AssetEvent.job_id.label("job_id"),
+        AssetEvent.event_type.label("event_type"),
+        AssetEvent.diff.label("diff"),
+        null().cast(Text).label("name"),
+    ).where(AssetEvent.domain_id == domain.id)
+    findings = select(
+        literal("finding"),
+        _finding.c.id,
+        _finding.c.first_seen_at,
+        _finding.c.job_id,
+        null().cast(Text),
+        null().cast(JSONB),
+        _finding.c.name,
+    ).where(_of_domain(domain.id))
+    timeline = union_all(events, findings).subquery()
     stmt = (
-        select(AssetEvent)
-        .add_columns(ToolModule.name)
-        .outerjoin(Job, Job.id == AssetEvent.job_id)
+        select(timeline, ToolModule.name.label("tool_module_name"))
+        .outerjoin(Job, Job.id == timeline.c.job_id)
         .outerjoin(ToolModule, ToolModule.id == Job.tool_module_id)
     )
     size = _clamp(limit)
-    page_stmt = stmt.where(where).order_by(AssetEvent.created_at.desc(), AssetEvent.id.desc())
+    page_stmt = stmt.order_by(timeline.c.at.desc(), timeline.c.id.desc())
     if cursor is not None:
         seen_at, seen_id = decode_time_cursor(cursor)
-        page_stmt = page_stmt.where(
-            tuple_(AssetEvent.created_at, AssetEvent.id) < (seen_at, seen_id)
-        )
+        page_stmt = page_stmt.where(tuple_(timeline.c.at, timeline.c.id) < (seen_at, seen_id))
     rows = list((await session.execute(page_stmt.limit(size + 1))).all())
-    total = await session.scalar(select(func.count()).select_from(AssetEvent).where(where)) or 0
+    total = await session.scalar(select(func.count()).select_from(timeline)) or 0
     page_rows = rows[:size]
     items = []
-    for event, tool_module_name in page_rows:
-        changed = ", ".join(sorted(event.diff)) if event.diff else ""
-        title = _EVENT_TITLES[event.event_type] + (f": {changed}" if changed else "")
+    for row in page_rows:
+        if row.kind == "finding":
+            title = row.name
+        else:
+            changed = ", ".join(sorted(row.diff)) if row.diff else ""
+            title = _EVENT_TITLES[row.event_type] + (f": {changed}" if changed else "")
         items.append(
             DomainActivityResponse(
-                kind="asset_event",
-                id=event.id,
-                at=event.created_at,
+                kind=row.kind,
+                id=row.id,
+                at=row.at,
                 title=title,
-                tool_module_name=tool_module_name,
-                job_id=event.job_id,
+                tool_module_name=row.tool_module_name,
+                job_id=row.job_id,
             )
         )
     next_cursor = (
-        encode_cursor(page_rows[-1][0].created_at.isoformat(), page_rows[-1][0].id)
-        if len(rows) > size
-        else None
+        encode_cursor(page_rows[-1].at.isoformat(), page_rows[-1].id) if len(rows) > size else None
     )
     return Page[DomainActivityResponse](items=items, next_cursor=next_cursor, total=total)
 

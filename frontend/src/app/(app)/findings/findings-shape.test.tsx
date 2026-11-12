@@ -44,9 +44,18 @@ describe('S20 against its mockup', () => {
     await userEvent.click(await screen.findByRole('button', { name: `Open ${NAME}` }));
     await screen.findByText('Vulnerability Synopsis');
     const words = container.textContent ?? '';
-    // Push to Jira: stay-out list. Nuclei v3: N13 waits on job.tool_version (D4).
+    // Push to Jira: stay-out list. Sync Nuclei became Re-scan (P2). Triaged is no triage status
+    // (debt 7). Nuclei v3: N13 waits on job.tool_version (D4).
     // Page numbers: cursor pagination only.
-    for (const banned of ['Push to Jira', 'Nuclei v3', 'Web Tier', '« First', 'Last »']) {
+    for (const banned of [
+      'Push to Jira',
+      'Sync Nuclei',
+      'Triaged',
+      'Nuclei v3',
+      'Web Tier',
+      '« First',
+      'Last »',
+    ]) {
       expect(words).not.toContain(banned);
     }
   });

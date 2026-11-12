@@ -80,3 +80,14 @@ class AssetTagResponse(BaseModel):
     service_id: uuid.UUID | None
     created_by: uuid.UUID | None
     created_at: datetime
+
+
+MAX_TAGS_PER_FINDING = 100
+
+
+class FindingTagsRequest(BaseModel):
+    """The whole tag list of one finding: what is not listed is removed."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tag_ids: list[uuid.UUID] = Field(max_length=MAX_TAGS_PER_FINDING)

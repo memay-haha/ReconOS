@@ -45,6 +45,7 @@ log = structlog.get_logger()
 
 _job = table(
     "job",
+    column("id", PG_UUID(as_uuid=True)),
     column("tool_module_id", PG_UUID(as_uuid=True)),
     column("status", Text),
     column("created_at", DateTime(timezone=True)),
@@ -52,6 +53,7 @@ _job = table(
     column("finished_at", DateTime(timezone=True)),
     column("last_heartbeat_at", DateTime(timezone=True)),
 )
+_finding = table("finding", column("job_id", PG_UUID(as_uuid=True)))
 
 # estimated_seconds: median duration of this many latest completed jobs.
 ESTIMATE_SAMPLE = 20
@@ -116,7 +118,8 @@ async def get_runnable(
 
 async def _job_aggregates(
     session: AsyncSession,
-) -> dict[uuid.UUID, tuple[datetime | None, int]]:
+) -> dict[uuid.UUID, tuple[datetime | None, int, int]]:
+    """Per tool module: last completed job, jobs created in 24 hours, findings of its jobs."""
     since = datetime.now(UTC) - timedelta(hours=24)
     result = await session.execute(
         select(
@@ -125,7 +128,15 @@ async def _job_aggregates(
             func.count().filter(_job.c.created_at >= since),
         ).group_by(_job.c.tool_module_id)
     )
-    return {row[0]: (row[1], int(row[2])) for row in result}
+    findings: dict[uuid.UUID, int] = {
+        row[0]: int(row[1])
+        for row in await session.execute(
+            select(_job.c.tool_module_id, func.count())
+            .select_from(_finding.join(_job, _job.c.id == _finding.c.job_id))
+            .group_by(_job.c.tool_module_id)
+        )
+    }
+    return {row[0]: (row[1], int(row[2]), findings.get(row[0], 0)) for row in result}
 
 
 async def _estimated_seconds(session: AsyncSession, tool_module_id: uuid.UUID) -> int | None:
@@ -156,10 +167,10 @@ async def _response(
     session: AsyncSession,
     row: ToolModule,
     spec: ToolModuleSpec,
-    aggregates: dict[uuid.UUID, tuple[datetime | None, int]],
+    aggregates: dict[uuid.UUID, tuple[datetime | None, int, int]],
     workers: list[Worker],
 ) -> ToolModuleResponse:
-    last_job_at, jobs_24h = aggregates.get(row.id, (None, 0))
+    last_job_at, jobs_24h, finding_count = aggregates.get(row.id, (None, 0, 0))
     return ToolModuleResponse(
         id=row.id,
         name=row.name,
@@ -178,8 +189,7 @@ async def _response(
         param_schema=spec.params.model_json_schema(),
         last_job_at=last_job_at,
         jobs_24h=jobs_24h,
-        # The finding table arrives in a later batch: docs/api/architecture.md.
-        finding_count=0,
+        finding_count=finding_count,
         # No engine-backed tool module exists yet, so no engine status either.
         engine_status=None,
         disabled_reason=_disabled_reason(row, workers),

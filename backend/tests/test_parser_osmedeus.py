@@ -17,6 +17,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.asset.models import AssetEvent, Domain, DomainIp, Ip, Service, Technology, Url
 from app.asset.schemas import IngestBatch
 from app.core.realtime import take_pending_events
+from app.finding.models import Finding
+from app.finding.schemas import FindingBatch
 from app.job.models import Job
 from app.parser import base, osmedeus
 from app.parser import service as parser_service
@@ -33,6 +35,7 @@ from tests.factories import (
     make_raw_output,
     make_scope_rule,
     tool_module_named,
+    tool_module_without_parser,
     zip_directory,
 )
 
@@ -47,7 +50,9 @@ def sample_zip(tmp_path: Path) -> Path:
 def _collect(path: Path) -> tuple[IngestBatch, ParseStats]:
     stats = ParseStats()
     merged = IngestBatch()
-    for batch in OsmedeusGeneralParser().parse(path, stats):
+    for batch in OsmedeusGeneralParser().parse(path, stats, "osmedeus-general"):
+        if isinstance(batch, FindingBatch):
+            continue
         merged.domains.extend(batch.domains)
         merged.ips.extend(batch.ips)
         merged.services.extend(batch.services)
@@ -62,7 +67,7 @@ def test_every_osmedeus_tool_module_has_this_parser() -> None:
     for name in ("osmedeus-domain-lite", "osmedeus-general", "osmedeus-domain-extensive"):
         assert isinstance(parser_for(name), OsmedeusParser)
         assert raw_output_service.has_parser(name)
-    assert parser_for("nuclei") is None
+    assert not isinstance(parser_for("nuclei"), OsmedeusParser)
 
 
 def test_sample_package_yields_records_and_drops_bad_lines(sample_zip: Path) -> None:
@@ -91,7 +96,8 @@ def test_sample_package_yields_records_and_drops_bad_lines(sample_zip: Path) -> 
     # Broken JSON, a JSON array, an httpx line without url, a port line with a
     # name or no number: each dropped, none fatal.
     assert stats.dropped == 5
-    assert stats.skipped_kinds == {"nuclei": 1}
+    # The nuclei line of the package is a finding now, not a skip.
+    assert stats.skipped_kinds == {}
 
 
 def test_a_run_without_output_is_skipped(tmp_path: Path) -> None:
@@ -276,8 +282,23 @@ async def test_parse_writes_assets_marks_scope_and_is_idempotent(
     )
     assert events == 12
     sent = take_pending_events(db_session)
-    assert [event["type"] for event in sent] == ["asset.discovered"]
+    assert [event["type"] for event in sent] == ["asset.discovered", "finding.created"]
     assert sent[0]["data"]["job_id"] == str(osmedeus_job.id)
+    # The nuclei result of the package, keyed by this Osmedeus tool module.
+    finding = await db_session.scalar(
+        select(Finding).where(Finding.program_id == scoped_program.id)
+    )
+    assert finding is not None
+    assert finding.dedup_key == dedup_key(
+        "osmedeus-general", "tech-detect", "https://a.example.com"
+    )
+    assert finding.url_id == urls["https://a.example.com/"].id
+    assert finding.raw_output_id == raw.id
+    assert sent[1]["data"] == {
+        "job_id": str(osmedeus_job.id),
+        "count": 1,
+        "by_severity": {"info": 1},
+    }
 
     # Parse the same file again, as a reparse does: no new row, no new event.
     raw.parse_status = "pending"
@@ -286,7 +307,8 @@ async def test_parse_writes_assets_marks_scope_and_is_idempotent(
         db_session, raw.id, open_stream=_opener(sample_zip)
     )
     assert again.found.total == 0
-    for model, expected in ((Domain, 4), (Ip, 3), (Service, 2), (Url, 3)):
+    assert (again.findings.created, again.findings.seen_again) == (0, 1)
+    for model, expected in ((Domain, 4), (Ip, 3), (Service, 2), (Url, 3), (Finding, 1)):
         assert await _count(db_session, model, scoped_program) == expected
     assert (
         await db_session.scalar(
@@ -312,9 +334,9 @@ async def test_a_raw_output_not_pending_is_left_alone(
 async def test_a_tool_module_without_parser_is_marked_no_parser(
     db_session: AsyncSession, scoped_program: Program, sample_zip: Path
 ) -> None:
-    tool = await tool_module_named(db_session, "nuclei")
+    tool = await tool_module_without_parser(db_session)
     job = await make_job(db_session, scoped_program, tool, status="completed")
-    raw = await make_raw_output(db_session, job, filename="nuclei.jsonl")
+    raw = await make_raw_output(db_session, job, filename="output.txt")
     outcome = await parser_service.parse_raw_output(
         db_session, raw.id, open_stream=_opener(sample_zip)
     )

@@ -15,6 +15,7 @@ from app.core.logging import configure_logging
 from app.core.realtime_router import router as realtime_router
 from app.dispatcher.router import router as dispatcher_router
 from app.engine.router import router as engine_router
+from app.finding.router import router as finding_router
 from app.job.router import router as job_router
 from app.parser import registry as _parser_registry  # noqa: F401  # registers parsers before any upload
 from app.program.router import router as program_router
@@ -77,6 +78,7 @@ app.include_router(engine_router)
 app.include_router(job_router)
 app.include_router(raw_output_router)
 app.include_router(asset_router)
+app.include_router(finding_router)
 app.include_router(tag_router)
 app.include_router(dispatcher_router)
 app.include_router(realtime_router)

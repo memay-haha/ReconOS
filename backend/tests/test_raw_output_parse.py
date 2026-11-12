@@ -17,8 +17,8 @@ from tests.factories import (
     make_program,
     make_raw_output,
     make_worker,
-    nuclei,
     tool_module_named,
+    tool_module_without_parser,
 )
 
 API = "/api/v1"
@@ -107,8 +107,10 @@ async def test_reparse_refuses_no_parser_and_archived(
 ) -> None:
     await logged_in(UserRole.ADMIN)
     program = await make_program(db_session)
-    job = await make_job(db_session, program, await nuclei(db_session), status="completed")
-    raw = await make_raw_output(db_session, job, filename="nuclei.jsonl", parse_status="no_parser")
+    job = await make_job(
+        db_session, program, await tool_module_without_parser(db_session), status="completed"
+    )
+    raw = await make_raw_output(db_session, job, filename="output.txt", parse_status="no_parser")
     assert (
         await client.post(f"{API}/raw-outputs/{raw.id}/reparse", headers=HEADERS)
     ).status_code == 409

@@ -1,4 +1,4 @@
-"""The shared tag catalogue and tags on assets: docs/architecture/modules.md.
+"""The shared tag catalogue and tags on assets and findings: docs/architecture/modules.md.
 
 The asset tables and `program` sit above this tier, so they are read by table
 name only, never imported: docs/architecture/dependency-graph.md. Tagging an
@@ -32,12 +32,13 @@ from app.core.errors import BadRequestError, ConflictError, NotFoundError
 from app.core.identity import User
 from app.core.pagination import MAX_LIMIT, Page, decode_cursor, encode_cursor
 from app.core.security import program_visible_to
-from app.tag.models import AssetTag, Tag
+from app.tag.models import AssetTag, FindingTag, Tag
 from app.tag.schemas import AssetTagResponse, AssetType, TagResponse, TagSort
 
 RESOURCE = "tag"
 
 _program = table("program", column("id"), column("status"))
+_finding = table("finding", column("id"), column("program_id"))
 
 
 def _asset_table(name: str) -> TableClause:
@@ -293,3 +294,68 @@ async def untag_asset(session: AsyncSession, *, actor: User, asset_tag_id: uuid.
 
 def asset_tag_response(row: AssetTag) -> AssetTagResponse:
     return AssetTagResponse.model_validate(row)
+
+
+# ---------------------------------------------------------------- tags on findings
+
+
+async def set_finding_tags(
+    session: AsyncSession, *, actor: User, finding_id: uuid.UUID, tag_ids: Sequence[uuid.UUID]
+) -> None:
+    """Replace the tag list of one finding. One audit row per tag added or removed.
+
+    A finding the actor cannot see answers 404 (G7), an unknown tag 404, a
+    finding of an archived program 409.
+    """
+    found = (
+        await session.execute(
+            select(_finding.c.program_id, _program.c.status)
+            .join(_program, _program.c.id == _finding.c.program_id)
+            .where(_finding.c.id == finding_id, program_visible_to(actor, _finding.c.program_id))
+        )
+    ).first()
+    if found is None:
+        raise NotFoundError(detail="finding does not exist")
+    program_id, status = found
+    if status == "archived":
+        raise ConflictError(detail="program is archived and read only")
+    wanted = set(tag_ids)
+    tags = {tag.id: tag for tag in await session.scalars(select(Tag).where(Tag.id.in_(wanted)))}
+    if len(tags) != len(wanted):
+        raise NotFoundError(detail="tag does not exist")
+    current = set(
+        await session.scalars(select(FindingTag.tag_id).where(FindingTag.finding_id == finding_id))
+    )
+    added = sorted(wanted - current, key=str)
+    removed = sorted(current - wanted, key=str)
+    if removed:
+        await session.execute(
+            delete(FindingTag).where(
+                FindingTag.finding_id == finding_id, FindingTag.tag_id.in_(removed)
+            )
+        )
+    if added:
+        await session.execute(
+            insert(FindingTag)
+            .values(
+                [
+                    {"finding_id": finding_id, "tag_id": tag_id, "created_by": actor.id}
+                    for tag_id in added
+                ]
+            )
+            .on_conflict_do_nothing()
+        )
+    for action, changed in (("finding_tagged", added), ("finding_untagged", removed)):
+        for tag_id in changed:
+            detail: dict[str, Any] = {"tag_id": str(tag_id)}
+            if tag_id in tags:
+                detail |= {"key": tags[tag_id].key, "value": tags[tag_id].value}
+            await audit.record(
+                session,
+                action=action,
+                user_id=actor.id,
+                program_id=program_id,
+                resource_type="finding",
+                resource_id=finding_id,
+                detail=detail,
+            )

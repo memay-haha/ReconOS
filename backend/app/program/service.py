@@ -14,7 +14,6 @@ from typing import Any, Literal
 from sqlalchemy import (
     ColumnElement,
     DateTime,
-    Integer,
     Row,
     ScalarSelect,
     Select,
@@ -98,6 +97,7 @@ _ip = table("ip", column("program_id"))
 _url = table("url", column("program_id"), column("first_seen_at"))
 _service = table("service", column("program_id"), column("ip_id"), column("port"))
 _job_finished = table("job", column("program_id"), column("finished_at"))
+_finding = table("finding", column("program_id"), column("severity"), column("triage_status"))
 _DAY = timedelta(hours=24)
 
 
@@ -128,8 +128,15 @@ _SERVICE_COUNT = _per_program(_service, func.count())
 _IP_RESOLVED_COUNT = _per_program(_service, func.count(distinct(_service.c.ip_id)))
 _SERVICE_PORT_COUNT = _per_program(_service, func.count(distinct(_service.c.port)))
 _LAST_JOB_FINISHED_AT = _per_program(_job_finished, func.max(_job_finished.c.finished_at))
-# The finding and screenshot tables arrive in batches 6 and 7: tech-debt.md, debt 47.
-_FINDING_CRITICAL_COUNT: ColumnElement[int] = literal(0, Integer)
+# Open findings: triage state other than false_positive, duplicate, resolved.
+_open_finding = _finding.c.triage_status.not_in(("false_positive", "duplicate", "resolved"))
+_SEVERITIES = ("critical", "high", "medium", "low", "info")
+_FINDING_COUNTS = {
+    severity: _per_program(_finding, func.count(), _open_finding, _finding.c.severity == severity)
+    for severity in _SEVERITIES
+}
+_FINDING_CRITICAL_COUNT = _FINDING_COUNTS["critical"]
+# The screenshot table arrives in batch 7: tech-debt.md, debt 47.
 
 _COMPUTED: dict[str, Any] = {
     "domain_count": _DOMAIN_COUNT,
@@ -142,6 +149,7 @@ _COMPUTED: dict[str, Any] = {
     "ip_resolved_count": _IP_RESOLVED_COUNT,
     "service_port_count": _SERVICE_PORT_COUNT,
     "last_job_finished_at": _LAST_JOB_FINISHED_AT,
+    **{f"finding_{severity}": expression for severity, expression in _FINDING_COUNTS.items()},
 }
 # Stands in for "never" so a descending keyset over a nullable time stays total.
 _NEVER = datetime(1, 1, 1, tzinfo=UTC)
@@ -270,6 +278,9 @@ def _row(row: Row[Any]) -> ProgramRowResponse:
             "ip_resolved_count": fields["ip_resolved_count"] or 0,
             "service_port_count": fields["service_port_count"] or 0,
             "last_job_finished_at": fields["last_job_finished_at"],
+            "finding_counts": {
+                severity: fields[f"finding_{severity}"] or 0 for severity in _SEVERITIES
+            },
             "scope_coverage": (
                 round(fields["domain_in_scope_count"] / domains, 4) if domains else None
             ),

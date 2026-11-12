@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -172,8 +172,23 @@ stateDiagram-v2
 | `resolved` | Program xác nhận đã sửa |
 
 - Parser tạo finding mới ở `new`. Finding trùng chuỗi khử trùng lặp chỉ cập nhật thời điểm phát hiện gần nhất, giữ trạng thái triage.
-- Người có quyền triage đổi trạng thái thủ công. Mỗi lần đổi ghi nhật ký thao tác.
-- Finding giữ liên kết tới job và output thô nguồn.
+- Người có quyền triage đổi trạng thái thủ công theo bảng chuyển dưới. Mỗi lần đổi ghi nhật ký thao tác `finding_triaged` với trạng thái cũ, mới.
+- Finding giữ liên kết tới job và output thô của lần phát hiện đầu.
+
+| Từ | Sang được |
+|---|---|
+| `new` | `confirmed`, `false_positive`, `duplicate` |
+| `confirmed` | `new`, `false_positive`, `duplicate`, `reported`, `resolved` |
+| `false_positive` | `new`, `confirmed` |
+| `duplicate` | `new`, `confirmed` |
+| `reported` | `confirmed`, `resolved` |
+| `resolved` | `confirmed` |
+
+- Chuyển ngoài bảng: `409 conflict`, trạng thái giữ nguyên. Đổi sang chính trạng thái hiện tại: không đổi gì, không ghi nhật ký.
+- `duplicate` cần `duplicate_of_id`: finding khác cùng program, không phải `duplicate`. Finding đang có finding khác trỏ tới không chuyển sang `duplicate` được. Rời `duplicate` thì xóa `duplicate_of_id`.
+- Chuyển sang `reported` bằng tay được khi chưa có module `report`. Khi có, nộp báo cáo cũng chuyển finding sang `reported` theo mục Báo cáo.
+- Triage hàng loạt: tất cả hoặc không. Một finding chuyển sai bảng thì không finding nào đổi. Không nhận `duplicate`.
+- Finding của program `archived` chỉ đọc: triage, gắn tag trả `409 conflict`.
 
 ### Báo cáo
 

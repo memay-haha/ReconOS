@@ -705,3 +705,105 @@ async def recompute_in_scope(session: AsyncSession, program_id: uuid.UUID) -> in
         .returning(Service.id)
     )
     return changed + len(result.all())
+
+
+# ---------------------------------------------------------------- locating written assets
+
+
+@dataclass(frozen=True)
+class Located:
+    """The row an ingest record landed on, for tables that link one asset."""
+
+    asset_type: AssetType
+    asset_id: uuid.UUID
+
+
+async def locate(
+    session: AsyncSession,
+    program_id: uuid.UUID,
+    records: Sequence[DomainRecord | IpRecord | ServiceRecord | UrlRecord],
+) -> list[Located | None]:
+    """The asset row of each record, in order, by natural key: call after `ingest`.
+
+    None for a record whose value does not canonicalise, which `ingest` skipped
+    too. A soft-deleted domain is still found: links to it stay (D5).
+    """
+    names = {n for r in records if isinstance(r, DomainRecord) if (n := canonical_domain(r.name))}
+    addresses = {
+        a
+        for r in records
+        if isinstance(r, IpRecord | ServiceRecord)
+        if (a := canonical_ip(r.address))
+    }
+    urls = {c.url_hash for r in records if isinstance(r, UrlRecord) if (c := canonical_url(r.url))}
+    domain_ids: dict[str, uuid.UUID] = {}
+    ip_ids: dict[str, uuid.UUID] = {}
+    url_ids: dict[bytes, uuid.UUID] = {}
+    service_ids: dict[tuple[uuid.UUID, int, str], uuid.UUID] = {}
+    for names_chunk in _chunks(sorted(names)):
+        for row_id, name in await session.execute(
+            select(Domain.id, Domain.name).where(
+                Domain.program_id == program_id, Domain.name.in_(names_chunk)
+            )
+        ):
+            domain_ids[name] = row_id
+    for address_chunk in _chunks(sorted(addresses)):
+        for row_id, address in await session.execute(
+            select(Ip.id, func.host(Ip.address)).where(
+                Ip.program_id == program_id, func.host(Ip.address).in_(address_chunk)
+            )
+        ):
+            ip_ids[address] = row_id
+    for hash_chunk in _chunks(sorted(urls)):
+        for row_id, url_hash in await session.execute(
+            select(Url.id, Url.url_hash).where(
+                Url.program_id == program_id, Url.url_hash.in_(hash_chunk)
+            )
+        ):
+            url_ids[url_hash] = row_id
+    service_keys = sorted(
+        {
+            (ip_ids[a], r.port, r.transport.value)
+            for r in records
+            if isinstance(r, ServiceRecord)
+            if (a := canonical_ip(r.address)) and a in ip_ids
+        },
+        key=str,
+    )
+    for key_chunk in _chunks(service_keys):
+        for row_id, ip_id, port, transport in await session.execute(
+            select(Service.id, Service.ip_id, Service.port, Service.transport).where(
+                tuple_(Service.ip_id, Service.port, Service.transport).in_(key_chunk)
+            )
+        ):
+            service_ids[(ip_id, port, transport)] = row_id
+    found: list[Located | None] = []
+    for record in records:
+        found.append(_located(record, domain_ids, ip_ids, url_ids, service_ids))
+    return found
+
+
+def _located(
+    record: DomainRecord | IpRecord | ServiceRecord | UrlRecord,
+    domain_ids: dict[str, uuid.UUID],
+    ip_ids: dict[str, uuid.UUID],
+    url_ids: dict[bytes, uuid.UUID],
+    service_ids: dict[tuple[uuid.UUID, int, str], uuid.UUID],
+) -> Located | None:
+    asset_id: uuid.UUID | None = None
+    if isinstance(record, DomainRecord):
+        name = canonical_domain(record.name)
+        asset_id = domain_ids.get(name) if name else None
+        return Located(AssetType.DOMAIN, asset_id) if asset_id else None
+    if isinstance(record, UrlRecord):
+        canonical = canonical_url(record.url)
+        asset_id = url_ids.get(canonical.url_hash) if canonical else None
+        return Located(AssetType.URL, asset_id) if asset_id else None
+    address = canonical_ip(record.address)
+    ip_id = ip_ids.get(address) if address else None
+    if isinstance(record, IpRecord):
+        return Located(AssetType.IP, ip_id) if ip_id else None
+    if ip_id is None:
+        return None
+    asset_id = service_ids.get((ip_id, record.port, record.transport.value))
+    return Located(AssetType.SERVICE, asset_id) if asset_id else None
