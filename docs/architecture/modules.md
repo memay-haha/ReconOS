@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.5 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.6 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -32,19 +32,19 @@
 |---|---|---|
 | `program` | Program, điều khoản, tạm dừng, tiếp tục, lưu trữ program, gán User vào program, proxy của program | S08, S09, S11 |
 | `scope` | Scope rule In-Scope, Out-of-Scope. So khớp mục tiêu với scope (G5) | S09, S11 |
-| `asset` | Domain, IP, URL, service, công nghệ của URL, sự kiện tài sản và liên kết chéo giữa chúng (G3) | S03, S04, S05 |
-| `screenshot` | Screenshot do parser của gowitness tạo | S06, S07 |
+| `asset` | Domain, IP, URL, service, công nghệ của URL, sự kiện tài sản và liên kết chéo giữa chúng (G3). Xóa mềm domain | S03, S04, S05 |
+| `screenshot` | Screenshot do parser của gowitness tạo. Xóa mềm screenshot | S06, S07 |
 | `tag` | Tag tùy biến gắn vào tài sản, finding (G2) | |
-| `tool_module` | Danh mục tool module, cấu hình trong CSDL | S18 |
-| `engine` | Cấu hình kết nối, biến engine của Osmedeus, Vigolium | S16, S17 |
-| `job` | Tạo job, kiểm tra scope trước khi tạo, trạng thái, duyệt, ưu tiên. Lịch quét định kỳ và task `schedule` tạo job định kỳ | S09, S10 |
+| `tool_module` | Danh mục tool module, cấu hình trong CSDL. Danh sách công cụ và phiên bản worker báo | S15, S18 |
+| `engine` | Cấu hình kết nối, biến engine, `settings` của Osmedeus, Vigolium. Đọc workflow, native module qua REST của engine | S16, S17 |
+| `job` | Tạo job đơn lẻ và hàng loạt, kiểm tra scope trước khi tạo, trạng thái, duyệt, ưu tiên, dọn hàng đợi. Lịch quét định kỳ, chạy ngay một lịch và task `schedule` tạo job định kỳ | S09, S10 |
 | `dispatcher` | Giao job cho worker: [system.md](system.md) | S10, S15 |
 | `raw_output` | Nhận, lưu, tra cứu, tải về output thô (G8) | |
 | `parser` | Chọn parser theo tool module, chạy parser trong tiến trình nền | |
 | `finding` | Finding, severity, triage (G6) | S20 |
 | `report` | Báo cáo từ finding, truy vết về output thô (G6) | |
-| `dashboard` | Số liệu tổng hợp | S02 |
-| `user` | Nghiệp vụ tài khoản: đăng nhập, vai trò, khóa tài khoản, thu hồi phiên, chặn đăng nhập sai nhiều lần, token worker | S12 |
+| `dashboard` | Số liệu tổng hợp, tình trạng hệ thống, tìm toàn cục. Bảng `diagnostic_run` của lần chẩn đoán | S02, S15, header |
+| `user` | Nghiệp vụ tài khoản: đăng nhập, vai trò, khóa, xóa mềm tài khoản, thu hồi phiên, ma trận quyền, chặn đăng nhập sai nhiều lần, token worker. Bảng `saved_filter` của bộ lọc đã lưu | S12, S04 |
 | `audit_log` | Đọc nhật ký thao tác (G7). Bảng và hai hàm ghi nằm ở `core` | S12 |
 | `alert` | Cảnh báo theo program, trạng thái đã đọc theo tài khoản | Chuông trên header |
 

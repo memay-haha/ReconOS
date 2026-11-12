@@ -1,5 +1,5 @@
-/** One definition of the text-on-surface pairs held to WCAG AA: tokens.test.ts proves them
- * and the Component Library page shows them, so the page cannot show a pair that is not covered. */
+/** One definition of the text-on-surface pairs held to WCAG AA: tokens.test.ts and
+ * rendered-contrast.test.ts prove them in both themes. */
 /**
  * Foreground token on background token, one entry per place the screens paint text or an
  * icon straight onto that fill. A pair earns a line here only when a component renders

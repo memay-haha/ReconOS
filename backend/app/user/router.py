@@ -7,7 +7,7 @@ as a dependency, so a handler added here inherits it: app/core/deps.py.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from app.core.deps import CurrentUser, DbDep, SettingsDep
 from app.core.identity import User, UserRole
@@ -15,12 +15,16 @@ from app.core.pagination import DEFAULT_LIMIT, Page
 from app.core.security import require_roles, session_cookie
 from app.user import service
 from app.user.schemas import (
+    ActiveUserSessionPage,
     LoginRequest,
     PasswordChangeRequest,
+    UserBriefResponse,
     UserCreateRequest,
     UserDetailResponse,
+    UserPage,
     UserResponse,
     UserSessionResponse,
+    UserSessionSort,
     UserUpdateRequest,
 )
 
@@ -119,11 +123,28 @@ async def create_user(body: UserCreateRequest, actor: Superadmin, session: DbDep
     )
 
 
-@router.get("/users", response_model=Page[UserDetailResponse], tags=["user"])
+account_readers = require_roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+
+
+async def account_reader(request: Request, user: CurrentUser) -> User:
+    return await account_readers(user, request)
+
+
+AccountReader = Annotated[User, Depends(account_reader)]
+
+
+@router.get("/users", response_model=UserPage | Page[UserBriefResponse], tags=["user"])
 async def list_users(
-    actor: Superadmin, session: DbDep, limit: int = DEFAULT_LIMIT, cursor: str | None = None
-) -> Page[UserDetailResponse]:
-    return await service.list_users(session, limit=limit, cursor=cursor)
+    actor: AccountReader,
+    session: DbDep,
+    limit: int = DEFAULT_LIMIT,
+    cursor: str | None = None,
+    q: Annotated[str | None, Query(max_length=255)] = None,
+    role: UserRole | None = None,
+) -> UserPage | Page[UserBriefResponse]:
+    return await service.list_users(
+        session, viewer=actor, limit=limit, cursor=cursor, q=q, role=role
+    )
 
 
 @router.get("/users/{user_id}", response_model=UserDetailResponse, tags=["user"])
@@ -163,11 +184,15 @@ async def list_user_sessions(
     )
 
 
-@router.get("/user-sessions", response_model=Page[UserSessionResponse], tags=["user"])
+@router.get("/user-sessions", response_model=ActiveUserSessionPage, tags=["user"])
 async def list_all_sessions(
-    actor: Superadmin, session: DbDep, limit: int = DEFAULT_LIMIT, cursor: str | None = None
-) -> Page[UserSessionResponse]:
-    return await service.list_active_sessions(session, limit=limit, cursor=cursor)
+    actor: Superadmin,
+    session: DbDep,
+    limit: int = DEFAULT_LIMIT,
+    cursor: str | None = None,
+    sort: UserSessionSort = "-created_at",
+) -> ActiveUserSessionPage:
+    return await service.list_active_sessions(session, limit=limit, cursor=cursor, sort=sort)
 
 
 @router.delete("/user-sessions/{user_session_id}", status_code=204, tags=["user"])

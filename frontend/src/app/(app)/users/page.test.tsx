@@ -5,6 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import UsersPage from './page';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/users',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 function row(id: string, username: string, sessions = 0) {
   return {
     id,
@@ -120,7 +126,7 @@ describe('UsersPage list states', () => {
       return ok(path) ?? Response.json(EMPTY);
     });
     expect(screen.getByText('Loading the account list…')).toBeInTheDocument();
-    expect(screen.queryByText(/no accounts yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no accounts match/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Could not load the account list.')).not.toBeInTheDocument();
   });
 
@@ -128,7 +134,7 @@ describe('UsersPage list states', () => {
     renderPage((path) =>
       path === '/api/v1/users' ? Response.json(EMPTY) : (ok(path) ?? Response.json(EMPTY)),
     );
-    expect(await screen.findByText('No accounts yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No accounts match.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByText('Loading the account list…')).not.toBeInTheDocument();
     expect(screen.queryByText('Could not load the account list.')).not.toBeInTheDocument();
@@ -141,7 +147,7 @@ describe('UsersPage list states', () => {
         : (ok(path) ?? Response.json(EMPTY)),
     );
     expect(await screen.findByText('Could not load the account list.')).toBeInTheDocument();
-    expect(screen.queryByText('No accounts yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No accounts match.')).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByText('Loading the account list…')).not.toBeInTheDocument();
     expect(screen.queryByText('Boom')).not.toBeInTheDocument();
@@ -167,19 +173,36 @@ describe('UsersPage stat tiles', () => {
     expect(within(tile('Total accounts')).getByText('37')).toBeInTheDocument();
   });
 
-  it('counts roles from the rows on screen and names the glossary roles', async () => {
+  it('counts roles over every account from role_counts and names the glossary roles', async () => {
     renderPage((path) =>
       path === '/api/v1/users'
-        ? Response.json(
-            list(
-              [{ ...row('1', 'rootadmin'), role: 'superadmin' }, row('2', 'a'), row('3', 'b')],
-              null,
-              3,
-            ),
-          )
+        ? Response.json({
+            ...list([row('2', 'a')], null, 3),
+            role_counts: { superadmin: 1, admin: 0, user: 2 },
+            locked_count: 1,
+          })
         : (ok(path) ?? Response.json(EMPTY)),
     );
     expect(await screen.findByText('1 Superadmin · 2 User')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'User (2)' })).toBeInTheDocument();
+    expect(screen.getByText('3 accounts registered')).toBeInTheDocument();
+    expect(within(tile('Locked accounts')).getByText('1')).toBeInTheDocument();
+  });
+
+  it('filters the list by search text and role pill', async () => {
+    const fetchMock = renderPage((path) =>
+      path.startsWith('/api/v1/users')
+        ? Response.json({
+            ...list([row('2', 'a')], null, 1),
+            role_counts: { superadmin: 1, admin: 0, user: 2 },
+          })
+        : (ok(path) ?? Response.json(EMPTY)),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Admin (0)' }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Filter accounts' }), 'ro');
+    await vi.waitFor(() =>
+      expect(fetchMock.mock.calls.map(([p]) => p)).toContain('/api/v1/users?q=ro&role=admin'),
+    );
   });
 });
 
@@ -196,7 +219,7 @@ describe('UsersPage mutations', () => {
     });
     expect(await screen.findByText('3 sessions')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
-    expect(await screen.findByText('No active sessions')).toBeInTheDocument();
+    expect(await screen.findByText('0 active (logged out)')).toBeInTheDocument();
     const paths = fetchMock.mock.calls.map(([path]) => path);
     expect(paths.filter((p) => p === '/api/v1/users')).toHaveLength(2);
     // The lock cancels sessions, so the session figure is read again too.

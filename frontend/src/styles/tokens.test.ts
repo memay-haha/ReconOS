@@ -28,7 +28,7 @@ describe('token generator', () => {
   });
 
   it('reproduces the committed token module exactly', () => {
-    // The Component Library imports this module; an edit to the table without
+    // The contrast test reads token values from this module; an edit to the table without
     // `pnpm tokens` fails here, as it does for the stylesheet.
     expect(generateTokenModule(designSystem)).toBe(committedModule);
   });

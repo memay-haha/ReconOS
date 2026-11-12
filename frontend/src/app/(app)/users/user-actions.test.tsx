@@ -72,8 +72,6 @@ describe('UserActions', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed')));
     wrap(<UserActions user={OPEN} isSelf={false} />);
     await userEvent.click(screen.getByRole('button', { name: 'Lock analyst' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Could not change the account status.',
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not change the account.');
   });
 });

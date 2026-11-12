@@ -24,6 +24,73 @@ describe('Pagination', () => {
     expect(screen.getByText(text)).toBeInTheDocument();
   });
 
+  it.each([
+    [false, 'Showing 24 of 1,234'],
+    [true, 'Showing 24 of about 1,234'],
+  ])('writes the mockup footer count when the page size is given (estimate %s)', (est, text) => {
+    render(
+      <Pagination
+        page={{ total: 1234, totalIsEstimate: est, nextCursor: 'c' }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+        shown={24}
+      />,
+    );
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
+  it('writes the range and the noun as the mockup footers do', () => {
+    render(
+      <Pagination
+        page={{ total: 14892, totalIsEstimate: false, nextCursor: 'c' }}
+        canGoBack
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+        shown={25}
+        start={26}
+        noun="domains"
+      />,
+    );
+    expect(screen.getByRole('navigation')).toHaveTextContent('Showing 26–50 of 14,892 domains');
+  });
+
+  it('draws what the caller adds beside the count, before the buttons', () => {
+    render(
+      <Pagination
+        page={{ total: 6, totalIsEstimate: false, nextCursor: null }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+      >
+        <button type="button">Export CSV</button>
+      </Pagination>,
+    );
+    const buttons = screen.getAllByRole('button').map((b) => b.textContent);
+    expect(buttons).toEqual(['Export CSV', 'Previous', 'Next']);
+  });
+
+  it('offers rows per page when the caller handles it', async () => {
+    const onPageSizeChange = vi.fn();
+    render(
+      <Pagination
+        page={{ total: 3, totalIsEstimate: false, nextCursor: null }}
+        canGoBack={false}
+        onBack={noop}
+        onNext={noop}
+        label="Test pagination"
+        pageSize={25}
+        onPageSizeChange={onPageSizeChange}
+        pageSizeLabel="Density:"
+      />,
+    );
+    await userEvent.selectOptions(screen.getByLabelText('Density:'), '50');
+    expect(onPageSizeChange).toHaveBeenCalledWith(50);
+  });
+
   it('disables Previous on the first page', () => {
     render(
       <Pagination
@@ -126,6 +193,7 @@ describe('useCursorStack', () => {
     act(() => result.current.goNext('c1'));
     expect(result.current.cursor).toBe('c1');
     expect(result.current.canGoBack).toBe(true);
+    expect(result.current.depth).toBe(1);
 
     act(() => result.current.goNext('c2'));
     expect(result.current.cursor).toBe('c2');

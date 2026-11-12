@@ -8,7 +8,13 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Gọi `fetch` trực tiếp trong component, gọi API trong `useEffect`: [design-patterns.md](../.claude/rules/design-patterns.md).
 - Dùng `dangerouslySetInnerHTML`, render HTML từ output thô, tài sản, finding: [security.md](../.claude/rules/security.md).
 - Dùng kiểu `any`.
-- Dựng các phần mockup đã ghi trong [tech-debt.md](../docs/tech-debt.md): BBRF, gowitness DB, New Module, Push to Jira, tự sinh job.
+- Dựng phần mockup trong danh sách không làm của [sổ quyết định 2026-11-11](../docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md) và [tech-debt.md](../docs/tech-debt.md):
+  - BBRF, gowitness DB, New Module, Push to Jira, tự sinh job và nút Generate Jobs.
+  - Engine thay thế, Target Engine Override trên S18. Confidence, Auto-reconciled trên S05.
+  - Database & Redis, Scope Defaults, Ingest Proxy, MITM, CA, bridge Burp và Caido, Hardening flags trên S16, S17.
+  - Latest upstream, Outdated, nút Update, đường dẫn, hash integrity của công cụ trên S15. Worker PID trên S07.
+  - Reveal, Copy, Rotate API key, Open Folder, View CA Path, cột Source của biến, TTL khóa trên S16, S17.
+  - Giá trị cookie của mục tiêu trên S07: chỉ hiện tên và cờ (G7).
 - Dựng MFA, FIDO2, WebAuthn, SSO SAML, đồng bộ Active Directory, mTLS, API Tokens trên S12, hoặc vai trò ngoài Superadmin, Admin, User.
 - Dựng phân trang theo số trang. Dùng nút **Trước**, **Sau**.
 
@@ -29,16 +35,34 @@ Next.js chỉ hiển thị và gọi API, WebSocket của Backend API. Quy tắc
 - Viết mọi chữ hiển thị cho người dùng bằng tiếng Anh: nhãn nút, nhãn ô nhập, tiêu đề, chữ trạng thái, thông báo lỗi, chữ khi danh sách rỗng. Đặt `lang="en"` trên `<html>`. Tài liệu vẫn viết tiếng Việt theo [vietnamese-writing.md](../.claude/rules/vietnamese-writing.md).
 - Số hàng nghìn viết theo kiểu tiếng Anh, `1,234`, cho khớp giao diện tiếng Anh. Ngày giờ vẫn `dd/mm/yyyy` và đồng hồ 24 giờ, múi giờ ghim `Asia/Ho_Chi_Minh` vì người vận hành ở Việt Nam.
 - Giữ chiều rộng sidebar bằng token `spacing-sidebar` (244px), nội dung chính lệch theo token này, ❌ không viết `244px` thẳng.
-- Trang `/components` (Component Library) hiển thị bảng Token Table sinh từ `src/styles/token-table.generated.ts`, thang chữ xám và cặp tương phản lấy từ `PAIRS`. Dùng để soát design system bằng mắt, ❌ không chép giá trị token vào trang.
+- ❌ Không dựng trang Component Library dù mockup có vẽ trên sidebar. Soát design system bằng test trong `src/styles/`.
 - Test `src/styles/rendered-contrast.test.ts` đọc cặp màu chữ trên nền thẳng từ component bằng `scripts/scan-contrast-pairs.ts`, rồi bắt mọi cặp đạt 4,5 ở cả hai theme. Cặp không đạt thì sửa giá trị token trong bảng Token Table rồi chạy lại `pnpm --dir frontend tokens`, hoặc thêm dòng kèm lý do vào `CONTRAST_EXCEPTIONS`.
-- Script chỉ đi ngược cây JSX trong một file, nên không thấy nền do component ở file khác vẽ, cũng không thấy màu đặt bằng thuộc tính `style`. Hai trường hợp này ghi vào `PAIRS` trong `src/styles/contrast-pairs.ts`, cũng là danh sách trang `/components` hiển thị. Màu chữ không rơi vào cặp nào thì test báo ngay.
+- Script chỉ đi ngược cây JSX trong một file, nên không thấy nền do component ở file khác vẽ, cũng không thấy màu đặt bằng thuộc tính `style`. Hai trường hợp này ghi vào `PAIRS` trong `src/styles/contrast-pairs.ts`. Màu chữ không rơi vào cặp nào thì test báo ngay.
 - Script không đoán `className` nó không hiểu: biểu thức không đánh giá được (prop, gọi hàm lạ, `props.x`) làm test `understands every className expression it reads` đỏ, kèm `file:dòng`. Viết class bằng chuỗi, template literal, ternary, hằng số hoặc bảng tra, hoặc truyền chuỗi literal vào `cn`, `clsx`, `classnames`, `twMerge`, `twJoin`. Hằng số import từ file `./` hoặc `@/` được đọc theo. ❌ Không dùng `cva` hay `className` truyền qua prop cho tới khi script hỗ trợ.
 - Test bố cục màn hình bằng cách so khung DOM: `src/test/dom-shape.ts` rút khung từ mockup và từ cây đã render, so thứ tự vùng, số cột bảng, vai trò ARIA. ❌ Không so class hay màu. Màn hình có mockup thì có test `*-shape.test.tsx`.
-- Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar.
+- Dựng sidebar theo mockup: bốn nhóm Recon, Operations, Admin, System, kèm icon Material Symbols và badge số đếm. Thẻ tài khoản và nút đăng xuất nằm ở đáy sidebar, không ở topbar. Màn hình chi tiết S05, S07, S09 mở từ màn hình danh sách, ❌ không lên sidebar. Mục chưa có `href` không hiện trên sidebar.
+- Để `main` chỉ chừa chiều cao topbar. Đệm nội dung theo mockup của từng màn hình bằng `ScreenFrame` trong `layout.tsx` của route.
+
+**Mockup lệch tài liệu:**
+
+Mục đã chốt trong [sổ quyết định 2026-11-11](../docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md) làm theo sổ đó, thắng dòng bỏ phần tử trong sổ 2026-11-05. Chỗ lệch khác thì áp quy tắc đầu tiên khớp, ghi một dòng vào sổ quyết định của đợt trong `docs/superpowers/specs/`, rồi dựng tiếp. Người dùng duyệt sổ sau khi xong đợt.
+
+| # | Trường hợp | Làm |
+|---|---|---|
+| M1 | Phần tử thuộc mục Cấm ở trên hoặc nợ mockup trong [tech-debt.md](../docs/tech-debt.md) | Làm theo hướng xử lý của nợ. Nợ không có hướng xử lý thì bỏ phần tử |
+| M2 | Nhãn, trạng thái, vai trò, số liệu khác glossary, `schema.md`, `authorization.md` | Theo tài liệu |
+| M3 | Phần tử cần dữ liệu hoặc thao tác không có endpoint, tham số hay trường trong [openapi.yaml](../docs/api/openapi.yaml) | Thêm endpoint, tham số hoặc trường vào [api/architecture.md](../docs/api/architecture.md) và `openapi.yaml` theo [doc-sync.md](../.claude/rules/doc-sync.md), dựng phần tử, trả dữ liệu mẫu bằng MSW. Chỉ số chưa có định nghĩa: dừng hỏi. ❌ Không bỏ phần tử của mockup chỉ vì API chưa có |
+| M4 | Endpoint có trong `openapi.yaml` nhưng backend chưa làm | Dựng, trả dữ liệu mẫu bằng MSW |
+| M5 | Chú thích, chữ mô tả hành vi trái tài liệu | Viết lại theo tài liệu |
+| M6 | Tài liệu yêu cầu mà mockup thiếu: trạng thái rỗng, lỗi, quyền | Thêm bằng component sẵn có trong `src/components/` |
+| M7 | Bố cục, icon, khoảng cách, thứ tự vùng tài liệu không nói tới | Theo mockup |
+
+- Vẫn dừng hỏi khi: tài liệu mâu thuẫn nhau, không quy tắc nào khớp, hoặc cách làm chạm mục 🚫 Cấm của `CLAUDE.md`. Gom mọi câu hỏi của đợt vào một lượt.
 
 **Dữ liệu:**
 
 - Đặt client gọi API và hook TanStack Query theo tài nguyên trong `src/lib/`.
+- Lấy phiên bản trên mọi chip phiên bản từ `version` của `package.json`, tên node trên S01 từ `RECONOS_NODE_NAME`, cả hai gắn lúc build: [configuration.md](../docs/ops/configuration.md). ❌ Không gọi Backend API để lấy hai giá trị này.
 - Endpoint backend chưa làm thì trả dữ liệu mẫu bằng MSW trong `src/mocks/`, chỉ bật ở chế độ phát triển. Màn hình gọi đúng endpoint trong [openapi.yaml](../docs/api/openapi.yaml), ❌ không rẽ nhánh theo cờ thật hay giả. Backend làm xong endpoint nào thì xóa handler của endpoint đó.
 - ❌ Không đọc file ngoài `frontend/` lúc chạy. Image chỉ copy `frontend/`, và `.dockerignore` loại `docs/`, nên đường dẫn kiểu `../docs/...` chạy được khi phát triển nhưng trả lỗi 500 trong container. Cần dữ liệu từ tài liệu thì sinh ra một module trong `frontend/src/` bằng `pnpm --dir frontend tokens`, giống cách `globals.css` được sinh từ bảng Token Table.
 - Cho component trong `src/components/` chỉ nhận dữ liệu qua props.

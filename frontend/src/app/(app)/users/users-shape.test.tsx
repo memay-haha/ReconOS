@@ -9,7 +9,11 @@ import { shapeOf } from '@/test/dom-shape';
 
 import UsersPage from './page';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/users',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 const mockupFile = resolve(
   import.meta.dirname,
@@ -31,23 +35,16 @@ function textOf(node: Element): string {
   return (node.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
-function cutByText(root: Element, selector: string, text: string, reason: string): void {
-  const hits = Array.from(root.querySelectorAll(selector)).filter((e) => textOf(e) === text);
-  if (hits.length === 0) throw new Error(`Exclusion matches nothing (${reason}): ${text}`);
-  hits.forEach((hit) => hit.remove());
-}
-
 /** Columns the screen does not build, with the reason each is cut. */
 const DROPPED_COLUMNS: { label: string; reason: string }[] = [
-  { label: '', reason: 'select-all checkbox: no bulk action has an endpoint' },
   { label: 'Auth Method', reason: 'frontend/CLAUDE.md bans MFA, FIDO2, SSO SAML, mTLS on S12' },
   { label: 'MFA Policy', reason: 'frontend/CLAUDE.md bans MFA on S12; authentication.md has none' },
 ];
 
-/** Stat tiles the screen does not build, matched by the label the tile shows. */
+/** Stat tiles the screen does not build, matched by the label the tile shows. The Security
+ * Policy tile stays: N39 turns it into Locked accounts. */
 const DROPPED_TILES: { label: string; reason: string }[] = [
   { label: 'API Tokens', reason: 'frontend/CLAUDE.md bans API Tokens on S12' },
-  { label: 'Security Policy', reason: 'frontend/CLAUDE.md bans MFA Enforced on S12' },
 ];
 
 interface Mockup {
@@ -79,23 +76,17 @@ function prunedMockup(): Mockup {
   const tileCount = grid.children.length;
   expect(tileCount).toBe(tilesBefore - DROPPED_TILES.length);
 
-  // frontend/CLAUDE.md bans API keys and the Active Directory SSO line; no endpoint for the
-  // Role Matrix. With those gone the tab bar holds one tab, so the bar goes.
-  const tabs = Array.from(root.querySelectorAll('button'))
-    .find((b) => textOf(b).includes('Accounts & Roles'))
-    ?.closest('div.border-b');
-  if (tabs == null) throw new Error('Tab bar not found in the mockup');
-  tabs.remove();
-
-  // No endpoint filters GET /users: it takes only limit and cursor.
-  const filters = root
-    .querySelector('input[placeholder^="Filter users"]')
-    ?.closest('div.bg-surface');
-  if (filters == null) throw new Error('Filter bar not found in the mockup');
-  filters.remove();
-
-  // Invented badge, not a fact the product knows.
-  cutByText(root, 'h1 > span', 'RBAC v3.1', 'invented version badge');
+  // Tab bar: the API Keys tab and the Active Directory SSO line are banned. The remaining
+  // tabs are real tabs (N36), so the product marks them with ARIA tab roles (M6).
+  const keysTab = Array.from(root.querySelectorAll('button')).find((b) =>
+    textOf(b).includes('API Keys'),
+  );
+  if (keysTab === undefined) throw new Error('API Keys tab not found in the mockup');
+  const tabList = keysTab.parentElement as Element;
+  keysTab.remove();
+  tabList.setAttribute('role', 'tablist');
+  Array.from(tabList.children).forEach((tab) => tab.setAttribute('role', 'tab'));
+  cut(root, 'div.hidden.lg\\:flex', 'Active Directory SSO is banned on S12');
 
   // The Audit Logs button navigates to S14: it is a link in the product, not a button.
   const audit = Array.from(root.querySelectorAll('button')).find((b) =>
@@ -110,9 +101,7 @@ function prunedMockup(): Mockup {
   const table = root.querySelector('table') as Element;
   const heads = Array.from(table.querySelectorAll('thead th'));
   const dropIndexes = DROPPED_COLUMNS.map(({ label, reason }) => {
-    const at = heads.findIndex((th) =>
-      label === '' ? th.querySelector('input[type=checkbox]') !== null : textOf(th) === label,
-    );
+    const at = heads.findIndex((th) => textOf(th) === label);
     if (at === -1) throw new Error(`Dropped column not in the mockup (${reason}): ${label}`);
     return at;
   });
@@ -123,24 +112,27 @@ function prunedMockup(): Mockup {
   }
   const columns = Array.from(table.querySelectorAll('thead th')).map(textOf);
 
-  // Session revoke lives in the selected-account panel, not in the row.
-  cut(table, 'button[title="Revoke Sessions"]', 'revoke stays in the account panel');
-  // The mockup's last row action is Delete (or Protected on a superadmin). The product has
-  // no delete endpoint, and that slot is Lock/Unlock (disabled on your own row).
+  // N38: the product keeps Lock as a fourth row action after the mockup's three.
+  for (const actions of Array.from(table.querySelectorAll('tbody td:last-child > div'))) {
+    actions.append(actions.ownerDocument.createElement('button'));
+  }
 
-  // Footer: bulk actions have no endpoint. Pagination is a nav landmark for assistive
-  // technology, which the mockup draws as a bare div.
+  // Footer: Export CSV downloads a file, so it is a link. The mockup's page number is
+  // numbered pagination (banned), so it is not a button here.
   const footer = table.closest('div.bg-surface')?.querySelector(':scope > div.border-t');
   if (footer == null) throw new Error('Table footer not found in the mockup');
-  const bulk = Array.from(footer.querySelectorAll('span')).find((e) =>
-    textOf(e).startsWith('Bulk actions'),
+  const exportButton = Array.from(footer.querySelectorAll('button')).find(
+    (b) => textOf(b) === 'Export CSV',
   );
-  if (bulk === undefined) throw new Error('Bulk actions not found in the mockup');
-  bulk.remove();
-  const pager = footer.querySelector('div.flex.items-center.gap-1') as Element;
-  const nav = pager.ownerDocument.createElement('nav');
-  nav.append(...Array.from(pager.querySelectorAll('button')));
-  pager.replaceWith(nav);
+  if (exportButton === undefined) throw new Error('Export CSV not found in the mockup');
+  const anchor = exportButton.ownerDocument.createElement('a');
+  anchor.append(...Array.from(exportButton.childNodes));
+  exportButton.replaceWith(anchor);
+  // The product's pager is one nav landmark: the count with the bulk actions beside it, as
+  // the mockup groups them, then Previous/Next.
+  const nav = footer.ownerDocument.createElement('nav');
+  nav.append(...Array.from(footer.querySelectorAll('a, button')));
+  footer.replaceChildren(nav);
 
   return { root, columns, rowCount: table.querySelectorAll('tbody tr').length, tileCount };
 }
@@ -231,10 +223,6 @@ describe('S12 against its mockup', () => {
   it('builds nothing from the dropped parts', async () => {
     const { container } = renderScreen(3);
     await screen.findByRole('table');
-    expect(container.querySelector('input[type=checkbox]')).toBeNull();
-    expect(container.querySelector('input[type=search], input[type=text]')).toBeNull();
-    expect(container.querySelector('select')).toBeNull();
-    expect(screen.queryAllByRole('tab')).toHaveLength(0);
     // Visible text and every accessible-name attribute: an icon-only button is named by
     // aria-label or title, which textContent never sees.
     const names = Array.from(container.querySelectorAll('*'))
@@ -249,27 +237,21 @@ describe('S12 against its mockup', () => {
       'Active Directory',
       'mTLS',
       'API Tokens',
+      'API Keys',
       'Security Policy',
-      'Role Matrix',
       'RBAC v3.1',
     ]) {
       expect(words).not.toContain(banned);
     }
   });
 
-  it('offers no delete or remove control in the table, whatever names it', async () => {
+  it('offers Delete on every row but your own, which reads Protected (D5)', async () => {
     renderScreen(3);
     const table = await screen.findByRole('table');
-    // The accessible name, as assistive technology computes it. Scoped to the table so a
-    // confirmation dialog elsewhere on the page may use the word.
-    const controls = Array.from(table.querySelectorAll('button, a, [role=menuitem]'));
-    const deleting = controls.filter((c) => {
-      const name = c.getAttribute('aria-label') ?? c.getAttribute('title') ?? textOf(c);
-      return /\b(delete|remove)\b/i.test(name);
-    });
-    // The scan must have looked at something, or an empty result proves nothing.
-    expect(controls.length).toBeGreaterThan(0);
-    expect(deleting.map((c) => c.outerHTML)).toEqual([]);
-    expect(within(table).queryAllByRole('button', { name: /delete|remove/i })).toHaveLength(0);
+    expect(
+      within(table).getByRole('button', { name: 'You cannot delete your own account' }),
+    ).toBeDisabled();
+    expect(within(table).queryByRole('button', { name: 'Delete user_1' })).toBeNull();
+    expect(within(table).getByRole('button', { name: 'Delete user_2' })).toBeEnabled();
   });
 });

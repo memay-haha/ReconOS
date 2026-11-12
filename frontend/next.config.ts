@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import type { NextConfig } from 'next';
 
 // The browser only ever talks to the Next origin. Next forwards /api/* to
@@ -6,7 +8,19 @@ import type { NextConfig } from 'next';
 // Production routes /api/ at Nginx instead: docs/ops/deployment.md.
 const apiUrl = process.env.RECONOS_API_URL ?? 'http://127.0.0.1:8000';
 
+// Stamped into the bundle at build time, never read from Backend API: the version for every
+// version chip and the S01 node chip (frontend/CLAUDE.md, docs/ops/configuration.md).
+const { version } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as {
+  version: string;
+};
+
 const nextConfig: NextConfig = {
+  env: {
+    RECONOS_VERSION: version,
+    RECONOS_NODE_NAME: process.env.RECONOS_NODE_NAME ?? '',
+  },
   // Standalone output keeps the runtime image small: docs/ops/deployment.md
   output: 'standalone',
   reactStrictMode: true,

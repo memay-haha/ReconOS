@@ -1,74 +1,93 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import type { ReactElement } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { type ReactElement, useState } from 'react';
 
-import { Pagination, useCursorStack } from '@/components/pagination';
 import { useMe } from '@/lib/auth';
-import { useActiveSessionCount } from '@/lib/sessions';
-import { type UserRow, useUsers } from '@/lib/users';
+import { versionLabel } from '@/lib/build-info';
+import { useActiveSessionSummary } from '@/lib/sessions';
+import { useUsers } from '@/lib/users';
 
-import { SessionPanel } from './session-panel';
+import { AccountsTab, roleBreakdown } from './accounts-tab';
+import { RoleMatrixTab } from './role-matrix-tab';
+import { SessionsTab } from './sessions-tab';
 import { StatCards } from './stat-cards';
-import { UserForm } from './user-form';
-import { UserTable } from './user-table';
 
-const ROLE_ORDER: readonly { role: UserRow['role']; label: string }[] = [
-  { role: 'superadmin', label: 'Superadmin' },
-  { role: 'admin', label: 'Admin' },
-  { role: 'user', label: 'User' },
-];
-
-/** "1 Superadmin · 2 User", from the rows on screen. Null when there are none. */
-function roleBreakdown(rows: readonly UserRow[]): string | null {
-  const parts = ROLE_ORDER.map(({ role, label }) => ({
-    label,
-    count: rows.filter((row) => row.role === role).length,
-  }))
-    .filter(({ count }) => count > 0)
-    .map(({ label, count }) => `${count} ${label}`);
-  return parts.length === 0 ? null : parts.join(' · ');
-}
-
+// Header buttons as the mockup draws them (M7): h-9, tight side padding, a small shadow.
 const HEADER_BUTTON =
-  'inline-flex h-9 items-center gap-space-sm rounded-sm px-space-lg text-body-default focus:outline-none focus:ring-2 focus:ring-ring';
+  'inline-flex h-9 items-center gap-2 rounded-sm px-3.5 font-body-default text-body-default shadow-sm focus:outline-none focus:ring-2 focus:ring-ring';
+
+const TABS = [
+  { id: 'accounts', label: 'Accounts & Roles', icon: 'account_box' },
+  { id: 'sessions', label: 'Active Sessions', icon: 'devices' },
+  { id: 'roles', label: 'Role Matrix', icon: 'grid_view' },
+] as const;
+type TabId = (typeof TABS)[number]['id'];
+
+const TAB =
+  'flex items-center gap-2 whitespace-nowrap px-3.5 py-2.5 font-panel-title text-panel-title';
+const TAB_ON = `${TAB} border-b-2 border-primary font-semibold text-primary`;
+const TAB_OFF = `${TAB} text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg`;
+const BADGE_ON =
+  'rounded-sm border border-accent-soft-bd bg-surface-3 px-1.5 font-body-code text-[10px] text-primary';
+const BADGE_GOOD =
+  'rounded-sm border border-good-bd bg-good-soft px-1.5 font-body-code text-[10px] text-good';
+const BADGE_OFF =
+  'rounded-sm border border-border bg-surface-2 px-1.5 font-body-code text-[10px] text-fg-faint';
+
+const COUNT = new Intl.NumberFormat('en-US');
 
 export default function UsersPage(): ReactElement {
-  const { cursor, canGoBack, goNext, goBack } = useCursorStack();
-  const users = useUsers(cursor);
-  const sessionCount = useActiveSessionCount();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [formMode, setFormMode] = useState<'create' | 'edit' | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
   const me = useMe();
-  const selectedUser = users.data?.items.find((row) => row.id === selectedId) ?? null;
+  const isSuperadmin = me.data?.role === 'superadmin';
+  // The tiles count every account: the unfiltered first page carries the totals.
+  const totals = useUsers(null);
+  const sessions = useActiveSessionSummary(isSuperadmin);
+  // The header button opens the drawer that the accounts tab draws beside its table.
+  const [creating, setCreating] = useState(false);
 
-  // An edit form belongs to one selected account; any move away from it closes the form.
-  const closeEdit = () => setFormMode((mode) => (mode === 'edit' ? null : mode));
+  const asked = params?.get('tab');
+  // Sessions and the role matrix are Superadmin reads: hiding them is a convenience.
+  const tab: TabId =
+    isSuperadmin && (asked === 'sessions' || asked === 'roles') ? asked : 'accounts';
+  const openTab = (id: TabId) =>
+    router.replace(
+      id === 'accounts' ? (pathname ?? '/users') : `${pathname ?? '/users'}?tab=${id}`,
+    );
 
-  // Once the selected row leaves the visible page, paged away or deleted, nothing on
-  // screen names the account, so its details and edit form must go with it.
-  // Render phase on purpose: an effect would paint one frame of a panel for an
-  // account that is no longer on screen.
-  if (selectedId !== null && users.data !== undefined && selectedUser === null) {
-    setSelectedId(null);
-    closeEdit();
-  }
+  const counts = totals.data?.role_counts;
+  const version = versionLabel();
+  const tabs = TABS.filter((t) => t.id === 'accounts' || isSuperadmin);
 
   return (
     <div className="flex w-full flex-col gap-space-lg">
-      <div className="flex flex-col justify-between gap-space-md pt-space-xs md:flex-row md:items-end">
-        <div className="flex flex-col gap-space-xs">
-          <div className="flex items-center gap-space-sm text-caption text-fg-faint">
+      <div className="flex flex-col justify-between gap-space-md pt-2 md:flex-row md:items-end">
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center gap-2 font-caption text-caption text-fg-faint">
             <span>ReconOS</span>
-            <span aria-hidden="true">/</span>
+            <span aria-hidden="true" className="text-[9px] opacity-60">
+              /
+            </span>
             <span>Admin</span>
-            <span aria-hidden="true">/</span>
-            <span className="text-body-code text-primary">Users &amp; Access</span>
+            <span aria-hidden="true" className="text-[9px] opacity-60">
+              /
+            </span>
+            <span className="font-body-code text-primary">Users &amp; Access</span>
           </div>
-          <h1 className="text-headline-lg text-fg">Users &amp; Access Control</h1>
-          <p className="max-w-2xl text-body-default text-fg-muted">
-            Accounts, roles, locks and login sessions.
+          <h1 className="flex items-center gap-space-sm font-headline-lg text-headline-lg tracking-tight text-fg">
+            Users &amp; Access Control
+            {version !== null && (
+              <span className="rounded-sm border border-accent-soft-bd bg-surface-container-high px-2 py-0.5 font-body-code text-[10px] text-primary">
+                {version}
+              </span>
+            )}
+          </h1>
+          <p className="max-w-2xl font-body-default text-body-default text-fg-muted">
+            Operator accounts, role-based access control (RBAC) and active login sessions.
           </p>
         </div>
         <div className="flex items-center gap-space-sm self-start md:self-auto">
@@ -76,101 +95,93 @@ export default function UsersPage(): ReactElement {
             href="/audit-log"
             className={`${HEADER_BUTTON} border border-border-strong bg-surface text-fg hover:bg-surface-2`}
           >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon text-fg-muted">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-[17px] text-fg-muted"
+            >
               history_toggle_off
             </span>
-            Audit Logs
+            <span>Audit Logs</span>
           </Link>
-          <button
-            type="button"
-            onClick={() => setFormMode('create')}
-            className={`${HEADER_BUTTON} bg-primary-container font-semibold text-accent-ink hover:bg-accent-hover`}
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-icon">
-              person_add
-            </span>
-            Add account
-          </button>
+          {isSuperadmin && (
+            <button
+              type="button"
+              onClick={() => {
+                if (tab !== 'accounts') openTab('accounts');
+                setCreating(true);
+              }}
+              className={`${HEADER_BUTTON} gap-1.5 bg-primary-container font-semibold text-accent-ink hover:bg-accent-hover`}
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
+                person_add
+              </span>
+              <span>New account</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {formMode === 'create' && <UserForm mode="create" onDone={() => setFormMode(null)} />}
-      {/* Edit needs a real account: when the selection clears (paged away, row gone), no form. */}
-      {formMode === 'edit' && selectedUser !== null && (
-        <UserForm
-          key={selectedUser.id}
-          mode="edit"
-          user={selectedUser}
-          onDone={() => setFormMode(null)}
-        />
-      )}
 
       <StatCards
-        userTotal={users.isPending ? undefined : (users.data?.total ?? null)}
-        sessionTotal={sessionCount.isPending ? undefined : (sessionCount.data ?? null)}
-        roleBreakdown={users.data === undefined ? null : roleBreakdown(users.data.items)}
+        userTotal={totals.isPending ? undefined : (totals.data?.total ?? null)}
+        sessionTotal={
+          me.isPending || (isSuperadmin && sessions.isPending)
+            ? undefined
+            : (sessions.data?.total ?? null)
+        }
+        sessionAccounts={sessions.data?.accountCount ?? null}
+        lockedTotal={totals.isPending ? undefined : (totals.data?.locked_count ?? null)}
+        roleBreakdown={counts === undefined ? null : roleBreakdown(counts)}
       />
 
-      <div className="flex w-full flex-col items-start gap-space-md xl:flex-row">
-        <div className="w-full overflow-hidden rounded-sm border border-border bg-surface">
-          {users.isPending && (
-            <p className="px-space-md py-space-xl text-body-default text-fg-muted">
-              Loading the account list…
-            </p>
-          )}
-          {users.isError && (
-            <p role="alert" className="px-space-md py-space-xl text-body-default text-crit">
-              Could not load the account list.
-            </p>
-          )}
-          {users.data !== undefined && (
-            <>
-              <UserTable
-                users={users.data.items}
-                selectedId={selectedId}
-                meId={me.data?.id ?? null}
-                onSelect={(id) => {
-                  setSelectedId(id);
-                  closeEdit();
-                }}
-                onEdit={(id) => {
-                  setSelectedId(id);
-                  setFormMode('edit');
-                }}
-              />
-              <div className="border-t border-border bg-surface-2 px-space-md">
-                <Pagination
-                  label="Account list pagination"
-                  page={{
-                    total: users.data.total,
-                    totalIsEstimate: users.data.total_is_estimate,
-                    nextCursor: users.data.next_cursor,
-                  }}
-                  canGoBack={canGoBack}
-                  onBack={() => {
-                    goBack();
-                    closeEdit();
-                  }}
-                  onNext={() => {
-                    goNext(users.data.next_cursor);
-                    closeEdit();
-                  }}
-                />
-              </div>
-            </>
-          )}
+      <div className="flex items-center justify-between border-b border-border">
+        <div
+          role="tablist"
+          aria-label="Access views"
+          className="flex items-center gap-space-xs overflow-x-auto"
+        >
+          {tabs.map((item) => {
+            const on = item.id === tab;
+            const count =
+              item.id === 'accounts'
+                ? (totals.data?.total ?? null)
+                : item.id === 'sessions'
+                  ? (sessions.data?.total ?? null)
+                  : null;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => openTab(item.id)}
+                className={on ? TAB_ON : TAB_OFF}
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+                {count !== null && (
+                  <span className={on ? BADGE_ON : item.id === 'sessions' ? BADGE_GOOD : BADGE_OFF}>
+                    {COUNT.format(count)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        {selectedUser !== null && (
-          <section
-            aria-label="Account details"
-            className="flex w-full flex-col gap-space-md rounded-sm border border-border bg-surface p-space-md xl:w-96"
-          >
-            <h2 className="text-panel-title text-fg">{selectedUser.display_name}</h2>
-            <h3 className="text-label-caps uppercase text-fg-muted">Sessions</h3>
-            <SessionPanel key={selectedUser.id} userId={selectedUser.id} />
-          </section>
-        )}
       </div>
+
+      {tab === 'accounts' && (
+        <AccountsTab
+          meId={me.data?.id ?? null}
+          isSuperadmin={isSuperadmin}
+          counts={counts}
+          creating={creating}
+          onCreateDone={() => setCreating(false)}
+        />
+      )}
+      {tab === 'sessions' && <SessionsTab />}
+      {tab === 'roles' && <RoleMatrixTab />}
     </div>
   );
 }

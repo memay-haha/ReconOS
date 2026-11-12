@@ -31,12 +31,13 @@ const USER: CurrentUser = {
 function wrap(
   user: CurrentUser | null = null,
   counts: Record<string, number> = {},
-  props: { onSignOut?: () => void; signOutFailed?: boolean } = {},
+  props: { onSignOut?: () => void; signOutFailed?: boolean; toggled?: boolean } = {},
 ) {
   return render(
     <Sidebar
       user={user}
       counts={counts}
+      toggled={props.toggled ?? false}
       onSignOut={props.onSignOut ?? (() => undefined)}
       signOutFailed={props.signOutFailed ?? false}
     />,
@@ -50,6 +51,17 @@ afterEach(() => {
 function mockupDoc(): Document {
   return new DOMParser().parseFromString(readFileSync(MOCKUP, 'utf8'), 'text/html');
 }
+
+/** Mockup labels the glossary renames (M2, decision log part B): staging is "queue". */
+const RENAMED: Readonly<Record<string, string>> = { 'Staging Queue': 'Queue' };
+
+function mockupLabel(text: string): string {
+  const label = text.trim();
+  return RENAMED[label] ?? label;
+}
+
+// The mockup draws a Component Library page; the user dropped it, so it is left out.
+const DROPPED: readonly string[] = ['Component Library'];
 
 describe('Sidebar against the mockup', () => {
   it('is an aside holding a nav, then the account card, as the mockup is', () => {
@@ -70,7 +82,7 @@ describe('Sidebar against the mockup', () => {
   it('is fixed to the left edge, the full height, one sidebar wide, with a right border', () => {
     wrap(USER);
     const aside = document.querySelector('aside') as HTMLElement;
-    for (const cls of ['fixed', 'left-0', 'top-0', 'h-screen', 'w-sidebar', 'border-r']) {
+    for (const cls of ['fixed', 'left-0', 'md:top-0', 'md:h-screen', 'w-sidebar', 'border-r']) {
       expect(aside).toHaveClass(cls);
     }
   });
@@ -85,9 +97,11 @@ describe('Sidebar against the mockup', () => {
   it('puts every mockup item in the mockup group, in order, and nothing else there', () => {
     const fromMockup = Array.from(mockupDoc().querySelectorAll('aside nav > div')).map((group) => ({
       heading: (group.firstElementChild?.textContent ?? '').trim().replace(/\s*ROOT$/, ''),
-      labels: Array.from(group.querySelectorAll('a')).map((a) =>
-        (a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? '').trim(),
-      ),
+      labels: Array.from(group.querySelectorAll('a'))
+        .map((a) =>
+          mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
+        )
+        .filter((l) => !DROPPED.includes(l)),
     }));
     // Raw Outputs and Audit Log have no mockup; they are asserted on their own below.
     const mine = NAV_GROUPS.map((g) => ({
@@ -104,20 +118,15 @@ describe('Sidebar against the mockup', () => {
       );
     const operations = NAV_GROUPS.find((g) => g.heading === 'Operations');
     // Pinned after the mockup's two Operations items.
-    expect(operations?.items.map((i) => i.label)).toEqual([
-      'Staging Queue',
-      'Manage',
-      'Raw Outputs',
-    ]);
+    expect(operations?.items.map((i) => i.label)).toEqual(['Queue', 'Manage', 'Raw Outputs']);
     expect(find('Raw Outputs')).toMatchObject({
       group: 'Operations',
       item: { icon: 'description', href: null },
     });
-    // Audit Log follows Users in Admin; Component Library keeps the mockup's last place.
+    // Audit Log follows Users in Admin.
     expect(NAV_GROUPS.find((g) => g.heading === 'Admin')?.items.map((i) => i.label)).toEqual([
       'Users',
       'Audit Log',
-      'Component Library',
     ]);
     expect(find('Audit Log')).toMatchObject({
       group: 'Admin',
@@ -129,44 +138,66 @@ describe('Sidebar against the mockup', () => {
     wrap(USER);
     expect(NAV_GROUPS.find((g) => g.heading === 'System')?.tag).toBe('ROOT');
     expect(screen.getByText('ROOT')).toBeInTheDocument();
-    expect(screen.getByText('v2.4')).toBeInTheDocument();
+    // Decision N3: the build version, stamped from package.json (vitest sets no env, so none).
   });
 
   it('counts unreviewed findings and queued jobs, as the mockup means', () => {
-    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) => (i.badge ? [i.badge] : []));
+    const badges = NAV_GROUPS.flatMap((g) => g.items).flatMap((i) =>
+      i.badge ? [i.badge.path] : [],
+    );
     expect(badges).toContain('/findings?triage_status=new');
     expect(badges).toContain('/jobs?status=queued');
   });
 
+  it('counts domains new in 24 hours beside Domains (decision M2)', () => {
+    const domains = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.label === 'Domains');
+    expect(domains?.badge).toEqual({
+      path: '/dashboard/summary?window=24h',
+      field: 'assets_new.domain',
+      tone: 'neutral',
+    });
+  });
+
   it('draws each icon with the ligature the mockup uses', () => {
     const fromMockup = Array.from(mockupDoc().querySelectorAll('aside nav a')).map((a) => [
-      (a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? '').trim(),
+      mockupLabel(a.querySelector('span:not(.material-symbols-outlined)')?.textContent ?? ''),
       a.querySelector('.material-symbols-outlined')?.textContent,
     ]);
     const mine = new Map(NAV_GROUPS.flatMap((g) => g.items.map((i) => [i.label, i.icon])));
-    for (const [label, icon] of fromMockup) expect(mine.get(label as string)).toBe(icon);
+    for (const [label, icon] of fromMockup) {
+      if (DROPPED.includes(label as string)) continue;
+      expect(mine.get(label as string)).toBe(icon);
+    }
   });
 });
 
 describe('Sidebar behaviour', () => {
   it('leaves the three detail screens off the sidebar', () => {
     const labels = NAV_GROUPS.flatMap((g) => g.items).map((i) => i.label);
-    for (const name of ['Domain Detail', 'Capture Detail', 'Program Detail'])
+    for (const name of ['Domain Detail', 'Screenshot Detail', 'Program Detail'])
       expect(labels).not.toContain(name);
   });
 
-  it('lets the reader reach only the screens part A builds', () => {
+  it('lets the reader reach only the screens that are built', () => {});
+
+  it('hides a screen no part has built yet: no dead entry, no placeholder text', () => {
     wrap();
-    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(hrefs.sort()).toEqual(['/audit-log', '/components', '/users']);
+    // Any screen still unbuilt will do: each part fills in its own hrefs.
+    const unbuilt = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.href === null);
+    if (unbuilt === undefined) return;
+    expect(screen.queryByText(unbuilt.label)).toBeNull();
+    expect(screen.queryByText(unbuilt.part)).toBeNull();
   });
 
-  it('renders an unbuilt screen as plain text, not a control, and says in words which part builds it', () => {
+  it('shows every built screen as a link', () => {
     wrap();
-    const pending = screen.getByText('Dashboard').closest('li') as HTMLElement;
-    expect(within(pending).queryByRole('link')).toBeNull();
-    expect(within(pending).queryByRole('button')).toBeNull();
-    expect(within(pending).getByText(/available in part d/i)).toBeInTheDocument();
+    for (const item of NAV_GROUPS.flatMap((g) => g.items)) {
+      if (item.href === null) continue;
+      expect(screen.getByRole('link', { name: new RegExp(`^${item.label}`) })).toHaveAttribute(
+        'href',
+        item.href,
+      );
+    }
   });
 
   it('marks the current screen, by whole path segment', () => {
@@ -187,7 +218,7 @@ describe('Sidebar behaviour', () => {
   });
 
   it('shows a count beside a label when one is given', () => {
-    wrap(null, { '/domains': 64 });
+    wrap(null, { '/dashboard/summary?window=24h#assets_new.domain': 64 });
     const domains = screen.getByText('Domains').closest('li') as HTMLElement;
     expect(within(domains).getByText('64')).toBeInTheDocument();
   });
@@ -231,29 +262,29 @@ describe('Sidebar account card', () => {
   });
 });
 
-describe('Sidebar on a narrow screen', () => {
-  it('is folded behind a Menu button until the reader opens it', async () => {
+describe('Sidebar and the topbar menu button', () => {
+  it('is folded away below md and the column from md up by default', () => {
     wrap(USER);
-    const button = screen.getByRole('button', { name: 'Menu' });
     const aside = document.querySelector('aside') as HTMLElement;
-    expect(button).toHaveAttribute('aria-controls', aside.id);
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(aside).toHaveClass('hidden');
-    await userEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(aside).not.toHaveClass('hidden');
+    expect(aside.id).toBe('sidebar');
+    expect(aside).toHaveClass('hidden', 'md:flex');
   });
 
-  it('is the full column from md up whatever the menu state', () => {
-    wrap(USER);
-    expect(document.querySelector('aside')).toHaveClass('md:flex');
-    expect(screen.getByRole('button', { name: 'Menu' })).toHaveClass('md:hidden');
+  it('flips both once the menu button toggles it', () => {
+    wrap(USER, {}, { toggled: true });
+    expect(document.querySelector('aside')).toHaveClass('flex', 'md:hidden');
   });
 
   it('opens the change-password dialog from the account card', async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <Sidebar user={USER} counts={{}} onSignOut={() => undefined} signOutFailed={false} />
+        <Sidebar
+          user={USER}
+          counts={{}}
+          toggled={false}
+          onSignOut={() => undefined}
+          signOutFailed={false}
+        />
       </QueryClientProvider>,
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

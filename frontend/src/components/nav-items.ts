@@ -5,9 +5,24 @@ export interface NavItem {
   /** Material Symbols Outlined ligature, as the mockups use. */
   readonly icon: string;
   readonly part: string;
-  /** Path and query whose `total` feeds the count beside the label. The query says what is
-   * counted: the mockup shows unreviewed findings and queued jobs, not every row. */
-  readonly badge?: string;
+  /** Where the count beside the label comes from. The query says what is counted: the
+   * mockup shows unreviewed findings and queued jobs, not every row. */
+  readonly badge?: NavBadge;
+}
+
+export interface NavBadge {
+  /** Path and query of the endpoint read. */
+  readonly path: string;
+  /** Dotted field of the response holding the count. A list endpoint's `total` is read with
+   * `limit=1`. */
+  readonly field: string;
+  /** The mockup colours a few counts; the rest are neutral. */
+  readonly tone: 'crit' | 'warn' | 'neutral';
+}
+
+/** One key per count, so two items may read different fields of one endpoint. */
+export function badgeKey(badge: NavBadge): string {
+  return `${badge.path}#${badge.field}`;
 }
 
 export interface NavGroup {
@@ -18,22 +33,33 @@ export interface NavGroup {
 }
 
 // Groups, headings and order follow the sidebar in docs/design/screens/s12-users-access-control.html.
-// S05, S07 and S09 are detail screens opened from their list screens, so they are not here.
+// S05, S07 (Screenshot Detail) and S09 are detail screens opened from their list screens, so they are not here.
 export const NAV_GROUPS: readonly NavGroup[] = [
   {
     heading: 'Recon',
     items: [
-      { label: 'Dashboard', href: null, icon: 'grid_view', part: 'Part D' },
-      { label: 'Monitor', href: null, icon: 'show_chart', part: 'Part C' },
-      { label: 'Domains', href: null, icon: 'language', part: 'Part C', badge: '/domains' },
-      { label: 'Screenshots', href: null, icon: 'photo_camera', part: 'Part D' },
-      { label: 'Programs', href: null, icon: 'folder', part: 'Part B' },
+      { label: 'Dashboard', href: '/dashboard', icon: 'grid_view', part: 'Part D' },
+      { label: 'Monitor', href: '/monitor', icon: 'show_chart', part: 'Part C' },
+      {
+        label: 'Domains',
+        href: '/domains',
+        icon: 'language',
+        part: 'Part C',
+        // Decision M2: domains discovered in the last 24 hours.
+        badge: {
+          path: '/dashboard/summary?window=24h',
+          field: 'assets_new.domain',
+          tone: 'neutral',
+        },
+      },
+      { label: 'Screenshots', href: '/screenshots', icon: 'photo_camera', part: 'Part D' },
+      { label: 'Programs', href: '/programs', icon: 'folder', part: 'Part B' },
       {
         label: 'Findings',
-        href: null,
+        href: '/findings',
         icon: 'pest_control',
         part: 'Part E',
-        badge: '/findings?triage_status=new',
+        badge: { path: '/findings?triage_status=new', field: 'total', tone: 'crit' },
       },
     ],
   },
@@ -41,13 +67,14 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     heading: 'Operations',
     items: [
       {
-        label: 'Staging Queue',
-        href: null,
+        // The mockup says Staging Queue; the glossary says queue (decision log, part B).
+        label: 'Queue',
+        href: '/queue',
         icon: 'dns',
         part: 'Part B',
-        badge: '/jobs?status=queued',
+        badge: { path: '/jobs?status=queued', field: 'total', tone: 'warn' },
       },
-      { label: 'Manage', href: null, icon: 'tune', part: 'Part B' },
+      { label: 'Manage', href: '/manage', icon: 'tune', part: 'Part B' },
       { label: 'Raw Outputs', href: null, icon: 'description', part: 'Part B' },
     ],
   },
@@ -56,17 +83,34 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { label: 'Users', href: '/users', icon: 'group', part: 'Part A' },
       { label: 'Audit Log', href: '/audit-log', icon: 'history', part: 'Part A' },
-      { label: 'Component Library', href: '/components', icon: 'widgets', part: 'Part A' },
     ],
   },
   {
     heading: 'System',
     tag: 'ROOT',
     items: [
-      { label: 'Health & Tools', href: null, icon: 'show_chart', part: 'Part E' },
-      { label: 'Osmedeus', href: null, icon: 'target', part: 'Part E' },
-      { label: 'Vigolium', href: null, icon: 'security', part: 'Part E' },
-      { label: 'Modules', href: null, icon: 'extension', part: 'Part E' },
+      { label: 'Health & Tools', href: '/system', icon: 'show_chart', part: 'Part E' },
+      { label: 'Osmedeus', href: '/osmedeus', icon: 'target', part: 'Part E' },
+      { label: 'Vigolium', href: '/vigolium', icon: 'security', part: 'Part E' },
+      { label: 'Modules', href: '/modules', icon: 'extension', part: 'Part E' },
     ],
   },
 ];
+
+/** Segment-aware: /users and /users/42 match /users, /usersfoo does not. */
+export function isCurrent(pathname: string | null, href: string): boolean {
+  return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+}
+
+/** The built screen the path belongs to, with its group: a detail path such as /domains/42
+ * belongs to its list screen. Null when the path is no sidebar screen. */
+export function currentScreen(
+  pathname: string | null,
+): { readonly group: NavGroup; readonly item: NavItem } | null {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (item.href !== null && isCurrent(pathname, item.href)) return { group, item };
+    }
+  }
+  return null;
+}

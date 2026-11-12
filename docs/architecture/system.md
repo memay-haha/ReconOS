@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-> Phiên bản: 1.2 · Ngày: 2026-11-01 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.3 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 4: Kiến trúc hệ thống
 > Liên quan: [overview.md](overview.md), [tech-stack.md](tech-stack.md), [directory-structure.md](directory-structure.md), [ADR chọn tech stack](../decisions/adr-tech-stack.md)
 
@@ -128,7 +128,7 @@ flowchart LR
 | Từ | Tới | Kênh | Nội dung |
 |---|---|---|---|
 | Trình duyệt | Frontend, Backend API | HTTPS, WSS qua reverse proxy | Trang, REST, sự kiện realtime |
-| Backend API, tiến trình nền | Dispatcher | PostgreSQL `NOTIFY` | Báo có job mới, job vừa xong, thay đổi tạm dừng hoặc duyệt |
+| Backend API, tiến trình nền | Dispatcher | PostgreSQL `NOTIFY` | Báo có job mới, job vừa xong, thay đổi tạm dừng hoặc duyệt, đổi độ ưu tiên, yêu cầu giao ngay |
 | Dispatcher | Worker | Task Celery qua Redis | Tham số job theo contract |
 | Worker | Backend API | HTTPS | Trạng thái job, upload nội dung output thô theo contract |
 | Backend API | Tiến trình nền | Task Celery qua Redis, queue `parse` | Định danh output thô cần parse |
@@ -153,10 +153,10 @@ flowchart LR
 ### Cơ chế dispatcher
 
 1. Backend API hoặc tiến trình nền ghi job vào PostgreSQL và gửi `NOTIFY` trong cùng transaction. Transaction rollback thì không có thông báo.
-2. Dispatcher `LISTEN` để phản ứng ngay. Dispatcher cũng quét định kỳ để không bỏ sót khi mất kết nối. Chu kỳ quét: [configuration.md](../ops/configuration.md).
+2. Dispatcher `LISTEN` để phản ứng ngay. Dispatcher cũng quét định kỳ để không bỏ sót khi mất kết nối. Chu kỳ quét: [configuration.md](../ops/configuration.md). Dispatch Now, Dispatch All trên S10 chỉ gửi `NOTIFY`, dispatcher chạy lượt giao như bình thường: [business-flow.md](business-flow.md).
 3. Mỗi lượt giao job:
    - Bỏ qua job chờ duyệt và job của program tạm dừng.
-   - Chọn job theo độ ưu tiên.
+   - Chọn job `priority` cao trước, cùng mức thì job tạo trước.
    - Kiểm tra giới hạn số job đồng thời và tốc độ theo công cụ, program, mục tiêu.
    - Đếm job đang chạy và chuyển trạng thái job trong cùng một transaction PostgreSQL. Không vượt giới hạn khi nhiều sự kiện đến cùng lúc.
    - Gửi task Celery cho worker.

@@ -23,7 +23,10 @@ UserFactory = Callable[..., Awaitable[User]]
 ROLE_CASES = [(UserRole.SUPERADMIN, 200), (UserRole.ADMIN, 403), (UserRole.USER, 403)]
 
 
-@pytest.mark.parametrize(("role", "expected"), ROLE_CASES)
+@pytest.mark.parametrize(
+    ("role", "expected"),
+    [(UserRole.SUPERADMIN, 200), (UserRole.ADMIN, 200), (UserRole.USER, 403)],
+)
 async def test_list_users_by_role(
     client: AsyncClient, logged_in: LoggedIn, role: UserRole, expected: int
 ) -> None:
@@ -340,6 +343,7 @@ async def _session_row(
     *,
     expires_in: timedelta = timedelta(hours=1),
     idle_for: timedelta = timedelta(0),
+    ip_address: str | None = None,
 ) -> UserSession:
     from app.core.security import hash_session_id, new_session_id
 
@@ -349,6 +353,7 @@ async def _session_row(
         session_hash=hash_session_id(new_session_id()),
         expires_at=now + expires_in,
         last_seen_at=now - idle_for,
+        ip_address=ip_address,
     )
     db_session.add(row)
     await db_session.flush()
@@ -497,3 +502,143 @@ async def test_user_list_reads_sessions_in_one_statement(
     counting = [s for s in statements if "user_session" in s and "count(" in s]
     assert len(counting) == 1
     assert counting[0].lstrip().startswith('SELECT "user"')
+
+
+async def test_admin_sees_only_the_brief_account_list(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory
+) -> None:
+    await logged_in(role=UserRole.ADMIN)
+    await user_factory(role=UserRole.USER, is_locked=True)
+    body = (await client.get("/api/v1/users")).json()
+    assert body["items"]
+    assert all(set(item) == {"id", "username", "role"} for item in body["items"])
+    assert "role_counts" not in body
+    assert "locked_count" not in body
+
+
+async def test_superadmin_list_carries_the_newest_live_session(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    target = await user_factory(role=UserRole.USER, username="sessioned")
+    idle = await user_factory(role=UserRole.USER, username="sessionless")
+    await _session_row(db_session, target, idle_for=timedelta(minutes=5), ip_address="192.0.2.1")
+    newest = await _session_row(db_session, target, ip_address="198.51.100.7")
+    await _session_row(db_session, target, expires_in=-timedelta(hours=1), ip_address="203.0.113.9")
+    rows = {item["username"]: item for item in (await client.get("/api/v1/users")).json()["items"]}
+    assert rows["sessioned"]["last_session_ip"] == "198.51.100.7"
+    assert rows["sessioned"]["last_seen_at"] is not None
+    assert datetime.fromisoformat(rows["sessioned"]["last_seen_at"]) == newest.last_seen_at
+    assert rows["sessioned"]["active_user_session_count"] == 2
+    assert rows[idle.username]["last_session_ip"] is None
+    assert rows[idle.username]["last_seen_at"] is None
+    detail = (await client.get(f"/api/v1/users/{target.id}")).json()
+    assert detail["last_session_ip"] == "198.51.100.7"
+
+
+async def test_superadmin_list_aggregates_ignore_the_filters(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    await user_factory(role=UserRole.ADMIN)
+    await user_factory(role=UserRole.USER, is_locked=True)
+    await user_factory(role=UserRole.USER)
+    body = (await client.get("/api/v1/users", params={"role": "admin", "limit": 1})).json()
+    assert body["total"] == 1
+    assert body["role_counts"] == {"superadmin": 1, "admin": 1, "user": 2}
+    assert body["locked_count"] == 1
+
+
+@pytest.mark.parametrize("viewer", [UserRole.SUPERADMIN, UserRole.ADMIN])
+async def test_list_users_filters_by_role(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, viewer: UserRole
+) -> None:
+    await logged_in(role=viewer)
+    await user_factory(role=UserRole.USER)
+    body = (await client.get("/api/v1/users", params={"role": "user"})).json()
+    assert body["total"] >= 1
+    assert {item["role"] for item in body["items"]} == {"user"}
+
+
+async def test_list_users_rejects_an_unknown_role(client: AsyncClient, logged_in: LoggedIn) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    assert (await client.get("/api/v1/users", params={"role": "root"})).status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("q", "expected"),
+    [
+        ("ALICE", {"alice_ops"}),
+        ("night", {"bob"}),
+        ("_", {"alice_ops"}),
+        ("%", set()),
+    ],
+)
+async def test_list_users_searches_username_and_display_name(
+    client: AsyncClient,
+    logged_in: LoggedIn,
+    user_factory: UserFactory,
+    q: str,
+    expected: set[str],
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    await user_factory(username="alice_ops", display_name="Alice")
+    await user_factory(username="bob", display_name="Night Shift")
+    body = (await client.get("/api/v1/users", params={"q": q})).json()
+    assert {item["username"] for item in body["items"]} == expected
+    assert body["total"] == len(expected)
+
+
+async def test_all_sessions_name_the_account_and_count_accounts(
+    client: AsyncClient, logged_in: LoggedIn, user_factory: UserFactory, db_session: AsyncSession
+) -> None:
+    me = await logged_in(role=UserRole.SUPERADMIN)
+    other = await user_factory(display_name="Field Operator")
+    await _session_row(db_session, other)
+    await _session_row(db_session, other)
+    dead = await user_factory()
+    await _session_row(db_session, dead, expires_in=-timedelta(hours=1))
+    body = (await client.get("/api/v1/user-sessions")).json()
+    assert body["total"] == 3
+    assert body["account_count"] == 2
+    names = {item["user_id"]: (item["username"], item["display_name"]) for item in body["items"]}
+    assert names[str(other.id)] == (other.username, "Field Operator")
+    assert names[str(me.id)][0] == me.username
+
+
+@pytest.mark.parametrize("sort", ["last_seen_at", "-last_seen_at", "created_at", "-created_at"])
+async def test_all_sessions_sort_and_paginate(
+    client: AsyncClient,
+    logged_in: LoggedIn,
+    user_factory: UserFactory,
+    db_session: AsyncSession,
+    sort: str,
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    other = await user_factory()
+    for minutes in (1, 2, 3):
+        await _session_row(db_session, other, idle_for=timedelta(minutes=minutes))
+    seen: list[dict[str, str]] = []
+    cursor: str | None = None
+    while True:
+        params: dict[str, str | int] = {"sort": sort, "limit": 1}
+        if cursor is not None:
+            params["cursor"] = cursor
+        page = (await client.get("/api/v1/user-sessions", params=params)).json()
+        seen.extend(page["items"])
+        cursor = page["next_cursor"]
+        if cursor is None:
+            break
+    assert len(seen) == 4
+    assert len({item["id"] for item in seen}) == 4
+    field = sort.lstrip("-")
+    keys = [(item[field], item["id"]) for item in seen]
+    assert keys == sorted(keys, reverse=sort.startswith("-"))
+
+
+async def test_all_sessions_rejects_an_unknown_sort(
+    client: AsyncClient, logged_in: LoggedIn
+) -> None:
+    await logged_in(role=UserRole.SUPERADMIN)
+    response = await client.get("/api/v1/user-sessions", params={"sort": "expires_at"})
+    assert response.status_code == 422

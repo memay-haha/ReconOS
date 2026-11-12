@@ -44,6 +44,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 - Đặt bảng, cột, giá trị liệt kê theo [schema.md](../docs/data/schema.md) và [erd.mermaid](../docs/data/erd.mermaid).
 - Khi sửa schema: sửa cả hai file trong cùng thay đổi với migration.
+- Lọc `deleted_at IS NULL` khi đọc `user`, `domain`, `screenshot`: [ADR xóa mềm](../docs/decisions/adr-soft-delete.md).
 - Thiết kế endpoint theo [api/architecture.md](../docs/api/architecture.md).
 - Khi thêm endpoint: cập nhật [openapi.yaml](../docs/api/openapi.yaml).
 - Thiết kế endpoint contract worker theo [external-services.md](../docs/integrations/external-services.md).

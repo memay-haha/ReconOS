@@ -177,10 +177,12 @@ def user_factory(db_session: AsyncSession) -> Callable[..., Awaitable[User]]:
         role: UserRole = UserRole.USER,
         is_locked: bool = False,
         password: str = "troutmoonlit7Ladder!quay",  # noqa: S107  # throwaway test value
+        username: str | None = None,
+        display_name: str = "Test Account",
     ) -> User:
         user = User(
-            username=f"account{next(counter)}",
-            display_name="Test Account",
+            username=username or f"account{next(counter)}",
+            display_name=display_name,
             password_hash=hash_password(password),
             role=role.value,
             is_locked=is_locked,

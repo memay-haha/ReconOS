@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.4 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -93,13 +93,13 @@ MinIO không còn phát hành image công khai và repo đã archived: nợ 19 t
 
 - Image `reconos-worker` cài sẵn runner và công cụ: nuclei, gowitness, sqlmap, dalfox. Phiên bản công cụ cố định trong Dockerfile.
 - Mỗi máy worker chạy `compose.worker.yaml`, khai báo `RECONOS_WORKER_TOOL_MODULES` theo công cụ dùng trên máy đó.
-- Cập nhật công cụ: đổi phiên bản trong Dockerfile, build image mới, triển khai lại máy worker.
+- Cập nhật công cụ: đổi phiên bản trong Dockerfile, build image mới, triển khai lại máy worker. Worker báo phiên bản công cụ qua heartbeat, S15 hiển thị. ❌ Không cập nhật công cụ từ UI.
 - Cài engine server Osmedeus, Vigolium trên máy riêng trong vùng worker theo hướng dẫn chính thức. Engine server chạy ở chế độ server có API key.
 - Dọn thư mục làm việc và dữ liệu lượt chạy cũ trên engine server bằng lịch chạy định kỳ trên máy engine. ReconOS đã giữ bản gốc trong output thô.
 
 ### Triển khai bản mới
 
-1. Build image `reconos-backend`, `reconos-frontend`, `reconos-worker`, gắn tag theo phiên bản.
+1. Build image `reconos-backend`, `reconos-frontend`, `reconos-worker`, gắn tag theo phiên bản. Image `reconos-frontend` build với `RECONOS_NODE_NAME` của môi trường đích: [configuration.md](configuration.md).
 2. Trên máy vùng lõi, kéo image mới.
 3. Chạy `migrate`. Nếu `migrate` lỗi, dừng triển khai, không khởi động lại service.
 4. Khởi động lại `api`, `frontend`, `background`, `beat`, `dispatcher` với image mới.

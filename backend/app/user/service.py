@@ -3,9 +3,20 @@
 import math
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
-from sqlalchemy import ColumnElement, ScalarSelect, and_, delete, func, select, text, tuple_
+from sqlalchemy import (
+    ColumnElement,
+    ScalarSelect,
+    and_,
+    delete,
+    func,
+    or_,
+    select,
+    text,
+    true,
+    tuple_,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -20,7 +31,13 @@ from app.core.errors import (
     UnauthenticatedError,
 )
 from app.core.identity import User, UserRole, UserSession
-from app.core.pagination import MAX_LIMIT, Page, decode_time_cursor, encode_cursor
+from app.core.pagination import (
+    MAX_LIMIT,
+    Page,
+    contains_ignore_case,
+    decode_time_cursor,
+    encode_cursor,
+)
 from app.core.security import (
     burn_password_comparison,
     check_password_policy,
@@ -31,7 +48,16 @@ from app.core.security import (
 )
 from app.core.system_setting import get_int_setting
 from app.user.models import LoginAttempt
-from app.user.schemas import UserDetailResponse, UserResponse, UserSessionResponse
+from app.user.schemas import (
+    ActiveUserSessionPage,
+    ActiveUserSessionResponse,
+    UserBriefResponse,
+    UserDetailResponse,
+    UserPage,
+    UserResponse,
+    UserSessionResponse,
+    UserSessionSort,
+)
 
 
 class LoginResult(NamedTuple):
@@ -324,58 +350,108 @@ def _clamp(limit: int) -> int:
     return max(1, min(limit, MAX_LIMIT))
 
 
-def _detail(user: User, active_user_session_count: int) -> UserDetailResponse:
-    return UserDetailResponse(
-        **UserResponse.model_validate(user, from_attributes=True).model_dump(),
-        active_user_session_count=active_user_session_count,
+def _detail(user: User, active: int, ip: object, seen_at: datetime | None) -> UserDetailResponse:
+    return UserDetailResponse.model_validate(
+        {
+            **UserResponse.model_validate(user, from_attributes=True).model_dump(),
+            "active_user_session_count": active,
+            "last_session_ip": ip,
+            "last_seen_at": seen_at,
+        }
     )
 
 
-async def _active_session_count(session: AsyncSession) -> ScalarSelect[int]:
-    """Correlated count of the live sessions of the enclosing user row.
+async def _session_columns(session: AsyncSession) -> tuple[ScalarSelect[Any], ...]:
+    """Correlated computed fields of the enclosing user row, all over live sessions.
 
-    It is a scalar subquery in the select list, so Postgres evaluates it only
-    for the rows that survive the page LIMIT, through the user_id index.
+    They are scalar subqueries in the select list, so Postgres evaluates them
+    only for the rows that survive the page LIMIT, through the user_id index.
     """
     live = await _live_session_filter(session)
+    own_live = and_(UserSession.user_id == User.id, live)
+    count = select(func.count()).select_from(UserSession).where(own_live)
+
+    def newest(column: InstrumentedAttribute[Any]) -> ScalarSelect[Any]:
+        return (
+            select(column)
+            .where(own_live)
+            .order_by(UserSession.last_seen_at.desc(), UserSession.id.desc())
+            .limit(1)
+            .correlate(User)
+            .scalar_subquery()
+        )
+
     return (
-        select(func.count())
-        .select_from(UserSession)
-        .where(UserSession.user_id == User.id, live)
-        .correlate(User)
-        .scalar_subquery()
+        count.correlate(User).scalar_subquery(),
+        newest(UserSession.ip_address),
+        newest(UserSession.last_seen_at),
     )
 
 
 async def get_user_detail(session: AsyncSession, user_id: uuid.UUID) -> UserDetailResponse:
-    count = await _active_session_count(session)
-    row = (await session.execute(select(User, count).where(User.id == user_id))).first()
+    columns = await _session_columns(session)
+    row = (await session.execute(select(User, *columns).where(User.id == user_id))).first()
     if row is None:
         raise NotFoundError(detail="account does not exist")
-    return _detail(row[0], row[1])
+    return _detail(row[0], row[1], row[2], row[3])
+
+
+def _account_filter(q: str | None, role: UserRole | None) -> ColumnElement[bool]:
+    clauses: list[ColumnElement[bool]] = [true()]
+    if q:
+        clauses.append(
+            or_(contains_ignore_case(User.username, q), contains_ignore_case(User.display_name, q))
+        )
+    if role is not None:
+        clauses.append(User.role == role.value)
+    return and_(*clauses)
 
 
 async def list_users(
-    session: AsyncSession, *, limit: int, cursor: str | None
-) -> Page[UserDetailResponse]:
+    session: AsyncSession,
+    *,
+    viewer: User,
+    limit: int,
+    cursor: str | None,
+    q: str | None = None,
+    role: UserRole | None = None,
+) -> UserPage | Page[UserBriefResponse]:
+    """Superadmin gets the full rows and the aggregates, Admin only id, username, role.
+
+    The projection is chosen here, not in the router, because which fields a
+    role may read is an authorization rule: docs/security/authorization.md.
+    """
     size = _clamp(limit)
-    count = await _active_session_count(session)
-    stmt = select(User, count).order_by(User.created_at.desc(), User.id.desc())
+    where = _account_filter(q, role)
+    full = viewer.role == UserRole.SUPERADMIN
+    columns = await _session_columns(session) if full else ()
+    stmt = select(User, *columns).where(where).order_by(User.created_at.desc(), User.id.desc())
     if cursor is not None:
         seen_at, seen_id = decode_time_cursor(cursor)
         stmt = stmt.where(tuple_(User.created_at, User.id) < (seen_at, seen_id))
     rows = list((await session.execute(stmt.limit(size + 1))).all())
-    total = await session.scalar(select(func.count()).select_from(User)) or 0
+    total = await session.scalar(select(func.count()).select_from(User).where(where)) or 0
     page_rows = rows[:size]
     next_cursor = (
         encode_cursor(page_rows[-1][0].created_at.isoformat(), page_rows[-1][0].id)
         if len(rows) > size
         else None
     )
-    return Page[UserDetailResponse](
-        items=[_detail(user, active) for user, active in page_rows],
+    if not full:
+        return Page[UserBriefResponse](
+            items=[UserBriefResponse.model_validate(row[0]) for row in page_rows],
+            next_cursor=next_cursor,
+            total=total,
+        )
+    grouped = await session.execute(select(User.role, func.count()).group_by(User.role))
+    by_role: dict[str, int] = dict(grouped.all())
+    locked = await session.scalar(select(func.count()).select_from(User).where(User.is_locked))
+    return UserPage(
+        items=[_detail(*row) for row in page_rows],
         next_cursor=next_cursor,
         total=total,
+        role_counts={member: by_role.get(member.value, 0) for member in UserRole},
+        locked_count=locked or 0,
     )
 
 
@@ -393,9 +469,12 @@ async def _live_session_filter(session: AsyncSession) -> ColumnElement[bool]:
     )
 
 
-async def _live_sessions_page(
-    session: AsyncSession, *, where: ColumnElement[bool], limit: int, cursor: str | None
+async def list_sessions_for_user(
+    session: AsyncSession, *, user_id: uuid.UUID, limit: int, cursor: str | None
 ) -> Page[UserSessionResponse]:
+    await get_user(session, user_id)
+    live = await _live_session_filter(session)
+    where = and_(UserSession.user_id == user_id, live)
     size = _clamp(limit)
     stmt = select(UserSession).where(where)
     stmt = stmt.order_by(UserSession.created_at.desc(), UserSession.id.desc())
@@ -417,21 +496,59 @@ async def _live_sessions_page(
     )
 
 
-async def list_sessions_for_user(
-    session: AsyncSession, *, user_id: uuid.UUID, limit: int, cursor: str | None
-) -> Page[UserSessionResponse]:
-    await get_user(session, user_id)
-    live = await _live_session_filter(session)
-    return await _live_sessions_page(
-        session, where=and_(UserSession.user_id == user_id, live), limit=limit, cursor=cursor
-    )
-
-
 async def list_active_sessions(
-    session: AsyncSession, *, limit: int, cursor: str | None
-) -> Page[UserSessionResponse]:
+    session: AsyncSession, *, limit: int, cursor: str | None, sort: UserSessionSort = "-created_at"
+) -> ActiveUserSessionPage:
+    size = _clamp(limit)
     live = await _live_session_filter(session)
-    return await _live_sessions_page(session, where=live, limit=limit, cursor=cursor)
+    column = (
+        UserSession.last_seen_at if sort.lstrip("-") == "last_seen_at" else UserSession.created_at
+    )
+    descending = sort.startswith("-")
+    stmt = (
+        select(UserSession, User.username, User.display_name)
+        .join(User, User.id == UserSession.user_id)
+        .where(live)
+        .order_by(
+            *(
+                (column.desc(), UserSession.id.desc())
+                if descending
+                else (column.asc(), UserSession.id.asc())
+            )
+        )
+    )
+    if cursor is not None:
+        seen_at, seen_id = decode_time_cursor(cursor)
+        key = tuple_(column, UserSession.id)
+        stmt = stmt.where(key < (seen_at, seen_id) if descending else key > (seen_at, seen_id))
+    rows = list((await session.execute(stmt.limit(size + 1))).all())
+    total, accounts = (
+        await session.execute(
+            select(func.count(), func.count(UserSession.user_id.distinct())).where(live)
+        )
+    ).one()
+    page_rows = rows[:size]
+    last = page_rows[-1][0] if page_rows else None
+    next_cursor = (
+        encode_cursor(getattr(last, column.key).isoformat(), last.id)
+        if last is not None and len(rows) > size
+        else None
+    )
+    return ActiveUserSessionPage(
+        items=[
+            ActiveUserSessionResponse.model_validate(
+                {
+                    **UserSessionResponse.model_validate(row, from_attributes=True).model_dump(),
+                    "username": username,
+                    "display_name": display_name,
+                }
+            )
+            for row, username, display_name in page_rows
+        ],
+        next_cursor=next_cursor,
+        total=total,
+        account_count=accounts,
+    )
 
 
 async def revoke_session(session: AsyncSession, *, actor: User, user_session_id: uuid.UUID) -> None:

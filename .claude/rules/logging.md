@@ -5,7 +5,7 @@ paths:
 ---
 # Ghi log
 
-> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.3 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 15: Ghi log
 
 ## ✅ Bắt buộc
@@ -16,7 +16,7 @@ paths:
 - Đặt cấu hình chung trong `backend/app/core/logging.py` và `workers/worker/logging.py`.
 - Đặt `event` là tên sự kiện tiếng Anh dạng snake_case: `job_claimed`, `parse_failed`.
 - Ghi đủ trường bắt buộc: `logged_at` UTC, `level`, `service`, `event`.
-- Ghi trường ngữ cảnh khi có: `request_id`, `user_id`, `program_id`, `job_id`, `worker_id`, `tool_module`, `duration_ms`.
+- Ghi trường ngữ cảnh khi có: `request_id`, `user_id`, `program_id`, `job_id`, `worker_id`, `tool_module`, `engine`, `duration_ms`. Log về lời gọi REST tới engine luôn có `engine`, để S16 lọc Daemon Event Stream bằng `GET /logs?engine=`.
 - Gắn ngữ cảnh bằng `structlog.contextvars` ở đầu request, task, job. ❌ Không truyền ngữ cảnh thủ công qua tham số từng lời gọi.
 - Lấy `request_id` từ header `X-Request-ID` của request nếu giá trị là UUID hợp lệ. Thiếu hoặc sai dạng thì sinh UUID mới. Trả `X-Request-ID` trong mọi response.
 

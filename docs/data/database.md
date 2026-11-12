@@ -1,8 +1,8 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.3 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.4 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
-> Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md)
+> Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
 ## 📌 Đây là gì
 
@@ -119,12 +119,15 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 | Program | Lưu trữ: `status = archived`, ghi `archived_at`. Chỉ Superadmin xóa cứng được |
 | Dữ liệu của program đã lưu trữ | Giữ nguyên, chỉ đọc. Không tạo job, `schedule` không chạy |
 | Xóa cứng program | Xóa dây chuyền mọi dòng có `program_id`, xóa object MinIO theo tiền tố `<program_id>/`. `audit_log.program_id` đặt `NULL` |
-| Tài khoản | Không xóa, chỉ khóa. Giữ liên kết người thực hiện |
+| Tài khoản | Khóa, hoặc xóa mềm bằng `deleted_at`. Giữ liên kết người thực hiện |
 | Token worker | Không xóa, ghi `revoked_at` |
 | Scope rule, tag, proxy, `schedule` | Xóa cứng, ghi nhật ký thao tác |
-| Tài sản, finding, output thô, job | Không xóa riêng lẻ. Chỉ mất khi xóa cứng program |
+| Domain, screenshot | Xóa mềm bằng `deleted_at`, ghi nhật ký thao tác. Output thô, finding, URL liên quan giữ nguyên |
+| `saved_filter` | Chủ sở hữu xóa cứng |
+| IP, URL, service, finding, output thô, job | Không xóa riêng lẻ. Chỉ mất khi xóa cứng program |
 | `audit_log` | Chỉ thêm. ❌ Không sửa, không xóa |
 
+- Xóa mềm: [ADR xóa mềm](../decisions/adr-soft-delete.md).
 - Khóa ngoại tới `program` dùng `ON DELETE CASCADE`. Khóa ngoại khác dùng `RESTRICT` mặc định.
 - Xóa cứng chạy trong tiến trình nền: xóa dòng trong PostgreSQL trước, xóa object MinIO sau. Lỗi xóa object thì thử lại, không khôi phục dòng đã xóa.
 

@@ -36,10 +36,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/theme-init.js"></script>
         {/* Icon font the mockups draw their icons with; the page reads fine without it. */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        {/* display=block: with swap the ligature names (grid_view, menu) show as words
+            until the font arrives. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font, @next/next/google-font-display */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
         />
       </head>
       <body className="bg-bg text-fg font-body-default text-body-default antialiased">

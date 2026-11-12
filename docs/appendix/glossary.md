@@ -1,6 +1,6 @@
 # ReconOS: Thuật ngữ
 
-> Phiên bản: 1.12 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.13 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 27: Phụ lục
 > Liên quan: [overview.md](../architecture/overview.md), [documentation.md](../../.claude/rules/documentation.md)
 
@@ -47,6 +47,8 @@
 | Engine | Nền tảng workflow bên ngoài điều phối nhiều công cụ: Osmedeus, Vigolium. | Nơi lưu dữ liệu: ReconOS không phụ thuộc CSDL của engine (G1). | `engine` |
 | Biến engine | Giá trị truyền cho workflow của engine, ví dụ API key của nguồn dữ liệu bên ngoài. Lưu và che như thông tin xác thực. | Cấu hình kết nối tới engine. | `engine_variable` |
 | Job | Một lần chạy một tool module trên một tập mục tiêu, đi qua hàng đợi. | Scan: "Run Scan" chỉ là nhãn trên UI, không phải thực thể riêng. | `job` |
+| Độ ưu tiên job | Mức dispatcher dùng để chọn job `queued` giao trước: `low`, `normal`, `high`. Mặc định `normal`. Dispatch Now trên S10 nâng lên `high`. | Thứ tự tạo job. | `priority` |
+| Phiên bản công cụ | Phiên bản của công cụ do worker báo: qua heartbeat cho mỗi công cụ đã cài, qua lời gọi kết thúc job cho công cụ đã chạy job đó. | Phiên bản ReconOS, phiên bản engine. | `tool_version` |
 | Hàng đợi | Nơi job chờ dispatcher giao cho worker. Hiển thị ở màn hình S10. | Queue Celery `parse`, `schedule` của tiến trình nền. | `queue` |
 | Dispatcher | Tiến trình riêng của ReconOS chọn job đến lượt trong hàng đợi và giao cho worker qua Celery. Giới hạn số job đồng thời và tốc độ theo công cụ, program, mục tiêu. Giữ job của tool module nhóm khai thác đến khi được duyệt. Tạm dừng, tiếp tục, ưu tiên job theo program. Trạng thái hiển thị ở màn hình S10, S15. | Worker: dispatcher không chạy công cụ. Engine: dispatcher không phải nền tảng workflow bên ngoài. | `dispatcher` |
 | Contract | Thỏa thuận giao tiếp giữa hai thành phần: tên task hoặc endpoint, tham số, định dạng dữ liệu trả về. Contract worker ↔ backend gồm tên task Celery, tham số job, định dạng output thô gửi về. | Hợp đồng pháp lý với program. Giao thức truyền dữ liệu: HTTP, AMQP (Advanced Message Queuing Protocol). | `contract` |
@@ -82,7 +84,10 @@
 | Thông tin xác thực | Giá trị bí mật dùng để xác thực hoặc truy cập: API key, token, mật khẩu, proxy có tên đăng nhập và mật khẩu. Luôn che trên UI. Lưu dạng mã hóa. Riêng mật khẩu, session ID, token worker chỉ lưu giá trị băm (G7). | | `secret` |
 | Nhật ký thao tác | Bản ghi hành động của tài khoản trên hệ thống (G7). | Log ứng dụng. | `audit_log` |
 | Dashboard | Màn hình tổng quan S02. | | `dashboard` |
-| Cảnh báo | Thông báo trên biểu tượng chuông ở header khi có finding critical hoặc high mới, job chờ duyệt, job thất bại, tài sản mới. Hiển thị cho tài khoản xem được program. | Log ứng dụng, nhật ký thao tác. | `alert` |
+| Cảnh báo | Thông báo trên biểu tượng chuông ở header khi có finding critical hoặc high mới, job chờ duyệt, job thất bại, tài sản mới, chứng chỉ TLS của URL sắp hết hạn. Hiển thị cho tài khoản xem được program. | Log ứng dụng, nhật ký thao tác. | `alert` |
+| Xóa mềm | Đánh dấu dòng đã xóa bằng cột `deleted_at`, không xóa dòng khỏi CSDL. Dòng đã xóa mềm ẩn khỏi danh sách, đọc chi tiết trả `404`. Áp dụng cho tài khoản, domain, screenshot: [ADR xóa mềm](../decisions/adr-soft-delete.md). | Xóa cứng program. Lưu trữ program. Khóa tài khoản. | `deleted_at` |
+| Bộ lọc đã lưu | Bộ tham số lọc của một màn hình danh sách, tài khoản tự đặt tên và lưu để dùng lại. Chỉ chủ sở hữu thấy. Nút Filter Presets trên S04. | Tag. | `saved_filter` |
+| Lần chẩn đoán | Một lần chạy Run Diagnostics trên S15: tiến trình nền kiểm tra từng thành phần hệ thống và công cụ trên worker, ghi kết quả từng dòng. | Healthcheck định kỳ của `GET /system/health`. | `diagnostic_run` |
 
 ## Từ dùng khi viết tài liệu
 

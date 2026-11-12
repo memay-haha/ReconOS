@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.6 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -31,7 +31,7 @@
 |---|---|
 | Scope và quyết định tạo job | Quét ngoài scope gây hậu quả pháp lý cho người dùng và program (G5) |
 | Finding, output thô | Chứa lỗ hổng chưa công bố của program, request và response có dữ liệu nhạy cảm |
-| Thông tin xác thực | API key của engine, biến engine, proxy, token worker |
+| Thông tin xác thực | API key của engine, API key LLM của Vigolium, biến engine, proxy, token worker |
 | Tài khoản, phiên | Chiếm phiên là chiếm quyền tạo job và duyệt job khai thác |
 | Nhật ký thao tác | Bằng chứng ai làm gì, nhất là ai duyệt job khai thác |
 | Máy worker, engine server | Chạy công cụ gửi payload tấn công tới mục tiêu |
@@ -58,7 +58,9 @@
 | Tampering | Gửi task giả vào Redis | Serializer JSON, model contract kiểm tra mọi task. Tài khoản Redis của worker chỉ dùng queue job |
 | Repudiation | Chối đã duyệt job khai thác, đổi scope, tải output thô. Xóa log ứng dụng để xóa dấu vết | `audit_log` chỉ cho thêm bản ghi, không sửa, không xóa, ghi người thực hiện và thời điểm. Chỉ Superadmin xóa được log ứng dụng, thao tác xóa ghi vào `audit_log` ở CSDL chính |
 | Information disclosure | User xem program không được gán | Lọc theo `program_user` ở backend, trả `404` |
-| Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job |
+| Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job. API key LLM chỉ ghi, API chỉ trả `has_llm_api_key` |
+| Information disclosure | Cookie phiên của mục tiêu do gowitness thu về lộ trên UI | Parser không lưu giá trị cookie vào `screenshot.cookies`, UI chỉ hiện tên và cờ. Giá trị chỉ còn trong output thô, tải output thô ghi nhật ký thao tác (G7) |
+| Information disclosure | Người chưa đăng nhập dò trạng thái nội bộ qua `GET /health` | `GET /health` chỉ trả `204`. Phiên bản và tên node trên S01 gắn lúc build frontend, không đọc từ Backend API |
 | Information disclosure | Mật khẩu lọt vào URL khi form gửi trước lúc trang hydrate | Form đăng nhập khai báo `method="post"`, nên trình duyệt không bao giờ gửi thông tin xác thực bằng GET: [security.md](../../.claude/rules/security.md) |
 | Information disclosure | Mật khẩu nằm trong markup vì React sao giá trị ô có kiểm soát vào thuộc tính `value` | Ô mật khẩu để dạng không kiểm soát, đọc qua `ref`. Mutation đăng nhập đặt `gcTime: 0`: [security.md](../../.claude/rules/security.md) |
 | Information disclosure | Truy cập trực tiếp MinIO | MinIO chỉ trong vùng lõi, không mở bucket công khai. Tải file qua Backend API có kiểm tra quyền |
@@ -67,7 +69,7 @@
 | Denial of service | Tạo job hàng loạt | Giới hạn số job đồng thời và tốc độ theo tool module, program |
 | Denial of service | Mất quyền quản trị tài khoản | Superadmin không đổi vai trò và không khóa chính mình: [authorization.md](authorization.md) |
 | Elevation of privilege | Người tạo tự duyệt job khai thác | Backend so người duyệt với người tạo, từ chối kể cả Superadmin |
-| Elevation of privilege | Nội dung từ mục tiêu chạy script trên UI | React escape mặc định. ❌ Không render HTML từ output thô. CSP (Content Security Policy) chặn script ngoài |
+| Elevation of privilege | Nội dung từ mục tiêu chạy script trên UI | React escape mặc định. ❌ Không render HTML từ output thô. HTML trang trên S07 trả `text/plain` kèm `nosniff`, UI hiện dạng văn bản. CSP (Content Security Policy) chặn script ngoài |
 | Elevation of privilege | Công thức trong file CSV (Comma-Separated Values) xuất ra | Thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@` |
 | Elevation of privilege | Đường dẫn trong gói nén thoát ra ngoài | Parser đọc gói nén trong bộ nhớ hoặc thư mục tạm, bỏ mục có `..` hoặc đường dẫn tuyệt đối |
 
@@ -85,6 +87,8 @@
 | Domain trong scope phân giải tới IP của bên thứ ba, như CDN dùng chung | ReconOS không phân giải DNS để kiểm tra scope. Người khai báo scope chịu trách nhiệm |
 | Worker bị chiếm gửi output thô giả, tạo finding giả | Worker là nguồn dữ liệu duy nhất. Finding cần triage trước khi báo cáo |
 | Worker bị chiếm nhận được thông tin xác thực của các job đã claim | Worker cần thông tin xác thực để chạy job. Thu hồi token và đổi thông tin xác thực khi phát hiện |
+| Phiên bản ReconOS và tên node hiện trên S01 cho người chưa đăng nhập | Giúp người vận hành nhận đúng môi trường. Không có trạng thái nội bộ, giá trị cố định lúc build |
+| Backend API gọi REST của engine để đọc workflow, native module | `engine.base_url` chỉ Superadmin sửa, mọi lần sửa ghi nhật ký thao tác. Engine nằm trong vùng worker |
 | Engine server tự giữ dữ liệu lượt chạy trong CSDL riêng | Engine nằm trong vùng worker. Dọn dữ liệu engine theo [deployment.md](../ops/deployment.md) |
 | Chưa có MFA (Multi-Factor Authentication) | Ghi trong [tech-debt.md](../tech-debt.md) và [roadmap.md](../roadmap.md) |
 
