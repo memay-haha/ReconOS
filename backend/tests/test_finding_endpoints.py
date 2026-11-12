@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.audit import AuditLog
 from app.core.identity import User, UserRole
 from app.finding.models import Finding, TriageStatus
-from app.finding.service import TRANSITIONS
+from app.finding.service import REPORT_ONLY, TRANSITIONS
 from app.program.models import Program, ProgramStatus
 from app.tag.models import FindingTag, Tag
 from tests.factories import (
@@ -309,7 +309,13 @@ async def test_transition_table(
         f"{API}/findings/{finding.id}", json={"triage_status": target.value}, headers=HEADERS
     )
     allowed = source == target or target in TRANSITIONS[source]
-    if allowed:
+    if allowed and target in REPORT_ONLY and source != target:
+        # In the table, but reached only by submitting a report.
+        assert response.status_code == 409
+        assert response.json()["errors"] == [
+            {"field": "triage_status", "code": "reported_by_report"}
+        ]
+    elif allowed:
         assert response.status_code == 200
         assert response.json()["triage_status"] == target.value
         if source == TriageStatus.DUPLICATE and target != source:

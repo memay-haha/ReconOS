@@ -154,7 +154,11 @@ describe('S10 queue', () => {
   it('offers the actions the status allows', async () => {
     stubQueue({
       [LIST]: page([
-        jobRow(1, { status: 'pending_approval', target: ['pending.example.com'] }),
+        jobRow(1, {
+          status: 'pending_approval',
+          target: ['pending.example.com'],
+          created_by: 'u-other',
+        }),
         jobRow(2, { status: 'running', target: ['running.example.com'] }),
         jobRow(3, {
           status: 'cancelled',
@@ -201,9 +205,42 @@ describe('S10 queue', () => {
     expect(within(rowOf('wait.example.com')).queryByRole('button', { name: 'Approve' })).toBeNull();
   });
 
+  it('offers review of an exploit job to a second person only (G5)', async () => {
+    const fetchMock = stubQueue({
+      [LIST]: page([
+        jobRow(1, {
+          status: 'pending_approval',
+          target: ['mine.example.com'],
+          created_by: ME_ADMIN.id,
+        }),
+        jobRow(2, {
+          status: 'pending_approval',
+          target: ['theirs.example.com'],
+          created_by: 'u-x',
+        }),
+        jobRow(3, { status: 'pending_approval', target: ['sched.example.com'], created_by: null }),
+      ]),
+      'POST /jobs/job-2-0000-0000/approve': () => new Response(null, { status: 204 }),
+      'POST /jobs/job-3-0000-0000/reject': () => new Response(null, { status: 204 }),
+    });
+    renderWithClient(<QueuePage />);
+    await screen.findByRole('table');
+    const mine = within(rowOf('mine.example.com'));
+    expect(mine.queryByRole('button', { name: 'Approve' })).toBeNull();
+    expect(mine.queryByRole('button', { name: 'Reject' })).toBeNull();
+    await userEvent.click(
+      within(rowOf('theirs.example.com')).getByRole('button', { name: 'Approve' }),
+    );
+    await userEvent.click(
+      within(rowOf('sched.example.com')).getByRole('button', { name: 'Reject' }),
+    );
+    expect(calls(fetchMock)).toContain('POST /jobs/job-2-0000-0000/approve');
+    expect(calls(fetchMock)).toContain('POST /jobs/job-3-0000-0000/reject');
+  });
+
   it('says why self approval failed, in its own sentence', async () => {
     const fetchMock = stubQueue({
-      [LIST]: page([jobRow(1, { status: 'pending_approval' })]),
+      [LIST]: page([jobRow(1, { status: 'pending_approval', created_by: 'u-other' })]),
       'POST /jobs/job-1-0000-0000/approve': () => problem(403, 'self_approval_forbidden'),
     });
     renderWithClient(<QueuePage />);

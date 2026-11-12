@@ -1,6 +1,5 @@
 import type { Job, JobStatus } from '@/lib/jobs';
 import type { JobLogEntry } from '@/lib/job-logs';
-import type { Schedule } from '@/lib/schedules';
 
 import { programs, toolModules } from './programs';
 import { users } from './users';
@@ -12,35 +11,6 @@ const P1 = programs[0]?.id ?? '';
 const P2 = programs[1]?.id ?? '';
 const tm = (index: number) => toolModules[index]?.id ?? '';
 const ME = users[0]?.id ?? null;
-
-export const schedules: Schedule[] = [
-  {
-    id: '0190e000-0000-7000-8000-000000000001',
-    program_id: P1,
-    tool_module_id: tm(0),
-    target: ['example.com'],
-    params: {},
-    interval_minutes: 1440,
-    is_enabled: true,
-    created_by: ME,
-    last_run_at: '2026-11-04T00:00:00Z',
-    next_run_at: '2026-11-05T00:00:00Z',
-    created_at: '2026-10-01T05:00:00Z',
-  },
-  {
-    id: '0190e000-0000-7000-8000-000000000002',
-    program_id: P1,
-    tool_module_id: tm(3),
-    target: ['*.example.com'],
-    params: {},
-    interval_minutes: 360,
-    is_enabled: false,
-    created_by: ME,
-    last_run_at: null,
-    next_run_at: null,
-    created_at: '2026-10-05T05:00:00Z',
-  },
-];
 
 function job(
   n: number,

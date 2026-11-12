@@ -86,6 +86,9 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("POST", "/jobs/cleanup"),
     ("GET", "/jobs/{job_id}"),
     ("POST", "/jobs/{job_id}/cancel"),
+    # Batch 8, approval of exploit jobs.
+    ("POST", "/jobs/{job_id}/approve"),
+    ("POST", "/jobs/{job_id}/reject"),
     ("POST", "/jobs/{job_id}/retry"),
     ("POST", "/jobs/{job_id}/prioritize"),
     ("GET", "/jobs/{job_id}/raw-outputs"),
@@ -113,6 +116,11 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("GET", "/engines/{engine_id}/variables"),
     ("PUT", "/engines/{engine_id}/variables/{key}"),
     ("DELETE", "/engines/{engine_id}/variables/{key}"),
+    # Batch 9, Vigolium native modules and checks.
+    ("GET", "/engines/{engine_id}/modules"),
+    ("PATCH", "/engines/{engine_id}/modules"),
+    ("POST", "/engines/{engine_id}/validate"),
+    ("POST", "/engines/{engine_id}/verify-model"),
     # Batch 5, asset, tag and parse.
     ("POST", "/raw-outputs/{raw_output_id}/reparse"),
     ("GET", "/domains"),
@@ -162,6 +170,30 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("PATCH", "/system-settings/{key}"),
     ("GET", "/logs"),
     ("DELETE", "/logs"),
+    # Batch 12: periodic scans.
+    ("GET", "/programs/{program_id}/schedules"),
+    ("POST", "/programs/{program_id}/schedules"),
+    ("GET", "/schedules"),
+    ("PATCH", "/schedules/{schedule_id}"),
+    ("DELETE", "/schedules/{schedule_id}"),
+    ("POST", "/schedules/{schedule_id}/run"),
+    # Batch 11: reports.
+    ("GET", "/reports"),
+    ("POST", "/reports"),
+    ("GET", "/reports/{report_id}"),
+    ("PATCH", "/reports/{report_id}"),
+    ("DELETE", "/reports/{report_id}"),
+    ("POST", "/reports/{report_id}/submit"),
+    ("GET", "/reports/{report_id}/export"),
+    # Batch 7: screenshots.
+    ("GET", "/screenshots"),
+    ("GET", "/screenshots/summary"),
+    ("GET", "/screenshots/{screenshot_id}"),
+    ("DELETE", "/screenshots/{screenshot_id}"),
+    ("GET", "/screenshots/{screenshot_id}/image"),
+    ("GET", "/screenshots/{screenshot_id}/html"),
+    ("GET", "/screenshots/{screenshot_id}/network"),
+    ("GET", "/screenshots/{screenshot_id}/har"),
 }
 # Reachable with a worker token only: docs/integrations/external-services.md.
 WORKER_PREFIX = "/worker/"

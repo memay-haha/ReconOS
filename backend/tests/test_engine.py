@@ -405,3 +405,296 @@ async def test_health_check_of_a_refusing_engine_clears_ok_since(
     assert result.message == "engine refused the API key"
     assert osmedeus.ok_since is None
     assert (await service.health_check(db_session, "nonexistent")).status == "down"
+
+
+# ---------------------------------------------------------------- Vigolium native modules, checks
+
+VIG_KEY = "vgl-test-key"
+LLM_KEY = "sk-test-llm-value"
+
+
+class FakeVigolium:
+    """Answers like the Vigolium REST docs for the calls the adapter makes."""
+
+    def __init__(self) -> None:
+        self.config: dict[str, str] = {
+            "dynamic-assessment.enabled_modules.active_modules": "all",
+            "dynamic-assessment.enabled_modules.passive_modules": "[header-audit tls-weak]",
+        }
+        self.posted: list[dict[str, str]] = []
+        self.config_errors: list[str] = []
+        self.diagnostics: dict[str, object] = {
+            "status": "degraded",
+            "timestamp": "2026-11-13T03:40:08+08:00",
+            "database": {"status": "ok", "message": "driver=sqlite"},
+            "agent": {"status": "ok", "name": "olium", "provider": "openai-compatible"},
+            "browser": {"status": "warning", "message": "disabled in config"},
+            "tools": {"chromium": {"status": "error", "path": "/usr/bin/chromium"}},
+        }
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        if request.headers.get("authorization") != f"Bearer {VIG_KEY}":
+            return httpx.Response(401, json={"error": "unauthorized"})
+        path = request.url.path
+        if path == "/api/modules":
+            modules = [
+                {"id": "xss-light", "type": "active", "short_description": "Reflected XSS"},
+                {"id": "sqli-error-based", "type": "active"},
+                {"id": "header-audit", "type": "passive"},
+                {"id": "tls-weak", "type": "passive"},
+                {"id": "cookie-flags", "type": "passive"},
+                {"id": "ext-odd", "type": "extension"},
+            ]
+            return httpx.Response(200, json={"modules": modules, "total": len(modules)})
+        if path == "/api/config" and request.method == "GET":
+            entries = [{"key": key, "value": value} for key, value in self.config.items()]
+            return httpx.Response(200, json={"entries": entries, "total": len(entries)})
+        if path == "/api/config" and request.method == "POST":
+            body = json.loads(request.content)
+            self.posted.append(body)
+            self.config.update(body)
+            return httpx.Response(200, json={"message": "ok", "errors": self.config_errors})
+        if path == "/api/diagnostics":
+            return httpx.Response(200, json=self.diagnostics)
+        return httpx.Response(404, json={"error": "not found"})
+
+
+@pytest_asyncio.fixture
+async def vigolium(db_session: AsyncSession) -> Engine:
+    return await _engine(db_session, "vigolium")
+
+
+@pytest.fixture
+def vig_api(monkeypatch: pytest.MonkeyPatch) -> FakeVigolium:
+    fake = FakeVigolium()
+    monkeypatch.setattr(service, "_transport", httpx.MockTransport(fake.handler))
+    return fake
+
+
+async def _configure_vigolium(client: AsyncClient, engine: Engine, **body: object) -> None:
+    payload = {"base_url": "http://engine.test:9002", "api_key": VIG_KEY, **body}
+    response = await client.patch(f"{API}/engines/{engine.id}", json=payload, headers=HEADERS)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("role", [UserRole.ADMIN, UserRole.USER])
+async def test_vigolium_routes_are_superadmin_only(
+    client: AsyncClient, logged_in: Login, vigolium: Engine, role: UserRole
+) -> None:
+    await logged_in(role)
+    base = f"{API}/engines/{vigolium.id}"
+    assert (await client.get(f"{base}/modules")).status_code == 403
+    patch = {"modules": [{"name": "xss-light", "is_enabled": False}]}
+    assert (await client.patch(f"{base}/modules", json=patch, headers=HEADERS)).status_code == 403
+    assert (await client.post(f"{base}/validate", headers=HEADERS)).status_code == 403
+    assert (await client.post(f"{base}/verify-model", headers=HEADERS)).status_code == 403
+
+
+async def test_native_modules_are_read_live(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    body = (await client.get(f"{API}/engines/{vigolium.id}/modules")).json()
+    assert body["total"] == 5
+    rows = {item["name"]: item for item in body["items"]}
+    assert "ext-odd" not in rows
+    assert rows["xss-light"] == {
+        "name": "xss-light",
+        "kind": "active",
+        "is_enabled": True,
+        "description": "Reflected XSS",
+    }
+    assert rows["header-audit"]["is_enabled"] is True
+    assert rows["cookie-flags"]["is_enabled"] is False
+
+
+async def test_switching_modules_writes_the_engine_config_and_audits(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    superadmin: User,
+    vigolium: Engine,
+    vig_api: FakeVigolium,
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    response = await client.patch(
+        f"{API}/engines/{vigolium.id}/modules",
+        json={
+            "modules": [
+                {"name": "xss-light", "is_enabled": False},
+                {"name": "cookie-flags", "is_enabled": True},
+            ]
+        },
+        headers=HEADERS,
+    )
+    assert response.status_code == 200
+    assert vig_api.posted == [
+        {
+            "dynamic-assessment.enabled_modules.active_modules": "sqli-error-based",
+            "dynamic-assessment.enabled_modules.passive_modules": "all",
+        }
+    ]
+    rows = {item["name"]: item["is_enabled"] for item in response.json()["items"]}
+    assert rows["xss-light"] is False
+    assert rows["cookie-flags"] is True
+    entry = await db_session.scalar(
+        select(AuditLog).where(AuditLog.action == "engine_modules_updated")
+    )
+    assert entry is not None
+    assert entry.detail == {"modules": {"xss-light": False, "cookie-flags": True}}
+
+
+@pytest.mark.parametrize(
+    ("changes", "code"),
+    [
+        ([{"name": "nothing-here", "is_enabled": True}], "not_found"),
+        (
+            [
+                {"name": "xss-light", "is_enabled": False},
+                {"name": "sqli-error-based", "is_enabled": False},
+            ],
+            "module_required",
+        ),
+    ],
+)
+async def test_module_switch_refuses_what_the_engine_cannot_take(
+    client: AsyncClient,
+    superadmin: User,
+    vigolium: Engine,
+    vig_api: FakeVigolium,
+    changes: list[dict[str, object]],
+    code: str,
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    response = await client.patch(
+        f"{API}/engines/{vigolium.id}/modules", json={"modules": changes}, headers=HEADERS
+    )
+    assert response.status_code == 422
+    assert [error["code"] for error in response.json()["errors"]] == [code]
+    assert vig_api.posted == []
+
+
+async def test_refused_module_config_is_502(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    vig_api.config_errors = ["bad key"]
+    response = await client.patch(
+        f"{API}/engines/{vigolium.id}/modules",
+        json={"modules": [{"name": "xss-light", "is_enabled": False}]},
+        headers=HEADERS,
+    )
+    assert response.status_code == 502
+    assert response.json()["code"] == "engine_unavailable"
+
+
+async def test_osmedeus_has_no_native_modules_or_checks(
+    client: AsyncClient, superadmin: User, osmedeus: Engine, engine_api: None
+) -> None:
+    await _configure(client, osmedeus)
+    base = f"{API}/engines/{osmedeus.id}"
+    assert (await client.get(f"{base}/modules")).status_code == 404
+    patch = {"modules": [{"name": "x", "is_enabled": True}]}
+    assert (await client.patch(f"{base}/modules", json=patch, headers=HEADERS)).status_code == 404
+    assert (await client.post(f"{base}/validate", headers=HEADERS)).status_code == 404
+    assert (await client.post(f"{base}/verify-model", headers=HEADERS)).status_code == 404
+
+
+async def test_validate_turns_diagnostics_into_issues(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    body = (await client.post(f"{API}/engines/{vigolium.id}/validate", headers=HEADERS)).json()
+    assert body == {
+        "ok": True,
+        "issues": [
+            {"level": "advisory", "message": "browser: disabled in config"},
+            {"level": "advisory", "message": "tools.chromium: error"},
+        ],
+    }
+    vig_api.diagnostics["database"] = {"status": "error", "message": "ping timeout"}
+    body = (await client.post(f"{API}/engines/{vigolium.id}/validate", headers=HEADERS)).json()
+    assert body["ok"] is False
+    assert {"level": "critical", "message": "database: ping timeout"} in body["issues"]
+
+
+async def test_validate_with_an_odd_body_is_502(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    vig_api.diagnostics = {"database": {"status": ["not", "text"]}}
+    response = await client.post(f"{API}/engines/{vigolium.id}/validate", headers=HEADERS)
+    assert response.status_code == 502
+
+
+async def test_verify_model_hands_the_llm_settings_to_the_engine(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    superadmin: User,
+    vigolium: Engine,
+    vig_api: FakeVigolium,
+) -> None:
+    await _configure_vigolium(
+        client,
+        vigolium,
+        llm_api_key=LLM_KEY,
+        settings={
+            "llm_provider": "openai-compatible",
+            "llm_model": "gemma4:latest",
+            "llm_base_url": "http://llm.test:11434/v1",
+        },
+    )
+    response = await client.post(f"{API}/engines/{vigolium.id}/verify-model", headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json() == {"ok": True, "issues": []}
+    assert LLM_KEY not in response.text
+    assert vig_api.posted == [
+        {
+            "agent.olium.provider": "openai-compatible",
+            "agent.olium.model": "gemma4:latest",
+            "agent.olium.custom_provider.model_id": "gemma4:latest",
+            "agent.olium.custom_provider.base_url": "http://llm.test:11434/v1",
+            "agent.olium.llm_api_key": LLM_KEY,
+            "agent.olium.custom_provider.api_key": LLM_KEY,
+        }
+    ]
+    entry = await db_session.scalar(
+        select(AuditLog).where(AuditLog.action == "engine_model_verified")
+    )
+    assert entry is not None and entry.detail == {"ok": True}
+    assert LLM_KEY not in json.dumps(entry.detail)
+
+
+async def test_verify_model_reports_the_agent_check(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium, settings={"llm_provider": "openai-api-key"})
+    vig_api.diagnostics["agent"] = {"status": "error", "message": "no credentials"}
+    body = (await client.post(f"{API}/engines/{vigolium.id}/verify-model", headers=HEADERS)).json()
+    assert body == {
+        "ok": False,
+        "issues": [{"level": "critical", "message": "agent: no credentials"}],
+    }
+    vig_api.config_errors = ["agent.olium.provider: rejected"]
+    body = (await client.post(f"{API}/engines/{vigolium.id}/verify-model", headers=HEADERS)).json()
+    assert body["issues"] == [{"level": "critical", "message": "engine refused the LLM settings"}]
+
+
+async def test_verify_model_without_a_provider_calls_nothing(
+    client: AsyncClient, superadmin: User, vigolium: Engine, vig_api: FakeVigolium
+) -> None:
+    await _configure_vigolium(client, vigolium)
+    body = (await client.post(f"{API}/engines/{vigolium.id}/verify-model", headers=HEADERS)).json()
+    assert body["ok"] is False
+    assert vig_api.posted == []
+
+
+async def test_vigolium_down_is_502(
+    client: AsyncClient, superadmin: User, vigolium: Engine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("refused", request=request)
+
+    monkeypatch.setattr(service, "_transport", httpx.MockTransport(down))
+    await _configure_vigolium(client, vigolium)
+    response = await client.get(f"{API}/engines/{vigolium.id}/modules")
+    assert response.status_code == 502

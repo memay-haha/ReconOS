@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 4: Kiến trúc hệ thống
 > Liên quan: [overview.md](overview.md), [tech-stack.md](tech-stack.md), [directory-structure.md](directory-structure.md), [ADR chọn tech stack](../decisions/adr-tech-stack.md)
 
@@ -197,12 +197,17 @@ sequenceDiagram
     participant DSP as Dispatcher
     BEAT->>RD: Task schedule
     RD-->>BG: Giao task
-    BG->>BG: Kiểm tra scope
-    BG->>PG: Ghi job, NOTIFY
+    BG->>PG: Khóa lịch đến hạn, SKIP LOCKED
+    BG->>BG: Kiểm tra scope, tham số
+    BG->>PG: Ghi job, dời next_run_at, NOTIFY
     PG-->>DSP: Thông báo
 ```
 
-- Từ bước Thông báo, job định kỳ đi tiếp như job tạo từ API.
+1. Celery Beat gửi task `reconos.run_due_schedules` vào queue `schedule` mỗi 60 giây. Task quá hạn 60 giây thì bỏ, lượt sau làm thay. Lịch nằm trong bảng `schedule`, Beat không giữ lịch quét.
+2. Tiến trình nền chọn tối đa 100 lịch đang bật, `next_run_at` đã tới, program `active`, bằng `SELECT ... FOR UPDATE SKIP LOCKED`. Trong cùng transaction, task dời `next_run_at` tới mốc kế tiếp sau thời điểm hiện tại và tạo job qua `create_scheduled_job` của service `job`. Hai lượt chạy cùng lúc không tạo trùng job vì lượt sau bỏ qua dòng đang khóa, rồi thấy `next_run_at` đã dời.
+3. Mỗi lịch một savepoint. Lịch bị từ chối không làm hỏng lịch khác: [business-flow.md](business-flow.md).
+4. Task không thử lại. Lượt lỗi không dời `next_run_at`, lượt sau chạy lại đúng các lịch đó.
+5. Từ bước Thông báo, job định kỳ đi tiếp như job tạo từ API.
 
 ### Luồng output thô và parse
 

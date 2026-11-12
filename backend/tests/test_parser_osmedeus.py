@@ -18,7 +18,6 @@ from app.asset.models import AssetEvent, Domain, DomainIp, Ip, Service, Technolo
 from app.asset.schemas import IngestBatch
 from app.core.realtime import take_pending_events
 from app.finding.models import Finding
-from app.finding.schemas import FindingBatch
 from app.job.models import Job
 from app.parser import base, osmedeus
 from app.parser import service as parser_service
@@ -51,7 +50,7 @@ def _collect(path: Path) -> tuple[IngestBatch, ParseStats]:
     stats = ParseStats()
     merged = IngestBatch()
     for batch in OsmedeusGeneralParser().parse(path, stats, "osmedeus-general"):
-        if isinstance(batch, FindingBatch):
+        if not isinstance(batch, IngestBatch):
             continue
         merged.domains.extend(batch.domains)
         merged.ips.extend(batch.ips)

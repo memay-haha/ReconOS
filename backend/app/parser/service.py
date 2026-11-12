@@ -27,6 +27,8 @@ from app.finding.schemas import FindingBatch, FindingIngestResult
 from app.parser.base import ParseDataError, ParseStats
 from app.parser.registry import parser_for
 from app.raw_output import service as raw_output_service
+from app.screenshot import service as screenshot_service
+from app.screenshot.schemas import ScreenshotBatch, ScreenshotIngestResult
 from contracts.raw_output import ParseStatus
 
 log = structlog.get_logger()
@@ -42,6 +44,7 @@ class ParseOutcome:
     status: ParseStatus | None
     found: IngestResult
     findings: FindingIngestResult = field(default_factory=FindingIngestResult)
+    screenshots: ScreenshotIngestResult = field(default_factory=ScreenshotIngestResult)
 
 
 async def _download(open_stream: OpenStream, object_key: str, directory: str) -> Path:
@@ -70,7 +73,7 @@ async def parse_raw_output(
         job_id=str(target.job_id), program_id=str(target.program_id), tool_module=target.tool_module
     )
     parser = parser_for(target.tool_module)
-    if parser is None:
+    if parser is None or not parser.accepts(target.filename):
         await raw_output_service.finish_parse(session, raw_output_id, status=ParseStatus.NO_PARSER)
         return ParseOutcome(status=ParseStatus.NO_PARSER, found=IngestResult())
     started = time.monotonic()
@@ -81,6 +84,7 @@ async def parse_raw_output(
     stats = ParseStats()
     found = IngestResult()
     findings = FindingIngestResult()
+    screenshots = ScreenshotIngestResult()
     new_by_severity: dict[str, int] = {}
     severe: list[tuple[uuid.UUID, str, str]] = []
     with tempfile.TemporaryDirectory(prefix="reconos-parse-") as directory:
@@ -94,6 +98,25 @@ async def parse_raw_output(
                 for severity, count in outcome.new_by_severity.items():
                     new_by_severity[severity] = new_by_severity.get(severity, 0) + count
                 severe.extend(row for row in outcome.new_findings if row[1] in ALERT_SEVERITIES)
+            elif isinstance(batch, ScreenshotBatch):
+                # The line names its image; the job's PNG rows are stored first:
+                # workers/worker/runners/gowitness.py.
+                images = await raw_output_service.ids_by_filename(
+                    session,
+                    target.job_id,
+                    {r.image_filename for r in batch.screenshots if r.image_filename},
+                )
+                shots, assets = await screenshot_service.ingest(
+                    session,
+                    batch,
+                    origin,
+                    rules,
+                    images=images,
+                    html_raw_output_id=target.raw_output_id,
+                )
+                found = found.add(assets)
+                screenshots = screenshots.add(shots)
+                stats.dropped += shots.dropped
             else:
                 found = found.add(await asset_service.ingest(session, batch, origin, rules))
     await raw_output_service.finish_parse(session, raw_output_id, status=ParseStatus.PARSED)
@@ -133,9 +156,12 @@ async def parse_raw_output(
         new_assets=found.model_dump(),
         new_findings=findings.created,
         findings_seen_again=findings.seen_again,
+        new_screenshots=screenshots.created,
         duration_ms=int((time.monotonic() - started) * 1000),
     )
-    return ParseOutcome(status=ParseStatus.PARSED, found=found, findings=findings)
+    return ParseOutcome(
+        status=ParseStatus.PARSED, found=found, findings=findings, screenshots=screenshots
+    )
 
 
 async def _raise_alerts(

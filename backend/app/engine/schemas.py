@@ -8,10 +8,22 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any, ClassVar, Final, Literal
 
-from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, ConfigDict, StringConstraints
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    StringConstraints,
+)
 
 from app.core.pagination import Page
-from app.engine.adapters import EngineWorkflowDetail, EngineWorkflowItem
+from app.engine.adapters import (
+    EngineCheckResult,
+    EngineModule,
+    EngineWorkflowDetail,
+    EngineWorkflowItem,
+)
 
 EngineSort = Literal["name", "-name"]
 VariableSort = Literal["key", "-key"]
@@ -107,13 +119,34 @@ class EngineVariablePut(BaseModel):
     value: Secret
 
 
+class EngineModuleChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[str, StringConstraints(min_length=1, max_length=255)]
+    is_enabled: bool
+
+
+class EngineModulesPatch(BaseModel):
+    """Native modules to switch; a module left out keeps its state."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    modules: Annotated[list[EngineModuleChange], Field(min_length=1, max_length=1000)]
+
+
 EnginePage = Page[EngineResponse]
 EngineVariablePage = Page[EngineVariableResponse]
 EngineWorkflowPage = Page[EngineWorkflowItem]
+EngineModulePage = Page[EngineModule]
 
 __all__ = [
     "ENGINE_SETTINGS",
     "VARIABLE_KEY_PATTERN",
+    "EngineCheckResult",
+    "EngineModule",
+    "EngineModuleChange",
+    "EngineModulePage",
+    "EngineModulesPatch",
     "EnginePage",
     "EngineResponse",
     "EngineSettings",

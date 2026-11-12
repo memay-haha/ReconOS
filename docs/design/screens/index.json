@@ -146,5 +146,11 @@
     "files": [
       "s20-global-findings-explorer.html"
     ]
+  },
+  {
+    "label": "S21. Reports",
+    "stitch_title": "Reports (chưa có mockup)",
+    "screen_id": "",
+    "files": []
   }
 ]

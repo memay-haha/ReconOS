@@ -18,8 +18,16 @@ from app.alert.models import Alert, AlertType
 from app.core.identity import User, UserRole
 from app.core.realtime import take_pending_events
 from app.job import service as job_service
-from contracts.job_status import JobStatus
-from tests.factories import assign, make_job, make_program, make_scope_rule, nuclei
+from contracts.job_status import FinishStatus, JobFinish, JobStatus
+from tests.factories import (
+    assign,
+    make_job,
+    make_program,
+    make_scope_rule,
+    make_worker,
+    nuclei,
+    tool_module_named,
+)
 
 SAME_ORIGIN = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
 
@@ -233,36 +241,56 @@ async def test_a_stale_job_raises_job_failed(db_session: AsyncSession) -> None:
     ]
 
 
-async def test_a_job_waiting_for_approval_raises_job_pending_approval(
-    db_session: AsyncSession,
-    user_factory: Callable[..., Awaitable[User]],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # No exploit tool module ships before batch 8, so the group is forced here:
-    # the alert hangs on the status, whichever tool module produced it.
-    monkeypatch.setattr(
-        job_service,
-        "_initial_status",
-        lambda spec: JobStatus.PENDING_APPROVAL,
-    )
-    actor = await user_factory(role=UserRole.ADMIN)
+async def test_a_worker_reporting_failure_raises_job_failed(db_session: AsyncSession) -> None:
     program = await make_program(db_session)
-    await make_scope_rule(db_session, program, value="a.example.com")
-    tool = await nuclei(db_session)
+    worker, _ = await make_worker(db_session)
+    job = await make_job(
+        db_session, program, await nuclei(db_session), status="running", worker_id=worker.id
+    )
+
+    await job_service.finish_job(
+        db_session,
+        worker=worker,
+        job_id=job.id,
+        finish=JobFinish(status=FinishStatus.FAILED, status_reason="nuclei exited with code 2"),
+    )
+
+    assert await _alerts_of(db_session, job.id) == [
+        ("job_failed", "nuclei job on a.example.com failed: nuclei exited with code 2")
+    ]
+
+
+@pytest.mark.parametrize("approve", [True, False])
+async def test_an_exploit_job_raises_job_pending_approval_once(
+    db_session: AsyncSession, user_factory: Callable[..., Awaitable[User]], approve: bool
+) -> None:
+    creator = await user_factory(role=UserRole.ADMIN)
+    reviewer = await user_factory(role=UserRole.ADMIN)
+    program = await make_program(db_session)
+    await make_scope_rule(db_session, program, "*.example.com", rule_type="wildcard")
+    sqlmap = await tool_module_named(db_session, "sqlmap")
 
     job = await job_service.create_job(
         db_session,
-        actor=actor,
+        actor=creator,
         program_id=program.id,
-        tool_module_id=tool.id,
-        target=["a.example.com"],
+        tool_module_id=sqlmap.id,
+        target=["https://a.example.com/item?id=1"],
         params={},
     )
 
     assert job.status == JobStatus.PENDING_APPROVAL.value
-    assert await _alerts_of(db_session, job.id) == [
-        ("job_pending_approval", "nuclei job on a.example.com is waiting for approval")
+    expected = [
+        (
+            "job_pending_approval",
+            "sqlmap job on https://a.example.com/item?id=1 is waiting for approval",
+        )
     ]
+    assert await _alerts_of(db_session, job.id) == expected
+    # Approving queues the job, rejecting cancels it: neither raises another alert.
+    review = job_service.approve_job if approve else job_service.reject_job
+    await review(db_session, actor=reviewer, job_id=job.id, path="/api/v1/jobs")
+    assert await _alerts_of(db_session, job.id) == expected
 
 
 async def test_a_queued_job_raises_nothing(

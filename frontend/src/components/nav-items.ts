@@ -66,6 +66,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
           tone: 'crit',
         },
       },
+      // S21, no mockup: reports sit next to the findings they are made from.
+      { label: 'Reports', href: '/reports', icon: 'summarize', part: 'S21' },
     ],
   },
   {

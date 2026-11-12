@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -56,7 +56,9 @@
 | Tampering | Sửa output thô sau khi lưu | Chỉ Backend API ghi MinIO, lưu mã băm SHA-256, parser không sửa object |
 | Tampering | Chèn lệnh qua mục tiêu hoặc tham số | Tham số theo allowlist, gọi công cụ bằng danh sách đối số, mục tiêu lấy từ job đã kiểm tra scope |
 | Tampering | Gửi task giả vào Redis | Serializer JSON, model contract kiểm tra mọi task. Tài khoản Redis `worker` chỉ ghi được key của queue job, ACL trong `infras/redis/acl.conf`. Worker giữ message chưa xác nhận ở key `job.unacked` riêng nên không đưa được message vào queue `parse`, `schedule` khi Celery khôi phục message |
+| Tampering | Chữ từ output thô chèn link, ảnh, HTML vào file Markdown báo cáo xuất ra, tới nền tảng bug bounty | Export `md` escape ký tự Markdown của chữ lấy từ finding hoặc đặt trong code span, `evidence` nằm trong khối code có hàng rào dài hơn mọi chuỗi backtick bên trong |
 | Repudiation | Chối đã duyệt job khai thác, đổi scope, tải output thô. Xóa log ứng dụng để xóa dấu vết | `audit_log` chỉ cho thêm bản ghi, không sửa, không xóa, ghi người thực hiện và thời điểm. Chỉ Superadmin xóa được log ứng dụng, thao tác xóa ghi vào `audit_log` ở CSDL chính |
+| Repudiation | Finding `reported` không rõ nộp qua báo cáo nào | Chỉ nộp báo cáo mới chuyển finding sang `reported`. Nhật ký `finding_triaged` ghi `report_id`: [business-flow.md](../architecture/business-flow.md) |
 | Information disclosure | User xem program không được gán | Lọc theo `program_user` ở backend, trả `404` |
 | Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job. API key LLM chỉ ghi, API chỉ trả `has_llm_api_key` |
 | Information disclosure | Cookie phiên của mục tiêu do gowitness thu về lộ trên UI | Parser không lưu giá trị cookie vào `screenshot.cookies`, UI chỉ hiện tên và cờ. Giá trị chỉ còn trong output thô, tải output thô ghi nhật ký thao tác (G7) |
@@ -71,6 +73,7 @@
 | Elevation of privilege | Người tạo tự duyệt job khai thác | Backend so người duyệt với người tạo, từ chối kể cả Superadmin |
 | Elevation of privilege | Nội dung từ mục tiêu chạy script trên UI | React escape mặc định. ❌ Không render HTML từ output thô. HTML trang trên S07 trả `text/plain` kèm `nosniff`, UI hiện dạng văn bản. CSP (Content Security Policy) chặn script ngoài |
 | Elevation of privilege | Công thức trong file CSV (Comma-Separated Values) xuất ra | Thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@` |
+| Elevation of privilege | Body Markdown của báo cáo chép từ output thô chứa HTML, link `javascript:` chạy trên UI | Frontend đọc Markdown bằng `src/lib/markdown.ts`, dựng node văn bản React, ❌ không có HTML. Link chỉ giữ `http`, `https`, `mailto`, mở với `rel="noopener noreferrer nofollow"` |
 | Elevation of privilege | Đường dẫn trong gói nén thoát ra ngoài | Parser không giải nén ra đĩa, chỉ mở mục có tên đúng lấy từ `manifest.json`. Mục có `..` hoặc đường dẫn tuyệt đối không bao giờ được mở |
 
 ### Kiểm soát công cụ khai thác

@@ -1,5 +1,4 @@
 import type { AssetEvent } from '@/lib/asset-events';
-import type { Screenshot, ScreenshotListExtra } from '@/lib/screenshots';
 import type { UrlDetail } from '@/lib/url-detail';
 
 import { programs } from './programs';
@@ -52,36 +51,6 @@ export const urlDetails: readonly UrlDetail[] = HOSTS.map((host, i) => ({
   ],
 }));
 
-export const screenshots: readonly Omit<Screenshot, ScreenshotListExtra>[] = urlDetails.map(
-  (url, i) => {
-    const failed = i === 3;
-    return {
-      id: uuid('0190d300', i + 1),
-      program_id: PROGRAM_ID,
-      url_id: url.id,
-      job_id: uuid('0190d400', 1),
-      raw_output_id: uuid('0190d500', 1),
-      final_url: url.url,
-      status_code: failed ? null : url.status_code,
-      title: failed ? null : url.title,
-      // Two pairs of look-alikes, so sort=perception_hash has something to group.
-      perception_hash: failed ? null : `p:${String(i % 3)}f0e1d2c3b4a5968`,
-      http_headers: failed
-        ? null
-        : {
-            server: 'nginx',
-            'content-type': 'text/html; charset=UTF-8',
-            'strict-transport-security': 'max-age=31536000; includeSubDomains',
-            'x-frame-options': 'DENY',
-            'x-content-type-options': 'nosniff',
-          },
-      is_failed: failed,
-      error_message: failed ? 'net::ERR_CONNECTION_TIMED_OUT' : null,
-      captured_at: `2026-11-0${String(1 + (i % 4))}T0${String(i)}:15:00Z`,
-    };
-  },
-);
-
 export const assetEvents: readonly AssetEvent[] = HOSTS.slice(0, 6).map((host, i) => ({
   id: uuid('0190d600', i + 1),
   program_id: PROGRAM_ID,
@@ -98,12 +67,3 @@ export const assetEvents: readonly AssetEvent[] = HOSTS.slice(0, 6).map((host, i
   asset_name: host,
   program_name: programs[0]?.name ?? 'Example Corp',
 }));
-
-/** A 1 x 1 transparent PNG: enough for the gallery to show a loaded image. */
-export const PLACEHOLDER_PNG = new Uint8Array([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
-  0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
-  0x42, 0x60, 0x82,
-]);

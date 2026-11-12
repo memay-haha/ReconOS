@@ -10,6 +10,8 @@ docs/data/database.md, section Upsert và khử trùng lặp.
   the programs assigned to it, and a hidden finding answers 404 (G7).
 - Triage moves along `TRANSITIONS` only, with a conditional UPDATE, and every
   change writes one audit row. A finding of an archived program is read only.
+- `reported` is reached only through `mark_reported`, when the report module
+  submits a report holding the finding.
 """
 
 import uuid
@@ -92,6 +94,10 @@ TRANSITIONS: Final[dict[TriageStatus, frozenset[TriageStatus]]] = {
     TriageStatus.REPORTED: frozenset({TriageStatus.CONFIRMED, TriageStatus.RESOLVED}),
     TriageStatus.RESOLVED: frozenset({TriageStatus.CONFIRMED}),
 }
+
+# Reached only by submitting a report, never by hand: business-flow.md, section
+# Vòng đời finding. The move stays in TRANSITIONS so the table reads the same.
+REPORT_ONLY: Final = frozenset({TriageStatus.REPORTED})
 
 _SEVERITY_RANK: Final = {
     Severity.CRITICAL.value: 5,
@@ -621,7 +627,7 @@ async def get_finding(
             "detail": detail,
             "in_scope": info.in_scope,
             "scope_rule": decision.rule_value if decision.allowed else None,
-            "allowed_triage_statuses": sorted(TRANSITIONS[current]),
+            "allowed_triage_statuses": sorted(TRANSITIONS[current] - REPORT_ONLY),
         }
     )
 
@@ -652,12 +658,18 @@ async def _locked(
     return [(finding, status) for finding, status in rows]
 
 
-def _check_move(finding: Finding, target: TriageStatus) -> None:
+def _check_move(finding: Finding, target: TriageStatus, *, by_report: bool = False) -> None:
     current = TriageStatus(finding.triage_status)
     if current != target and target not in TRANSITIONS[current]:
         raise ConflictError(
             detail=f"triage status cannot move from {current.value} to {target.value}",
             errors=[{"field": "triage_status", "code": "invalid_transition"}],
+        )
+    if target in REPORT_ONLY and current != target and not by_report:
+        # Every reported finding then traces to the report that carried it (G6).
+        raise ConflictError(
+            detail="a finding becomes reported only when a report holding it is submitted",
+            errors=[{"field": "triage_status", "code": "reported_by_report"}],
         )
 
 
@@ -704,6 +716,7 @@ async def _move(
     finding: Finding,
     target: TriageStatus,
     duplicate_of_id: uuid.UUID | None,
+    report_id: uuid.UUID | None = None,
 ) -> bool:
     """Write one triage change and its audit row. False when nothing changes."""
     current = finding.triage_status
@@ -734,6 +747,7 @@ async def _move(
             "from": current,
             "to": target.value,
             "duplicate_of_id": str(duplicate_of_id) if duplicate_of_id else None,
+            **({"report_id": str(report_id)} if report_id else {}),
         },
     )
     return True
@@ -776,11 +790,53 @@ async def bulk_triage(
         await _move(session, actor, finding, triage_status, None)
 
 
+# ---------------------------------------------------------------- for the report module
+
+
+async def read_many(
+    session: AsyncSession, *, viewer: User, ids: Sequence[uuid.UUID]
+) -> list[FindingResponse]:
+    """The visible findings among `ids`, worst severity first. Hidden ones are left out."""
+    if not ids:
+        return []
+    rows = list(
+        (
+            await session.execute(
+                _row_select()
+                .where(Finding.id.in_(list(set(ids))), _visible(viewer))
+                .order_by(_severity_rank.desc(), Finding.name, Finding.id)
+            )
+        ).all()
+    )
+    return await _responses(session, rows)
+
+
+async def mark_reported(
+    session: AsyncSession, *, actor: User, ids: Sequence[uuid.UUID], report_id: uuid.UUID
+) -> None:
+    """Move the findings of a submitted report to `reported`, all or none.
+
+    Each must still be `confirmed`: one that left it since the report was drafted
+    stops the submit with 409, so nothing is reported by accident.
+    """
+    rows = await _locked(session, actor, ids)
+    stale = [finding for finding, _ in rows if finding.triage_status != TriageStatus.CONFIRMED]
+    if stale:
+        raise ConflictError(
+            detail="every finding of the report must be confirmed to submit it",
+            errors=[{"field": "finding_ids", "code": "not_confirmed"}],
+        )
+    for finding, _ in rows:
+        _check_move(finding, TriageStatus.REPORTED, by_report=True)
+        await _move(session, actor, finding, TriageStatus.REPORTED, None, report_id)
+
+
 def with_ids(flt: FindingFilter, ids: Sequence[uuid.UUID] | None) -> FindingFilter:
     return replace(flt, ids=ids or None)
 
 
 __all__ = [
+    "REPORT_ONLY",
     "TRANSITIONS",
     "FindingFilter",
     "IngestOutcome",
@@ -789,6 +845,8 @@ __all__ = [
     "get_finding",
     "ingest",
     "list_findings",
+    "mark_reported",
+    "read_many",
     "summary",
     "triage",
 ]

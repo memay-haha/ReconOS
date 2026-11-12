@@ -15,6 +15,9 @@ from app.core.security import require_roles
 from app.engine import service
 from app.engine.schemas import (
     VARIABLE_KEY_PATTERN,
+    EngineCheckResult,
+    EngineModulePage,
+    EngineModulesPatch,
     EnginePage,
     EngineResponse,
     EngineSort,
@@ -78,6 +81,32 @@ async def get_workflow(
     engine_id: uuid.UUID, name: WorkflowName, actor: Superadmin, session: DbDep
 ) -> EngineWorkflowDetail:
     return await service.get_workflow(session, engine_id, name)
+
+
+@router.get("/engines/{engine_id}/modules", response_model=EngineModulePage)
+async def list_modules(engine_id: uuid.UUID, actor: Superadmin, session: DbDep) -> EngineModulePage:
+    return await service.list_modules(session, engine_id)
+
+
+@router.patch("/engines/{engine_id}/modules", response_model=EngineModulePage)
+async def patch_modules(
+    engine_id: uuid.UUID, body: EngineModulesPatch, actor: Superadmin, session: DbDep
+) -> EngineModulePage:
+    return await service.update_modules(session, actor=actor, engine_id=engine_id, changes=body)
+
+
+@router.post("/engines/{engine_id}/validate", response_model=EngineCheckResult)
+async def validate_engine(
+    engine_id: uuid.UUID, actor: Superadmin, session: DbDep
+) -> EngineCheckResult:
+    return await service.validate_engine(session, engine_id)
+
+
+@router.post("/engines/{engine_id}/verify-model", response_model=EngineCheckResult)
+async def verify_model(
+    engine_id: uuid.UUID, actor: Superadmin, session: DbDep
+) -> EngineCheckResult:
+    return await service.verify_model(session, actor=actor, engine_id=engine_id)
 
 
 @router.get("/engines/{engine_id}/variables", response_model=EngineVariablePage)

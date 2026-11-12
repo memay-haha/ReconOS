@@ -1,11 +1,10 @@
 """alert, alert_read and diagnostic_run tables for batch 10
 
 Tables: docs/data/schema.md. alert and alert_read follow app/alert/models.py,
-diagnostic_run app/dashboard/models.py. down_revision stays 0006 until the
-batches of layer 5 are chained at merge time.
+diagnostic_run app/dashboard/models.py.
 
 Revision ID: 0011
-Revises: 0006
+Revises: 0008
 Create Date: 2026-11-12 18:48:35.320351+00:00
 
 """
@@ -17,7 +16,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '0011'
-down_revision: Union[str, Sequence[str], None] = '0006'
+down_revision: Union[str, Sequence[str], None] = '0008'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

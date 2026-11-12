@@ -199,20 +199,24 @@ describe('S09 program detail', () => {
         {
           id: 's1',
           program_id: 'p1',
+          program_name: 'acme-bb',
           tool_module_id: 'tm1',
+          tool_module_name: 'osmedeus-domain-lite',
           target: ['*.example.com'],
           params: {},
           interval_minutes: 360,
           is_enabled: true,
           created_by: null,
           last_run_at: null,
-          next_run_at: null,
+          next_run_at: '2026-11-01T07:00:00Z',
           created_at: '2026-11-01T01:00:00Z',
         },
       ]),
       'POST /schedules/s1/run': { id: 'j9' },
     });
     renderWithClient(<ProgramDetailPage />);
+    // The row names its tool module from the joined field of the response.
+    expect(await screen.findByText('osmedeus-domain-lite')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: /^Trigger / }));
     expect(calls(fetchMock)).toContain('POST /schedules/s1/run');
   });

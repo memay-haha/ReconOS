@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -138,15 +138,23 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 |---|---|---|---|
 | `nuclei` | Quét | `nuclei.jsonl`: mỗi dòng một kết quả | Finding |
 | `gowitness` | Recon | `gowitness.jsonl` và từng file ảnh PNG | Screenshot, URL, công nghệ |
-| `sqlmap` | Khai thác | Gói nén thư mục output của sqlmap | Finding |
-| `dalfox` | Khai thác | File JSON kết quả | Finding |
+| `sqlmap` | Khai thác | `sqlmap.zip`: `results.csv` ở gốc gói, thư mục output của sqlmap trong `output/` | Finding |
+| `dalfox` | Khai thác | `dalfox.jsonl`: dòng đầu `{"meta": ...}`, mỗi dòng sau một finding | Finding |
 
-- gowitness ghi JSONL, không dùng CSDL riêng của gowitness. Runner cấu hình gowitness ghi cả URL chụp lỗi vào JSONL. Parser tạo screenshot có `is_failed` cho URL đó.
-- Runner bật ghi đủ dữ liệu trang của gowitness: TLS, network log, console log, cookie, độ phân giải, IP máy chủ, thời gian chụp, HTML. HTML mỗi trang là một file output thô riêng, dòng JSONL ghi tên file ảnh và file HTML. Parser liên kết `screenshot.raw_output_id`, `html_raw_output_id` theo tên file, ghi các cột jsonb theo [schema.md](../data/schema.md), bỏ giá trị cookie (G7).
-- Cờ gowitness cho các trường trên chưa kiểm chứng trên phiên bản gowitness đang dùng: nợ 42 trong [tech-debt.md](../tech-debt.md).
+- gowitness 3.2.2 ghi JSONL, không dùng CSDL riêng của gowitness (G1). Mỗi dòng là một `Result`: `url`, `final_url`, `response_code`, `title`, `html`, `perception_hash`, `file_name`, `failed`, `failed_reason`, `probed_at`, `tls`, `technologies`, `headers`, `network`, `console`, `cookies`.
+- `gowitness`: `scan file`, `--file`, `--chrome-path /usr/bin/chromium`, `--threads`, `--timeout`, `--delay`, `--chrome-window-x`, `--chrome-window-y`, `--screenshot-path`, `--screenshot-format png`, `--write-jsonl`, `--write-jsonl-file gowitness.jsonl`, `--log-scan-errors`. Tham số `threads`, `timeout`, `delay`, `window_width`, `window_height`. Phiên bản lấy từ `gowitness version`.
+- Runner upload `stdout.txt`, `stderr.txt`, từng file PNG, rồi `gowitness.jsonl` sau cùng. File PNG có tên không khớp quy tắc tên file upload thì bỏ, ghi log `warning`. Job có proxy: runner finish `failed` vì gowitness chỉ nhận proxy trên dòng lệnh, nợ 66 trong [tech-debt.md](../tech-debt.md).
+- Parser `gowitness` (`app/parser/gowitness.py`) chỉ đọc `gowitness.jsonl`, dòng tới 16 MiB. File khác của job ghi `no_parser` qua `Parser.accepts`. Parser service tìm ảnh theo `file_name` trong output thô cùng job, ghi `screenshot.raw_output_id`. HTML nằm trong `gowitness.jsonl` nên `html_raw_output_id` trỏ tới file này, parser chép HTML vào `screenshot.html`.
+- URL tài sản là `url` gowitness được giao. `status_code`, `title` chỉ ghi vào URL tài sản khi `final_url` trùng `url`. Công nghệ gowitness nhận ra gắn vào URL tài sản. Cột jsonb, giới hạn độ dài: [schema.md](../data/schema.md). Bỏ giá trị cookie và giá trị `Set-Cookie` (G7).
+- `failed` là `true` khi có response mà không chụp được ảnh: parser tạo screenshot `is_failed`. Lỗi điều hướng như DNS, timeout không có dòng JSONL, chỉ có trong `stderr.txt`: nợ 65.
+- Trường trên lấy từ mã nguồn gowitness 3.2.2, chưa chạy thử trong image worker: nợ 42, 67.
 - httpx ghi ngày hết hạn chứng chỉ TLS, parser ghi `url.tls_not_after`.
 - Cờ dòng lệnh cụ thể nằm trong runner và schema tham số của tool module, kèm test.
 - Parser `nuclei` (`app/parser/nuclei.py`) đọc mọi output thô của job nuclei. `stdout.txt` cùng JSONL với `nuclei.jsonl`, chuỗi khử trùng lặp gộp lại. Dòng không phải JSON của `stderr.txt` bị bỏ và đếm. Trường đọc, giới hạn độ dài, tài sản của finding: [schema.md](../data/schema.md).
+- `sqlmap` 1.10.8: `-m` file mục tiêu, `--batch`, `--disable-coloring`, `--output-dir`, `--results-file`, `--level`, `--risk`, `--threads`, `--timeout`, `--retries`, `--delay`, `--technique`, `--dbms`, `--proxy-file`. Tham số `level`, `risk`, `technique`, `dbms`, `threads`, `timeout`, `retries`, `delay`. Phiên bản lấy từ `sqlmap --version`. Runner nén `results.csv` và thư mục `--output-dir` thành `sqlmap.zip` cả khi công cụ lỗi hoặc bị hủy, bỏ symlink, dừng job `failed` khi tổng dung lượng vượt 10 GiB.
+- `dalfox` 3.2.4: `scan --input-type file`, `--config`, `--format jsonl`, `--output dalfox.jsonl`, `--silence`, `--no-color`, `--workers`, `--delay`, `--timeout`, `--rate-limit`, `--retries`, `--follow-redirects`, `--skip-mining`, `--skip-discovery`, `--deep-scan`, `--only-poc`. Tham số `workers`, `delay`, `timeout`, `rate`, `retries`, `follow_redirects`, `skip_mining`, `skip_discovery`, `deep_scan`, `only_poc`. Phiên bản lấy từ `dalfox --version`. dalfox v3 bỏ qua biến môi trường proxy, nên proxy đi qua file cấu hình JSON quyền `0600` truyền bằng `--config`, xóa khi công cụ dừng (G7). Mã thoát `1` là có finding, coi như `completed`. Mã `2` là lỗi.
+- Tham số ngoài allowlist và lý do loại của từng công cụ ghi trong docstring của `contracts/tool_modules/<tool module>.py`, có test trong `contracts/tests/test_tool_modules.py`.
+- Parser `sqlmap` (`app/parser/sqlmap.py`) chỉ mở mục `results.csv` của gói, mỗi dòng CSV `Target URL,Place,Parameter,Technique(s),Note(s)` một finding, severity `high`, `low` khi sqlmap ghi `false positive or unexploitable`. File không phải zip (`stdout.txt`, `stderr.txt`) không sinh gì. Parser `dalfox` (`app/parser/dalfox.py`) bỏ dòng `meta`, severity lấy từ `severity` của dalfox, thiếu thì theo hạng `V` `high`, `A`, `R` `medium`, `I` `info`. Finding của cả hai nằm trên URL bỏ query và fragment.
 - `nuclei`: `-list`, `-jsonl`, `-output nuclei.jsonl`, `-silent`, `-no-color`, `-disable-update-check`, `-rate-limit`, `-concurrency`, `-timeout`, `-retries`, `-severity`, `-tags`, `-exclude-tags`, `-proxy`. Tham số `rate`, `threads`, `timeout`, `retries`, `severity`, `tags`, `exclude_tags`. Phiên bản lấy từ `nuclei -version`.
 
 ### Gọi engine
@@ -156,10 +164,11 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 | Bước | Osmedeus | Vigolium |
 |---|---|---|
 | Xác thực | Header `x-osm-api-key` | `Authorization: Bearer` |
-| Phiên bản | `GET /server-info`, trường `version` | Chờ đợt Vigolium |
-| Tạo lượt chạy | `POST /osm/api/runs` với `flow`, `target`, `params`, `timeout`. Response `202` có `run_uuid` | `POST /api/scans/run` với `targets` |
-| Theo dõi | `GET /osm/api/runs/{run_uuid}`, trường `data.status`: `pending`, `running`, `completed`, `failed`, `cancelled` | `GET /api/scans/{scan_uuid}` |
-| Lấy kết quả | `GET /osm/api/snapshot-download/{workspace}`: zip cả workspace | `GET /api/findings` theo lượt chạy |
+| Phiên bản | `GET /server-info`, trường `version` | `GET /api/info`, trường `version` |
+| Tạo lượt chạy | `POST /osm/api/runs` với `flow`, `target`, `params`, `timeout`. Response `202` có `run_uuid` | `POST /api/scans/run` với `targets`, `strategy`, `concurrency`, `rate_limit`, `scope_origin`, `scanning_max_duration`. Response `202` có `scan_uuid`, `409` khi engine đang chạy lượt quét khác |
+| Theo dõi | `GET /osm/api/runs/{run_uuid}`, trường `data.status`: `pending`, `running`, `completed`, `failed`, `cancelled` | `GET /api/scans/{scan_uuid}`, trường `status` hoặc `data.status` |
+| Dừng | `DELETE /osm/api/runs/{run_uuid}` | `POST /api/scans/{scan_uuid}/stop`, `409` là lượt quét đã dừng |
+| Lấy kết quả | `GET /osm/api/snapshot-download/{workspace}`: zip cả workspace | `GET /api/findings?scan_id=<scan_uuid>`, `limit` 500, `offset`, `sort=created_at`, `order=asc`, theo `has_more` |
 | Output thô | `osmedeus.zip` | `vigolium-findings.jsonl` |
 
 **Lượt chạy Osmedeus:**
@@ -173,6 +182,19 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 - Job `completed` khi mọi lượt chạy `completed`. Có lượt `failed`: job `failed`, vẫn upload output thô.
 - Phiên bản engine lấy từ `GET /server-info` khi bắt đầu job, gửi trong `tool_version` của finish.
 - Workspace và bản zip vẫn nằm trên engine server sau khi tải: REST của Osmedeus chưa có endpoint xóa workspace, nợ 51 trong [tech-debt.md](../tech-debt.md).
+
+**Lượt quét Vigolium:**
+
+- Mỗi job một lượt quét gồm mọi mục tiêu trong `job.target`. Vigolium chỉ chạy một lượt quét mỗi lúc, nên tool module `vigolium` có `max_concurrency` 1.
+- Body gồm tham số job: `strategy`, `threads` thành `concurrency`, `rate` thành `rate_limit`. Runner đặt thêm `scope_origin` là `strict` để lượt quét không chạm host khác mục tiêu (G5), `scanning_max_duration` bằng thời gian còn lại của job tính theo phút để engine tự dừng khi worker mất kết nối.
+- Biến engine không gửi cho Vigolium: REST của lượt quét không có chỗ nhận biến.
+- Engine trả `409` khi đang chạy lượt quét khác: job `failed` với lý do `engine refused the scan`, không thử lại.
+- Runner hỏi trạng thái và gửi heartbeat job mỗi `heartbeat_seconds`. Trạng thái `pending`, `queued`, `starting`, `running`, `paused`, `cancelling` là chưa xong. Trạng thái khác kết thúc lượt hỏi, chỉ `completed` cho job `completed`.
+- Nhận `cancel` hoặc quá thời hạn: gọi `stop`, chờ 30 giây cho engine dừng, rồi vẫn lấy finding đã có.
+- Runner chép từng object trong `data` của `GET /api/findings` thành một dòng của `vigolium-findings.jsonl`, không đọc nội dung finding. Object có `scan_uuid` khác lượt quét của job bị bỏ, đếm vào log `engine_findings_foreign`: engine bỏ qua bộ lọc `scan_id` thì finding của program khác không lọt vào job.
+- Dừng chép khi đủ 100.000 finding hoặc file vượt 2 GiB, ghi log `engine_findings_truncated`.
+- Lấy finding lỗi: job `completed` chuyển `failed` với lý do `engine findings are unavailable`.
+- Cách lọc theo `scan_id` và dạng body của `GET /api/scans/{scan_uuid}` lấy từ tài liệu REST của Vigolium, chưa kiểm chứng trên engine thật: nợ 12 trong [tech-debt.md](../tech-debt.md).
 
 **Gói `osmedeus.zip`:**
 
@@ -210,11 +232,12 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 | `POST /engines/{engine_id}/test` | Osmedeus | `GET /server-info` lấy `version`, rồi `GET /osm/api/workflows?limit=1` để kiểm tra API key vì `/server-info` không cần key |
 | `POST /engines/{engine_id}/test` | Vigolium | `GET /api/info` có API key, lấy `version` |
 | `GET /engines/{engine_id}/workflows`, `/workflows/{name}` | Osmedeus | `GET /osm/api/workflows`, `GET /osm/api/workflows/{name}?json=true`. Bỏ workflow `hidden`. `step_count` của flow là số module. `steps` của chi tiết gồm module rồi step |
-| `GET`, `PATCH /engines/{engine_id}/modules` | Vigolium | Danh sách native module, bật, tắt module |
-| `POST /engines/{engine_id}/validate` | Vigolium | Kiểm tra cấu hình engine |
-| `POST /engines/{engine_id}/verify-model` | Vigolium | Kiểm tra model LLM với `llm_provider`, `llm_model`, `llm_base_url`, API key LLM |
+| `GET /engines/{engine_id}/modules` | Vigolium | `GET /api/modules` lấy module loại `active`, `passive`, `name` là `id`, `description` là `short_description`. `is_enabled` đọc từ `GET /api/config?filter=dynamic-assessment.enabled_modules`: giá trị `all` hoặc không có khóa là bật mọi module của loại đó |
+| `PATCH /engines/{engine_id}/modules` | Vigolium | `POST /api/config` ghi `dynamic-assessment.enabled_modules.active_modules`, `passive_modules`: `all` khi bật đủ, nếu không thì danh sách `id` cách nhau bằng dấu phẩy. Tắt hết module của một loại: `422`, mã `module_required`, vì danh sách rỗng có thể bị engine hiểu là mặc định. Body trả `errors`: `502` |
+| `POST /engines/{engine_id}/validate` | Vigolium | `GET /api/diagnostics`. Mỗi kiểm tra `error`, `warning` thành một dòng `issues`. `database` lỗi là `critical`, còn lại `advisory` vì lượt quét native không cần agent, trình duyệt. `ok` khi không có dòng `critical` |
+| `POST /engines/{engine_id}/verify-model` | Vigolium | `POST /api/config` ghi `agent.olium.provider`, `agent.olium.model` và `custom_provider.model_id`, `custom_provider.base_url`, `agent.olium.llm_api_key` và `custom_provider.api_key` từ `engine.settings` và API key LLM, rồi đọc kiểm tra `agent` của `GET /api/diagnostics`. Chưa có `llm_provider`: `ok` là `false`, không gọi engine. Engine giữ cấu hình đã ghi |
 
-- Endpoint Osmedeus lấy từ mã nguồn v5.1.2. Endpoint Vigolium cho native module, kiểm tra cấu hình, model LLM chưa kiểm chứng: nợ 8 trong [tech-debt.md](../tech-debt.md). Engine không có endpoint tương ứng thì ReconOS không dựng phần đó, endpoint ReconOS trả `404`.
+- Endpoint Osmedeus lấy từ mã nguồn v5.1.2. Endpoint Vigolium cho native module, kiểm tra cấu hình, model LLM lấy từ tài liệu REST của Vigolium, chưa kiểm chứng trên engine thật: nợ 8 trong [tech-debt.md](../tech-debt.md). Engine không có endpoint tương ứng thì ReconOS không dựng phần đó, endpoint ReconOS trả `404`.
 - ❌ Không dựng cấu hình Database và Redis, Scope Defaults, Ingest Proxy, MITM, CA, bridge Burp và Caido, Hardening flags của engine (G1, G5).
 - Backend gọi REST engine không thử lại, timeout 10 giây. Engine không trả lời, từ chối API key hoặc trả body sai dạng: `502 engine_unavailable`. Kiểm tra thất bại vẫn ghi `last_test_ok` là `false` qua session độc lập.
 
@@ -235,14 +258,20 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 - `probing/dns-<workspace>.txt` không đọc: cùng nội dung với `dns-json`. `vulnscan/nuclei-jsonl-<workspace>.txt` đọc bằng bộ đọc dòng của parser `nuclei`, finding mang `dedup_key` mở đầu bằng tên tool module Osmedeus.
 - Dòng sai định dạng bị bỏ và đếm vào log `parse_completed`. Gói không phải zip, thiếu hoặc sai `manifest.json`: `parse_status = failed`, không thử lại: [system.md](../architecture/system.md).
 - Ảnh chụp do httpx trong Osmedeus tạo chỉ nằm trong output thô. Parser không tạo `screenshot` từ ảnh này.
+- Tool module `vigolium` khai báo trong `contracts/tool_modules/vigolium.py`, runner `workers/worker/runners/vigolium.py`. Tham số: `strategy` là `lite`, `balanced`, `deep`, mặc định `balanced`. `threads` từ 1 đến 100, mặc định 25. `rate` từ 1 đến 1.000 request mỗi giây, mặc định 100. Thời hạn mặc định do migration `0010` ghi: 480 phút.
+- Runner Osmedeus và Vigolium dùng chung client REST `workers/worker/runners/engine_client.py`: thử lại lỗi mạng và `5xx` theo số lần ở mục Thử lại.
+- Parser `vigolium` (`app/parser/vigolium.py`) đọc mỗi dòng một finding. `template_id` là `module_id`, `name` là `module_name`, `matched_at` là phần tử đầu của `matched_at`, tài sản lấy từ `matched_at` như parser `nuclei`. CVE lấy từ tag dạng `cve-<năm>-<số>`. Dòng thiếu `module_id` hoặc `matched_at` bị bỏ và đếm.
 
 ### Chuỗi khử trùng lặp
 
 | Tool module | Thành phần `dedup_key` |
 |---|---|
 | `nuclei`, phần nuclei trong Osmedeus | `template-id`, `matched-at` |
-| `vigolium` | `finding_hash` của Vigolium |
+| `vigolium` | `finding_hash` của Vigolium. Dòng không có `finding_hash`: `module_id`, `severity`, `matched_at` đầu tiên, các trường Vigolium dùng để gộp finding trùng |
 | `dalfox` | Loại lỗ hổng, URL, tham số bị ảnh hưởng |
 | `sqlmap` | URL, tham số bị ảnh hưởng, kỹ thuật |
+| `vigolium` | `finding_hash` của Vigolium |
+| `dalfox` | Loại lỗ hổng là `inject_type`, URL bỏ query, tham số bị ảnh hưởng |
+| `sqlmap` | URL như trong `results.csv`, vị trí kèm tham số bị ảnh hưởng dạng `GET:id`, chuỗi chữ cái kỹ thuật |
 
 - `dedup_key` bắt đầu bằng tên tool module: [database.md](../data/database.md).

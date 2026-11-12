@@ -36,6 +36,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 - Viết một file cho mỗi tool module trong `app/parser/`.
 - Cho parser kế thừa lớp cơ sở trong `base.py`, đăng ký trong `registry.py`.
+- Khai báo `accepts(filename)` khi tool module upload file chỉ làm bằng chứng, ví dụ ảnh PNG của gowitness. File parser không nhận ghi `no_parser`.
 - Đọc output thô dạng stream.
 - Upsert theo lô.
 - Tính `dedup_key` bắt đầu bằng tên tool module: [database.md](../docs/data/database.md).
@@ -68,3 +69,4 @@ Chạy từ gốc repo sau `make init`:
 | `uv run uvicorn app.main:app --reload --app-dir backend` | Chạy Backend API khi phát triển |
 | `uv run --directory backend python -m app.dispatcher` | Chạy dispatcher |
 | `uv run --directory backend celery -A app.background.celery_app worker -Q parse,schedule` | Chạy tiến trình nền |
+| `uv run --directory backend celery -A app.background.celery_app beat` | Chạy Celery Beat: gửi task `reconos.run_due_schedules` mỗi 60 giây |

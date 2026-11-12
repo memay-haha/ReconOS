@@ -11,10 +11,14 @@ app/background/celery_app.py.
 from typing import Final
 
 from app.parser.base import Parser
+from app.parser.dalfox import DalfoxParser
+from app.parser.gowitness import GowitnessParser
 from app.parser.nuclei import NucleiParser
 from app.parser.osmedeus_domain_extensive import OsmedeusDomainExtensiveParser
 from app.parser.osmedeus_domain_lite import OsmedeusDomainLiteParser
 from app.parser.osmedeus_general import OsmedeusGeneralParser
+from app.parser.sqlmap import SqlmapParser
+from app.parser.vigolium import VigoliumParser
 from app.raw_output import service as raw_output_service
 
 PARSERS: Final[tuple[Parser, ...]] = (
@@ -22,6 +26,10 @@ PARSERS: Final[tuple[Parser, ...]] = (
     OsmedeusDomainLiteParser(),
     OsmedeusGeneralParser(),
     OsmedeusDomainExtensiveParser(),
+    VigoliumParser(),
+    SqlmapParser(),
+    DalfoxParser(),
+    GowitnessParser(),
 )
 
 _BY_TOOL_MODULE: dict[str, Parser] = {}
