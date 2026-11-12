@@ -1,6 +1,6 @@
 # Cơ sở dữ liệu
 
-> Phiên bản: 1.5 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [schema.md](schema.md), [erd.mermaid](erd.mermaid), [business-flow.md](../architecture/business-flow.md), [system.md](../architecture/system.md), [ADR tự xây CSDL riêng](../decisions/adr-own-database.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -74,7 +74,8 @@ flowchart LR
 | Bucket | Một bucket cho output thô của mọi program |
 | Khóa object | `<program_id>/<job_id>/<filename>` |
 | Tên file | Do runner đặt, duy nhất trong một job. ❌ Không chứa `/` hoặc `..` |
-| Upload lại | Cùng `job_id` và `filename`: không tạo dòng mới, không ghi đè nội dung đã lưu |
+| Upload lại | Cùng `job_id` và `filename`: không tạo dòng mới, không ghi đè nội dung đã lưu. Hai upload cùng tên chạy đồng thời xếp hàng qua advisory lock của transaction, upload sau thấy dòng đã có |
+| Dung lượng | Stream lên MinIO theo từng phần 8 MiB, tính SHA-256 trong lúc ghi. Vượt `upload_max_bytes` thì hủy upload, không để lại object |
 | Thời hạn giữ | Vĩnh viễn. Chỉ mất khi xóa cứng program |
 | Parse lại | Đặt `parse_status = pending`, gửi lại task `parse`. Nội dung trong MinIO không đổi |
 
@@ -129,7 +130,7 @@ Bảng gắn với một tài sản bất kỳ có 4 cột `domain_id`, `ip_id`,
 | `audit_log` | Chỉ thêm. ❌ Không sửa, không xóa |
 
 - Xóa mềm: [ADR xóa mềm](../decisions/adr-soft-delete.md).
-- Khóa ngoại tới `program` dùng `ON DELETE CASCADE`. Khóa ngoại khác dùng `RESTRICT` mặc định.
+- Khóa ngoại tới `program` dùng `ON DELETE CASCADE`. `raw_output.job_id` cũng dùng `ON DELETE CASCADE` để xóa cứng program tới được output thô qua job. `job.proxy_id` dùng `ON DELETE SET NULL`: job đã kết thúc giữ lịch sử khi xóa proxy. Khóa ngoại khác dùng `RESTRICT` mặc định.
 - Xóa cứng chạy trong tiến trình nền: xóa dòng trong PostgreSQL trước, xóa object MinIO sau. Lỗi xóa object thì thử lại, không khôi phục dòng đã xóa.
 
 ### CSDL log

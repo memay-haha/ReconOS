@@ -26,7 +26,13 @@ from app.user.schemas import (
     UserSessionResponse,
     UserSessionSort,
     UserUpdateRequest,
+    WorkerCreateRequest,
+    WorkerResponse,
+    WorkerSort,
+    WorkerTokenCreatedResponse,
 )
+from app.user.service import CurrentWorker
+from contracts.worker import WorkerHeartbeat, WorkerLogBatch
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
 
@@ -198,3 +204,62 @@ async def list_all_sessions(
 @router.delete("/user-sessions/{user_session_id}", status_code=204, tags=["user"])
 async def revoke_session(user_session_id: uuid.UUID, actor: Superadmin, session: DbDep) -> None:
     await service.revoke_session(session, actor=actor, user_session_id=user_session_id)
+
+
+# ---------------------------------------------------------------- workers
+
+
+@router.get("/workers", response_model=Page[WorkerResponse], tags=["worker"])
+async def list_workers(
+    actor: AccountReader,
+    session: DbDep,
+    limit: int = DEFAULT_LIMIT,
+    cursor: str | None = None,
+    sort: WorkerSort = "name",
+) -> Page[WorkerResponse]:
+    return await service.list_workers(session, limit=limit, cursor=cursor, sort=sort)
+
+
+@router.post("/workers", response_model=WorkerResponse, tags=["worker"])
+async def register_worker(
+    body: WorkerCreateRequest, actor: Superadmin, session: DbDep
+) -> WorkerResponse:
+    worker = await service.register_worker(session, actor=actor, name=body.name)
+    return WorkerResponse(
+        id=worker.id,
+        name=worker.name,
+        tool_modules=list(worker.tool_modules),
+        tool_versions=[],
+        cpu_percent=worker.cpu_percent,
+        last_heartbeat_at=worker.last_heartbeat_at,
+        created_at=worker.created_at,
+        is_online=False,
+        running_job_count=0,
+        running_tool_module_ids=[],
+    )
+
+
+@router.post(
+    "/workers/{worker_id}/tokens", response_model=WorkerTokenCreatedResponse, tags=["worker"]
+)
+async def create_worker_token(
+    worker_id: uuid.UUID, actor: Superadmin, session: DbDep
+) -> WorkerTokenCreatedResponse:
+    return await service.create_worker_token(session, actor=actor, worker_id=worker_id)
+
+
+@router.post("/worker-tokens/{worker_token_id}/revoke", status_code=204, tags=["worker"])
+async def revoke_worker_token(
+    worker_token_id: uuid.UUID, actor: Superadmin, session: DbDep
+) -> None:
+    await service.revoke_worker_token(session, actor=actor, worker_token_id=worker_token_id)
+
+
+@router.post("/worker/heartbeat", status_code=204, tags=["worker_contract"])
+async def worker_heartbeat(body: WorkerHeartbeat, worker: CurrentWorker, session: DbDep) -> None:
+    await service.record_worker_heartbeat(session, worker=worker, heartbeat=body)
+
+
+@router.post("/worker/logs", status_code=204, tags=["worker_contract"])
+async def worker_logs(body: WorkerLogBatch, worker: CurrentWorker, session: DbDep) -> None:
+    await service.store_worker_logs(session, worker=worker, batch=body)

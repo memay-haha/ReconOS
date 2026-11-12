@@ -1,8 +1,6 @@
 import { HttpResponse } from 'msw';
 
-import type { JobStatus } from '@/lib/jobs';
-
-import { jobLogs, jobs, rawOutputs, schedules } from '../data/part-b';
+import { jobLogs, jobs, schedules } from '../data/part-b';
 import { users } from '../data/users';
 import { type MockRoute, page, route } from './helpers';
 
@@ -64,23 +62,6 @@ export const partBRoutes: readonly MockRoute[] = [
   ),
 
   // Jobs
-  route('GET /jobs', ({ request }) => {
-    const query = new URL(request.url).searchParams;
-    const status = query.get('status') as JobStatus | null;
-    const programId = query.get('program_id');
-    const target = query.get('target');
-    const rows = jobs.filter(
-      (j) =>
-        (status === null || j.status === status) &&
-        (programId === null || j.program_id === programId) &&
-        (target === null || j.target.includes(target)),
-    );
-    return HttpResponse.json(page([...rows].reverse()));
-  }),
-  route('GET /jobs/:job_id', ({ params }) => {
-    const found = jobs.find((j) => j.id === params.job_id);
-    return found === undefined ? problem(404, 'not_found') : HttpResponse.json(found);
-  }),
   route('POST /jobs/:job_id/approve', ({ params }) => {
     const found = jobs.find((j) => j.id === params.job_id);
     if (found === undefined) return problem(404, 'not_found');
@@ -90,37 +71,6 @@ export const partBRoutes: readonly MockRoute[] = [
       : noContent();
   }),
   route('POST /jobs/:job_id/reject', noContent),
-  route('POST /jobs/:job_id/cancel', noContent),
-  route('POST /jobs/:job_id/retry', ({ params }) => {
-    const found = jobs.find((j) => j.id === params.job_id);
-    if (found === undefined) return problem(404, 'not_found');
-    return HttpResponse.json({
-      ...found,
-      id: crypto.randomUUID(),
-      status: 'queued',
-      retry_of_job_id: found.id,
-      status_reason: null,
-      created_at: new Date().toISOString(),
-      started_at: null,
-      finished_at: null,
-    });
-  }),
-  route('GET /dispatcher/status', () => {
-    const queued = jobs.filter((j) => j.status === 'queued');
-    const count = (key: (j: (typeof jobs)[number]) => string) =>
-      queued.reduce<Record<string, number>>((acc, j) => {
-        acc[key(j)] = (acc[key(j)] ?? 0) + 1;
-        return acc;
-      }, {});
-    return HttpResponse.json({
-      last_heartbeat_at: new Date().toISOString(),
-      queued_by_tool_module: count((j) => j.tool_module_id),
-      queued_by_program: count((j) => j.program_id),
-    });
-  }),
-  route('GET /jobs/:job_id/raw-outputs', ({ params }) =>
-    HttpResponse.json(page(rawOutputs.filter((o) => o.job_id === params.job_id))),
-  ),
   route('GET /jobs/:job_id/logs', ({ params }) =>
     HttpResponse.json(page(jobLogs.filter((l) => l.job_id === params.job_id))),
   ),

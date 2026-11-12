@@ -1,11 +1,10 @@
 import { HttpResponse } from 'msw';
 
 import { SEVERITIES, type Severity } from '@/lib/programs';
-import { TOOL_GROUPS, type ToolGroup } from '@/lib/tool-modules';
 import { type FindingDetail, TRIAGE_STATUSES, type TriageStatus } from '@/lib/findings';
 
 import { programs } from '../data/programs';
-import { findingRows, toolModuleRows } from '../data/stitch-f';
+import { findingRows } from '../data/stitch-f';
 import { type MockRoute, page, route } from './helpers';
 
 /** Mock routes added by the Stitch fidelity pass (docs/superpowers/specs/2026-11-11-stitch-fidelity-decisions.md).
@@ -63,45 +62,6 @@ function listRow(f: FindingDetail): Partial<FindingDetail> {
 }
 
 export const stitchFRoutes: readonly MockRoute[] = [
-  route('GET /tool-modules/stats', () =>
-    HttpResponse.json({ jobs: 1420, jobs_prev: 1243, stalled: 0 }),
-  ),
-  route('GET /tool-modules', ({ request }) => {
-    const query = new URL(request.url).searchParams;
-    const q = query.get('q')?.toLowerCase() ?? '';
-    const group = query.get('group');
-    const runsOn = query.get('runs_on');
-    const enabled = query.get('is_enabled');
-    const items = toolModuleRows.filter(
-      (m) =>
-        (q === '' || [m.name, m.title, m.description].some((v) => v.toLowerCase().includes(q))) &&
-        (group === null || m.group === group) &&
-        (runsOn === null || m.runs_on === runsOn) &&
-        (enabled === null || String(m.is_enabled) === enabled),
-    );
-    const groupCounts = zero<ToolGroup>(TOOL_GROUPS);
-    for (const m of toolModuleRows) groupCounts[m.group] += 1;
-    const disabled = toolModuleRows.filter((m) => !m.is_enabled);
-    return HttpResponse.json({
-      ...page(items),
-      enabled_count: toolModuleRows.length - disabled.length,
-      disabled_count: disabled.length,
-      disabled_names: disabled.map((m) => m.name),
-      group_counts: groupCounts,
-      engines_bound: 2,
-      installed_count: toolModuleRows.filter((m) => m.is_enabled).length,
-    });
-  }),
-  route('PATCH /tool-modules/:tool_module_id', async ({ params, request }) => {
-    const found = toolModuleRows.find((m) => m.id === params.tool_module_id);
-    if (found === undefined) return notFound();
-    const body = (await request.json()) as Record<string, unknown>;
-    Object.assign(found, body, { updated_at: new Date().toISOString() });
-    if (typeof body.is_enabled === 'boolean') {
-      Object.assign(found, { disabled_reason: body.is_enabled ? null : 'off' });
-    }
-    return HttpResponse.json(found);
-  }),
   route('GET /findings/summary', ({ request }) => {
     const rows = filterFindings(new URL(request.url).searchParams);
     const bySeverity = zero<Severity>(SEVERITIES);

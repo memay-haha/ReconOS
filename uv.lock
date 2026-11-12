@@ -1289,6 +1289,7 @@ dependencies = [
     { name = "celery", extra = ["redis"] },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "reconos-contracts" },
     { name = "structlog" },
 ]
@@ -1298,6 +1299,7 @@ requires-dist = [
     { name = "celery", extras = ["redis"], specifier = ">=5" },
     { name = "httpx" },
     { name = "pydantic", specifier = ">=2" },
+    { name = "pydantic-settings", specifier = ">=2" },
     { name = "reconos-contracts", editable = "contracts" },
     { name = "structlog" },
 ]

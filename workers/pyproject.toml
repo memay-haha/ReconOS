@@ -9,6 +9,7 @@ dependencies = [
     "celery[redis]>=5",
     "httpx",
     "pydantic>=2",
+    "pydantic-settings>=2",
     "reconos-contracts",
     "structlog",
 ]

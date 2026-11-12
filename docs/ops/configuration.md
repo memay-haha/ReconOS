@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.9 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -100,11 +100,24 @@ Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong mô
 |---|---|---|
 | `RECONOS_API_URL` | | URL Backend API |
 | `RECONOS_WORKER_TOKEN` | ✅ | Token worker do Superadmin tạo |
-| `RECONOS_REDIS_URL` | | URL kết nối Redis |
+| `RECONOS_REDIS_URL` | | URL kết nối Redis có tên tài khoản `worker`, không chứa mật khẩu, ví dụ `rediss://worker@redis.internal:6380/0` |
 | `RECONOS_REDIS_PASSWORD` | ✅ | Mật khẩu tài khoản Redis của worker, chỉ dùng queue job |
-| `RECONOS_WORKER_TOOL_MODULES` | | Tool module đã cài, cách nhau bằng dấu phẩy. Worker nghe queue tương ứng |
-| `RECONOS_WORKER_WORKDIR` | | Thư mục làm việc của job |
+| `RECONOS_WORKER_TOOL_MODULES` | | Tool module đã cài, cách nhau bằng dấu phẩy, ít nhất một. Worker nghe queue tương ứng |
+| `RECONOS_WORKER_WORKDIR` | | Thư mục làm việc của job, mặc định `/var/lib/reconos/jobs` |
 | `RECONOS_WORKER_CONCURRENCY` | | Số job chạy song song trên máy, mặc định 1 |
+| `RECONOS_WORKER_HEARTBEAT_SECONDS` | | Chu kỳ heartbeat worker, mặc định 30, tối thiểu 5. Heartbeat job theo `job_heartbeat_seconds` nhận khi claim |
+| `RECONOS_LOG_LEVEL` | | Cấp log ra stdout, mặc định `info` |
+
+- Mã: `workers/worker/config.py`. Thiếu biến bắt buộc thì worker dừng khi khởi động.
+
+### Biến môi trường của container Redis
+
+Đọc bởi `infras/redis/render-acl.sh`. Cả hai nhận dạng `_FILE`.
+
+| Biến | Thông tin xác thực | Ý nghĩa |
+|---|---|---|
+| `RECONOS_REDIS_PASSWORD` | ✅ | Mật khẩu tài khoản `default` của lõi, cùng giá trị với biến của lõi. Để trống: không cần mật khẩu, chỉ dùng khi phát triển |
+| `RECONOS_REDIS_WORKER_PASSWORD` | ✅ | Mật khẩu tài khoản `worker`, cùng giá trị với `RECONOS_REDIS_PASSWORD` của máy worker. Để trống: tài khoản `worker` bị tắt |
 
 ### Khóa mã hóa
 

@@ -1,6 +1,6 @@
 # Luồng request
 
-> Phiên bản: 1.2 · Ngày: 2026-11-04 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.4 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 6: Luồng request
 > Liên quan: [authentication.md](../security/authentication.md), [authorization.md](../security/authorization.md), [api/architecture.md](../api/architecture.md), [system.md](system.md), [external-services.md](../integrations/external-services.md)
 
@@ -56,7 +56,7 @@ sequenceDiagram
 | 6. Kiểm tra dữ liệu request theo schema Pydantic | FastAPI | `422 validation_error` |
 | 7. Kiểm tra tài nguyên thuộc program được gán | Service | `404 not_found` |
 | 8. Chạy nghiệp vụ trong một transaction, ghi nhật ký thao tác | Service | Rollback, lỗi theo loại |
-| 9. Commit, publish sự kiện realtime sau commit | Dependency session | |
+| 9. Commit, publish sự kiện realtime sau commit. Service xếp sự kiện vào session, rollback thì bỏ | Dependency session | Redis lỗi: ghi log `warning`, request vẫn thành công |
 
 - Lỗi ở bước nào cũng đi qua bộ xử lý lỗi chung: [error-handling.md](../../.claude/rules/error-handling.md).
 - Request bị từ chối ở bước 3, 5, 7 được ghi nhật ký thao tác: [authorization.md](../security/authorization.md).
@@ -65,10 +65,10 @@ sequenceDiagram
 ### Tạo job
 
 1. Bước 1 đến 6 như trên.
-2. Service của `job` kiểm tra program ở trạng thái `active`, tool module đang bật.
-3. Kiểm tra tham số theo schema của tool module trong `contracts/`.
+2. Service của `job` khóa dòng program, kiểm tra program ở trạng thái `active`, sai thì `409`. Kiểm tra tool module đang bật.
+3. Gộp `default_params` của tool module với `params`, kiểm tra theo schema của tool module trong `contracts/`. Kiểm tra `proxy_id` thuộc program và đang bật.
 4. Kiểm tra từng mục tiêu với scope của program. Một mục tiêu không đạt thì từ chối cả job với `422 target_out_of_scope`.
-5. Ghi job: nhóm khai thác vào `pending_approval`, nhóm khác vào `queued`. Gửi `NOTIFY` trong cùng transaction.
+5. Ghi job: nhóm khai thác vào `pending_approval`, nhóm khác vào `queued`. Gửi `NOTIFY` và xếp sự kiện `job.status_changed` trong cùng transaction.
 6. Trả job vừa tạo. Dispatcher nhận thông báo và giao: [system.md](system.md).
 
 ### WebSocket
@@ -86,9 +86,11 @@ sequenceDiagram
     API->>BR: Sự kiện
 ```
 
-- `Origin` sai hoặc phiên không hợp lệ: đóng kết nối khi bắt tay.
-- Phiên hết hạn hoặc bị thu hồi khi đang mở: server đóng kết nối, trình duyệt chuyển về S01.
+- `Origin` sai hoặc phiên không hợp lệ: đóng kết nối khi bắt tay, trước khi chấp nhận. Trình duyệt nhận `403`.
+- Backend API kiểm tra lại phiên và program được xem trước mỗi sự kiện, và 30 giây một lần khi không có sự kiện. Lần kiểm tra này không commit nên không gia hạn phiên: kết nối đang mở không giữ phiên sống quá thời gian chờ.
+- Phiên hết hạn hoặc bị thu hồi khi đang mở: server đóng kết nối với mã `4401`. Trình duyệt không kết nối lại, làm mới query đang mở, nhận `401` rồi chuyển về S01.
 - Vai trò hoặc program được gán thay đổi: áp dụng cho sự kiện tiếp theo, không cần kết nối lại.
+- Redis lỗi khi đang mở: server đóng với mã `1011`. Trình duyệt kết nối lại và làm mới toàn bộ query đang mở.
 
 ### Request từ worker
 

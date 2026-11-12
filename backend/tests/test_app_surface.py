@@ -22,6 +22,7 @@ from httpx import AsyncClient
 from app.core.deps import csrf_guard, current_user
 from app.core.security import UNSAFE_METHODS
 from app.main import API_PREFIX, app
+from app.user.service import current_worker
 
 OPENAPI_FILE = Path(__file__).resolve().parents[2] / "docs" / "api" / "openapi.yaml"
 
@@ -73,7 +74,39 @@ BATCH_SURFACE: set[tuple[str, str]] = {
     ("PATCH", "/scope-rules/{scope_rule_id}"),
     ("DELETE", "/scope-rules/{scope_rule_id}"),
     ("POST", "/programs/{program_id}/scope-check"),
+    # Batch 4, job backbone: tool modules, jobs, raw output, dispatcher, workers.
+    ("GET", "/tool-modules"),
+    ("GET", "/tool-modules/stats"),
+    ("GET", "/tools"),
+    ("PATCH", "/tool-modules/{tool_module_id}"),
+    ("GET", "/jobs"),
+    ("POST", "/jobs"),
+    ("POST", "/jobs/bulk-create"),
+    ("POST", "/jobs/bulk-retry"),
+    ("POST", "/jobs/cleanup"),
+    ("GET", "/jobs/{job_id}"),
+    ("POST", "/jobs/{job_id}/cancel"),
+    ("POST", "/jobs/{job_id}/retry"),
+    ("POST", "/jobs/{job_id}/prioritize"),
+    ("GET", "/jobs/{job_id}/raw-outputs"),
+    ("GET", "/raw-outputs/{raw_output_id}"),
+    ("GET", "/raw-outputs/{raw_output_id}/content"),
+    ("POST", "/dispatcher/wake"),
+    ("GET", "/dispatcher/status"),
+    ("GET", "/workers"),
+    ("POST", "/workers"),
+    ("POST", "/workers/{worker_id}/tokens"),
+    ("POST", "/worker-tokens/{worker_token_id}/revoke"),
+    # The worker contract: a worker token, never a session.
+    ("POST", "/worker/heartbeat"),
+    ("POST", "/worker/logs"),
+    ("POST", "/worker/jobs/{job_id}/claim"),
+    ("POST", "/worker/jobs/{job_id}/heartbeat"),
+    ("POST", "/worker/jobs/{job_id}/finish"),
+    ("PUT", "/worker/jobs/{job_id}/raw-outputs/{filename}"),
 }
+# Reachable with a worker token only: docs/integrations/external-services.md.
+WORKER_PREFIX = "/worker/"
 MUTATING = sorted(pair for pair in BATCH_SURFACE if pair[0] in UNSAFE_METHODS)
 
 
@@ -133,8 +166,12 @@ def test_the_served_surface_is_exactly_this_batch() -> None:
 
 @pytest.mark.parametrize(("method", "path"), sorted(BATCH_SURFACE))
 def test_a_route_outside_the_allowlist_needs_a_session(method: str, path: str) -> None:
-    needs_session = current_user in _dependency_calls(_served()[(method, path)].dependant)
-    assert needs_session is ((method, path) not in PUBLIC)
+    calls = _dependency_calls(_served()[(method, path)].dependant)
+    is_worker_route = path.startswith(WORKER_PREFIX)
+    # A worker route takes the worker token and never a session; every other
+    # route outside the public allowlist takes a session.
+    assert (current_worker in calls) is is_worker_route
+    assert (current_user in calls) is ((method, path) not in PUBLIC and not is_worker_route)
 
 
 def test_csrf_is_declared_for_the_whole_application() -> None:

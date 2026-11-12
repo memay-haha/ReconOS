@@ -1,6 +1,6 @@
 # Tech stack
 
-> Phiên bản: 1.8 · Ngày: 2026-11-04 · Trạng thái: 🟢 Xong
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 2: Tech stack
 > Liên quan: [ADR chọn tech stack](../decisions/adr-tech-stack.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -45,7 +45,7 @@
 | Node.js | 26 LTS (Long-Term Support) | Runtime build và chạy server Next.js | frontend |
 
 - Celery, SQLAlchemy, Pydantic, FastAPI, Alembic, asyncpg, aioboto3, argon2-cffi, cryptography chạy đạt trên Python 3.15.2, kiểm chứng ngày 03/11/2026.
-- ⚠️ Celery và aioboto3 không có `py.typed`. Khai báo bỏ qua riêng cho hai module này khi chạy mypy strict: [coding-convention.md](../../.claude/rules/coding-convention.md).
+- ⚠️ Celery, aioboto3, asyncpg không có `py.typed`. Khai báo bỏ qua riêng cho ba module này khi chạy mypy strict: [coding-convention.md](../../.claude/rules/coding-convention.md).
 - ⚠️ zxcvbn không có `py.typed`. Gói `types-zxcvbn` trong nhóm công cụ phát triển cung cấp stub cho mypy, không dùng khai báo bỏ qua.
 - ⚠️ PostgreSQL 19 dự kiến phát hành ngày 19/11/2026. Chọn 18 cho đến khi 19 ra bản chính thức.
 - ⚠️ MinIO dừng phát triển bản mã nguồn mở: không còn image công khai trên registry nào, repo archived từ 24/04/2026. Hệ thống dùng bản `RELEASE.2025-09-07T16-13-09Z` ghim theo digest, nạp từ file tar. Rủi ro và hướng thay thế: nợ 19 trong [tech-debt.md](../tech-debt.md).
@@ -63,7 +63,7 @@
 | structlog | Bản mới nhất | Log JSON có ngữ cảnh: [logging.md](../../.claude/rules/logging.md) |
 | cryptography | Bản mới nhất | AES-256-GCM cho cột thông tin xác thực |
 | Celery | 5 | Thực thi task trên worker: thử lại, timeout. Celery Beat tạo job quét định kỳ |
-| asyncpg | Bản mới nhất | Driver PostgreSQL của SQLAlchemy chế độ async và của migration Alembic |
+| asyncpg | Bản mới nhất | Driver PostgreSQL của SQLAlchemy chế độ async và của migration Alembic. Dispatcher dùng trực tiếp cho `LISTEN` và advisory lock |
 | argon2-cffi | Bản mới nhất | Băm mật khẩu Argon2id: [authentication.md](../security/authentication.md) |
 | zxcvbn | Bản mới nhất | Chấm điểm độ mạnh mật khẩu, chặn mật khẩu phổ biến: [authentication.md](../security/authentication.md) |
 | httpx | Bản mới nhất | Client HTTP của worker gọi Backend API và REST API của engine, đặt timeout cho mọi lời gọi |

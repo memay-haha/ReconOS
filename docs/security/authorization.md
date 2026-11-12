@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.10 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.11 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -88,7 +88,7 @@
 5. Duyệt job: backend so người duyệt với người tạo job. Trùng thì từ chối, kể cả Superadmin.
 6. Hủy, thử lại job với vai trò User: backend so tài khoản gọi với người tạo job. Khác thì trả `403 forbidden`.
 7. Quản trị tài khoản: Superadmin không đổi vai trò của chính mình, không khóa, không xóa chính mình, để hệ thống luôn còn người quản trị tài khoản.
-8. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem. Đổi vai trò, gán hoặc bỏ gán program: áp dụng ngay từ sự kiện tiếp theo trên kết nối đang mở.
+8. WebSocket: chỉ đẩy sự kiện thuộc program mà tài khoản được xem. Sự kiện không thuộc program nào, ví dụ worker đổi trạng thái, chỉ đẩy cho Superadmin, Admin. Đổi vai trò, gán hoặc bỏ gán program: áp dụng ngay từ sự kiện tiếp theo trên kết nối đang mở.
 9. Frontend ẩn nút theo vai trò chỉ để tiện dùng. ❌ Không dựa vào frontend để phân quyền.
 
 - Mã lỗi khi bị từ chối: [api/architecture.md](../api/architecture.md).

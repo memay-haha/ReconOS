@@ -19,7 +19,7 @@ export interface RealtimeEvent {
 }
 
 /** `connecting` before the first open and while waiting to reconnect, `open` while events
- * flow, `closed` when the browser has no WebSocket. */
+ * flow, `closed` when the browser has no WebSocket or the server ended the session. */
 export type RealtimeStatus = 'connecting' | 'open' | 'closed';
 
 const TYPES: ReadonlySet<string> = new Set<RealtimeEventType>([
@@ -33,7 +33,16 @@ const TYPES: ReadonlySet<string> = new Set<RealtimeEventType>([
 /** Query roots each event makes stale, by the resource keys in src/lib. The sidebar counts
  * ('nav-count') follow jobs, findings and assets. */
 export const INVALIDATES: Readonly<Record<RealtimeEventType, readonly string[]>> = {
-  'job.status_changed': ['jobs', 'dashboard', 'dispatcher', 'nav-count', 'job-logs'],
+  // S18 counts running jobs per tool module; a finished job has new raw outputs.
+  'job.status_changed': [
+    'jobs',
+    'dashboard',
+    'dispatcher',
+    'nav-count',
+    'job-logs',
+    'raw-outputs',
+    'tool-modules',
+  ],
   'finding.created': ['findings', 'dashboard', 'nav-count', 'programs'],
   'asset.discovered': [
     'domains',
@@ -47,8 +56,13 @@ export const INVALIDATES: Readonly<Record<RealtimeEventType, readonly string[]>>
     'programs',
   ],
   'alert.created': ['alerts'],
-  'worker.status_changed': ['workers', 'system', 'dispatcher'],
+  // S15 lists tools as installed or missing from worker heartbeats.
+  'worker.status_changed': ['workers', 'system', 'dispatcher', 'tools'],
 };
+
+/** Close code Backend API sends when the session behind the socket has ended:
+ * docs/architecture/request-flow.md, section WebSocket. */
+export const SESSION_ENDED_CLOSE_CODE = 4401;
 
 /** Events arriving within this window refresh each query once (frontend/CLAUDE.md). */
 export const BATCH_MS = 500;
@@ -150,8 +164,15 @@ class RealtimeConnection {
       this.flushTimer ??= setTimeout(() => this.flush(), BATCH_MS);
       for (const listener of this.eventListeners) listener(event);
     };
-    socket.onclose = () => {
+    socket.onclose = (closed: CloseEvent) => {
       this.socket = null;
+      if (closed.code === SESSION_ENDED_CLOSE_CODE) {
+        // The session ended while the socket was open. Refetching what is on screen meets
+        // the 401 that the query provider turns into the one redirect to S01.
+        this.setStatus('closed');
+        void this.client?.invalidateQueries({ type: 'active' });
+        return;
+      }
       if (this.users > 0) this.scheduleRetry();
     };
   }

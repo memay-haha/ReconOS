@@ -308,26 +308,4 @@ export const stitchBRoutes: readonly MockRoute[] = [
     savedFilters.splice(index, 1);
     return new HttpResponse(null, { status: 204 });
   }),
-
-  route('POST /jobs/bulk-create', async ({ request }) => {
-    const body = (await request.json()) as {
-      program_id: string;
-      target: string[];
-      priority?: string;
-      items: { tool_module_id: string }[];
-    };
-    if (body.items.length === 0) return problem(422, 'validation_error');
-    const now = new Date().toISOString();
-    return HttpResponse.json({
-      items: body.items.map((item) => ({
-        id: crypto.randomUUID(),
-        program_id: body.program_id,
-        tool_module_id: item.tool_module_id,
-        status: 'queued',
-        priority: body.priority ?? 'normal',
-        target: body.target,
-        created_at: now,
-      })),
-    });
-  }),
 ];

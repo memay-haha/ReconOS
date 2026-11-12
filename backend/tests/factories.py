@@ -5,14 +5,20 @@ without a fixture. Names use reserved documentation values only.
 """
 
 import itertools
+import secrets
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import encrypt
+from app.job.models import Job
 from app.program.models import Program, ProgramStatus, ProgramUser, Proxy
 from app.scope.models import ScopeRule
+from app.tool_module.models import ToolModule
+from app.user.models import Worker, WorkerToken
+from app.user.service import hash_worker_token
 
 _counter = itertools.count()
 
@@ -83,3 +89,61 @@ async def make_scope_rule(
     session.add(rule)
     await session.flush()
     return rule
+
+
+async def nuclei(session: AsyncSession) -> ToolModule:
+    """The nuclei row seeded by migration 0003."""
+    row = await session.scalar(select(ToolModule).where(ToolModule.name == "nuclei"))
+    assert row is not None
+    return row
+
+
+async def make_worker(
+    session: AsyncSession,
+    *,
+    name: str | None = None,
+    tool_modules: list[str] | None = None,
+    online: bool = True,
+) -> tuple[Worker, str]:
+    """A worker and the plain token for its Authorization header."""
+    worker = Worker(
+        name=name or f"worker-{next(_counter)}-{uuid.uuid4().hex[:6]}",
+        tool_modules=tool_modules if tool_modules is not None else ["nuclei"],
+        tool_versions=[{"name": "nuclei", "version": "3.3.0"}],
+        last_heartbeat_at=datetime.now(UTC) if online else None,
+    )
+    session.add(worker)
+    await session.flush()
+    token = secrets.token_urlsafe(32)
+    session.add(WorkerToken(worker_id=worker.id, token_hash=hash_worker_token(token)))
+    await session.flush()
+    return worker, token
+
+
+async def make_job(
+    session: AsyncSession,
+    program: Program,
+    tool_module: ToolModule,
+    *,
+    status: str = "queued",
+    target: list[str] | None = None,
+    priority: int = 1,
+    worker_id: uuid.UUID | None = None,
+    created_by: uuid.UUID | None = None,
+    **columns: object,
+) -> Job:
+    job = Job(
+        program_id=program.id,
+        tool_module_id=tool_module.id,
+        status=status,
+        priority=priority,
+        target=target or ["a.example.com"],
+        params={},
+        worker_id=worker_id,
+        created_by=created_by,
+        **columns,
+    )
+    session.add(job)
+    await session.flush()
+    await session.refresh(job)
+    return job

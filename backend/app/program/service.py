@@ -35,7 +35,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from app.core import audit
 from app.core.audit import AuditLog
-from app.core.crypto import encrypt
+from app.core.crypto import decrypt, encrypt
 from app.core.errors import BadRequestError, ConflictError, NotFoundError, ValidationFailedError
 from app.core.identity import User, UserRole
 from app.core.pagination import (
@@ -64,6 +64,9 @@ PROXY_URL_CONTEXT = "proxy.url_encrypted"
 # scope_rule belongs to scope, one tier up. It is read by table name and its
 # model is never imported: docs/architecture/dependency-graph.md.
 _scope_rule = table("scope_rule", column("program_id"), column("scope_type"))
+# job is two tiers up; the same rule applies.
+_job = table("job", column("id"), column("proxy_id"), column("status"))
+_UNFINISHED_JOB_STATUSES = ("pending_approval", "queued", "dispatched", "running")
 
 
 def _rule_count(scope_type: str) -> ScalarSelect[int]:
@@ -661,6 +664,15 @@ async def update_proxy(
 
 async def delete_proxy(session: AsyncSession, *, actor: User, proxy_id: uuid.UUID) -> None:
     proxy = await _writable_proxy(session, actor=actor, proxy_id=proxy_id)
+    # A finished job keeps its history with proxy_id set to NULL; an unfinished
+    # one would silently run without the proxy it was created with.
+    in_use = await session.scalar(
+        select(_job.c.id)
+        .where(_job.c.proxy_id == proxy.id, _job.c.status.in_(_UNFINISHED_JOB_STATUSES))
+        .limit(1)
+    )
+    if in_use is not None:
+        raise ConflictError(detail="an unfinished job still uses this proxy")
     await session.delete(proxy)
     await audit.record(
         session,
@@ -671,3 +683,30 @@ async def delete_proxy(session: AsyncSession, *, actor: User, proxy_id: uuid.UUI
         resource_id=proxy.id,
         detail={"name": proxy.name},
     )
+
+
+# --- proxies used by jobs -------------------------------------------------------
+
+
+async def require_job_proxy(
+    session: AsyncSession, *, program_id: uuid.UUID, proxy_id: uuid.UUID, field: str
+) -> None:
+    """422 unless the proxy belongs to the program and is enabled."""
+    proxy = await session.get(Proxy, proxy_id)
+    if proxy is None or proxy.program_id != program_id:
+        raise ValidationFailedError(
+            detail="proxy does not exist in this program",
+            errors=[{"field": field, "code": "not_found"}],
+        )
+    if not proxy.is_enabled:
+        raise ValidationFailedError(
+            detail="proxy is disabled", errors=[{"field": field, "code": "proxy_disabled"}]
+        )
+
+
+async def proxy_url_for_job(session: AsyncSession, proxy_id: uuid.UUID) -> str | None:
+    """The decrypted proxy URL a claimed job runs through. Never logged (G7)."""
+    proxy = await session.get(Proxy, proxy_id)
+    if proxy is None:
+        return None
+    return decrypt(proxy.url_encrypted, context=PROXY_URL_CONTEXT)

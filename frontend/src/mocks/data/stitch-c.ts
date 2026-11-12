@@ -1,4 +1,4 @@
-import type { Job, JobStatus } from '@/lib/jobs';
+import type { JobStatus } from '@/lib/jobs';
 import type {
   ConsoleEntry,
   NetworkEntry,
@@ -8,13 +8,11 @@ import type {
 } from '@/lib/screenshots';
 import type { Technology } from '@/lib/url-detail';
 
-import { programs, toolModules } from './programs';
+import { programs } from './programs';
 
 /** Sample data for S06 and S07 (agent C of the Stitch pass). Documentation domains and
  * addresses only: .claude/rules/testing.md. */
 const PROGRAM_ID = programs[0]?.id ?? '0190a000-0000-7000-8000-000000000001';
-export const GOWITNESS_ID =
-  toolModules.find((m) => m.name === 'gowitness')?.id ?? '0190b000-0000-7000-8000-000000000002';
 
 function uuid(prefix: string, n: number): string {
   return `${prefix}-0000-7000-8000-${String(n).padStart(12, '0')}`;
@@ -407,49 +405,3 @@ export const SAMPLE_HTML = `<!DOCTYPE html>
 </body>
 </html>
 `;
-
-function job(n: number, status: JobStatus, target: readonly string[], minutesAgo: number): Job {
-  const at = new Date(NOW - minutesAgo * 60_000).toISOString();
-  const running = status === 'running' || status === 'dispatched';
-  const done = status === 'completed' || status === 'failed';
-  return {
-    id: uuid('0190d400', n),
-    program_id: PROGRAM_ID,
-    tool_module_id: GOWITNESS_ID,
-    status,
-    priority: 'normal',
-    target,
-    params: {},
-    proxy_id: null,
-    schedule_id: null,
-    retry_of_job_id: null,
-    worker_id: running || done ? uuid('0190e000', 2) : null,
-    created_by: null,
-    approved_by: null,
-    status_reason: null,
-    created_at: at,
-    approved_at: null,
-    dispatched_at: running || done ? at : null,
-    started_at: running || done ? at : null,
-    last_heartbeat_at: running ? at : null,
-    finished_at: done ? at : null,
-  };
-}
-
-/** gowitness jobs: one finished scan per sample batch, and a few still waiting. */
-export const gowitnessJobs: readonly Job[] = [
-  job(
-    1,
-    'completed',
-    SEEDS.slice(0, 8).map((s) => `https://${s.host}/`),
-    60 * 30,
-  ),
-  job(
-    2,
-    'completed',
-    SEEDS.slice(8).map((s) => `https://${s.host}/`),
-    60 * 5,
-  ),
-  job(3, 'queued', ['https://ingress.example.com/'], 4),
-  job(4, 'running', ['https://shop.example.org/', 'https://cdn.example.org/'], 1),
-];

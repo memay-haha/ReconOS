@@ -1,6 +1,6 @@
 # Cấu trúc thư mục
 
-> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 3: Cấu trúc thư mục
 > Liên quan: [ADR cấu trúc repo](../decisions/adr-repo-structure.md), [tech-stack.md](tech-stack.md), [modules.md](modules.md)
 
@@ -47,7 +47,7 @@
 | Đường dẫn | Vai trò |
 |---|---|
 | `app/main.py` | Khởi tạo FastAPI, gắn router các module |
-| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime |
+| `app/core/` | Mã dùng chung: cấu hình, kết nối CSDL, bảo mật, client object storage, realtime. `realtime_router.py` giữ endpoint WebSocket `/api/v1/ws`, vì endpoint này không thuộc module nghiệp vụ nào |
 | `app/<module>/` | Một module nghiệp vụ. Tên thư mục theo tên trong mã của [glossary](../appendix/glossary.md) |
 | `app/dispatcher/` | Mã của tiến trình dispatcher, chạy bằng `python -m app.dispatcher` |
 | `app/background/` | Celery app của tiến trình nền và Celery Beat: `celery_app.py`, lịch trong `beat.py`, task trong `tasks.py` gọi service của module |
@@ -68,10 +68,13 @@
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `worker/celery_app.py` | Cấu hình Celery của worker |
-| `worker/tasks.py` | Nhận task theo `contracts/` |
-| `worker/client.py` | Gọi API backend: báo trạng thái job, gửi output thô |
-| `worker/runners/` | Runner, một file một công cụ, gọi công cụ qua tiến trình con |
+| `worker/celery_app.py` | Cấu hình Celery của worker, khởi động heartbeat worker và gửi log |
+| `worker/config.py` | Đọc biến môi trường `RECONOS_*` của worker |
+| `worker/tasks.py` | Nhận task theo `contracts/`: claim, chạy runner, upload, finish |
+| `worker/client.py` | Gọi API backend: báo trạng thái job, gửi output thô, gửi log theo lô |
+| `worker/heartbeat.py` | Heartbeat worker: tool module, phiên bản công cụ, tải CPU |
+| `worker/logging.py` | Cấu hình structlog, bộ đệm log gửi về Backend API |
+| `worker/runners/` | Runner, một file một công cụ, gọi công cụ qua tiến trình con. `base.py` giữ lớp cơ sở và bảng đăng ký, `__init__.py` import từng runner |
 | `tests/` | Test của worker |
 
 - ❌ Không import `backend/`. Không truy cập CSDL. Không parse output.
@@ -80,9 +83,11 @@
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `contracts/tasks.py` | Tên task Celery, schema tham số job |
-| `contracts/raw_output.py` | Schema output thô gửi về |
-| `contracts/job_status.py` | Schema báo trạng thái job |
+| `contracts/tasks.py` | Tên task Celery, tên queue, đặc tả job trả khi claim |
+| `contracts/raw_output.py` | Tên file, `Content-Type`, trạng thái parse của output thô |
+| `contracts/job_status.py` | Trạng thái job, trả lời heartbeat job, body finish |
+| `contracts/worker.py` | Heartbeat worker, log theo lô |
+| `contracts/tool_modules/` | Schema tham số và nhóm của tool module, một file một tool module, đăng ký trong `__init__.py` |
 | `tests/` | Test của contract |
 
 - Chỉ chứa schema Pydantic và hằng số. ❌ Không chứa logic, không chứa model CSDL.

@@ -1,6 +1,5 @@
 import type { Job, JobStatus } from '@/lib/jobs';
 import type { JobLogEntry } from '@/lib/job-logs';
-import type { RawOutput } from '@/lib/raw-outputs';
 import type { Schedule } from '@/lib/schedules';
 
 import { programs, toolModules } from './programs';
@@ -92,21 +91,6 @@ export const jobs: Job[] = [
   job(7, 'cancelled', 3, 'billing.example.com', {
     status_reason: 'Target no longer matches the scope',
   }),
-];
-
-export const rawOutputs: RawOutput[] = [
-  {
-    id: '01911000-0000-7000-8000-000000000001',
-    job_id: jobs[4]?.id ?? '',
-    filename: 'subdomains.jsonl',
-    content_type: 'application/x-ndjson',
-    size_bytes: 48213,
-    sha256: '0'.repeat(64),
-    parse_status: 'parsed',
-    parse_error: null,
-    created_at: '2026-11-04T05:04:40Z',
-    parsed_at: '2026-11-04T05:04:45Z',
-  },
 ];
 
 export const jobLogs: JobLogEntry[] = [

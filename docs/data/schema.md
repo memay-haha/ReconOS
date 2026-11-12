@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.8 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -72,10 +72,10 @@
 
 | Bảng | Lưu gì | Cột cần chú ý |
 |---|---|---|
-| `tool_module` | Cấu hình tool module, mỗi tool module đăng ký trong mã có một dòng | `name`: khớp tên đăng ký trong mã. `timeout_minutes`: thời hạn chạy một job. Nhóm công cụ và schema tham số nằm trong mã |
+| `tool_module` | Cấu hình tool module, mỗi tool module đăng ký trong mã có một dòng | `name`: khớp tên đăng ký trong mã. `timeout_minutes`: thời hạn chạy một job. `rate_limit_per_minute` là `NULL`: không giới hạn tốc độ. `default_params`: chỉ khóa người vận hành chọn, mặc định còn lại nằm trong schema. Nhóm công cụ và schema tham số nằm trong mã |
 | `engine` | Kết nối tới Osmedeus, Vigolium | `settings`: cấu hình trên S16, S17, trừ thông tin xác thực, khóa theo bảng dưới. `llm_api_key_encrypted`: API key LLM của Vigolium, chỉ ghi. `version`, `last_tested_at`, `last_test_ok`: kết quả lần kiểm tra kết nối gần nhất. `api_key_updated_at`: lần đổi API key gần nhất. `ok_since`: lần healthcheck `ok` đầu tiên của chuỗi `ok` hiện tại, `NULL` khi lần gần nhất không `ok` |
 | `engine_variable` | Biến engine trên S16 | `value_encrypted`: giá trị đã mã hóa |
-| `job` | Job và trạng thái job | `target`: mục tiêu đã kiểm tra scope. `created_by` là `NULL`: job do `schedule` sinh. `worker_id`: ghi khi worker báo nhận. `last_heartbeat_at`: heartbeat gần nhất của job. `retry_of_job_id`: job cũ khi thử lại. `status_reason`: lý do hủy, từ chối, lỗi. `priority`: `0`, `1`, `2` ứng với `low`, `normal`, `high` của API. `tool_version`: phiên bản công cụ worker báo khi kết thúc job |
+| `job` | Job và trạng thái job | `target`: mục tiêu đã kiểm tra scope. `created_by` là `NULL`: job do `schedule` sinh. `worker_id`: ghi khi worker báo nhận. `last_heartbeat_at`: heartbeat gần nhất của job. `retry_of_job_id`: job cũ khi thử lại. `status_reason`: lý do hủy, từ chối, lỗi. `priority`: `0`, `1`, `2` ứng với `low`, `normal`, `high` của API. `tool_version`: phiên bản công cụ worker báo khi kết thúc job. `proxy_id`: xóa proxy thì đặt `NULL`, chỉ xóa được khi không còn job chưa kết thúc dùng proxy. `schedule_id` chưa có khóa ngoại tới khi có bảng `schedule`: nợ 50 trong [tech-debt.md](../tech-debt.md) |
 | `raw_output` | Metadata output thô, nội dung trong MinIO | `object_key`: khóa object trong MinIO. `sha256`: kiểm tra nguyên vẹn |
 
 ### Tài sản

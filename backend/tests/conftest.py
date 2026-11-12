@@ -109,6 +109,11 @@ def _migrated_test_database() -> None:
     config.set_main_option("script_location", str(REPO_ROOT / "backend" / "migrations"))
     command.downgrade(config, "base")
     command.upgrade(config, "head")
+    # reconos_log_test: worker log batches are written there. Upgrade only: the
+    # table is partitioned and created by hand, and nothing edits that migration.
+    log_config = Config(str(REPO_ROOT / "backend" / "alembic.ini"), ini_section="log")
+    log_config.set_main_option("script_location", str(REPO_ROOT / "backend" / "migrations_log"))
+    command.upgrade(log_config, "head")
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
