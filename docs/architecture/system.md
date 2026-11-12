@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-> Phiên bản: 1.5 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 4: Kiến trúc hệ thống
 > Liên quan: [overview.md](overview.md), [tech-stack.md](tech-stack.md), [directory-structure.md](directory-structure.md), [ADR chọn tech stack](../decisions/adr-tech-stack.md)
 
@@ -99,7 +99,7 @@ flowchart LR
 | Reverse proxy | `infras/` | Giải mã TLS, định tuyến tới frontend và Backend API |
 | Backend API | `backend/` | REST, WebSocket, xác thực, phân quyền, kiểm tra scope khi tạo job (G5), nhận output thô và lưu vào MinIO (G8) |
 | Dispatcher | `backend/app/dispatcher/` | Chọn job đến lượt, kiểm tra giới hạn, gửi task Celery cho worker. Một bản hoạt động, các bản khác chờ |
-| Tiến trình nền | `backend/` | Celery chạy mã backend. Queue `parse`: đọc output thô đã lưu, tạo hoặc cập nhật tài sản và finding. Queue `schedule`: tạo job quét định kỳ |
+| Tiến trình nền | `backend/` | Celery chạy mã backend. Queue `parse`: đọc output thô đã lưu, tạo hoặc cập nhật tài sản và finding, tính lại `in_scope`, xóa object của program đã xóa cứng. Queue `schedule`: tạo job quét định kỳ |
 | Celery Beat | `backend/` | Gửi task vào queue `schedule` theo lịch. Không tạo job, không giao job |
 | Worker | `workers/` | Nhận task job, chạy công cụ hoặc engine qua runner, gửi output thô về Backend API. Một đến nhiều máy |
 | Frontend | `frontend/` | Render giao diện, gọi API và WebSocket của backend |
@@ -208,10 +208,12 @@ sequenceDiagram
 
 1. Worker chạy công cụ, upload output thô lên Backend API theo contract.
 2. Backend API lưu nguyên vẹn nội dung vào MinIO, ghi metadata vào PostgreSQL.
-3. Backend API gửi task parse vào queue `parse`. Công cụ chưa có parser thì bỏ qua bước này. Output thô vẫn tra cứu và tải về được (G8).
-4. Tiến trình nền đọc output thô từ MinIO, chọn parser qua `registry.py`, tạo hoặc cập nhật tài sản và finding.
-5. Task `parse` lỗi thử lại tối đa 3 lần, backoff theo cấp số nhân. Hết lượt thử: `parse_status = failed`, ghi `parse_error`.
-6. Parse lỗi không làm mất output thô. Parse lại được từ output thô đã lưu.
+3. Backend API xếp task `reconos.parse_raw_output` vào session bằng `queue_task` của `app/core/tasks.py`. `session_scope` gửi task vào queue `parse` sau khi commit, rollback thì bỏ. Công cụ chưa có parser thì bỏ qua bước này. Output thô vẫn tra cứu và tải về được (G8).
+4. Tiến trình nền khóa dòng `raw_output` còn `pending`, chép object MinIO ra file tạm chỉ đọc, chọn parser qua `registry.py`, tạo hoặc cập nhật tài sản và finding. Mỗi output thô một transaction: ghi đủ tài sản rồi chuyển `parsed`, hoặc không ghi gì. Dòng không còn `pending` thì task dừng, nên task giao trùng chỉ parse một lần.
+5. Task `parse` lỗi thử lại tối đa 3 lần, backoff 10, 20, 40 giây. Hết lượt thử: `parse_status = failed`, `parse_error` là `parse failed after retries`.
+6. File không parse được, ví dụ không phải zip, thiếu `manifest.json`, vượt giới hạn giải nén: `failed` ngay, không thử lại vì thử lại đọc cùng nội dung. `parse_error` ghi lý do ngắn bằng tiếng Anh, không chứa đường dẫn hay giá trị lấy từ file.
+7. Parse lỗi không làm mất output thô. Parse lại được từ output thô đã lưu.
+8. Parse xong có tài sản mới: xếp sự kiện `asset.discovered` kèm `job_id` và số tài sản mới theo loại.
 
 ```mermaid
 sequenceDiagram
@@ -230,6 +232,8 @@ sequenceDiagram
     BG->>PG: Tạo, cập nhật tài sản và finding
 ```
 
+- Giới hạn parser: dòng dài quá 1 MiB bị bỏ, đọc tối đa 2 GiB giải nén và 100.000 mục mỗi gói. Mã: `app/parser/base.py`.
+- Hai task khác của tiến trình nền cũng chạy trên queue `parse`, gửi sau commit theo cùng cơ chế: `reconos.recompute_in_scope` khi scope rule đổi, `reconos.purge_program_objects` khi xóa cứng program: [database.md](../data/database.md).
 - gowitness đi theo luồng này như mọi công cụ: worker gửi file kết quả và ảnh, parser tạo screenshot. ReconOS không dùng CSDL riêng của gowitness.
 - Quy tắc viết mã xử lý lỗi: [error-handling.md](../../.claude/rules/error-handling.md).
 

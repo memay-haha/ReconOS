@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -80,7 +80,7 @@ Mọi endpoint dùng token worker trong header `Authorization: Bearer`: [authent
 | `POST /api/v1/worker/logs` | Gửi log của worker theo lô | Ghi vào CSDL log: [logging.md](../../.claude/rules/logging.md) |
 
 - Heartbeat chỉ chấp nhận job đang `running` trên đúng worker đã claim. Upload, finish chấp nhận job `running`, hoặc `cancelled` khi job bị hủy lúc đang chạy trên đúng worker đó và chưa nhận finish, để worker gửi phần output đã có. Sai thì trả `409`.
-- Đặc tả job khi claim là model `JobSpec` trong `contracts/tasks.py`: `job_id`, `tool_module`, `target`, `params` đã kiểm tra, `timeout_minutes`, `heartbeat_seconds` lấy từ `job_heartbeat_seconds`, `proxy_url`, `engine` gồm `name`, `base_url`, `api_key`, `variables`. Worker không đọc CSDL nên nhận chu kỳ heartbeat qua claim.
+- Đặc tả job khi claim là model `JobSpec` trong `contracts/tasks.py`: `job_id`, `tool_module`, `target`, `params` đã kiểm tra, `timeout_minutes`, `heartbeat_seconds` lấy từ `job_heartbeat_seconds`, `proxy_url`, `engine` gồm `name`, `base_url`, `api_key`, `variables`, `settings` của engine. `engine` là `NULL` khi tool module không chạy trên engine, hoặc engine đang tắt, chưa có `base_url`, API key: runner finish `failed`. Worker không đọc CSDL nên nhận chu kỳ heartbeat qua claim.
 - Body finish là `JobFinish` trong `contracts/job_status.py`: `status` nhận `completed`, `failed`, `cancelled`, kèm `status_reason`, `tool_version`. `cancelled` là worker xác nhận đã dừng theo lệnh hủy, job giữ trạng thái `cancelled`. Job đã `cancelled` mà worker gửi `completed` hoặc `failed` thì job vẫn giữ `cancelled`, chỉ ghi `tool_version`.
 - Finish lặp lại sau khi job đã kết thúc với cùng trạng thái trên đúng worker trả `204`, không đổi gì. Job đã `cancelled` coi mọi finish của worker đó là đã nhận.
 - Log theo lô: Backend API chỉ giữ `job_id` của bản ghi khi job đó do chính worker gửi log claim. `job_id` khác bị bỏ, `context` thêm `job_id_rejected`. `context` qua processor ẩn thông tin xác thực trước khi ghi `reconos_log`.
@@ -155,14 +155,49 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 | Bước | Osmedeus | Vigolium |
 |---|---|---|
 | Xác thực | Header `x-osm-api-key` | `Authorization: Bearer` |
-| Tạo lượt chạy | `POST /osm/api/runs` với `flow`, `targets`, `params`, `workspace` bằng job ID | `POST /api/scans/run` với `targets` |
-| Theo dõi | `GET /osm/api/runs/{run_id}` | `GET /api/scans/{scan_uuid}` |
-| Lấy kết quả | `GET /osm/api/artifacts/{workspace}`: gói zip cả workspace | `GET /api/findings` theo lượt chạy |
+| Phiên bản | `GET /server-info`, trường `version` | Chờ đợt Vigolium |
+| Tạo lượt chạy | `POST /osm/api/runs` với `flow`, `target`, `params`, `timeout`. Response `202` có `run_uuid` | `POST /api/scans/run` với `targets` |
+| Theo dõi | `GET /osm/api/runs/{run_uuid}`, trường `data.status`: `pending`, `running`, `completed`, `failed`, `cancelled` | `GET /api/scans/{scan_uuid}` |
+| Lấy kết quả | `GET /osm/api/snapshot-download/{workspace}`: zip cả workspace | `GET /api/findings` theo lượt chạy |
 | Output thô | `osmedeus.zip` | `vigolium-findings.jsonl` |
 
-- Đặt `workspace` bằng job ID để các job cùng mục tiêu không ghi chung workspace.
-- Biến engine truyền trong `params` của lượt chạy Osmedeus.
-- `scan_preset` trong `engine.settings` của Osmedeus đổi thành tham số số luồng, thời hạn, phạm vi cổng trong `params` của lượt chạy. Tên tham số cụ thể chờ kiểm chứng ở nợ 8.
+**Lượt chạy Osmedeus:**
+
+- Mỗi mục tiêu của job một lượt chạy, chạy lần lượt theo thứ tự trong `job.target`.
+- Cô lập workspace theo job: `params.space_name` bằng `reconos-<job_id>-<n>`, `n` là thứ tự mục tiêu tính từ 1. Osmedeus v5.1.2 dùng `space_name` làm tên workspace thay cho tên sinh từ mục tiêu. Hai job cùng mục tiêu không ghi chung workspace (G8).
+- `params` gồm biến engine, rồi các khóa runner đặt sau cùng nên ghi đè biến trùng tên: `space_name`, `tactic` từ `engine.settings.scan_preset`, `threads_hold` khi tham số `threads` khác 0.
+- `scan_preset` đổi thành `tactic`: `quick` thành `aggressive`, `balanced` thành `default`, `deep` thành `gently`. `tactic` quyết định số luồng mặc định của mọi công cụ trong workflow.
+- `timeout` bằng thời gian còn lại của job tính theo phút, để engine tự dừng khi worker mất kết nối.
+- Runner hỏi trạng thái lượt chạy và gửi heartbeat job mỗi `heartbeat_seconds`. Nhận `cancel` hoặc quá thời hạn: gọi `DELETE /osm/api/runs/{run_uuid}`, tải phần workspace đã có, không chạy mục tiêu còn lại.
+- Job `completed` khi mọi lượt chạy `completed`. Có lượt `failed`: job `failed`, vẫn upload output thô.
+- Phiên bản engine lấy từ `GET /server-info` khi bắt đầu job, gửi trong `tool_version` của finish.
+- Workspace và bản zip vẫn nằm trên engine server sau khi tải: REST của Osmedeus chưa có endpoint xóa workspace, nợ 51 trong [tech-debt.md](../tech-debt.md).
+
+**Gói `osmedeus.zip`:**
+
+| Mục trong gói | Nội dung |
+|---|---|
+| `manifest.json` | `OsmedeusManifest` trong `contracts/tool_modules/osmedeus.py`: `tool_module`, `flow`, `engine_version`, `runs` |
+| `runs[]` | `index` từ 1, `target`, `workspace`, `run_uuid`, `status` của Osmedeus hoặc `missing` khi không tạo được lượt chạy, `has_output` |
+| `<index>/` | Nội dung workspace của lượt chạy thứ `index`, đường dẫn tương đối từ gốc workspace. Không có thư mục khi `has_output` là `false` |
+
+- Tên file trong workspace chứa tên workspace của lượt chạy, không chứa mục tiêu. Parser đọc tên workspace trong `manifest.json`.
+- Runner chép lại từng mục từ zip của engine vào gói, bỏ mục có đường dẫn tuyệt đối hoặc `..`, dừng job `failed` khi tổng dung lượng giải nén vượt `PACKAGE_MAX_BYTES` 10 GiB.
+
+| File trong `<index>/` | Module của flow | Nội dung |
+|---|---|---|
+| `subdomain/final-<workspace>.txt` | `enum-subdomain` | Subdomain, mỗi dòng một tên |
+| `probing/dns-<workspace>.txt` | `probe-dns` | Kết quả dnsx đã lọc, mỗi dòng một bản ghi |
+| `probing/dns-json-<workspace>.txt` | `probe-dns` | JSONL của dnsx |
+| `probing/http-<workspace>.txt` | `probe-dns` | URL HTTP sống, mỗi dòng một URL |
+| `fingerprint/http-fingerprint-<workspace>.jsonl` | `recon-http-fp` | JSONL của httpx: URL, mã trạng thái, tiêu đề, công nghệ, IP |
+| `ipspace/ip-<workspace>.txt` | `enum-ipspace` | IP của subdomain. Không có ở `domain-lite` |
+| `portscan/open-ports-<workspace>.txt` | `probe-port` | Cổng mở dạng `ip:port`. Không có ở `domain-lite` |
+| `portscan/http-port-fingerprint-<workspace>.jsonl` | `probe-port` | JSONL của httpx trên cổng mở. Không có ở `domain-lite` |
+| `vulnscan/nuclei-jsonl-<workspace>.txt` | `scan-vuln` | JSONL của nuclei. Không có ở `domain-lite` |
+
+- Đường dẫn trên lấy từ workflow mặc định của Osmedeus v5.1.2. Workflow trên engine server bị sửa thì parser chỉ đọc file có mặt, file thiếu bỏ qua.
+- Biến engine, API key không nằm trong gói: runner không ghi chúng ra file (G7).
 - ReconOS chỉ dùng REST API. ❌ Không đọc CSDL của engine server (G1).
 
 ### Đọc cấu hình engine qua REST
@@ -171,26 +206,33 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 
 | Endpoint ReconOS | Engine | Việc |
 |---|---|---|
-| `GET /engines/{engine_id}/workflows`, `/workflows/{name}` | Osmedeus | Danh sách và chi tiết workflow đã cài |
+| `POST /engines/{engine_id}/test` | Osmedeus | `GET /server-info` lấy `version`, rồi `GET /osm/api/workflows?limit=1` để kiểm tra API key vì `/server-info` không cần key |
+| `POST /engines/{engine_id}/test` | Vigolium | `GET /api/info` có API key, lấy `version` |
+| `GET /engines/{engine_id}/workflows`, `/workflows/{name}` | Osmedeus | `GET /osm/api/workflows`, `GET /osm/api/workflows/{name}?json=true`. Bỏ workflow `hidden`. `step_count` của flow là số module. `steps` của chi tiết gồm module rồi step |
 | `GET`, `PATCH /engines/{engine_id}/modules` | Vigolium | Danh sách native module, bật, tắt module |
 | `POST /engines/{engine_id}/validate` | Vigolium | Kiểm tra cấu hình engine |
 | `POST /engines/{engine_id}/verify-model` | Vigolium | Kiểm tra model LLM với `llm_provider`, `llm_model`, `llm_base_url`, API key LLM |
 
-- Endpoint REST của engine cho các việc trên chưa kiểm chứng trên Osmedeus v5.1.2 và Vigolium: nợ 8 trong [tech-debt.md](../tech-debt.md). Engine không có endpoint tương ứng thì ReconOS không dựng phần đó.
+- Endpoint Osmedeus lấy từ mã nguồn v5.1.2. Endpoint Vigolium cho native module, kiểm tra cấu hình, model LLM chưa kiểm chứng: nợ 8 trong [tech-debt.md](../tech-debt.md). Engine không có endpoint tương ứng thì ReconOS không dựng phần đó, endpoint ReconOS trả `404`.
 - ❌ Không dựng cấu hình Database và Redis, Scope Defaults, Ingest Proxy, MITM, CA, bridge Burp và Caido, Hardening flags của engine (G1, G5).
-- Backend gọi REST engine không thử lại. Engine không trả lời thì trả lỗi như `POST /engines/{engine_id}/test`.
+- Backend gọi REST engine không thử lại, timeout 10 giây. Engine không trả lời, từ chối API key hoặc trả body sai dạng: `502 engine_unavailable`. Kiểm tra thất bại vẫn ghi `last_test_ok` là `false` qua session độc lập.
 
 ### Tool module của engine
 
 | Tool module | Flow | Công cụ bên trong | Nhóm |
 |---|---|---|---|
 | `osmedeus-domain-lite` | `domain-lite` | subfinder, dnsx, httpx | Recon |
-| `osmedeus-general` | `general` | subfinder, dnsx, httpx, quét cổng, nuclei, Vigolium | Quét |
+| `osmedeus-general` | `general` | subfinder, dnsx, httpx, rustscan, nmap, nuclei | Quét |
 | `osmedeus-domain-extensive` | `domain-extensive` | Như `general`, thêm DNS brute force, quét đủ dải cổng | Quét |
 | `vigolium` | Quét mặc định | Module của Vigolium | Quét |
 
 - Kiểm tra tên flow bằng `osmedeus workflow list` trên engine server khi thêm tool module.
-- Parser Osmedeus đọc trong gói zip: danh sách subdomain, JSON của dnsx, JSONL của httpx, kết quả quét cổng, JSONL của nuclei.
+- Tool module `osmedeus-<flow>` khai báo trong `contracts/tool_modules/osmedeus_<flow>.py` bằng `osmedeus_spec`, runner trong `workers/worker/runners/osmedeus_<flow>.py` kế thừa `OsmedeusRunner`. Tham số duy nhất: `threads` từ 0 đến 100, 0 giữ số luồng của `tactic`.
+- Thời hạn mặc định do migration ghi: `domain-lite` 240 phút, `general` 720 phút, `domain-extensive` 1.200 phút.
+- Parser Osmedeus đọc gói `osmedeus.zip` theo mục Gói `osmedeus.zip` ở trên. Mỗi workflow một file parser `osmedeus_<workflow>.py` kế thừa lớp chung `app/parser/osmedeus.py`.
+- Parser chỉ mở mục có tên đúng `<index>/<đường dẫn>` lấy từ `manifest.json`, không giải nén ra đĩa. Mục khác trong gói, kể cả mục có đường dẫn tuyệt đối hoặc `..`, không bao giờ được mở.
+- `probing/dns-<workspace>.txt` không đọc: cùng nội dung với `dns-json`. `vulnscan/nuclei-jsonl-<workspace>.txt` chờ bảng `finding` của đợt 6, parser đếm là bỏ qua.
+- Dòng sai định dạng bị bỏ và đếm vào log `parse_completed`. Gói không phải zip, thiếu hoặc sai `manifest.json`: `parse_status = failed`, không thử lại: [system.md](../architecture/system.md).
 - Ảnh chụp do httpx trong Osmedeus tạo chỉ nằm trong output thô. Parser không tạo `screenshot` từ ảnh này.
 
 ### Chuỗi khử trùng lặp

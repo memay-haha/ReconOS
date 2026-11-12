@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, status
 
+from app.asset.router import router as asset_router
 from app.audit_log.router import router as audit_log_router
 from app.core.config import get_settings
 from app.core.crypto import get_keyring
@@ -13,10 +14,13 @@ from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.core.realtime_router import router as realtime_router
 from app.dispatcher.router import router as dispatcher_router
+from app.engine.router import router as engine_router
 from app.job.router import router as job_router
+from app.parser import registry as _parser_registry  # noqa: F401  # registers parsers before any upload
 from app.program.router import router as program_router
 from app.raw_output.router import router as raw_output_router
 from app.scope.router import router as scope_router
+from app.tag.router import router as tag_router
 from app.tool_module.router import router as tool_module_router
 from app.user.router import router as user_router
 
@@ -69,7 +73,10 @@ app.include_router(audit_log_router)
 app.include_router(program_router)
 app.include_router(scope_router)
 app.include_router(tool_module_router)
+app.include_router(engine_router)
 app.include_router(job_router)
 app.include_router(raw_output_router)
+app.include_router(asset_router)
+app.include_router(tag_router)
 app.include_router(dispatcher_router)
 app.include_router(realtime_router)

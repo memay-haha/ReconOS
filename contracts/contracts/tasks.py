@@ -35,6 +35,8 @@ class EngineSpec(BaseModel):
     base_url: Annotated[str, Field(min_length=1, max_length=2048)]
     api_key: SecretStr
     variables: dict[str, SecretStr] = Field(default_factory=dict)
+    # `engine.settings` without credentials; the runner maps it to run options.
+    settings: dict[str, Any] = Field(default_factory=dict)
 
     # SecretStr hides the value in repr and logs; JSON on the wire must carry it.
     @field_serializer("api_key", when_used="json")

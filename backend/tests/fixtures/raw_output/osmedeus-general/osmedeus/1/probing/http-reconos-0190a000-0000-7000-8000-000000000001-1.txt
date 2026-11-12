@@ -1,0 +1,2 @@
+https://a.example.com
+http://a.example.com:8080/login

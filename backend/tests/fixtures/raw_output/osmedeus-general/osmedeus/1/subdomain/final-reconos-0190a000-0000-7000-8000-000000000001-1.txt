@@ -1,0 +1,5 @@
+example.com
+a.example.com
+b.example.com
+outside.example.org
+not a domain!!

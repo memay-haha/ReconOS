@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.22 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.24 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -110,7 +110,7 @@ Danh sách dùng phân trang cursor theo keyset.
 | `/tool-modules` | `name`, `title`, `description` |
 | `/findings` | `name`, `template_id`, `cve`, `matched_at` |
 | `/search` | Tên program, tên domain, `url`, tên finding, tên tool module. Lọc theo program được gán. Trả tối đa `limit` dòng, mặc định 10, tối đa 50, mỗi dòng `type` (`program`, `domain`, `url`, `finding`, `tool_module`), `id`, `label`, `program_id`, `NULL` với tool module |
-- Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/urls`, `/services`, `/asset-events`, `/screenshots`, `/findings`. Với `/services`: service trên IP mà domain phân giải ra, qua `domain_ip`. `/screenshots` nhận thêm `is_failed`, `job_id`, `technology_id`, `status_code` theo lớp `2xx`, `3xx`, `4xx`, `5xx`.
+- Tham số lọc của từng endpoint: [openapi.yaml](openapi.yaml). Mọi danh sách thuộc program nhận `program_id`. Danh sách liên quan tới một domain nhận `domain_id`: `/urls`, `/services`, `/asset-events`, `/screenshots`, `/findings`. Với `/services`: service trên IP mà domain phân giải ra, qua `domain_ip`. Với `/asset-events`: sự kiện của domain và của URL có `url.domain_id` là domain đó. `/screenshots` nhận thêm `is_failed`, `job_id`, `technology_id`, `status_code` theo lớp `2xx`, `3xx`, `4xx`, `5xx`.
 - User chỉ nhận dữ liệu của program được gán, kể cả khi không truyền `program_id`.
 
 ### Trường tính và số liệu tổng hợp
@@ -120,7 +120,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | Endpoint | Trường |
 |---|---|
 | `GET /programs`, `GET /programs/{program_id}` | `in_scope_rule_count`, `out_of_scope_rule_count`, `domain_count`, `ip_count`, `url_count`, `service_count`, `finding_counts`, `last_job_finished_at`, `scope_coverage`, `assets_new_today`: `domain`, `url`, `ip_resolved_count`, `service_port_count`, `screenshot_count`, `created_by_username` |
-| `GET /programs/{program_id}/scope-rules` | `matched_domain_count`: số domain của program khớp rule. Chưa trả cho tới khi có bảng `domain`: [tech-debt.md](../tech-debt.md) |
+| `GET /programs/{program_id}/scope-rules` | `matched_domain_count`: số domain chưa xóa mềm của program khớp rule theo `rule_matches` trong `app/scope/matching.py`. Rule domain khớp đúng tên, rule wildcard khớp subdomain, rule CIDR và URL luôn `0` vì so khớp không tra DNS |
 | `GET /domains`, `GET /domains/{domain_id}` | `ips`: danh sách địa chỉ IP, `url_count`, `service_count`, `finding_counts`, `has_findings`, `asn`, `asn_org` của IP đầu tiên trong `ips`. Riêng `GET /domains/{domain_id}` có thêm `tags`: danh sách `id` của `asset_tag`, `tag_id`, `key`, `value`. `ip_records`: danh sách `address`, `record_type`. `service_ports`: các cổng của service trên IP của domain, tăng dần |
 | `GET /asset-events` | `asset_type`, `asset_name`, `program_name`, `tool_module_name`. Sự kiện của IP thêm `asn`, `asn_org` |
 | `GET /domains/{domain_id}/activity` | Gộp sự kiện tài sản, finding, screenshot của domain, mới trước. Mỗi dòng `kind` (`asset_event`, `finding`, `screenshot`), `id`, `at`, `title`, `tool_module_name`, `job_id` |
@@ -134,7 +134,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | `GET /screenshots` | `technologies`: `name`, `category`. `similar_group`, `similar_count`. `retry_job_status` |
 | `GET /screenshots/{screenshot_id}` | Như danh sách, thêm `worker_name`, `html_size`, `html_sha256`, `security_headers`: object 5 header, giá trị `true` khi có mặt, `security_headers_passed`, `security_headers_total` |
 | `GET /tool-modules` | `title`, `description`, `group`, `runs_on`, `tools`, `output_types`, `param_schema` lấy từ mã. `last_job_at`, `jobs_24h`, `finding_count`, `engine_status`, `disabled_reason`, `estimated_seconds` |
-| `GET /engines` | `version`, `last_tested_at`, `last_test_ok`, `api_key_updated_at`, `has_llm_api_key`, `uptime_seconds`, `slots_used`, `slots_total` |
+| `GET /engines` | `version`, `last_tested_at`, `last_test_ok`, `api_key_updated_at`, `has_api_key`, `has_llm_api_key`, `uptime_seconds`, `slots_used`, `slots_total` |
 | `GET /alerts` | Lọc `is_read`, `alert_type` lặp lại. `is_read` của tài khoản gọi. Mỗi dòng `id`, `alert_type`, `message`, `program_id`, `finding_id`, `job_id`, `created_at`, `is_read` |
 
 - `finding_counts` là object theo 5 mức severity, đếm finding có `triage_status` khác `false_positive`, `duplicate`, `resolved`. Gọi là finding mở.
@@ -215,11 +215,12 @@ Response tổng hợp:
 | 404 | `not_found` | Không tồn tại, hoặc thuộc program User không được gán |
 | 409 | `conflict` | Vi phạm ràng buộc duy nhất, kèm `errors` với `code` là `already_exists` cho trường bị trùng. Chuyển trạng thái không hợp lệ |
 | 413 | `payload_too_large` | File upload vượt giới hạn dung lượng |
-| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường. Mã riêng trong `errors`: `tool_module_disabled`, `proxy_disabled`, `filename_invalid`, `not_found` khi ID trong body không tồn tại. Tham số job sai schema tool module: `field` là `params.<khóa>`, `code` là mã của Pydantic như `extra_forbidden` |
+| 422 | `validation_error` | Dữ liệu sai schema, kèm `errors` từng trường. Mã riêng trong `errors`: `tool_module_disabled`, `proxy_disabled`, `filename_invalid`, `not_found` khi ID trong body không tồn tại, `engine_not_configured` khi bật engine chưa có `base_url` hoặc API key, `not_supported` khi gửi `llm_api_key` cho engine không dùng LLM. Tham số job sai schema tool module: `field` là `params.<khóa>`, `code` là mã của Pydantic như `extra_forbidden` |
 | 422 | `target_out_of_scope` | Mục tiêu không khớp scope khi tạo job (G5). `errors` từng mục tiêu: `code` là `target_out_of_scope`, hoặc `invalid_target` khi mục tiêu không phải domain, IP, CIDR, URL đọc được |
 | 422 | `current_password_incorrect` | Đổi mật khẩu nhập sai mật khẩu hiện tại. Phiên vẫn hợp lệ nên không dùng 401. Kèm `errors` với `field` là `current_password` |
 | 429 | `rate_limited` | Vượt giới hạn tần suất, kèm header `Retry-After` |
 | 500 | `internal_error` | Lỗi không lường trước. `detail` không chứa stack trace |
+| 502 | `engine_unavailable` | Endpoint đọc REST của engine: engine không trả lời, từ chối API key, trả body sai dạng, hoặc engine chưa có `base_url`, API key |
 
 - `detail` viết tiếng Anh, không chứa thông tin xác thực, đường dẫn hệ thống, câu lệnh SQL.
 - Cách backend phát sinh lỗi và chuyển lỗi thành response: [error-handling.md](../../.claude/rules/error-handling.md).
@@ -255,18 +256,27 @@ Response tổng hợp:
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}`. Một ID không tồn tại hoặc không xem được: `404`, không program nào đổi |
 | `POST /programs/{program_id}/pause`, `resume`, `archive` | Chuyển trạng thái theo [business-flow.md](../architecture/business-flow.md). Trạng thái hiện tại không cho phép: `409 conflict` |
 | `POST`, `PATCH /programs/{program_id}` | Body `name`, `platform`, `platform_url`, `platform_handle`, `bounty_type` (mặc định `bounty`), `description`. Trường lạ, kể cả `status`: `422`. `platform_url` chỉ nhận `http`, `https`, sai thì mã `url_invalid`. `PATCH` gửi `null` cho `name`, `bounty_type`: mã `null_not_allowed`. Program `archived`: `409 conflict` |
-| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng của đợt sau trả `0` hoặc `null` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md) |
+| `GET /programs` | `sort` mặc định `name`. Trường tính lấy từ bảng `finding`, `screenshot` trả `0` cho tới khi bảng đó có: [tech-debt.md](../tech-debt.md). `last_job_finished_at`: `finished_at` mới nhất của job thuộc program |
 | `POST /programs/{program_id}/users` | Body `user_id`. Chỉ gán tài khoản vai trò `user`. Tài khoản không tồn tại: `422`, `errors` có `user_id` mã `not_found`. Vai trò khác: mã `role_not_assignable`. Đã gán: `409 conflict`. Gán, bỏ gán vẫn làm được khi program `archived` |
 | `GET /programs/{program_id}/users`, `GET /programs/{program_id}/proxies` | Một thứ tự duy nhất: `sort` chỉ nhận `-assigned_at`, `-created_at` |
 | `POST /programs/{program_id}/proxies`, `PATCH /proxies/{proxy_id}` | Body `name`, `url`, `is_enabled` (mặc định `true`). `url` chỉ ghi: response không có URL, kể cả dạng che. Scheme `http`, `https`, `socks4`, `socks4a`, `socks5`, `socks5h`, có host, không path, query, fragment. Sai: `422` mã `proxy_url_invalid`, `detail` không lặp lại giá trị. Program `archived`: `409 conflict`, cả khi xóa proxy. Xóa proxy mà job chưa kết thúc còn dùng: `409 conflict`. Job đã kết thúc giữ lịch sử, `proxy_id` về `NULL` |
 | `POST /users/{user_id}/revoke-sessions`, `POST /users/bulk-revoke-sessions` | Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi |
-| `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids` |
+| `GET /domains` | `sort`: `name` mặc định, `-name`, `first_seen_at`, `-first_seen_at`, `last_seen_at`, `-last_seen_at`. `program_status` chỉ giữ domain của program ở trạng thái đó |
+| `GET /ips`, `GET /urls`, `GET /services` | `sort`: `-last_seen_at` mặc định, `last_seen_at`, `first_seen_at`, `-first_seen_at` |
+| `GET /asset-events` | `sort`: `-created_at` mặc định, `created_at`. Sự kiện của domain đã xóa mềm không hiện |
+| `GET /technologies`, `GET /tags` | Danh mục dùng chung, không thuộc program: mọi vai trò đọc đủ. `sort` của `/technologies`: `name` mặc định, `-name`. `sort` của `/tags`: `key` mặc định, `-key`, rồi theo `value` |
+| `GET /domains/{domain_id}/activity` | Mới trước. Dòng `asset_event` có `title` là `Discovered` hoặc `Changed` kèm tên cột đã đổi |
+| `GET /<tài sản>/export` | `csv` có header, `jsonl` mỗi dòng một object, `md` một bảng. Cột: cột của dòng danh sách. Header `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff` |
+| `POST /tags` | Body `key` tối đa 100 ký tự, `value` tối đa 255, bỏ khoảng trắng hai đầu. Trùng cặp `key`, `value`: `409 conflict`, `code` là `already_exists`. Mọi vai trò tạo được, chỉ Superadmin, Admin xóa |
+| `POST /asset-tags` | Body `tag_id` và đúng một trong `domain_id`, `ip_id`, `url_id`, `service_id`, sai thì `422`. Tài sản đã có tag: `409`, `code` là `already_exists`. Tài sản không thấy được hoặc tag không tồn tại: `404`. Program `archived`: `409 conflict`. Gỡ tag theo cùng quy tắc |
+| `POST /asset-tags/bulk-create` | Body `tag_id`, `asset_type`, `ids`. Tất cả hoặc không: một tài sản không thấy được thì `404`. Tài sản đã có tag giữ nguyên |
+| `POST /raw-outputs/{raw_output_id}/reparse` | Superadmin, Admin. Đặt `parse_status = pending`, gửi lại task `parse`: [database.md](../data/database.md). Tool module không có parser hoặc program `archived`: `409 conflict` |
 | `GET`, `POST /saved-filters`, `DELETE /saved-filters/{saved_filter_id}` | Chỉ bộ lọc của tài khoản gọi. `GET` nhận `screen`. Body `screen`, `name`, `params`. Trùng `name` trong cùng `screen`: `409 conflict` |
 | `GET /system-settings/{key}` | Superadmin đọc mọi key. Admin, User chỉ đọc key có cột Đọc công khai trong [configuration.md](../ops/configuration.md) |
 | `GET /roles/permissions` | Ma trận quyền sinh từ khai báo quyền của backend, trả `items`, mỗi dòng `action`, `superadmin`, `admin`, `user` với giá trị `allow`, `deny`, `limited` và `note` |
 | `POST /system/diagnostics`, `GET /system/diagnostics/{diagnostic_run_id}`, `GET /system/diagnostics/latest` | Tạo lần chẩn đoán chạy ở tiến trình nền, trả `id`, `status`. Đọc `id`, `status`, `exit_code`, `output`, `created_at`, `finished_at`. Mỗi dòng của `output` bắt đầu bằng một tiền tố: `[OK]` đạt, `[WARN]` chưa đạt nhưng hệ thống vẫn chạy, `[FAIL]` không đạt, `[*]` thông tin |
 | `GET /tools` | Mỗi công cụ của tool module: `name`, `tool_modules`, `status` (`installed`, `missing`), `installed`: `worker_name`, `version` theo heartbeat |
-| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `settings` và `llm_api_key`, chỉ ghi. Dạng response: schema `EngineWorkflow`, `EngineModule`, `EngineCheckResult` trong [openapi.yaml](openapi.yaml) |
+| `GET /engines/{engine_id}/workflows`, `GET /engines/{engine_id}/workflows/{name}`, `GET`, `PATCH /engines/{engine_id}/modules`, `POST /engines/{engine_id}/validate`, `POST /engines/{engine_id}/verify-model` | Backend gọi REST của engine rồi trả lại: [external-services.md](../integrations/external-services.md). `PATCH /engines/{engine_id}` nhận `base_url`, `api_key`, `is_enabled`, `settings` và `llm_api_key`. API key chỉ ghi, bỏ trống thì giữ key cũ. `settings` kiểm tra theo khóa của từng engine trong [schema.md](../data/schema.md), khóa lạ trả `422`. Tên biến engine trong `PUT /engines/{engine_id}/variables/{key}` khớp `^[A-Za-z_][A-Za-z0-9_]{0,63}$`, body `value`. Dạng response: schema `EngineWorkflow`, `EngineModule`, `EngineCheckResult` trong [openapi.yaml](openapi.yaml) |
 | `GET /logs` | User chỉ nhận log của job thuộc program được gán. Lọc thêm `program_id`, `event`, `engine` |
 
 ### WebSocket
@@ -288,7 +298,7 @@ Response tổng hợp:
 |---|---|
 | `job.status_changed` | Job đổi trạng thái. `data` gồm `job_id`, `status` |
 | `finding.created` | Parser tạo finding mới |
-| `asset.discovered` | Parser tạo tài sản mới, gom theo job |
+| `asset.discovered` | Parser tạo tài sản mới. Một sự kiện mỗi output thô, `data` gồm `job_id` và số tài sản mới `domain`, `ip`, `url`, `service` |
 | `alert.created` | Có cảnh báo mới |
 | `worker.status_changed` | Worker bắt đầu gửi heartbeat hoặc mất heartbeat. `program_id` là `null`, `data` gồm `worker_id`, `is_online` |
 

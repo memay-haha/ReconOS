@@ -58,6 +58,7 @@ from app.core.pagination import (
 )
 from app.core.security import program_visible_to
 from app.core.system_setting import get_int_setting
+from app.engine import service as engine_service
 from app.job.models import Job, JobPriority
 from app.job.schemas import (
     PRIORITY_NAMES,
@@ -638,9 +639,17 @@ async def claim_job(session: AsyncSession, *, worker: Worker, job_id: uuid.UUID)
         if job.proxy_id is not None
         else None
     )
+    spec = tool_module_service.spec_of(tool_module.name)
+    # None when the engine is off or not set up: the runner finishes the job failed.
+    engine = (
+        await engine_service.engine_spec_for(session, spec.runs_on)
+        if spec is not None and spec.runs_on is not None
+        else None
+    )
     log.info("job_claimed", job_id=str(job.id), tool_module=tool_module.name)
     return JobSpec.model_validate(
         {
+            "engine": engine,
             "job_id": job.id,
             "tool_module": tool_module.name,
             "target": list(job.target),

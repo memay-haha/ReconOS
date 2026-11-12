@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.11 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -62,6 +62,8 @@
 | Xem program, scope, tài sản, screenshot, tìm toàn cục | ✅ | ✅ | ✅ chỉ program được gán |
 | Xóa mềm domain, screenshot | ✅ | ✅ | ❌ |
 | Gắn, gỡ tag tài sản, kể cả hàng loạt | ✅ | ✅ | ✅ chỉ program được gán |
+| Tạo tag trong danh mục dùng chung | ✅ | ✅ | ✅ |
+| Xóa tag khỏi danh mục, gỡ khỏi mọi tài sản | ✅ | ✅ | ❌ |
 | Lưu, xóa bộ lọc đã lưu | ✅ chỉ của mình | ✅ chỉ của mình | ✅ chỉ của mình |
 | Tạo job | ✅ | ✅ | ✅ chỉ program được gán |
 | Thử lại job, kể cả hàng loạt | ✅ | ✅ | ✅ chỉ job mình tạo |
@@ -70,6 +72,7 @@
 | Xem hàng đợi, trạng thái dispatcher | ✅ | ✅ | ✅ job thuộc program được gán |
 | Dispatch Now, Dispatch All, Cleanup hàng đợi | ✅ | ✅ | ❌ |
 | Xem, tải output thô | ✅ | ✅ | ✅ chỉ program được gán |
+| Parse lại output thô | ✅ | ✅ | ❌ |
 | Triage finding | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo báo cáo, đánh dấu đã nộp | ✅ | ✅ | ✅ chỉ program được gán |
 | Xem nhật ký thao tác trên S14 | ✅ | ✅ | ❌ |
@@ -107,7 +110,8 @@ Backend luôn ghi nhật ký thao tác cho các thao tác sau (G7):
 - Thêm, sửa, xóa scope rule.
 - Tạo, duyệt, từ chối, hủy job.
 - Đổi trạng thái triage.
-- Tải nội dung output thô.
+- Tải nội dung output thô. Parse lại output thô.
+- Tạo, xóa tag. Gắn, gỡ tag tài sản.
 - Xóa log ứng dụng.
 - Tạo, thu hồi token worker. Sửa cấu hình tool module, engine, hệ thống.
 - Yêu cầu bị từ chối vì thiếu quyền, chỉ với phương thức thay đổi dữ liệu `POST`, `PUT`, `PATCH`, `DELETE`. Yêu cầu đọc bị từ chối không ghi dòng nào: nhật ký chỉ thêm dòng và chưa có thời hạn giữ.

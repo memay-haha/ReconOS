@@ -11,7 +11,18 @@ from collections.abc import Sequence
 from typing import Any
 
 import structlog
-from sqlalchemy import delete, func, select, tuple_
+from sqlalchemy import (
+    ColumnElement,
+    Uuid,
+    column,
+    delete,
+    func,
+    literal,
+    select,
+    table,
+    tuple_,
+    union_all,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +37,7 @@ from app.core.errors import (
 from app.core.identity import User
 from app.core.pagination import MAX_LIMIT, Page, decode_time_cursor, encode_cursor
 from app.core.security import program_visible_to
+from app.core.tasks import PARSE_QUEUE, RECOMPUTE_IN_SCOPE_TASK, queue_task
 from app.program import service as program_service
 from app.scope.matching import (
     InvalidScopeValueError,
@@ -42,6 +54,7 @@ from app.scope.schemas import (
     ScopeCheckItem,
     ScopeRuleCreateRequest,
     ScopeRuleResponse,
+    ScopeRuleRowResponse,
     ScopeRuleSort,
     ScopeRuleUpdateRequest,
 )
@@ -49,6 +62,24 @@ from app.scope.schemas import (
 log = structlog.get_logger()
 
 RESOURCE = "scope_rule"
+
+# domain belongs to asset, one tier up: read by table name, never imported.
+# docs/architecture/dependency-graph.md.
+_domain = table("domain", column("program_id"), column("name"), column("deleted_at"))
+
+
+def _queue_recompute(session: AsyncSession, program_id: uuid.UUID) -> None:
+    """Re-mark the program's assets once the rule change commits.
+
+    The task belongs to asset and is sent by name, so scope never imports
+    asset: docs/architecture/dependency-graph.md.
+    """
+    queue_task(
+        session,
+        RECOMPUTE_IN_SCOPE_TASK,
+        queue=PARSE_QUEUE,
+        kwargs={"program_id": str(program_id)},
+    )
 
 
 # ---------------------------------------------------------------- the G5 check
@@ -163,7 +194,7 @@ async def list_rules(
     limit: int,
     cursor: str | None,
     sort: ScopeRuleSort = "created_at",
-) -> Page[ScopeRuleResponse]:
+) -> Page[ScopeRuleRowResponse]:
     await program_service.get_program(session, viewer=viewer, program_id=program_id)
     size = _clamp(limit)
     descending = sort.startswith("-")
@@ -186,11 +217,53 @@ async def list_rules(
         if len(rows) > size
         else None
     )
-    return Page[ScopeRuleResponse](
-        items=[ScopeRuleResponse.model_validate(row) for row in page_rows],
+    counts = await _matched_domain_counts(session, program_id, page_rows)
+    return Page[ScopeRuleRowResponse](
+        items=[
+            ScopeRuleRowResponse.model_validate(
+                {
+                    **ScopeRuleResponse.model_validate(row).model_dump(),
+                    "matched_domain_count": counts.get(row.id, 0),
+                }
+            )
+            for row in page_rows
+        ],
         next_cursor=next_cursor,
         total=total or 0,
     )
+
+
+def _domain_match(rule: ScopeRule) -> ColumnElement[bool] | None:
+    """SQL form of `rule_matches` for a domain name target: app/scope/matching.py.
+
+    A domain rule matches the name itself, a wildcard rule its subdomains only.
+    CIDR and URL rules never match a domain name, since matching does no DNS
+    lookup, so they count none.
+    """
+    if rule.rule_type == RuleType.DOMAIN:
+        return _domain.c.name == rule.value
+    if rule.rule_type == RuleType.WILDCARD:
+        base = rule.value.removeprefix("*.")
+        escaped = base.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return _domain.c.name.like(f"%.{escaped}", escape="\\")
+    return None
+
+
+async def _matched_domain_counts(
+    session: AsyncSession, program_id: uuid.UUID, rules: Sequence[ScopeRule]
+) -> dict[uuid.UUID, int]:
+    """Live domains of the program each rule matches, one query for the page."""
+    parts = [
+        select(literal(rule.id, Uuid()).label("rule_id"), func.count().label("matched"))
+        .select_from(_domain)
+        .where(_domain.c.program_id == program_id, _domain.c.deleted_at.is_(None), condition)
+        for rule in rules
+        if (condition := _domain_match(rule)) is not None
+    ]
+    if not parts:
+        return {}
+    rows = await session.execute(union_all(*parts))
+    return {row[0]: row[1] for row in rows.all()}
 
 
 def _validated(
@@ -317,6 +390,8 @@ async def create_rules(
             resource_id=rule.id,
             detail=_snapshot(rule),
         )
+    if rules:
+        _queue_recompute(session, program_id)
     return [rule for _, rule in rules]
 
 
@@ -363,6 +438,7 @@ async def update_rule(
         resource_id=rule.id,
         detail={"before": before, "after": _snapshot(rule)},
     )
+    _queue_recompute(session, rule.program_id)
     return rule
 
 
@@ -380,3 +456,4 @@ async def delete_rule(session: AsyncSession, *, actor: User, scope_rule_id: uuid
         resource_id=rule.id,
         detail=snapshot,
     )
+    _queue_recompute(session, rule.program_id)

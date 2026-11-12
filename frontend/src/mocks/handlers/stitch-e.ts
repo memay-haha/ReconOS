@@ -236,83 +236,6 @@ const s15Routes: MockRoute[] = [
 
 // ---- S16 Osmedeus, S17 Vigolium ----------------------------------------------------------
 
-const engineRows = engines.map((engine) =>
-  engine.name === 'osmedeus'
-    ? {
-        ...engine,
-        settings: { scan_preset: 'balanced' },
-        version: 'v5.1.2',
-        last_tested_at: minutesAgo(30),
-        last_test_ok: true,
-        api_key_updated_at: minutesAgo(3 * 24 * 60),
-        has_llm_api_key: false,
-        uptime_seconds: 18 * 86_400 + 4 * 3_600,
-        slots_used: 4,
-        slots_total: 32,
-      }
-    : {
-        ...engine,
-        settings: {
-          llm_provider: 'openai-compatible',
-          llm_model: 'example-model-large',
-          llm_base_url: 'https://llm.example.com/v1',
-        },
-        version: 'v0.5.3',
-        last_tested_at: minutesAgo(12),
-        last_test_ok: true,
-        api_key_updated_at: null,
-        has_llm_api_key: true,
-        uptime_seconds: 2 * 86_400 + 7 * 3_600,
-        slots_used: 1,
-        slots_total: 4,
-      },
-);
-
-const workflowRows = [
-  [
-    'general',
-    'flow',
-    14,
-    'Domain enumeration, ports, vulnerability scan and web screenshots.',
-    ['recon', 'active', 'default'],
-  ],
-  [
-    'domain-lite',
-    'flow',
-    6,
-    'Passive subdomain discovery, DNS resolution and HTTP probing.',
-    ['recon', 'passive'],
-  ],
-  [
-    'domain-extensive',
-    'flow',
-    22,
-    'General flow plus DNS brute force and a full port range.',
-    ['recon', 'active'],
-  ],
-  [
-    'subdomain',
-    'module',
-    8,
-    'Passive feeds and recursive wordlist DNS brute forcing.',
-    ['dns', 'subfinder'],
-  ],
-  [
-    'portscan',
-    'module',
-    4,
-    'Initial SYN probe followed by service and version detection.',
-    ['infra', 'services'],
-  ],
-  ['vuln', 'module', 6, 'Nuclei templates against live HTTP endpoints.', ['nuclei', 'cve']],
-].map(([name, kind, step_count, description, tags]) => ({
-  name,
-  kind,
-  step_count,
-  description,
-  tags,
-}));
-
 const moduleRows = [
   ['cve-2024-deep-check', 'active', true],
   ['graphql-introspection', 'active', true],
@@ -344,7 +267,6 @@ const engineLogs = [
 }));
 
 const s16Routes: MockRoute[] = [
-  route('GET /engines', () => HttpResponse.json(page(engineRows))),
   // P4: schedules whose tool module runs on the engine, with both names joined.
   route('GET /schedules', ({ request }) => {
     const engineId = new URL(request.url).searchParams.get('engine_id');
@@ -358,17 +280,6 @@ const s16Routes: MockRoute[] = [
       .filter((s) => engineId === null || s.module?.runs_on === engineName)
       .map(({ module, ...s }) => ({ ...s, tool_module_name: module?.name ?? '' }));
     return HttpResponse.json(page(rows));
-  }),
-  route('GET /engines/:engine_id/workflows', () => HttpResponse.json(page(workflowRows))),
-  route('GET /engines/:engine_id/workflows/:name', ({ params }) => {
-    const found = workflowRows.find((w) => w.name === params.name);
-    return HttpResponse.json({
-      ...found,
-      steps: Array.from({ length: Number(found?.step_count ?? 0) }, (_, i) => ({
-        name: `step-${i + 1}`,
-        description: null,
-      })),
-    });
   }),
   route('GET /engines/:engine_id/modules', () => HttpResponse.json(page(moduleRows))),
   route('PATCH /engines/:engine_id/modules', async ({ request }) => {

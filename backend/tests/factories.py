@@ -7,7 +7,9 @@ without a fixture. Names use reserved documentation values only.
 import itertools
 import secrets
 import uuid
+import zipfile
 from datetime import UTC, datetime
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.crypto import encrypt
 from app.job.models import Job
 from app.program.models import Program, ProgramStatus, ProgramUser, Proxy
+from app.raw_output.models import RawOutput
 from app.scope.models import ScopeRule
 from app.tool_module.models import ToolModule
 from app.user.models import Worker, WorkerToken
@@ -147,3 +150,42 @@ async def make_job(
     await session.flush()
     await session.refresh(job)
     return job
+
+
+async def tool_module_named(session: AsyncSession, name: str) -> ToolModule:
+    """A tool module row seeded by migration, for example `osmedeus-general` (0005)."""
+    row = await session.scalar(select(ToolModule).where(ToolModule.name == name))
+    assert row is not None
+    return row
+
+
+async def make_raw_output(
+    session: AsyncSession,
+    job: Job,
+    *,
+    filename: str = "osmedeus.zip",
+    parse_status: str = "pending",
+) -> RawOutput:
+    """Metadata only: tests hand the parser the bytes, MinIO is not touched."""
+    row = RawOutput(
+        job_id=job.id,
+        filename=filename,
+        object_key=f"{job.program_id}/{job.id}/{filename}",
+        content_type="application/zip",
+        size_bytes=0,
+        sha256="0" * 64,
+        parse_status=parse_status,
+    )
+    session.add(row)
+    await session.flush()
+    await session.refresh(row)
+    return row
+
+
+def zip_directory(source: Path, target: Path) -> Path:
+    """Pack a sample raw output tree, as the runner packs a workspace."""
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(source.rglob("*")):
+            if path.is_file():
+                archive.write(path, path.relative_to(source).as_posix())
+    return target

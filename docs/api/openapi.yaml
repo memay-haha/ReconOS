@@ -651,7 +651,7 @@ paths:
   /engines:
     get:
       tags: [engine]
-      summary: "Danh sách engine, API key đã che. Thêm version, last_tested_at, last_test_ok, api_key_updated_at, has_llm_api_key, uptime_seconds, slots_used, slots_total, settings"
+      summary: "Danh sách engine, không có API key. Thêm version, last_tested_at, last_test_ok, api_key_updated_at, has_api_key, has_llm_api_key, uptime_seconds, slots_used, slots_total, settings"
       x-roles: [superadmin]
       parameters:
         - $ref: '#/components/parameters/limit'
@@ -665,8 +665,11 @@ paths:
       - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
     patch:
       tags: [engine]
-      summary: "Sửa kết nối engine, settings, llm_api_key chỉ ghi"
+      summary: "Sửa kết nối engine, settings, llm_api_key chỉ ghi. Bật engine chưa có base_url, API key: 422 engine_not_configured"
       x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/EngineUpdate'}}}
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
@@ -675,7 +678,7 @@ paths:
       - {name: engine_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [engine]
-      summary: "Kiểm tra kết nối engine, response version theo api/architecture.md"
+      summary: "Kiểm tra kết nối engine, response version theo api/architecture.md. Engine không trả lời hoặc từ chối API key: 502 engine_unavailable"
       x-roles: [superadmin]
       responses:
         '200': {$ref: '#/components/responses/Object'}
@@ -758,8 +761,11 @@ paths:
       - {name: key, in: path, required: true, schema: {type: string}}
     put:
       tags: [engine]
-      summary: "Đặt giá trị biến engine"
+      summary: "Đặt giá trị biến engine, chỉ ghi. key khớp ^[A-Za-z_][A-Za-z0-9_]{0,63}$"
       x-roles: [superadmin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [value], additionalProperties: false, properties: {value: {type: string, minLength: 1, maxLength: 4096, writeOnly: true}}}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -944,7 +950,7 @@ paths:
       - {name: raw_output_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
       tags: [raw_output]
-      summary: "Parse lại output thô"
+      summary: "Parse lại output thô. Không có parser hoặc program archived thì 409"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -1289,8 +1295,11 @@ paths:
         default: {$ref: '#/components/responses/Problem'}
     post:
       tags: [tag]
-      summary: "Tạo tag"
+      summary: "Tạo tag, trùng cặp key value thì 409"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/TagCreate'}}}
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
@@ -1307,16 +1316,22 @@ paths:
   /asset-tags:
     post:
       tags: [tag]
-      summary: "Gắn tag vào tài sản"
+      summary: "Gắn tag vào tài sản, đã có thì 409"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/AssetTagCreate'}}}
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
   /asset-tags/bulk-create:
     post:
       tags: [tag]
-      summary: "Gắn một tag cho nhiều tài sản, body tag_id, asset_type, ids"
+      summary: "Gắn một tag cho nhiều tài sản, tất cả hoặc không"
       x-roles: [superadmin, admin, user]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/AssetTagBulkCreate'}}}
       responses:
         '204': {description: Thành công}
         default: {$ref: '#/components/responses/Problem'}
@@ -2136,6 +2151,29 @@ components:
         output: {type: [string, 'null'], description: "Mỗi dòng bắt đầu bằng [OK], [WARN], [FAIL] hoặc [*]"}
         created_at: {type: string, format: date-time}
         finished_at: {type: [string, 'null'], format: date-time}
+    TagCreate:
+      type: object
+      required: [key, value]
+      properties:
+        key: {type: string, minLength: 1, maxLength: 100}
+        value: {type: string, minLength: 1, maxLength: 255}
+    AssetTagCreate:
+      type: object
+      required: [tag_id]
+      description: "Đúng một trong domain_id, ip_id, url_id, service_id"
+      properties:
+        tag_id: {type: string, format: uuid}
+        domain_id: {type: string, format: uuid}
+        ip_id: {type: string, format: uuid}
+        url_id: {type: string, format: uuid}
+        service_id: {type: string, format: uuid}
+    AssetTagBulkCreate:
+      type: object
+      required: [tag_id, asset_type, ids]
+      properties:
+        tag_id: {type: string, format: uuid}
+        asset_type: {type: string, enum: [domain, ip, url, service]}
+        ids: {type: array, minItems: 1, maxItems: 500, items: {type: string, format: uuid}}
     Ids:
       type: object
       required: [ids]
@@ -2260,6 +2298,15 @@ components:
         worker_id: {type: string, format: uuid}
         token: {type: string, description: "Chỉ trả một lần, CSDL lưu giá trị băm"}
         created_at: {type: string, format: date-time}
+    EngineUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        base_url: {type: string, format: uri}
+        api_key: {type: string, minLength: 1, maxLength: 4096, writeOnly: true}
+        is_enabled: {type: boolean}
+        settings: {type: object, description: "Khóa theo engine: schema.md, mục Cột jsonb có cấu trúc"}
+        llm_api_key: {type: string, minLength: 1, maxLength: 4096, writeOnly: true, description: "Chỉ Vigolium"}
     ToolModuleUpdate:
       type: object
       properties:

@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.9 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -65,13 +65,13 @@
 | Information disclosure | Mật khẩu nằm trong markup vì React sao giá trị ô có kiểm soát vào thuộc tính `value` | Ô mật khẩu để dạng không kiểm soát, đọc qua `ref`. Mutation đăng nhập đặt `gcTime: 0`: [security.md](../../.claude/rules/security.md) |
 | Information disclosure | Truy cập trực tiếp MinIO | MinIO chỉ trong vùng lõi, không mở bucket công khai. Tải file qua Backend API có kiểm tra quyền |
 | Information disclosure | Lỗi lộ chi tiết hệ thống | Phản hồi lỗi theo RFC 9457, không có stack trace, câu SQL |
-| Denial of service | File output thô vượt `upload_max_bytes`, gói nén nở lớn khi giải nén | Upload dạng stream, giới hạn kích thước. Parser đọc stream, giới hạn tổng dung lượng sau giải nén |
+| Denial of service | File output thô vượt `upload_max_bytes`, gói nén nở lớn khi giải nén | Upload dạng stream, giới hạn kích thước. Parser đọc stream, giới hạn tổng dung lượng sau giải nén 2 GiB tính theo byte đọc được chứ không theo header của gói, tối đa 100.000 mục, bỏ dòng dài quá 1 MiB |
 | Denial of service | Tạo job hàng loạt | Giới hạn số job đồng thời và tốc độ theo tool module, program |
 | Denial of service | Mất quyền quản trị tài khoản | Superadmin không đổi vai trò và không khóa chính mình: [authorization.md](authorization.md) |
 | Elevation of privilege | Người tạo tự duyệt job khai thác | Backend so người duyệt với người tạo, từ chối kể cả Superadmin |
 | Elevation of privilege | Nội dung từ mục tiêu chạy script trên UI | React escape mặc định. ❌ Không render HTML từ output thô. HTML trang trên S07 trả `text/plain` kèm `nosniff`, UI hiện dạng văn bản. CSP (Content Security Policy) chặn script ngoài |
 | Elevation of privilege | Công thức trong file CSV (Comma-Separated Values) xuất ra | Thêm `'` trước ô bắt đầu bằng `=`, `+`, `-`, `@` |
-| Elevation of privilege | Đường dẫn trong gói nén thoát ra ngoài | Parser đọc gói nén trong bộ nhớ hoặc thư mục tạm, bỏ mục có `..` hoặc đường dẫn tuyệt đối |
+| Elevation of privilege | Đường dẫn trong gói nén thoát ra ngoài | Parser không giải nén ra đĩa, chỉ mở mục có tên đúng lấy từ `manifest.json`. Mục có `..` hoặc đường dẫn tuyệt đối không bao giờ được mở |
 
 ### Kiểm soát công cụ khai thác
 

@@ -98,11 +98,14 @@ async def test_list_filters_and_pages(
     assert (await client.get(f"{API}/tool-modules", params={"group": "exploit"})).json()[
         "items"
     ] == []
-    assert (await client.get(f"{API}/tool-modules", params={"runs_on": "osmedeus"})).json()[
-        "items"
-    ] == []
+    on_engine = (await client.get(f"{API}/tool-modules", params={"runs_on": "osmedeus"})).json()
+    assert [item["name"] for item in on_engine["items"]] == [
+        "osmedeus-domain-extensive",
+        "osmedeus-domain-lite",
+        "osmedeus-general",
+    ]
     first = (await client.get(f"{API}/tool-modules", params={"limit": 1, "sort": "-name"})).json()
-    assert first["items"][0]["name"] == "nuclei"
+    assert first["items"][0]["name"] == "osmedeus-general"
     if first["next_cursor"]:
         after = await client.get(
             f"{API}/tool-modules",
@@ -212,7 +215,8 @@ async def test_tools_report_versions_from_heartbeats(
     row = next(item for item in body["items"] if item["name"] == "nuclei")
     assert row["status"] == "installed"
     assert {"worker_name": worker.name, "version": "3.3.0"} in row["installed"]
-    assert row["tool_modules"] == ["nuclei"]
+    # The Osmedeus workflows run nuclei inside the engine too.
+    assert row["tool_modules"] == ["nuclei", "osmedeus-domain-extensive", "osmedeus-general"]
 
 
 async def test_user_cannot_read_tools(client: AsyncClient, logged_in: Login) -> None:

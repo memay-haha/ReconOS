@@ -37,6 +37,8 @@ log = structlog.get_logger(__name__)
 class RunResult:
     status: FinishStatus
     reason: str | None = None
+    # Version the tool reported during the job; engines report it per job.
+    tool_version: str | None = None
 
 
 def tool_env() -> dict[str, str]:

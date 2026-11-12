@@ -56,7 +56,7 @@ describe('S17 against its mockup', () => {
     ]) {
       expect(words).not.toContain(banned);
     }
-    // Base URL, API key; LLM model, base URL and key (the provider is a select).
-    expect(container.querySelectorAll('input')).toHaveLength(5);
+    // Base URL, API key, enabled; LLM model, base URL and key (the provider is a select).
+    expect(container.querySelectorAll('input')).toHaveLength(6);
   });
 });
