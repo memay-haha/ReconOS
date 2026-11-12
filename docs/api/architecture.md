@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.26 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.27 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -251,8 +251,10 @@ Response tổng hợp:
 | `GET /programs/{program_id}/scope-rules` | `sort`: `created_at` mặc định, `-created_at` |
 | `POST /programs/{program_id}/scope-rules`, `POST …/scope-rules/bulk-create`, `PATCH /scope-rules/{scope_rule_id}` | Body `scope_type`, `rule_type`, `value`, `reason`. `value` lưu dạng chuẩn hóa: [business-flow.md](../architecture/business-flow.md). Giá trị không đọc được: `422 validation_error`, `errors` với `field` là `value` hoặc `items.<i>.value`, `code` là một trong `invalid_length`, `not_ascii`, `control_character`, `invalid_domain`, `invalid_ip`, `invalid_url`, `invalid_path`, `encoded_slash`, `unsupported_scheme`, `credentials_in_url`, `invalid_port`, `wildcard_target`, `wrong_rule_form`, `query_in_rule`. Out-of-Scope thiếu `reason`: `code` là `missing`. Trùng scope rule sau chuẩn hóa: `409 conflict`, `code` là `already_exists`. Program `archived`: `409 conflict`. `bulk-create` tối đa 200 phần tử, tất cả hoặc không |
 | `POST /programs/{program_id}/scope-check` | Body `targets`, tối đa 200. Trả `items` theo thứ tự body: `target`, `normalized_target`, `in_scope`, `verdict`, `rule_value`. `verdict` nhận `in_scope`, `invalid_target`, `no_in_scope_match`, `out_of_scope_match`. `rule_value`: In-Scope đầu tiên khớp, hoặc Out-of-Scope đã loại mục tiêu. Không ghi dữ liệu |
-| `POST /schedules/{schedule_id}/run` | Tạo ngay một job từ lịch, kiểm scope, không đổi `next_run_at` |
-| `GET /schedules` | Lịch của mọi program tài khoản xem được. Lọc `engine_id`: lịch có tool module chạy trên engine đó. Mỗi dòng thêm `program_name`, `tool_module_name`. Dùng cho tab Schedules của S16 |
+| `POST /programs/{program_id}/schedules`, `PATCH /schedules/{schedule_id}` | Body `tool_module_id` (chỉ khi tạo), `target` (tối đa 200), `params`, `interval_minutes` (15 đến 525.600), `is_enabled` (mặc định `true`). Trường lạ: `422`. `PATCH` gửi `null`: mã `null_not_allowed`. Kiểm như `POST /jobs`: `422` mã `not_found`, `tool_module_disabled`, `target_out_of_scope`, `invalid_target`, lỗi của `param_schema`. Tool module nhóm `exploit`: `422` mã `tool_module_not_schedulable`. Program `archived`: `409 conflict`, cả khi xóa. Response thêm `program_name`, `tool_module_name`. Quy tắc: [business-flow.md](../architecture/business-flow.md) |
+| `GET /programs/{program_id}/schedules` | `sort` chỉ nhận `-created_at`. Mỗi dòng thêm `program_name`, `tool_module_name` |
+| `POST /schedules/{schedule_id}/run` | Tạo ngay một job từ lịch, kiểm scope, không đổi `next_run_at`. Trả job như `GET /jobs/{job_id}`, `created_by` là người bấm. Program không `active`: `409` |
+| `GET /schedules` | Lịch của mọi program tài khoản xem được. Lọc `engine_id`: lịch có tool module chạy trên engine đó. Mỗi dòng thêm `program_name`, `tool_module_name`. `engine_id` không tồn tại: `404`. `sort` chỉ nhận `-created_at`. Dùng cho tab Schedules của S16 |
 | `DELETE /domains/{domain_id}`, `POST /domains/bulk-delete`, `DELETE /screenshots/{screenshot_id}`, `DELETE /users/{user_id}` | Xóa mềm. Superadmin không xóa chính mình |
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}`. Một ID không tồn tại hoặc không xem được: `404`, không program nào đổi |
 | `POST /programs/{program_id}/pause`, `resume`, `archive` | Chuyển trạng thái theo [business-flow.md](../architecture/business-flow.md). Trạng thái hiện tại không cho phép: `409 conflict` |

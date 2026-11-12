@@ -72,9 +72,9 @@ export function SchedulesPanel({ engine }: { engine: Engine }): ReactElement {
             <tbody className="divide-y divide-border">
               {schedules.data.items.map((s) => (
                 <tr key={s.id} className="hover:bg-surface-2">
-                  <td className={`${CELL} text-fg`}>{s.program_name ?? s.program_id}</td>
+                  <td className={`${CELL} text-fg`}>{s.program_name}</td>
                   <td className={`${CELL} font-body-code text-body-code text-primary`}>
-                    {s.tool_module_name ?? s.tool_module_id}
+                    {s.tool_module_name}
                   </td>
                   <td className={`${CELL} break-all font-body-code text-body-code text-fg-muted`}>
                     {s.target.join(', ')}
@@ -93,7 +93,7 @@ export function SchedulesPanel({ engine }: { engine: Engine }): ReactElement {
                     {s.last_run_at === null ? 'Never' : formatMoment(s.last_run_at)}
                   </td>
                   <td className={`${CELL} whitespace-nowrap font-body-code text-fg-muted`}>
-                    {s.next_run_at === null ? '-' : formatMoment(s.next_run_at)}
+                    {s.is_enabled ? formatMoment(s.next_run_at) : '-'}
                   </td>
                 </tr>
               ))}

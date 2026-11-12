@@ -544,49 +544,59 @@ paths:
     parameters:
       - {name: program_id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
-      tags: [job]
-      summary: "Danh sách lịch quét định kỳ"
+      tags: [schedule]
+      summary: "Danh sách lịch quét định kỳ của program, tạo gần nhất trước"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
+        - {name: sort, in: query, schema: {type: string, enum: [-created_at], default: -created_at}}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Schedule'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
     post:
-      tags: [job]
-      summary: "Tạo lịch quét định kỳ"
+      tags: [schedule]
+      summary: "Tạo lịch quét định kỳ. Kiểm như POST /jobs (G5). Tool module nhóm exploit: 422 tool_module_not_schedulable. Program archived: 409"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ScheduleCreate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Lịch vừa tạo
+          content: {application/json: {schema: {$ref: '#/components/schemas/Schedule'}}}
         default: {$ref: '#/components/responses/Problem'}
   /schedules:
     get:
-      tags: [job]
+      tags: [schedule]
       summary: "Lịch quét định kỳ của mọi program xem được, thêm program_name, tool_module_name"
       x-roles: [superadmin, admin, user]
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/cursor'
-        - $ref: '#/components/parameters/sort'
-        - {name: engine_id, in: query, schema: {type: string, format: uuid}, description: "Lịch có tool module chạy trên engine này"}
+        - {name: sort, in: query, schema: {type: string, enum: [-created_at], default: -created_at}}
+        - {name: engine_id, in: query, schema: {type: string, format: uuid}, description: "Lịch có tool module chạy trên engine này. Engine không tồn tại: 404"}
       responses:
-        '200': {$ref: '#/components/responses/Page'}
+        '200': {description: Một trang dữ liệu, content: {application/json: {schema: {allOf: [{$ref: '#/components/schemas/PageMeta'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/Schedule'}}}}]}}}}
         default: {$ref: '#/components/responses/Problem'}
   /schedules/{schedule_id}:
     parameters:
       - {name: schedule_id, in: path, required: true, schema: {type: string, format: uuid}}
     patch:
-      tags: [job]
-      summary: "Sửa, bật, tắt lịch quét định kỳ"
+      tags: [schedule]
+      summary: "Sửa, bật, tắt lịch quét định kỳ, chỉ gửi trường cần đổi. Đổi chu kỳ hoặc bật lại: next_run_at tính lại từ lúc sửa. Program archived: 409"
       x-roles: [superadmin, admin]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ScheduleUpdate'}}}
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Lịch sau khi sửa
+          content: {application/json: {schema: {$ref: '#/components/schemas/Schedule'}}}
         default: {$ref: '#/components/responses/Problem'}
     delete:
-      tags: [job]
-      summary: "Xóa lịch quét định kỳ"
+      tags: [schedule]
+      summary: "Xóa lịch quét định kỳ. Job đã sinh giữ lịch sử, schedule_id về null. Program archived: 409"
       x-roles: [superadmin, admin]
       responses:
         '204': {description: Thành công}
@@ -595,11 +605,13 @@ paths:
     parameters:
       - {name: schedule_id, in: path, required: true, schema: {type: string, format: uuid}}
     post:
-      tags: [job]
-      summary: "Tạo ngay một job từ lịch, kiểm scope, không đổi next_run_at"
+      tags: [schedule]
+      summary: "Tạo ngay một job từ lịch, kiểm scope, không đổi next_run_at. created_by là người bấm. Program không active: 409"
       x-roles: [superadmin, admin]
       responses:
-        '200': {$ref: '#/components/responses/Object'}
+        '200':
+          description: Job vừa tạo
+          content: {application/json: {schema: {$ref: '#/components/schemas/Job'}}}
         default: {$ref: '#/components/responses/Problem'}
   /tool-modules:
     get:
@@ -2332,6 +2344,41 @@ components:
         is_enabled: {type: boolean}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    ScheduleCreate:
+      type: object
+      required: [tool_module_id, target, interval_minutes]
+      additionalProperties: false
+      properties:
+        tool_module_id: {type: string, format: uuid}
+        target: {type: array, minItems: 1, maxItems: 200, items: {type: string}}
+        params: {type: object, description: "Khớp param_schema của tool module. default_params điền lúc chạy"}
+        interval_minutes: {type: integer, minimum: 15, maximum: 525600}
+        is_enabled: {type: boolean, default: true}
+    ScheduleUpdate:
+      type: object
+      additionalProperties: false
+      description: "Không đổi tool module. Gửi null: null_not_allowed"
+      properties:
+        target: {type: array, minItems: 1, maxItems: 200, items: {type: string}}
+        params: {type: object}
+        interval_minutes: {type: integer, minimum: 15, maximum: 525600}
+        is_enabled: {type: boolean}
+    Schedule:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        program_id: {type: string, format: uuid}
+        program_name: {type: string}
+        tool_module_id: {type: string, format: uuid}
+        tool_module_name: {type: string}
+        target: {type: array, items: {type: string}, description: "Dạng chuẩn đã qua kiểm tra scope"}
+        params: {type: object}
+        interval_minutes: {type: integer}
+        is_enabled: {type: boolean}
+        created_by: {type: [string, 'null'], format: uuid}
+        last_run_at: {type: [string, 'null'], format: date-time}
+        next_run_at: {type: string, format: date-time}
+        created_at: {type: string, format: date-time}
     JobCreate:
       type: object
       required: [program_id, tool_module_id, target]

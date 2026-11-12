@@ -23,6 +23,7 @@ from app.finding.models import Finding
 from app.job.models import Job
 from app.program.models import Program, ProgramUser, Proxy
 from app.raw_output.models import RawOutput
+from app.schedule.models import Schedule
 from app.scope.models import ScopeRule
 from app.tag.models import AssetTag, FindingTag, Tag
 from app.tool_module.models import ToolModule
@@ -46,6 +47,7 @@ __all__ = [
     "ProgramUser",
     "Proxy",
     "RawOutput",
+    "Schedule",
     "ScopeRule",
     "Service",
     "SystemSetting",

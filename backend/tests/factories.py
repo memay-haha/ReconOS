@@ -9,7 +9,7 @@ import json
 import secrets
 import uuid
 import zipfile
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import select
@@ -24,6 +24,7 @@ from app.job.models import Job
 from app.parser.nuclei import finding_from_line
 from app.program.models import Program, ProgramStatus, ProgramUser, Proxy
 from app.raw_output.models import RawOutput
+from app.schedule.models import Schedule
 from app.scope.models import ScopeRule
 from app.tool_module.models import ToolModule
 from app.user.models import Worker, WorkerToken
@@ -251,3 +252,30 @@ def nuclei_line(
         "matched-at": matched_at,
         **extra,
     }
+
+
+async def make_schedule(
+    session: AsyncSession,
+    program: Program,
+    tool_module: ToolModule,
+    *,
+    target: list[str] | None = None,
+    params: dict[str, object] | None = None,
+    interval_minutes: int = 60,
+    is_enabled: bool = True,
+    next_run_at: datetime | None = None,
+) -> Schedule:
+    """A schedule written as given, without the service's scope check."""
+    schedule = Schedule(
+        program_id=program.id,
+        tool_module_id=tool_module.id,
+        target=target or ["a.example.com"],
+        params=params or {},
+        interval_minutes=interval_minutes,
+        is_enabled=is_enabled,
+        next_run_at=next_run_at or datetime.now(UTC) + timedelta(minutes=interval_minutes),
+    )
+    session.add(schedule)
+    await session.flush()
+    await session.refresh(schedule)
+    return schedule

@@ -10,7 +10,7 @@ event and, when the dispatcher cares, a NOTIFY in the same transaction:
 Public API for the modules above (raw_output, dispatcher): `require_upload_job`,
 `dispatch_candidates`, `active_counts`, `recent_dispatch_counts`,
 `mark_dispatched`, `revert_dispatch`, `cancel_out_of_scope`, `fail_stale_jobs`,
-`cancel_jobs_of_archived_programs`.
+`cancel_jobs_of_archived_programs`. For schedule: `create_scheduled_job`.
 """
 
 import uuid
@@ -328,19 +328,31 @@ def _initial_status(spec: ToolModuleSpec) -> S:
     return S.PENDING_APPROVAL if spec.group is ToolGroup.EXPLOIT else S.QUEUED
 
 
-async def _checked_program(session: AsyncSession, actor: User, program_id: uuid.UUID) -> None:
+async def _checked_program(
+    session: AsyncSession, actor: User | None, program_id: uuid.UUID
+) -> None:
     # Locked, so an archive cannot slip in between this check and the insert.
-    program = await program_service.get_program(
-        session, viewer=actor, program_id=program_id, lock=True
-    )
-    if program.status != ProgramStatus.ACTIVE:
+    if actor is None:
+        # A schedule creates the job: no viewer, the schedule already belongs
+        # to the program.
+        status = await session.scalar(
+            select(_program.c.status).where(_program.c.id == program_id).with_for_update()
+        )
+        if status is None:
+            raise NotFoundError(detail="program does not exist")
+    else:
+        program = await program_service.get_program(
+            session, viewer=actor, program_id=program_id, lock=True
+        )
+        status = program.status
+    if status != ProgramStatus.ACTIVE:
         raise ConflictError(detail="jobs can only be created in an active program")
 
 
 async def _insert(
     session: AsyncSession,
     *,
-    actor: User,
+    actor: User | None,
     program_id: uuid.UUID,
     tool_module: ToolModule,
     spec: ToolModuleSpec,
@@ -349,6 +361,7 @@ async def _insert(
     priority: PriorityName,
     proxy_id: uuid.UUID | None,
     retry_of_job_id: uuid.UUID | None = None,
+    schedule_id: uuid.UUID | None = None,
 ) -> Job:
     status = _initial_status(spec)
     job = Job(
@@ -360,7 +373,9 @@ async def _insert(
         params=params,
         proxy_id=proxy_id,
         retry_of_job_id=retry_of_job_id,
-        created_by=actor.id,
+        schedule_id=schedule_id,
+        # NULL: Celery Beat created the job from a schedule (docs/data/schema.md).
+        created_by=actor.id if actor is not None else None,
     )
     session.add(job)
     await session.flush()
@@ -369,7 +384,7 @@ async def _insert(
     await audit.record(
         session,
         action="job_created",
-        user_id=actor.id,
+        user_id=actor.id if actor is not None else None,
         program_id=program_id,
         resource_type=RESOURCE,
         resource_id=job.id,
@@ -379,6 +394,7 @@ async def _insert(
             "priority": priority,
             "target_count": len(target),
             "retry_of_job_id": str(retry_of_job_id) if retry_of_job_id else None,
+            "schedule_id": str(schedule_id) if schedule_id else None,
         },
     )
     return job
@@ -387,13 +403,14 @@ async def _insert(
 async def create_jobs(
     session: AsyncSession,
     *,
-    actor: User,
+    actor: User | None,
     program_id: uuid.UUID,
     target: Sequence[str],
     items: Sequence[JobBulkItem],
     priority: PriorityName = "normal",
     proxy_id: uuid.UUID | None = None,
     field_prefix: str = "items",
+    schedule_id: uuid.UUID | None = None,
 ) -> list[Job]:
     """Create one job per item, all or nothing (G5).
 
@@ -435,6 +452,7 @@ async def create_jobs(
             params=params,
             priority=priority,
             proxy_id=proxy_id,
+            schedule_id=schedule_id,
         )
         for tool_module, spec, params in checked
     ]
@@ -463,6 +481,34 @@ async def create_job(
         priority=priority,
         proxy_id=proxy_id,
         field_prefix="",
+    )
+    return jobs[0]
+
+
+async def create_scheduled_job(
+    session: AsyncSession,
+    *,
+    actor: User | None,
+    schedule_id: uuid.UUID,
+    program_id: uuid.UUID,
+    tool_module_id: uuid.UUID,
+    target: Sequence[str],
+    params: dict[str, Any],
+) -> Job:
+    """A job from a schedule, behind every check a job from the API passes (G5).
+
+    `actor` is None when Celery Beat runs the schedule, so `created_by` stays
+    NULL; it is the account that pressed run on POST /schedules/{id}/run.
+    Priority `normal`: docs/architecture/business-flow.md.
+    """
+    jobs = await create_jobs(
+        session,
+        actor=actor,
+        program_id=program_id,
+        target=target,
+        items=[JobBulkItem(tool_module_id=tool_module_id, params=params)],
+        field_prefix="",
+        schedule_id=schedule_id,
     )
     return jobs[0]
 

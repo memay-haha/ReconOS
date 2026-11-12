@@ -1,6 +1,6 @@
 # Phân quyền
 
-> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 8: Phân quyền
 > Liên quan: [authentication.md](authentication.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [overview.md](../architecture/overview.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -59,7 +59,7 @@
 | Thêm, sửa, xóa scope rule | ✅ | ✅ | ❌ |
 | Gán, bỏ gán User vào program | ✅ | ✅ | ❌ |
 | Xem danh sách tài khoản rút gọn: `id`, `username`, `role` | ✅ | ✅ | ❌ |
-| Xem program, scope, tài sản, screenshot, tìm toàn cục | ✅ | ✅ | ✅ chỉ program được gán |
+| Xem program, scope, lịch quét định kỳ, tài sản, screenshot, tìm toàn cục | ✅ | ✅ | ✅ chỉ program được gán |
 | Xóa mềm domain, screenshot | ✅ | ✅ | ❌ |
 | Gắn, gỡ tag tài sản, kể cả hàng loạt | ✅ | ✅ | ✅ chỉ program được gán |
 | Tạo tag trong danh mục dùng chung | ✅ | ✅ | ✅ |
