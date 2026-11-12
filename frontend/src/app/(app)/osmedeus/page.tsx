@@ -3,6 +3,7 @@
 import { type ReactElement, useState } from 'react';
 
 import { type ScanPreset, SCAN_PRESETS, useEngineWorkflows } from '@/lib/engines';
+import { useSchedules } from '@/lib/schedules';
 
 import { ALERT_TEXT, STATE_TEXT } from '../system/modal';
 import { loadErrorText, NoAccess } from '../system/states';
@@ -24,6 +25,7 @@ import {
   WorkflowsPanel,
 } from './osmedeus-panels';
 import { ENGINE_PANEL, PanelTitle } from './panel-title';
+import { SchedulesPanel } from './schedules-panel';
 import { VariablesPanel } from './variables-panel';
 
 const DESCRIPTION =
@@ -35,12 +37,14 @@ function presetOf(settings: Readonly<Record<string, unknown>>): ScanPreset {
 }
 
 /** S16. Superadmin only. D3-B: connection, variables, Scan Tactics and the workflow index
- * read through the engine's REST. Environments, Database & Redis, Cloud & LLM and Schedules
- * are out (G1, tech-debt 8). */
+ * read through the engine's REST. Schedules lists ReconOS schedules on this engine (P4).
+ * Environments, Database & Redis and Cloud & LLM are out (G1, tech-debt 8). */
 export default function OsmedeusPage(): ReactElement {
   const { me, isSuperadmin, engines, engine, component } = useEngineScreen('osmedeus');
   const test = useEngineTest(engine);
   const workflows = useEngineWorkflows(engine?.id ?? null);
+  // First page only, for the tab count; the panel shares its cache.
+  const schedules = useSchedules(engine === undefined ? null : { engineId: engine.id });
   const [preset, setPreset] = useState<ScanPreset | null>(null);
 
   if (me.data !== undefined && !isSuperadmin) return <NoAccess what="Osmedeus" />;
@@ -100,6 +104,12 @@ export default function OsmedeusPage(): ReactElement {
                 icon: 'account_tree',
                 count: workflows.data?.total ?? null,
               },
+              {
+                id: 'schedules',
+                label: 'Schedules',
+                icon: 'event_repeat',
+                count: schedules.data?.total ?? null,
+              },
             ]}
           />
           <div className="grid grid-cols-1 items-start gap-space-lg xl:grid-cols-12">
@@ -141,6 +151,7 @@ export default function OsmedeusPage(): ReactElement {
             </div>
           </div>
           <WorkflowsPanel engine={engine} />
+          <SchedulesPanel engine={engine} />
         </>
       )}
     </div>

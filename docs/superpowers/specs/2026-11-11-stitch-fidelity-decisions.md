@@ -1,6 +1,6 @@
 # Sổ quyết định: dựng màn hình khớp mockup Stitch
 
-> Phiên bản: 1.0 · Ngày: 2026-11-11 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.1 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Liên quan: [frontend/CLAUDE.md](../../../frontend/CLAUDE.md), [sổ quyết định 2026-11-05](2026-11-05-fe-shell-b-e-decisions.md), [tech-debt.md](../../tech-debt.md), [ADR xóa mềm](../../decisions/adr-soft-delete.md)
 
 Người dùng duyệt 2026-11-12: chọn khuyến nghị cho mọi mục.
@@ -252,6 +252,18 @@ Vấn đề: S10 có Dispatch Now, Dispatch All, Cleanup, cột CPU load. S05 c�
 | `GET /system/health` | `components[].version`, `detail` [M33], `message`, `tools_installed` [M34], `fleet_load` [M24] |
 | `GET /engines` | `version`, `last_tested_at`, `last_test_ok`, `api_key_updated_at`, `slots_used`, `slots_total` [M24] |
 | `GET /tool-modules` | Danh sách: `enabled_count`, `disabled_count`, `disabled_names`, `group_counts`, `engines_bound` [M37], `installed_count` [M34]. Mỗi dòng: `title`, `description`, `runs_on`, `tools`, `output_types`, `last_job_at` [M22], `jobs_24h`, `finding_count` [N44], `engine_status`, `disabled_reason` [N46], `param_schema` [D7], `estimated_seconds` [M13] |
+
+## Quyết định bổ sung ngày 2026-11-12
+
+Người dùng chốt sau khi dựng xong:
+
+| # | Màn hình | Phần tử | Quyết định |
+|---|---|---|---|
+| P1 | S05 | "Estimated" khi chọn nhiều tool module | Lấy ước tính lớn nhất trong các tool module đã chọn, vì các job chạy song song. Mỗi tool module vẫn tính theo M13 |
+| P2 | S20 | Nút Sync Nuclei | Thay N49: nút "Re-scan" tạo lại job bằng đúng tool module đã tạo từng finding chọn, có kiểm scope. Không rẽ nhánh theo tên công cụ |
+| P3 | S08 | "100% active sync" trên thẻ Total Programs | `active_sync_ratio` của `GET /dashboard/summary`: program `active` có job `completed` trong 24 giờ chia tổng program `active` |
+| P4 | S16 | Tab Schedules | Liệt kê lịch của ReconOS có tool module chạy trên Osmedeus, qua `GET /schedules?engine_id=` |
+| P5 | S16 | Heartbeat Interval, Worker Pool Max | Bỏ: không phải khóa của `engine.settings` |
 
 ## Tài liệu mâu thuẫn
 

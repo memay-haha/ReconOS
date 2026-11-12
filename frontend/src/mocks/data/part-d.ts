@@ -22,6 +22,7 @@ function dayOffset(days: number): string {
 export const dashboardSummary: DashboardSummary = {
   programs: programs.length,
   programs_active: programs.filter((p) => p.status === 'active').length,
+  active_sync_ratio: 1,
   programs_new: 1,
   assets: { domain: 144, ip: 45, url: 332, service: 81 },
   assets_new: { domain: 11, ip: 4, url: 27, service: 3 },

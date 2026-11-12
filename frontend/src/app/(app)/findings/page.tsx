@@ -238,7 +238,7 @@ function FindingsScreen(): ReactElement {
     );
   };
 
-  /** N49: re-run the tool module that found each selected finding on its target, one job per
+  /** P2 (replaces N49): re-run the tool module that found each selected finding on its target, one job per
    * program and tool module. The backend checks scope for every target. */
   const rescan = async () => {
     const modules = new Map((toolModules.data?.items ?? []).map((m) => [m.name, m.id]));

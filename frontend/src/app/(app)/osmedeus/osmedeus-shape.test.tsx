@@ -2,9 +2,18 @@ import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ENGINE, VARIABLE, VIGOLIUM } from '../system/fixtures';
-import { dropEntry, mockupMain, type OutlineEntry, outline, rename } from '../system/shape-outline';
+import {
+  dropEntry,
+  insertAfter,
+  mockupMain,
+  type OutlineEntry,
+  outline,
+  rename,
+  section,
+} from '../system/shape-outline';
 import { json, page, renderScreen, stubApi } from '../system/test-api';
 import OsmedeusPage from './page';
+import { SCHEDULE_ROW } from './test-fixtures';
 
 /** The mockup pruned to what S16 builds, each change with its rule from frontend/CLAUDE.md. */
 function expected(): OutlineEntry[] {
@@ -27,6 +36,20 @@ function expected(): OutlineEntry[] {
     'D3-B: count from the engine',
   );
   // D3-B: Cluster Resource Overhead sits under the connection panel, as the mockup draws it.
+  e = insertAfter(
+    e,
+    null,
+    section('Schedules', [
+      'Program',
+      'Tool Module',
+      'Target',
+      'Interval',
+      'Status',
+      'Last Run',
+      'Next Run',
+    ]),
+    'P4: the Schedules tab opens a panel the mockup does not draw',
+  );
   return e;
 }
 
@@ -38,6 +61,7 @@ function render() {
       return json(
         page([{ name: 'general', kind: 'flow', step_count: 1, description: null, tags: [] }]),
       );
+    if (call.path === '/schedules?engine_id=e1') return json(page([SCHEDULE_ROW]));
     return undefined;
   });
   return renderScreen(<OsmedeusPage />);
@@ -50,6 +74,7 @@ describe('S16 against its mockup', () => {
     const { container } = render();
     await screen.findByText('GITHUB_TOKEN');
     await screen.findByText('general');
+    await screen.findByText('acme-bb');
     expect(outline(container.firstElementChild as Element)).toEqual(expected());
   });
 
@@ -64,7 +89,8 @@ describe('S16 against its mockup', () => {
       'Environments',
       'Database & Redis',
       'Cloud & LLM',
-      'Schedules',
+      'Heartbeat Interval',
+      'Worker Pool',
       'Open Folder',
       '/root/',
       'v4.5.1',

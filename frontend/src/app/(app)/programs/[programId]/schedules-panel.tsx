@@ -7,6 +7,7 @@ import { Pagination, useCursorStack } from '@/components/pagination';
 import { fieldErrorsOf } from '@/lib/api-client';
 import { formatMoment } from '@/lib/format-moment';
 import {
+  formatInterval,
   type Schedule,
   useCreateSchedule,
   useDeleteSchedule,
@@ -16,13 +17,7 @@ import {
 import type { ToolModule } from '@/lib/tool-modules';
 
 import { errorText } from '../error-text';
-import { ALERT, COUNT, DANGER_BUTTON, FIELD, LABEL, NOTE, PANEL, ROW_BUTTON, TD, TH } from '../ui';
-
-function every(minutes: number): string {
-  if (minutes % 1440 === 0) return `${COUNT.format(minutes / 1440)} d`;
-  if (minutes % 60 === 0) return `${COUNT.format(minutes / 60)} h`;
-  return `${COUNT.format(minutes)} min`;
-}
+import { ALERT, DANGER_BUTTON, FIELD, LABEL, NOTE, PANEL, ROW_BUTTON, TD, TH } from '../ui';
 
 function ScheduleForm({
   programId,
@@ -167,7 +162,7 @@ export function SchedulesPanel({
   toolModules: readonly ToolModule[];
 }): ReactElement {
   const { cursor, canGoBack, goNext, goBack } = useCursorStack();
-  const schedules = useSchedules(programId, cursor);
+  const schedules = useSchedules({ programId }, cursor);
   const moduleName = new Map(toolModules.map((m) => [m.id, m.name]));
 
   return (
@@ -202,7 +197,7 @@ export function SchedulesPanel({
                 <tr key={s.id}>
                   <td className={TD}>{moduleName.get(s.tool_module_id) ?? s.tool_module_id}</td>
                   <td className={`${TD} break-all font-body-code`}>{s.target.join(', ')}</td>
-                  <td className={TD}>{every(s.interval_minutes)}</td>
+                  <td className={TD}>{formatInterval(s.interval_minutes)}</td>
                   <td className={TD}>
                     {s.next_run_at === null ? '-' : formatMoment(s.next_run_at)}
                   </td>

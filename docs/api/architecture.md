@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.17 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.18 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -164,7 +164,7 @@ Response tổng hợp:
 
 | Endpoint | Trường |
 |---|---|
-| `GET /dashboard/summary` | Tham số `window`: `24h` mặc định, `7d`, `30d`. `programs`: số program xem được. `programs_active`: số program `active`. `programs_new`: số program tạo trong `window`. `assets`: số `domain`, `ip`, `url`, `service`. `assets_new`: cùng 4 khóa, đếm tài sản có `first_seen_at` trong `window`. `new_assets_daily`: 14 phần tử `date`, `domain`, `url`, `ip`, cũ trước, phần tử cuối là hôm nay. `top_programs`: tối đa 5 phần tử `id`, `name`, `domain_count`, giảm dần. `scope_coverage`: tỉ lệ domain `in_scope` trên tổng domain, `NULL` khi chưa có domain. `top_ports`: tối đa 5 phần tử `port`, `transport`, `name`, `count`, giảm dần theo số service. `top_service_name`: `name`, `ratio` của tên dịch vụ nhiều nhất, `NULL` khi chưa có service. `findings_by_severity`: như `finding_counts`. `confirmed_cve_findings_24h`. `jobs_by_status`: đủ 7 trạng thái job. `jobs_per_minute`. `workers_online` |
+| `GET /dashboard/summary` | Tham số `window`: `24h` mặc định, `7d`, `30d`. `programs`: số program xem được. `programs_active`: số program `active`. `active_sync_ratio`: số program `active` có job chuyển sang `completed` trong 24 giờ qua chia `programs_active`, `NULL` khi chưa có program `active`. `programs_new`: số program tạo trong `window`. `assets`: số `domain`, `ip`, `url`, `service`. `assets_new`: cùng 4 khóa, đếm tài sản có `first_seen_at` trong `window`. `new_assets_daily`: 14 phần tử `date`, `domain`, `url`, `ip`, cũ trước, phần tử cuối là hôm nay. `top_programs`: tối đa 5 phần tử `id`, `name`, `domain_count`, giảm dần. `scope_coverage`: tỉ lệ domain `in_scope` trên tổng domain, `NULL` khi chưa có domain. `top_ports`: tối đa 5 phần tử `port`, `transport`, `name`, `count`, giảm dần theo số service. `top_service_name`: `name`, `ratio` của tên dịch vụ nhiều nhất, `NULL` khi chưa có service. `findings_by_severity`: như `finding_counts`. `confirmed_cve_findings_24h`. `jobs_by_status`: đủ 7 trạng thái job. `jobs_per_minute`. `workers_online` |
 | `GET /dashboard/summary`, thêm | `assets_closed`: `service`, số service có `closed_at` trong `window`. `findings_near_sla`: số finding `confirmed` hoặc `reported` có tuổi quá `finding_sla_days` trừ 2 ngày |
 | `GET /dispatcher/status` | `last_heartbeat_at` của dispatcher, `queued_by_tool_module`, `queued_by_program`: object có khóa là ID tool module hoặc ID program, giá trị là số job `queued`. `status`: `ok`, `degraded`, `down` theo heartbeat. `queued_total`, `queue_capacity`, `workers_online`, `running_total`, `slot_capacity`, `jobs_per_minute`, `avg_wait_seconds`, `redis_used_bytes`, `last_dispatched_at`, `last_dispatched_tool_module` |
 | `GET /domains/summary` | Cùng bộ lọc như `GET /domains`. `total`, `in_scope`, `resolved`, `resolved_new_24h`, `unresolved`, `with_findings`, `with_critical`, `new_24h`, `new_daily_avg_7d` |
@@ -242,6 +242,7 @@ Response tổng hợp:
 | `POST /jobs`, `POST /jobs/bulk-create` | Body `program_id`, `target`, `priority` (`low`, `normal`, `high`, mặc định `normal`), `proxy_id`. `POST /jobs` thêm `tool_module_id`, `params`. `bulk-create` thêm `items`: mỗi phần tử `tool_module_id`, `params`. Kiểm scope, tham số từng job. `bulk-create` trả `items`: các job vừa tạo theo thứ tự của body |
 | `POST /jobs/{job_id}/prioritize`, `POST /dispatcher/wake`, `POST /jobs/cleanup`, `POST /jobs/bulk-retry` | Dispatch Now, Dispatch All, Cleanup, Retry Failed: [business-flow.md](../architecture/business-flow.md). `cleanup` trả số job đã hủy |
 | `POST /schedules/{schedule_id}/run` | Tạo ngay một job từ lịch, kiểm scope, không đổi `next_run_at` |
+| `GET /schedules` | Lịch của mọi program tài khoản xem được. Lọc `engine_id`: lịch có tool module chạy trên engine đó. Mỗi dòng thêm `program_name`, `tool_module_name`. Dùng cho tab Schedules của S16 |
 | `DELETE /domains/{domain_id}`, `POST /domains/bulk-delete`, `DELETE /screenshots/{screenshot_id}`, `DELETE /users/{user_id}` | Xóa mềm. Superadmin không xóa chính mình |
 | `POST /programs/bulk-pause`, `bulk-resume`, `bulk-archive`, `bulk-delete` | Như thao tác trên từng program. `bulk-delete` là xóa cứng như `DELETE /programs/{program_id}` |
 | `POST /users/{user_id}/revoke-sessions`, `POST /users/bulk-revoke-sessions` | Thu hồi mọi phiên của tài khoản. Với chính mình: giữ phiên đang gọi |

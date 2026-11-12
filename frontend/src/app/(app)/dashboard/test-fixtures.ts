@@ -4,6 +4,7 @@ import type { DashboardSummary } from '@/lib/dashboard';
 export const SUMMARY: DashboardSummary = {
   programs: 24,
   programs_active: 22,
+  active_sync_ratio: 1,
   programs_new: 2,
   assets: { domain: 14892, ip: 4105, url: 86410, service: 9842 },
   assets_new: { domain: 1204, ip: 88, url: 5320, service: 0 },

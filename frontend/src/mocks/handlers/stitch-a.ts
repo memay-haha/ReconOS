@@ -116,6 +116,7 @@ export const stitchARoutes: readonly MockRoute[] = [
     return HttpResponse.json({ items: q === '' ? [] : rows.slice(0, limit) });
   }),
   // Decision M3, M21: closed services and findings near their SLA join the summary.
+  // P3: `active_sync_ratio` comes from the shared summary, the same in every window.
   route('GET /dashboard/summary', ({ request }) => {
     const scale =
       { '24h': 1, '7d': 6, '30d': 21 }[new URL(request.url).searchParams.get('window') ?? '24h'] ??

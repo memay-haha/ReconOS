@@ -21,6 +21,7 @@ const SUMMARY = {
   assets_new: { domain: 418, ip: 0, url: 0, service: 0 },
   findings_by_severity: { critical: 29, high: 1, medium: 1, low: 0, info: 0 },
   findings_near_sla: 18,
+  active_sync_ratio: 0.917,
 };
 
 /** The screen's tiles read the dashboard summary; every test gets one. */
@@ -52,6 +53,7 @@ describe('S08 programs', () => {
     expect(await screen.findByText('4,321')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(await screen.findByText('+2 this month')).toBeInTheDocument();
+    expect(screen.getByText('92% active sync')).toBeInTheDocument();
     expect(screen.getByText('75.0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 paused')).toBeInTheDocument();
     expect(screen.getByText('+418 24h')).toBeInTheDocument();
@@ -63,6 +65,17 @@ describe('S08 programs', () => {
     expect(calls(fetchMock)).toEqual(
       expect.arrayContaining([`GET ${LIST}`, 'GET /dashboard/summary?window=30d']),
     );
+  });
+
+  it('shows a dash for active sync before the first active program', async () => {
+    const empty = { ...SUMMARY, active_sync_ratio: null };
+    stub({
+      [LIST]: page([]),
+      '/dashboard/summary?window=30d': empty,
+      '/dashboard/summary?window=24h': empty,
+    });
+    renderWithClient(<ProgramsPage />);
+    expect(await screen.findByText('– active sync')).toBeInTheDocument();
   });
 
   it('searches, hides programs without scope and says how many it shows', async () => {

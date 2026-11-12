@@ -16,6 +16,7 @@ import {
 } from '../system/test-api';
 import VigoliumPage from '../vigolium/page';
 import OsmedeusPage from './page';
+import { SCHEDULE_ROW } from './test-fixtures';
 
 function standard(call: Call): Response | undefined {
   if (call.method === 'GET' && call.path === '/engines?limit=200')
@@ -178,6 +179,84 @@ describe('S16 Osmedeus settings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Refresh Index' }));
     await vi.waitFor(() =>
       expect(paths(calls).filter((p) => p.startsWith('/engines/e1/workflows'))).toHaveLength(2),
+    );
+  });
+
+  it('lists the ReconOS schedules on this engine and counts them on the tab (P4)', async () => {
+    const calls = open('superadmin', (call) =>
+      call.path === '/schedules?engine_id=e1'
+        ? json(
+            page(
+              [
+                SCHEDULE_ROW,
+                {
+                  ...SCHEDULE_ROW,
+                  id: 's2',
+                  is_enabled: false,
+                  last_run_at: null,
+                  next_run_at: null,
+                },
+              ],
+              { total: 2 },
+            ),
+          )
+        : standard(call),
+    );
+    const panel = await screen.findByRole('region', { name: 'Engine schedules' });
+    expect(await within(panel).findAllByText('acme-bb')).toHaveLength(2);
+    const row = within(panel).getAllByRole('row')[1] as HTMLElement;
+    expect(within(row).getByText('osmedeus-domain-lite')).toBeInTheDocument();
+    expect(within(row).getByText('*.example.com')).toBeInTheDocument();
+    expect(within(row).getByText('6 h')).toBeInTheDocument();
+    expect(within(row).getByText('Enabled')).toBeInTheDocument();
+    expect(within(row).getByText('12/11/2026 08:30')).toBeInTheDocument();
+    expect(within(row).getByText('12/11/2026 14:30')).toBeInTheDocument();
+    const off = within(panel).getAllByRole('row')[2] as HTMLElement;
+    expect(within(off).getByText('Disabled')).toBeInTheDocument();
+    expect(within(off).getByText('Never')).toBeInTheDocument();
+    const tab = screen.getByRole('link', { name: /Schedules/ });
+    expect(tab).toHaveAttribute('href', '#schedules');
+    expect(tab).toHaveTextContent('2');
+    expect(paths(calls).filter((p) => p.startsWith('/schedules'))).toEqual([
+      '/schedules?engine_id=e1',
+    ]);
+  });
+
+  it('pages the schedules with the cursor, Previous and Next', async () => {
+    const calls = open('superadmin', (call) => {
+      if (call.path === '/schedules?engine_id=e1')
+        return json(page([SCHEDULE_ROW], { next_cursor: 'c2', total: 2 }));
+      if (call.path === '/schedules?engine_id=e1&cursor=c2')
+        return json(
+          page([{ ...SCHEDULE_ROW, id: 's2', program_name: 'globex-vdp' }], { total: 2 }),
+        );
+      return standard(call);
+    });
+    const panel = await screen.findByRole('region', { name: 'Engine schedules' });
+    await within(panel).findByText('acme-bb');
+    await userEvent.click(within(panel).getByRole('button', { name: /Next/ }));
+    expect(await within(panel).findByText('globex-vdp')).toBeInTheDocument();
+    expect(paths(calls)).toContain('/schedules?engine_id=e1&cursor=c2');
+    await userEvent.click(within(panel).getByRole('button', { name: /Previous/ }));
+    expect(await within(panel).findByText('acme-bb')).toBeInTheDocument();
+  });
+
+  it('says when no schedule runs on the engine', async () => {
+    open('superadmin', (call) =>
+      call.path === '/schedules?engine_id=e1' ? json(page([])) : standard(call),
+    );
+    expect(
+      await screen.findByText('No schedule runs a tool module on this engine.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows an error when the schedule list fails', async () => {
+    open('superadmin', (call) =>
+      call.path === '/schedules?engine_id=e1' ? problem(500, 'internal') : standard(call),
+    );
+    const panel = await screen.findByRole('region', { name: 'Engine schedules' });
+    expect(await within(panel).findByRole('alert')).toHaveTextContent(
+      'Could not load the schedule list.',
     );
   });
 

@@ -23,6 +23,9 @@ interface AssetCounts {
 export interface DashboardSummary {
   readonly programs: number;
   readonly programs_active: number;
+  /** `active` programs with a job `completed` in the last 24 hours over `programs_active`,
+   * 0 to 1, whatever the window (P3). null before the first `active` program. */
+  readonly active_sync_ratio: number | null;
   readonly programs_new: number;
   readonly assets: AssetCounts;
   readonly assets_new: AssetCounts;

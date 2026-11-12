@@ -491,6 +491,19 @@ paths:
       responses:
         '200': {$ref: '#/components/responses/Object'}
         default: {$ref: '#/components/responses/Problem'}
+  /schedules:
+    get:
+      tags: [job]
+      summary: "Lịch quét định kỳ của mọi program xem được, thêm program_name, tool_module_name"
+      x-roles: [superadmin, admin, user]
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/sort'
+        - {name: engine_id, in: query, schema: {type: string, format: uuid}, description: "Lịch có tool module chạy trên engine này"}
+      responses:
+        '200': {$ref: '#/components/responses/Page'}
+        default: {$ref: '#/components/responses/Problem'}
   /schedules/{schedule_id}:
     parameters:
       - {name: schedule_id, in: path, required: true, schema: {type: string, format: uuid}}

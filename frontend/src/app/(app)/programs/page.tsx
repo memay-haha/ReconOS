@@ -51,6 +51,14 @@ const SEARCH_FIELD =
 // Partial: a field the backend has not shipped yet must leave its tile empty, not crash it.
 type SummaryWithSla = Partial<DashboardSummary> & { readonly findings_near_sla?: number };
 
+/** "100% active sync" (P3): the 24-hour share of `active` programs, whatever the window.
+ * Absent (old backend) hides the figure; null (no `active` program yet) shows a dash. */
+function activeSync(summary: SummaryWithSla | undefined): string | null {
+  const ratio = summary?.active_sync_ratio;
+  if (ratio === undefined) return null;
+  return `${ratio === null ? '–' : `${Math.round(ratio * 100)}%`} active sync`;
+}
+
 function openFindings(summary: SummaryWithSla | undefined): Figure {
   if (summary === undefined) return undefined;
   const bySeverity = summary.findings_by_severity;
@@ -132,6 +140,7 @@ export default function ProgramsPage(): ReactElement {
           trendIcon="trending_up"
           trendTone="primary"
           footer="Registered programs"
+          footerValue={activeSync(daySummary)}
         />
         <StatTile
           label="Active In Scope"

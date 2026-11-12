@@ -205,7 +205,7 @@ function SeedFeeds({
   canManage: boolean;
   moduleNames: ReadonlyMap<string, string>;
 }): ReactElement {
-  const schedules = useSchedules(programId);
+  const schedules = useSchedules({ programId });
   const rows = schedules.data?.items ?? [];
   return (
     <section

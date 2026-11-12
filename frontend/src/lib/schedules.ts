@@ -27,17 +27,46 @@ export interface ScheduleBody {
   readonly is_enabled?: boolean;
 }
 
+const COUNT = new Intl.NumberFormat('en-US');
+
+/** "6 h", "1 d", "45 min" from `interval_minutes`. */
+export function formatInterval(minutes: number): string {
+  if (minutes % 1440 === 0) return `${COUNT.format(minutes / 1440)} d`;
+  if (minutes % 60 === 0) return `${COUNT.format(minutes / 60)} h`;
+  return `${COUNT.format(minutes)} min`;
+}
+
+/** `GET /schedules?engine_id=` adds both names to every row; `GET /programs/{id}/schedules`
+ * does not promise them. */
+export interface ScheduleRow extends Schedule {
+  readonly program_name?: string;
+  readonly tool_module_name?: string;
+}
+
+/** One program's schedules, or every schedule whose tool module runs on an engine (S16). */
+export type ScheduleFilter = { readonly programId: string } | { readonly engineId: string };
+
 export const scheduleKeys = {
   all: ['schedules'] as const,
-  list: (programId: string, cursor: string | null) =>
-    ['schedules', 'list', programId, cursor] as const,
+  list: (filter: ScheduleFilter | null, cursor: string | null) =>
+    ['schedules', 'list', filter, cursor] as const,
 };
 
-export function useSchedules(programId: string, cursor: string | null = null) {
+function schedulesPath(filter: ScheduleFilter, cursor: string | null): string {
+  return 'programId' in filter
+    ? withQuery(`/programs/${filter.programId}/schedules`, { cursor })
+    : withQuery('/schedules', { engine_id: filter.engineId, cursor });
+}
+
+/** `null` waits: S16 knows its engine id only after `GET /engines`. */
+export function useSchedules(filter: ScheduleFilter | null, cursor: string | null = null) {
   return useQuery({
-    queryKey: scheduleKeys.list(programId, cursor),
+    queryKey: scheduleKeys.list(filter, cursor),
     queryFn: () =>
-      apiRequest<Page<Schedule>>(withQuery(`/programs/${programId}/schedules`, { cursor })),
+      filter === null
+        ? Promise.reject(new Error('No schedule filter'))
+        : apiRequest<Page<ScheduleRow>>(schedulesPath(filter, cursor)),
+    enabled: filter !== null,
   });
 }
 
