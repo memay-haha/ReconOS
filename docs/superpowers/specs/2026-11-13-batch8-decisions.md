@@ -4,6 +4,8 @@
 
 Quyết định tự chọn khi dựng đợt 8 vì tài liệu chưa nói, chờ người dùng duyệt. Đặc tả đợt: [thiết kế thứ tự viết mã](2026-11-02-implementation-roadmap-design.md).
 
+Ngày 2026-11-13, vòng 2: đã chạy sqlmap 1.10.8 và dalfox 3.2.4 thật từ image worker trên lab cố ý có lỗ hổng, xác nhận B8-5 đến B8-11 đúng với công cụ thật, kể cả dalfox thoát mã 1 khi có finding (B8-10). Meta dalfox thật có thêm `target_summary`. Nợ 71 còn đường proxy và pipeline đầy đủ: nợ 97, 98. Chi tiết [sổ quyết định vòng 2](2026-11-13-real-tools-verification-decisions.md).
+
 | # | Vấn đề | Chọn | Lý do | Tài liệu đã sửa |
 |---|---|---|---|---|
 | B8-1 | `openapi.yaml` không có body cho `reject`, `status_reason` cần lý do | `status_reason` cố định `Rejected by approver.`, người từ chối ghi trong nhật ký `job_rejected` | `status_reason` chỉ chứa câu cố định, không lấy dữ liệu từ request. Nợ 72 | business-flow.md, api/architecture.md, openapi.yaml, tech-debt.md |

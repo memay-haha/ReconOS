@@ -4,6 +4,8 @@
 
 Quyết định agent tự chọn khi dựng tool module `gowitness`, bảng `screenshot`, S06 và S07 ở đợt 7. Căn cứ về gowitness lấy từ mã nguồn gowitness 3.2.2 (`pkg/models/models.go`, `pkg/runner/runner.go`, `pkg/runner/drivers/chromedp.go`, `cmd/scan.go`), chưa chạy công cụ thật: nợ 42, 67 trong [tech-debt.md](../../tech-debt.md). Tài liệu đã đồng bộ ghi ở cột Tài liệu.
 
+Ngày 2026-11-13, vòng 2: đã chạy gowitness 3.2.2 thật từ image worker trên lab, xác nhận S1, S4 đến S8, S13 đến S15 đúng với công cụ thật. Nợ 42, 67 đã đóng, nợ 65 xác nhận hành vi. Chi tiết [sổ quyết định vòng 2](2026-11-13-real-tools-verification-decisions.md).
+
 | # | Chỗ chưa có trong tài liệu hoặc mâu thuẫn | Chọn | Tài liệu |
 |---|---|---|---|
 | S1 | Tài liệu ghi HTML mỗi trang là một file output thô riêng. gowitness 3.2.2 chỉ ghi HTML trong trường `html` của dòng JSONL, không ghi file HTML. Worker tách HTML ra file là parse trong worker, trái G8 | `html_raw_output_id` trỏ tới `gowitness.jsonl`, nơi HTML nằm nguyên vẹn. Parser chép HTML vào cột mới `screenshot.html`, cắt ở 2 MiB, để `/html` không phải đọc lại JSONL từ MinIO | `schema.md`, `erd.mermaid`, `external-services.md` |
