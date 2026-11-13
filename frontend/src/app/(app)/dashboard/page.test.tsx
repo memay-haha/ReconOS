@@ -58,6 +58,7 @@ const CERT = {
   program_id: 'p1',
   finding_id: null,
   job_id: null,
+  schedule_id: null,
   created_at: '2026-11-04T00:30:00Z',
   is_read: false,
 };

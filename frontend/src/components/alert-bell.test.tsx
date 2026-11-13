@@ -13,6 +13,7 @@ const ALERT: Alert = {
   program_id: 'p1',
   finding_id: null,
   job_id: null,
+  schedule_id: null,
   created_at: '2026-11-04T02:30:00Z',
   is_read: false,
 };
@@ -54,6 +55,24 @@ describe('AlertBell', () => {
     expect(screen.getByRole('link', { name: /TLS certificate/ })).toHaveAttribute(
       'href',
       '/programs/p1',
+    );
+  });
+
+  it('labels a failed schedule run and links to the Scope tab that lists schedules', async () => {
+    wrap({
+      alerts: [
+        {
+          ...ALERT,
+          alert_type: 'schedule_run_failed',
+          message: 'Scheduled nuclei on a.example.com did not run: target_out_of_scope',
+          schedule_id: 's1',
+        },
+      ],
+    });
+    await userEvent.click(screen.getByRole('button', { name: /^Alerts/ }));
+    expect(screen.getByRole('link', { name: /Scheduled scan failed/ })).toHaveAttribute(
+      'href',
+      '/programs/p1?tab=scope',
     );
   });
 

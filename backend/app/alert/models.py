@@ -1,7 +1,7 @@
 """Tables owned by the alert module: docs/data/schema.md, section Finding và báo cáo.
 
-`alert` sits at tier 2, below `job` and `finding`, so its foreign keys to them
-are declared by table name and no model above is imported:
+`alert` sits at tier 2, below `job`, `finding` and `schedule`, so its foreign
+keys to them are declared by table name and no model above is imported:
 docs/architecture/dependency-graph.md.
 """
 
@@ -22,6 +22,7 @@ class AlertType(StrEnum):
     JOB_FAILED = "job_failed"
     ASSET_NEW = "asset_new"
     CERT_EXPIRING = "cert_expiring"
+    SCHEDULE_RUN_FAILED = "schedule_run_failed"
 
 
 # A job raises each of these at most once, so a retried transition or a second
@@ -66,6 +67,9 @@ class Alert(Base):
     )
     job_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("job.id", ondelete="CASCADE"), index=True
+    )
+    schedule_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")

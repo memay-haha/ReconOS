@@ -17,6 +17,7 @@ const TYPE: Record<AlertType, { icon: string; label: string; tone: string }> = {
   job_failed: { icon: 'error', label: 'Job failed', tone: 'text-crit' },
   asset_new: { icon: 'add_circle', label: 'New asset', tone: 'text-good' },
   cert_expiring: { icon: 'lock_clock', label: 'TLS certificate expiring', tone: 'text-warn' },
+  schedule_run_failed: { icon: 'event_busy', label: 'Scheduled scan failed', tone: 'text-crit' },
 };
 
 const ICON_BUTTON =
