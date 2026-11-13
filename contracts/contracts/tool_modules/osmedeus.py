@@ -42,6 +42,7 @@ def osmedeus_spec(
     group: ToolGroup,
     tools: tuple[str, ...],
     output_types: tuple[OutputType, ...],
+    accepts_wildcard: bool = False,
 ) -> ToolModuleSpec:
     """A tool module named `osmedeus-<flow>` that runs one Osmedeus flow."""
     return ToolModuleSpec(
@@ -53,6 +54,7 @@ def osmedeus_spec(
         tools=tools,
         output_types=output_types,
         params=OsmedeusParams,
+        accepts_wildcard=accepts_wildcard,
     )
 
 

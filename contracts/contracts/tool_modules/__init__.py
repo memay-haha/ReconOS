@@ -6,7 +6,15 @@ docs/architecture/modules.md
 
 from typing import Final
 
-from contracts.tool_modules.base import OutputType, ToolGroup, ToolModuleSpec, ToolParams
+from contracts.tool_modules.base import (
+    WILDCARD_PREFIX,
+    OutputType,
+    ToolGroup,
+    ToolModuleSpec,
+    ToolParams,
+    base_domain,
+    is_wildcard_target,
+)
 from contracts.tool_modules.dalfox import DALFOX, DalfoxParams
 from contracts.tool_modules.gowitness import GOWITNESS, GowitnessParams
 from contracts.tool_modules.nuclei import NUCLEI, NucleiParams
@@ -33,6 +41,7 @@ TOOL_MODULES: Final[dict[str, ToolModuleSpec]] = {
 
 __all__ = [
     "TOOL_MODULES",
+    "WILDCARD_PREFIX",
     "DalfoxParams",
     "GowitnessParams",
     "NucleiParams",
@@ -43,4 +52,6 @@ __all__ = [
     "ToolModuleSpec",
     "ToolParams",
     "VigoliumParams",
+    "base_domain",
+    "is_wildcard_target",
 ]

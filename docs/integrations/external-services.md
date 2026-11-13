@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -174,6 +174,7 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 **Lượt chạy Osmedeus:**
 
 - Mỗi mục tiêu của job một lượt chạy, chạy lần lượt theo thứ tự trong `job.target`.
+- Mục tiêu wildcard `*.b`: runner gửi domain gốc `b` trong trường `target` của lượt chạy, đổi bằng `base_domain` trong `contracts/tool_modules/base.py`. `runs[].target` trong `manifest.json` giữ nguyên `*.b`. Quy tắc scope: [business-flow.md](../architecture/business-flow.md).
 - Cô lập workspace theo job: `params.space_name` bằng `reconos-<job_id>-<n>`, `n` là thứ tự mục tiêu tính từ 1. Osmedeus v5.1.2 dùng `space_name` làm tên workspace thay cho tên sinh từ mục tiêu. Hai job cùng mục tiêu không ghi chung workspace (G8).
 - `params` gồm biến engine, rồi các khóa runner đặt sau cùng nên ghi đè biến trùng tên: `space_name`, `tactic` từ `engine.settings.scan_preset`, `threads_hold` khi tham số `threads` khác 0.
 - `scan_preset` đổi thành `tactic`: `quick` thành `aggressive`, `balanced` thành `default`, `deep` thành `gently`. `tactic` quyết định số luồng mặc định của mọi công cụ trong workflow.
@@ -254,6 +255,8 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 | `vigolium` | Quét mặc định | Module của Vigolium | Quét |
 
 - Kiểm tra tên flow bằng `osmedeus workflow list` trên engine server khi thêm tool module.
+- Cả 3 tool module Osmedeus khai báo `accepts_wildcard` vì flow mở đầu bằng subfinder trên domain gốc. Tool module thêm sau chỉ bật cờ này khi flow mở đầu bằng dò subdomain.
+- Worker kiểm tra lại trước khi chạy: tool module không có `accepts_wildcard` mà nhận mục tiêu wildcard thì gọi `finish` `failed`, lý do `tool module does not accept a wildcard target`, không chạy công cụ.
 - Tool module `osmedeus-<flow>` khai báo trong `contracts/tool_modules/osmedeus_<flow>.py` bằng `osmedeus_spec`, runner trong `workers/worker/runners/osmedeus_<flow>.py` kế thừa `OsmedeusRunner`. Tham số duy nhất: `threads` từ 0 đến 100, 0 giữ số luồng của `tactic`.
 - Thời hạn mặc định do migration ghi: `domain-lite` 240 phút, `general` 720 phút, `domain-extensive` 1.200 phút.
 - Parser Osmedeus đọc gói `osmedeus.zip` theo mục Gói `osmedeus.zip` ở trên. Mỗi workflow một file parser `osmedeus_<workflow>.py` kế thừa lớp chung `app/parser/osmedeus.py`.

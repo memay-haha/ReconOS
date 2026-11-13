@@ -14,6 +14,7 @@ from app.scope.matching import (
     ScopeType,
     UrlTarget,
     Verdict,
+    WildcardTarget,
     decide,
     parse_rule,
     parse_target,
@@ -221,8 +222,15 @@ INVALID_TARGETS = [
     "ex\x00ample.com",
     "ex\x7fample.com",
     "bücher.example",
-    "*.example.com",
     "*",
+    "*.",
+    "*example.com",
+    "**.example.com",
+    "*.*.example.com",
+    "a.*.example.com",
+    "*.198.51.100.7",
+    "*.example.123",
+    "*.-a.example.com",
     "example..com",
     ".example.com",
     "-a.example.com",
@@ -281,6 +289,8 @@ CANONICAL_TARGETS = [
     ("https://[2001:db8::1]:8443/x", "https://[2001:db8::1]:8443/x"),
     ("https://[::ffff:198.51.100.7]/", "https://198.51.100.7/"),
     ("https://example.com/%7euser/%3f", "https://example.com/~user/%3F"),
+    ("*.Example.COM.", "*.example.com"),
+    ("*.md", "*.md"),
 ]
 
 
@@ -293,6 +303,70 @@ def test_target_kinds() -> None:
     assert isinstance(parse_target("example.com"), DomainTarget)
     assert isinstance(parse_target("198.51.100.7"), NetworkTarget)
     assert isinstance(parse_target("https://example.com/"), UrlTarget)
+    assert parse_target("*.example.com") == WildcardTarget("example.com")
+
+
+# ------------------------------------------------------------ wildcard target
+
+WILDCARD_MATCH_CASES = [
+    # Only a wildcard rule over the same or a parent base holds every subdomain.
+    (W, "*.example.com", "*.example.com", True),
+    (W, "*.example.com", "*.a.example.com", True),
+    (W, "*.a.example.com", "*.example.com", False),
+    (W, "*.example.com", "*.example.org", False),
+    (W, "*.example.com", "*.badexample.com", False),
+    (W, "*.md", "*.carlevana.md", True),
+    # A domain, URL or CIDR rule names single hosts or addresses.
+    (D, "example.com", "*.example.com", False),
+    (D, "a.example.com", "*.example.com", False),
+    (U, "https://example.com/", "*.example.com", False),
+    (C, "0.0.0.0/0", "*.example.com", False),
+]
+
+
+@pytest.mark.parametrize(("rule_type", "value", "target", "expected"), WILDCARD_MATCH_CASES)
+def test_in_scope_rule_matches_wildcard_target(
+    rule_type: RuleType, value: str, target: str, expected: bool
+) -> None:
+    assert rule_matches(rule(rule_type, value), parse_target(target)) is expected
+
+
+WILDCARD_TOUCH_CASES = [
+    # Any excluded host of the run, the base domain included, refuses it.
+    (W, "*.example.com", "*.example.com", True),
+    (W, "*.a.example.com", "*.example.com", True),
+    (W, "*.example.com", "*.a.example.com", True),
+    (W, "*.example.org", "*.example.com", False),
+    (W, "*.badexample.com", "*.example.com", False),
+    (D, "example.com", "*.example.com", True),
+    (D, "admin.example.com", "*.example.com", True),
+    (D, "example.org", "*.example.com", False),
+    (D, "badexample.com", "*.example.com", False),
+    (D, "com", "*.example.com", False),
+    (U, "https://example.com/admin/", "*.example.com", True),
+    (U, "https://admin.example.com/", "*.example.com", True),
+    (U, "https://example.org/", "*.example.com", False),
+    (U, "https://198.51.100.7/", "*.example.com", False),
+    (C, "0.0.0.0/0", "*.example.com", False),
+]
+
+
+@pytest.mark.parametrize(("rule_type", "value", "target", "expected"), WILDCARD_TOUCH_CASES)
+def test_out_of_scope_rule_touches_wildcard_target(
+    rule_type: RuleType, value: str, target: str, expected: bool
+) -> None:
+    assert rule_touches(rule(rule_type, value, OUT), parse_target(target)) is expected
+
+
+def test_wildcard_target_decisions() -> None:
+    rules = [rule(W, "*.example.com"), rule(D, "admin.example.com", OUT)]
+    decision = decide(rules, "*.Example.com")
+    assert decision.verdict is Verdict.OUT_OF_SCOPE_MATCH
+    assert decision.target == "*.example.com"
+    assert decision.rule_value == "admin.example.com"
+    assert decide(rules, "*.a.example.com").allowed
+    assert decide(rules, "*.example.org").verdict is Verdict.NO_IN_SCOPE_MATCH
+    assert decide([rule(D, "example.com")], "*.example.com").verdict is (Verdict.NO_IN_SCOPE_MATCH)
 
 
 # ------------------------------------------------------------ rule values

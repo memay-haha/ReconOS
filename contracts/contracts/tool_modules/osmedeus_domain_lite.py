@@ -10,4 +10,6 @@ OSMEDEUS_DOMAIN_LITE = osmedeus_spec(
     group=ToolGroup.RECON,
     tools=("subfinder", "dnsx", "httpx"),
     output_types=(OutputType.DOMAIN, OutputType.IP, OutputType.URL),
+    # The flow starts with subfinder on the base domain.
+    accepts_wildcard=True,
 )

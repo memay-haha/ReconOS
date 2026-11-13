@@ -32,7 +32,10 @@ export interface RunScanRequest {
 
 /** A tool module as the dialog needs it: the list row of `GET /tool-modules` carries the
  * parameter allowlist. */
-export type ScanToolModule = ToolModule & { readonly param_schema?: ParamSchema };
+export type ScanToolModule = ToolModule & {
+  readonly param_schema?: ParamSchema;
+  readonly accepts_wildcard?: boolean;
+};
 
 function isNumeric(spec: ParamSpec): boolean {
   return spec.type === 'integer' || spec.type === 'number';
@@ -86,10 +89,16 @@ function Body({
   onClose,
 }: Omit<RunScanDialogProps, 'open'>): ReactElement {
   const enabled = toolModules.filter((m) => m.is_enabled);
-  const [toolModuleId, setToolModuleId] = useState(enabled[0]?.id ?? '');
+  // Wildcard targets (radar Run Scan) start on a tool module that takes them;
+  // the backend still decides: docs/architecture/business-flow.md.
+  const first =
+    (targets.some((t) => t.startsWith('*.'))
+      ? enabled.find((m) => m.accepts_wildcard === true)
+      : undefined) ?? enabled[0];
+  const [toolModuleId, setToolModuleId] = useState(first?.id ?? '');
   const [targetText, setTargetText] = useState(targets.join('\n'));
   const [priority, setPriority] = useState<JobPriority>('normal');
-  const [paramValues, setParamValues] = useState(() => initialParams(enabled[0]));
+  const [paramValues, setParamValues] = useState(() => initialParams(first));
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstRef = useRef<HTMLSelectElement>(null);
 

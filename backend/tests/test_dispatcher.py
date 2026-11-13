@@ -90,6 +90,15 @@ async def test_target_that_left_scope_is_cancelled_at_dispatch(
     assert job.status_reason == "Target no longer in scope at dispatch."
 
 
+async def test_wildcard_target_on_a_tool_module_without_it_is_cancelled_at_dispatch(
+    db_session: AsyncSession, program: Program, tool: ToolModule
+) -> None:
+    job = await make_job(db_session, program, tool, target=["*.a.example.com"])
+    assert await service.dispatch_round(db_session) == []
+    await db_session.refresh(job)
+    assert job.status == "cancelled"
+
+
 async def test_paused_program_and_disabled_tool_module_wait(
     db_session: AsyncSession, program: Program, tool: ToolModule
 ) -> None:

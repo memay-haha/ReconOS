@@ -20,7 +20,7 @@ const TEXT: ReadonlyMap<string, string> = new Map([
   ['unsupported_scheme', 'URL must start with http:// or https://.'],
   ['credentials_in_url', 'URL must not contain a user name or password.'],
   ['invalid_port', 'URL port is not valid.'],
-  ['wildcard_target', 'A target cannot be a wildcard.'],
+  ['wildcard_target', 'A wildcard target must look like *.example.com.'],
   ['wrong_rule_form', 'Value does not match the selected rule type.'],
   ['query_in_rule', 'A URL rule cannot contain a query or fragment.'],
   // Raised by backend/app/program/schemas.py and service.py
@@ -29,6 +29,8 @@ const TEXT: ReadonlyMap<string, string> = new Map([
     'proxy_url_invalid',
     'Enter a proxy URL like socks5://host:1080 or http://user:pass@host:3128, with no path.',
   ],
+  // Raised by backend/app/scope/service.py when the tool module cannot run a wildcard
+  ['target_type_not_supported', 'This tool module does not accept a wildcard target.'],
   ['null_not_allowed', 'This field cannot be empty.'],
   ['role_not_assignable', 'Only accounts with the User role are assigned to programs.'],
   ['not_found', 'The selected item no longer exists.'],

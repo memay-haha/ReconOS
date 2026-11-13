@@ -62,6 +62,9 @@ async def test_list_merges_code_and_row(
     assert set(row["param_schema"]["properties"]) >= {"severity", "rate", "threads"}
     assert row["param_schema"]["additionalProperties"] is False
     assert row["runs_on"] is None
+    assert row["accepts_wildcard"] is False
+    lite = next(item for item in body["items"] if item["name"] == "osmedeus-domain-lite")
+    assert lite["accepts_wildcard"] is True
     assert row["finding_count"] == 0
     assert body["group_counts"]["scan"] >= 1
     assert body["engines_bound"] == 0

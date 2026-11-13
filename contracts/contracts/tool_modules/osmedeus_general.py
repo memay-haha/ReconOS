@@ -16,4 +16,6 @@ OSMEDEUS_GENERAL = osmedeus_spec(
         OutputType.SERVICE,
         OutputType.FINDING,
     ),
+    # The flow starts with subfinder on the base domain.
+    accepts_wildcard=True,
 )

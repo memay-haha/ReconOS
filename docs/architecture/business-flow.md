@@ -1,6 +1,6 @@
 # Luồng nghiệp vụ
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 11: Luồng nghiệp vụ
 > Liên quan: [overview.md](overview.md), [modules.md](modules.md), [system.md](system.md), [authorization.md](../security/authorization.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -75,13 +75,27 @@ Mục tiêu hợp lệ khi khớp **ít nhất một** In-Scope và **không kh�
 - Mục tiêu domain không so khớp với scope rule dạng CIDR. ReconOS không phân giải DNS để kiểm tra scope.
 - Mục tiêu URL có host là IP khớp scope rule CIDR chứa IP đó.
 - Scope rule URL chỉ khớp mục tiêu URL. Mục tiêu domain, IP, CIDR không khớp scope rule URL, kể cả Out-of-Scope.
-- Mục tiêu hợp lệ có một trong 4 dạng: domain, IP, CIDR, URL `http` hoặc `https`. Dạng khác bị từ chối, không đoán.
+- Mục tiêu hợp lệ có một trong 5 dạng: domain, wildcard `*.<domain>`, IP, CIDR, URL `http` hoặc `https`. Dạng khác bị từ chối, không đoán.
+
+**Mục tiêu wildcard:** `*.b` là mọi subdomain của `b`, dùng cho job dò subdomain khi scope chỉ khai báo wildcard, ví dụ `*.example.com` mà không có `example.com`.
+
+| Scope rule | In-Scope khớp `*.b` | Out-of-Scope chạm `*.b` |
+|---|---|---|
+| Wildcard `*.a` | `b` bằng `a` hoặc là subdomain của `a` | `a` bằng `b`, nằm dưới `b`, hoặc `b` nằm dưới `a` |
+| Domain `a` | Không | `a` bằng `b` hoặc nằm dưới `b` |
+| URL | Không | Host bằng `b` hoặc nằm dưới `b` |
+| CIDR | Không | Không |
+
+- Out-of-Scope đọc như mục tiêu CIDR: một host bị loại trong tập là đủ để từ chối cả mục tiêu. Engine chạy từ domain gốc `b` rồi gửi request tới host tìm được, nên host Out-of-Scope không được nằm trong tập (G5).
+- Phần sau `*.` chuẩn hóa như domain. `*`, `*.`, `**.b`, `a.*.b`, `*.<IP>` là mục tiêu không đọc được: mã `invalid_target`.
+- Chỉ tool module khai báo `accepts_wildcard` nhận mục tiêu wildcard: các tool module Osmedeus mở đầu bằng subfinder. Tool module khác: `422 validation_error`, mã `target_type_not_supported`, khi tạo job, thử lại job, tạo và sửa lịch. Dispatcher gặp cặp này thì hủy job như mục tiêu ra khỏi scope.
+- Runner Osmedeus gửi domain gốc `b` cho engine. Runner khác nhận mục tiêu wildcard thì kết thúc job `failed`, không chạy công cụ. Domain gốc `b` không thuộc tập `*.b`, nhưng engine vẫn có thể gửi request tới `b`: [nợ 100](../tech-debt.md).
 
 **Chuẩn hóa trước khi so khớp:** backend lưu scope rule và mục tiêu job ở dạng chuẩn hóa, đúng chuỗi đã kiểm tra.
 
 | Thành phần | Quy tắc |
 |---|---|
-| Domain | Chữ thường, bỏ một dấu `.` cuối. Chỉ nhận ASCII: domain quốc tế nhập dạng punycode `xn--...`. Nhãn cuối toàn chữ số như `127.1`, `2130706433` bị từ chối vì trình phân giải đọc thành IP |
+| Domain, phần sau `*.` của wildcard | Chữ thường, bỏ một dấu `.` cuối. Chỉ nhận ASCII: domain quốc tế nhập dạng punycode `xn--...`. Nhãn cuối toàn chữ số như `127.1`, `2130706433` bị từ chối vì trình phân giải đọc thành IP |
 | IP, CIDR | IPv4-mapped IPv6 như `::ffff:198.51.100.7` so khớp như IPv4. CIDR có bit host như `198.51.100.7/24` bị từ chối. Từ chối IP kèm zone `%eth0` |
 | URL | Scheme, host chữ thường. Cổng mặc định 80, 443 khi không ghi. Đường dẫn: giải mã ký tự không dành riêng như `%61`, bỏ đoạn `.` và `..`. Từ chối URL có tài khoản `user@`, đường dẫn có `\`, `%2F`, `%5C`. Bỏ qua query và fragment khi so khớp. Scope rule URL không được có query, fragment |
 

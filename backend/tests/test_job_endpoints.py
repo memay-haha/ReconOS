@@ -13,7 +13,15 @@ from app.core.identity import User, UserRole
 from app.job.models import Job
 from app.program.models import Program, ProgramStatus
 from app.tool_module.models import ToolModule
-from tests.factories import assign, make_job, make_program, make_proxy, make_scope_rule, nuclei
+from tests.factories import (
+    assign,
+    make_job,
+    make_program,
+    make_proxy,
+    make_scope_rule,
+    nuclei,
+    tool_module_named,
+)
 
 API = "/api/v1"
 HEADERS = {"origin": "https://reconos.example.com", "sec-fetch-site": "same-origin"}
@@ -131,6 +139,53 @@ async def test_params_outside_the_schema_are_refused(
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
     assert {"field": field, "code": code} in response.json()["errors"]
+
+
+async def test_wildcard_target_runs_on_a_tool_module_that_takes_it(
+    client: AsyncClient, logged_in: Login, db_session: AsyncSession, program: Program
+) -> None:
+    await logged_in(UserRole.ADMIN)
+    tool = await tool_module_named(db_session, "osmedeus-domain-lite")
+    tool.is_enabled = True
+    response = await client.post(
+        f"{API}/jobs", json=_body(program, tool, target=["*.Shop.Example.com"]), headers=HEADERS
+    )
+    assert response.status_code == 200
+    assert response.json()["target"] == ["*.shop.example.com"]
+
+
+async def test_wildcard_target_is_refused_for_a_tool_module_without_it(
+    client: AsyncClient,
+    logged_in: Login,
+    db_session: AsyncSession,
+    program: Program,
+    tool: ToolModule,
+) -> None:
+    await logged_in(UserRole.ADMIN)
+    before = await _job_count(db_session)
+    response = await client.post(
+        f"{API}/jobs", json=_body(program, tool, target=["*.shop.example.com"]), headers=HEADERS
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "validation_error"
+    assert response.json()["errors"] == [
+        {"field": "target[0]", "code": "target_type_not_supported"}
+    ]
+    assert await _job_count(db_session) == before
+
+
+async def test_wildcard_target_touching_out_of_scope_is_refused(
+    client: AsyncClient, logged_in: Login, db_session: AsyncSession, program: Program
+) -> None:
+    """`*.example.com` would reach admin.example.com, an Out-of-Scope host (G5)."""
+    await logged_in(UserRole.ADMIN)
+    tool = await tool_module_named(db_session, "osmedeus-domain-lite")
+    tool.is_enabled = True
+    response = await client.post(
+        f"{API}/jobs", json=_body(program, tool, target=["*.example.com"]), headers=HEADERS
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "target_out_of_scope"
 
 
 async def test_disabled_tool_module_is_refused(

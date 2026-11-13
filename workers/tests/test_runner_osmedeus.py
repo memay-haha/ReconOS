@@ -241,6 +241,19 @@ def test_each_target_runs_in_its_own_workspace(tmp_path: Path) -> None:
     assert any(name.startswith("2/") for name in names)
 
 
+def test_wildcard_target_runs_the_flow_on_its_base_domain(tmp_path: Path) -> None:
+    engine = FakeEngine(statuses=["completed"])
+    job = _job(target=["*.example.com"])
+
+    result = _runner(engine).run(job, OsmedeusParams(), tmp_path, _continue)
+
+    assert result.status is FinishStatus.COMPLETED
+    assert engine.created[0]["target"] == "example.com"
+    manifest, _ = _manifest(tmp_path)
+    # The manifest keeps the job target as the scope check saw it.
+    assert [run.target for run in manifest.runs] == ["*.example.com"]
+
+
 def test_failed_run_fails_the_job_but_keeps_the_output(tmp_path: Path) -> None:
     result = _runner(FakeEngine(statuses=["failed"])).run(
         _job(), OsmedeusParams(), tmp_path, _continue

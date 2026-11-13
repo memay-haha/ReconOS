@@ -54,6 +54,15 @@ describe('RunScanDialog', () => {
     });
   });
 
+  it('starts wildcard targets on a tool module that accepts them', async () => {
+    const lite = { ...module('m3', 'osmedeus-domain-lite', 'recon'), accepts_wildcard: true };
+    const onSubmit = draw({ targets: ['*.example.com'], toolModules: [...MODULES, lite] });
+    await userEvent.click(screen.getByRole('button', { name: /create job/i }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ toolModuleId: 'm3', target: ['*.example.com'] }),
+    );
+  });
+
   it('sends the priority and the parameters the tool module declares (D7-A, D8)', async () => {
     const onSubmit = draw({
       toolModules: [

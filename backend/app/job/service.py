@@ -479,7 +479,13 @@ async def create_jobs(
         await program_service.require_job_proxy(
             session, program_id=program_id, proxy_id=proxy_id, field="proxy_id"
         )
-    canonical = await scope_service.require_in_scope(session, program_id, target)
+    canonical = await scope_service.require_in_scope(
+        session,
+        program_id,
+        target,
+        # One target list for every item: a wildcard needs every tool module to take it.
+        accepts_wildcard=all(spec.accepts_wildcard for _, spec, _ in checked),
+    )
     jobs = [
         await _insert(
             session,
@@ -593,7 +599,9 @@ async def retry_jobs(
             await program_service.require_job_proxy(
                 session, program_id=job.program_id, proxy_id=job.proxy_id, field="proxy_id"
             )
-        canonical = await scope_service.require_in_scope(session, job.program_id, job.target)
+        canonical = await scope_service.require_in_scope(
+            session, job.program_id, job.target, accepts_wildcard=spec.accepts_wildcard
+        )
         created.append(
             await _insert(
                 session,
