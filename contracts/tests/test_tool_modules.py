@@ -10,6 +10,8 @@ from contracts.tool_modules import (
     SqlmapParams,
     ToolGroup,
     VigoliumParams,
+    base_domain,
+    is_wildcard_target,
 )
 
 
@@ -191,3 +193,16 @@ def test_gowitness_is_a_recon_tool_module_with_bounded_params() -> None:
         "window_width",
         "window_height",
     }
+
+
+def test_only_subdomain_enumeration_flows_accept_a_wildcard_target() -> None:
+    accepting = {name for name, spec in TOOL_MODULES.items() if spec.accepts_wildcard}
+    assert accepting == {"osmedeus-domain-lite", "osmedeus-general", "osmedeus-domain-extensive"}
+    assert all(TOOL_MODULES[name].tools[0] == "subfinder" for name in accepting)
+
+
+def test_wildcard_target_helpers() -> None:
+    assert is_wildcard_target("*.example.com")
+    assert not is_wildcard_target("example.com")
+    assert base_domain("*.example.com") == "example.com"
+    assert base_domain("https://example.com/") == "https://example.com/"

@@ -1,6 +1,6 @@
 # Module
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 5: Phân rã module
 > Liên quan: [system.md](system.md), [directory-structure.md](directory-structure.md), [dependency-graph.md](dependency-graph.md)
 
@@ -64,7 +64,7 @@ Tool module bọc **một công cụ** hoặc **một workflow của engine**. M
 | Thành phần | Nơi khai báo | Nội dung |
 |---|---|---|
 | Schema tham số | `contracts/tool_modules/<tool module>.py` | Tham số cho phép, kiểu, miền giá trị. Dùng chung cho backend kiểm tra và runner dựng lệnh. `param_schema` của `GET /tool-modules` sinh từ model này |
-| Nhóm | `contracts/tool_modules/<tool module>.py` | Recon, quét hoặc khai thác. Cùng file khai báo tiêu đề, mô tả, `runs_on`, công cụ, `output_types` |
+| Nhóm | `contracts/tool_modules/<tool module>.py` | Recon, quét hoặc khai thác. Cùng file khai báo tiêu đề, mô tả, `runs_on`, công cụ, `output_types`, `accepts_wildcard` khi tool module nhận mục tiêu wildcard: [business-flow.md](business-flow.md) |
 | Runner | `workers/worker/runners/<tool module>.py` | Dựng lệnh từ tham số đã kiểm tra, chạy công cụ, thu output thô |
 | Parser | `backend/app/parser/<tool module>.py` | Đọc output thô, tạo tài sản và finding. Không bắt buộc: thiếu parser thì output thô vẫn lưu và tải về được (G8). Một lớp parser phục vụ được nhiều tool module cùng định dạng output thô, ví dụ `OsmedeusParser` cho 3 workflow Osmedeus |
 | Cấu hình | CSDL, Superadmin sửa trên S18 | Bật, tắt. Tham số mặc định trong miền của schema. Giới hạn số job đồng thời và tốc độ |

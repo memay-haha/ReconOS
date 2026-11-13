@@ -160,6 +160,17 @@ def test_params_outside_schema_fail_the_job_without_running(tmp_path: Path) -> N
     )
 
 
+def test_wildcard_target_fails_a_tool_module_without_it(tmp_path: Path) -> None:
+    job_id = uuid4()
+    client = FakeClient(_spec(job_id, target=["*.example.com"]), JobHeartbeatAction.CONTINUE)
+
+    _execute(client, job_id, tmp_path)
+
+    assert client.uploads == []
+    assert client.finished[0].status is FinishStatus.FAILED
+    assert client.finished[0].status_reason == "tool module does not accept a wildcard target"
+
+
 def test_unknown_tool_module_fails_the_job(tmp_path: Path) -> None:
     job_id = uuid4()
     client = FakeClient(_spec(job_id, tool_module="not-installed"), JobHeartbeatAction.CONTINUE)

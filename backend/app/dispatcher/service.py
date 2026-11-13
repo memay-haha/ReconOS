@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from app.core import realtime
 from app.core.config import Settings, get_settings
 from app.core.db import DISPATCHER_CHANNEL, get_engine, session_scope
-from app.core.errors import TargetOutOfScopeError
+from app.core.errors import TargetOutOfScopeError, ValidationFailedError
 from app.core.identity import User
 from app.core.security import program_visible_to
 from app.core.system_setting import get_int_setting
@@ -42,6 +42,7 @@ from app.tool_module.models import ToolModule
 from app.user import service as user_service
 from contracts.job_status import JobStatus as S
 from contracts.tasks import JOB_QUEUE_PREFIX, RUN_JOB_TASK, RunJobTask
+from contracts.tool_modules import TOOL_MODULES
 
 log = structlog.get_logger()
 
@@ -106,9 +107,15 @@ async def dispatch_round(session: AsyncSession, state: RoundState | None = None)
         limit = tool_module.rate_limit_per_minute
         if limit is not None and recent.get(tool_module.id, 0) >= limit:
             continue
+        spec = TOOL_MODULES.get(tool_module.name)
         try:
-            await scope_service.require_in_scope(session, job.program_id, job.target)
-        except TargetOutOfScopeError:
+            await scope_service.require_in_scope(
+                session,
+                job.program_id,
+                job.target,
+                accepts_wildcard=spec is not None and spec.accepts_wildcard,
+            )
+        except TargetOutOfScopeError, ValidationFailedError:
             await job_service.cancel_out_of_scope(session, job.id)
             log.warning("job_cancelled_out_of_scope", job_id=str(job.id))
             continue

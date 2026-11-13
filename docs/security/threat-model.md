@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -80,7 +80,7 @@
 ### Kiểm soát công cụ khai thác
 
 1. Job của tool module nhóm khai thác vào trạng thái `pending_approval`, cần người thứ hai duyệt: [authorization.md](authorization.md).
-2. Backend kiểm tra scope khi tạo job, dispatcher kiểm tra lại khi giao job: [business-flow.md](../architecture/business-flow.md).
+2. Backend kiểm tra scope khi tạo job, dispatcher kiểm tra lại khi giao job: [business-flow.md](../architecture/business-flow.md). Mục tiêu wildcard bị từ chối khi bất kỳ Out-of-Scope nào chạm tập subdomain hoặc domain gốc của nó, và chỉ chạy trên tool module dò subdomain có `accepts_wildcard`.
 3. Tham số chỉ trong allowlist của schema, ❌ không có tham số tự do: [modules.md](../architecture/modules.md).
 4. Backend ghi nhật ký thao tác ở mọi bước tạo, duyệt, từ chối, hủy.
 
@@ -94,6 +94,7 @@
 | Phiên bản ReconOS và tên node hiện trên S01 cho người chưa đăng nhập | Giúp người vận hành nhận đúng môi trường. Không có trạng thái nội bộ, giá trị cố định lúc build |
 | Backend API gọi REST của engine để đọc workflow, native module | `engine.base_url` chỉ Superadmin sửa, mọi lần sửa ghi nhật ký thao tác. Engine nằm trong vùng worker |
 | Engine server tự giữ dữ liệu lượt chạy trong CSDL riêng | Engine nằm trong vùng worker. Dọn dữ liệu engine theo [deployment.md](../ops/deployment.md) |
+| Job mục tiêu wildcard `*.b` có thể gửi request tới domain gốc `b` dù `b` không In-Scope | Engine chạy flow từ domain gốc, ReconOS không lọc host bên trong flow. Out-of-Scope chạm `b` thì job bị từ chối: [tech-debt.md](../tech-debt.md) nợ 100 |
 | Chưa có MFA (Multi-Factor Authentication) | Ghi trong [tech-debt.md](../tech-debt.md) và [roadmap.md](../roadmap.md) |
 
 - Quy tắc viết mã rút từ file này: [security.md](../../.claude/rules/security.md).

@@ -6,6 +6,7 @@ inside that range (S18).
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Final
 
 from pydantic import BaseModel, ConfigDict
 
@@ -45,3 +46,23 @@ class ToolModuleSpec:
     output_types: tuple[OutputType, ...]
     # `param_schema` of GET /tool-modules is params.model_json_schema().
     params: type[ToolParams]
+    # Takes a wildcard job target `*.<domain>`: only flows that start from
+    # subdomain enumeration, which read the base domain and never probe the
+    # wildcard itself. docs/architecture/business-flow.md, scope check.
+    accepts_wildcard: bool = False
+
+
+WILDCARD_PREFIX: Final = "*."
+
+
+def is_wildcard_target(target: str) -> bool:
+    """A wildcard job target, `*.<domain>`, as the backend stores it after the scope check."""
+    return target.startswith(WILDCARD_PREFIX)
+
+
+def base_domain(target: str) -> str:
+    """The domain a tool receives for a target: `*.example.com` gives `example.com`.
+
+    Any other target is returned unchanged.
+    """
+    return target.removeprefix(WILDCARD_PREFIX)

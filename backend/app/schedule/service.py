@@ -178,13 +178,18 @@ def _schedulable(spec: ToolModuleSpec, *, field: str) -> None:
         )
 
 
-def _checked_params(tool_module: ToolModule, params: dict[str, Any]) -> None:
+def _spec(tool_module: ToolModule) -> ToolModuleSpec:
     spec = tool_module_service.spec_of(tool_module.name)
     if spec is None:
         raise ValidationFailedError(
             detail="tool module does not exist",
             errors=[{"field": "tool_module_id", "code": "not_found"}],
         )
+    return spec
+
+
+def _checked_params(tool_module: ToolModule, params: dict[str, Any]) -> None:
+    spec = _spec(tool_module)
     tool_module_service.validate_params(spec, tool_module.default_params, params, field="params")
 
 
@@ -214,7 +219,9 @@ async def create_schedule(
     )
     _schedulable(spec, field="tool_module_id")
     tool_module_service.validate_params(spec, tool_module.default_params, params, field="params")
-    canonical = await scope_service.require_in_scope(session, program.id, target)
+    canonical = await scope_service.require_in_scope(
+        session, program.id, target, accepts_wildcard=spec.accepts_wildcard
+    )
     schedule = Schedule(
         program_id=program.id,
         tool_module_id=tool_module.id,
@@ -263,13 +270,16 @@ async def update_schedule(
     now: the next run is one interval away.
     """
     schedule = await _writable_schedule(session, actor, schedule_id)
+    tool_module = await tool_module_service.get_tool_module(session, schedule.tool_module_id)
     if "params" in fields:
-        tool_module = await tool_module_service.get_tool_module(session, schedule.tool_module_id)
         _checked_params(tool_module, fields["params"])
         schedule.params = fields["params"]
     if "target" in fields:
         schedule.target = await scope_service.require_in_scope(
-            session, schedule.program_id, fields["target"]
+            session,
+            schedule.program_id,
+            fields["target"],
+            accepts_wildcard=_spec(tool_module).accepts_wildcard,
         )
     # The operator changed the schedule: its next refusal opens a new streak and alerts.
     schedule.failing_since = None

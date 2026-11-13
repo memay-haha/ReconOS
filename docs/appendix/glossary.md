@@ -1,6 +1,6 @@
 # ReconOS: Thuật ngữ
 
-> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.15 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 27: Phụ lục
 > Liên quan: [overview.md](../architecture/overview.md), [documentation.md](../../.claude/rules/documentation.md)
 
@@ -17,8 +17,8 @@
 | Scope rule | Dòng trong scope, xác định một giá trị được quét hoặc bị loại trừ. Có loại In-Scope hoặc Out-of-Scope. Dạng giá trị: domain, wildcard, CIDR (Classless Inter-Domain Routing), URL. | Tài sản. | `scope_rule` |
 | In-Scope | Loại scope rule cho phép tạo job trên mục tiêu khớp. | | `in_scope` |
 | Out-of-Scope | Loại scope rule loại trừ mục tiêu khớp, kèm lý do. Không tạo job cho mục tiêu khớp Out-of-Scope, kể cả khi mục tiêu khớp In-Scope. | | `out_of_scope` |
-| Wildcard | Giá trị scope rule dạng `*.example.com`. | Tài sản domain. | `wildcard` |
-| Mục tiêu | Giá trị đầu vào của một job: domain, IP, URL, CIDR. | Tài sản: mục tiêu là đầu vào của job, tài sản là dữ liệu đã lưu. | `target` |
+| Wildcard | Giá trị scope rule hoặc mục tiêu job dạng `*.example.com`: mọi subdomain của `example.com`, không gồm `example.com`. Mục tiêu wildcard chỉ chạy trên tool module có `accepts_wildcard`. | Tài sản domain. | `wildcard` |
+| Mục tiêu | Giá trị đầu vào của một job: domain, wildcard, IP, URL, CIDR. | Tài sản: mục tiêu là đầu vào của job, tài sản là dữ liệu đã lưu. | `target` |
 | Proxy | Địa chỉ proxy khai báo theo program, công cụ gửi lưu lượng của job qua proxy này. Lưu và che như thông tin xác thực. | Reverse proxy của ReconOS. | `proxy` |
 | Lịch quét định kỳ | Cấu hình tạo job lặp lại cho một program: tool module, mục tiêu, tham số, chu kỳ. | Celery Beat: Beat chỉ đẩy task vào queue `schedule`. | `schedule` |
 | Lưu trữ program | Đưa program sang trạng thái `archived`: ẩn khỏi danh sách, không tạo job, dữ liệu chỉ đọc. | Lưu output thô. Xóa cứng program. | `archived` |

@@ -28,6 +28,7 @@ const MODULES = [
   moduleRow('t2', 'nuclei', 'scan', true, {
     title: 'Template Scan',
     output_types: ['finding'],
+    accepts_wildcard: false,
     finding_count: 790,
     param_schema: THREADS_RATE,
   }),
@@ -36,6 +37,7 @@ const MODULES = [
     runs_on: 'osmedeus',
     tools: ['subfinder', 'amass'],
     output_types: ['domain', 'ip'],
+    accepts_wildcard: false,
     jobs_24h: 482,
     engine_status: 'ok',
     last_job_at: new Date(Date.now() - 18 * 60_000).toISOString(),

@@ -186,6 +186,7 @@ async def _response(
         runs_on=spec.runs_on,
         tools=list(spec.tools),
         output_types=list(spec.output_types),
+        accepts_wildcard=spec.accepts_wildcard,
         param_schema=spec.params.model_json_schema(),
         last_job_at=last_job_at,
         jobs_24h=jobs_24h,

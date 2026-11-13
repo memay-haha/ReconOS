@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict
 
 from contracts.job_status import FinishStatus, JobHeartbeatAction
 from contracts.tasks import EngineSpec, JobSpec
-from contracts.tool_modules import OsmedeusParams, ToolParams
+from contracts.tool_modules import OsmedeusParams, ToolParams, base_domain
 from contracts.tool_modules.osmedeus import (
     ENGINE,
     MANIFEST_FILENAME,
@@ -316,7 +316,8 @@ class OsmedeusRunner(Runner):
                     break
                 body = {
                     "flow": flow,
-                    "target": target,
+                    # A wildcard target runs the flow on its base domain.
+                    "target": base_domain(target),
                     "params": self.run_params(engine, params, workspace),
                     "timeout": max(1, math.ceil(remaining / 60)),
                 }

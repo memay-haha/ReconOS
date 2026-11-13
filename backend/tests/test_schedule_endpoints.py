@@ -112,6 +112,7 @@ async def test_user_cannot_create_schedule(
     [
         ({"target": ["admin.example.com"]}, "target[0]", "target_out_of_scope"),
         ({"target": ["a.example.org"]}, "target[0]", "target_out_of_scope"),
+        ({"target": ["*.shop.example.com"]}, "target[0]", "target_type_not_supported"),
         ({"params": {"os_shell": True}}, "params.os_shell", "extra_forbidden"),
         ({"interval_minutes": 5}, "interval_minutes", "greater_than_equal"),
         ({"interval_minutes": 525_601}, "interval_minutes", "less_than_equal"),
@@ -339,6 +340,11 @@ async def test_patch_rechecks_scope_and_params(
     )
     assert null.status_code == 422
     assert null.json()["errors"][0]["code"] == "null_not_allowed"
+    wildcard = await client.patch(
+        f"{API}/schedules/{schedule.id}", json={"target": ["*.shop.example.com"]}, headers=HEADERS
+    )
+    assert wildcard.status_code == 422
+    assert wildcard.json()["errors"][0]["code"] == "target_type_not_supported"
 
 
 async def test_patch_disable_then_enable(

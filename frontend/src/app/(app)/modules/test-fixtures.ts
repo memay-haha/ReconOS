@@ -15,6 +15,7 @@ export function moduleRow(
     runs_on: null,
     tools: [name],
     output_types: ['url'],
+    accepts_wildcard: false,
     param_schema: {},
     last_job_at: null,
     jobs_24h: 3,

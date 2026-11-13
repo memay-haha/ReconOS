@@ -29,6 +29,7 @@ class ToolModuleResponse(BaseModel):
     runs_on: str | None
     tools: list[str]
     output_types: list[OutputType]
+    accepts_wildcard: bool
     param_schema: dict[str, Any]
     last_job_at: datetime | None
     jobs_24h: int

@@ -58,6 +58,7 @@ from app.scope.schemas import (
     ScopeRuleSort,
     ScopeRuleUpdateRequest,
 )
+from contracts.tool_modules import is_wildcard_target
 
 log = structlog.get_logger()
 
@@ -121,7 +122,12 @@ async def decide_target(session: AsyncSession, program_id: uuid.UUID, target: st
 
 
 async def require_in_scope(
-    session: AsyncSession, program_id: uuid.UUID, targets: Sequence[str], *, field: str = "target"
+    session: AsyncSession,
+    program_id: uuid.UUID,
+    targets: Sequence[str],
+    *,
+    accepts_wildcard: bool,
+    field: str = "target",
 ) -> list[str]:
     """Return the canonical form of every target, or refuse them all (G5).
 
@@ -129,6 +135,9 @@ async def require_in_scope(
     before it hands one out. One refused target refuses the whole call, so a
     batch is never half created. Store the returned form, not the input: it
     is exactly what was checked.
+
+    `accepts_wildcard` comes from the tool module: a wildcard target given to
+    a tool module without it is refused with `target_type_not_supported`.
     """
     rules = await load_rules(session, program_id)
     decisions = [decide(rules, target) for target in targets]
@@ -144,13 +153,24 @@ async def require_in_scope(
     ]
     if errors or not decisions:
         raise TargetOutOfScopeError(detail=_refusal_detail(decisions), errors=errors or None)
-    return [str(decision.target) for decision in decisions]
+    canonical = [str(decision.target) for decision in decisions]
+    if not accepts_wildcard:
+        unsupported: list[FieldError] = [
+            {"field": f"{field}[{index}]", "code": "target_type_not_supported"}
+            for index, target in enumerate(canonical)
+            if is_wildcard_target(target)
+        ]
+        if unsupported:
+            raise ValidationFailedError(
+                detail="the tool module does not accept a wildcard target", errors=unsupported
+            )
+    return canonical
 
 
 def _refusal_detail(decisions: Sequence[ScopeDecision]) -> str:
     for decision in decisions:
         if decision.verdict is Verdict.INVALID_TARGET:
-            return "target is not a valid domain, IP, CIDR or http(s) URL"
+            return "target is not a valid domain, wildcard, IP, CIDR or http(s) URL"
         if decision.verdict is Verdict.OUT_OF_SCOPE_MATCH:
             return f"{decision.target} matches an out-of-scope rule"
         if decision.verdict is Verdict.NO_IN_SCOPE_MATCH:

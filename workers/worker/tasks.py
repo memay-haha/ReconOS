@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from contracts.job_status import FinishStatus, JobFinish
 from contracts.tasks import RUN_JOB_TASK, JobSpec, RunJobTask
+from contracts.tool_modules import is_wildcard_target
 from contracts.worker import ToolVersion
 from worker.celery_app import app, runtime
 from worker.client import BackendClient, BackendError, JobConflictError
@@ -37,6 +38,10 @@ def _run(job: JobSpec, client: BackendClient, workdir: Path) -> RunResult:
         params = runner_cls.check_params(job.params)
     except ValidationError:
         return RunResult(FinishStatus.FAILED, "job parameters do not match the tool module schema")
+    # The backend refuses this pairing at creation and dispatch; a tool given
+    # `*.example.com` literally would fail in its own, less clear way.
+    if not runner_cls.spec().accepts_wildcard and any(map(is_wildcard_target, job.target)):
+        return RunResult(FinishStatus.FAILED, "tool module does not accept a wildcard target")
     runner = runner_cls()
     result = runner.run(job, params, workdir, lambda: client.job_heartbeat(job.job_id).action)
     for path in runner.raw_output_paths(workdir):

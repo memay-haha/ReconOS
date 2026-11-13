@@ -52,6 +52,8 @@ export interface ToolModuleRow extends ToolModule {
   readonly runs_on: string | null;
   readonly tools: readonly string[];
   readonly output_types: readonly string[];
+  /** Takes a wildcard target `*.example.com`: docs/architecture/business-flow.md. */
+  readonly accepts_wildcard: boolean;
   readonly param_schema: ParamSchema;
   readonly last_job_at: string | null;
   readonly jobs_24h: number;
