@@ -56,7 +56,7 @@ Mã chạy thành 4 tiến trình: Backend API, dispatcher, tiến trình nền,
 
 ## 🛠️ Build và test
 
-Chạy từ gốc repo sau `make init`:
+Chạy từ gốc repo sau `make init`. `make backend` chạy sẵn Backend API, dispatcher, tiến trình nền và Celery Beat. Các lệnh dưới dùng khi cần chạy riêng một tiến trình:
 
 | Lệnh | Việc |
 |---|---|

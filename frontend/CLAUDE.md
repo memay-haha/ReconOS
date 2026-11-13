@@ -84,6 +84,6 @@ Mục đã chốt trong [sổ quyết định 2026-11-11](../docs/superpowers/sp
 | `pnpm --dir frontend exec tsc --noEmit` | Kiểm tra kiểu |
 | `pnpm --dir frontend tokens` | Sinh lại `src/styles/globals.css` từ bảng token |
 | `pnpm --dir frontend test` | Vitest |
-| `pnpm --dir frontend exec playwright test` | E2E, cần `make init` và Backend API đang chạy. Tài khoản đăng nhập lấy từ `RECONOS_BOOTSTRAP_ADMIN_*`: [configuration.md](../docs/ops/configuration.md) |
+| `pnpm --dir frontend exec playwright test` | E2E, cần `make init` và `make backend` đang chạy. Bộ test gồm đăng nhập, tạo job, duyệt job nhóm khai thác, triage finding. Tài khoản đăng nhập lấy từ `RECONOS_BOOTSTRAP_ADMIN_*`: [configuration.md](../docs/ops/configuration.md) |
 | `pnpm --dir frontend build` | Build chế độ standalone |
 | `pnpm --dir frontend check:no-mocks` | Quét bản build xem dữ liệu mẫu MSW có lọt vào không. Cần `build` trước. `make test` chạy sẵn hai lệnh này |

@@ -12,7 +12,7 @@ import {
  * created, the dispatcher marks it dispatched, this spec plays the worker over the worker API
  * and uploads a nuclei.jsonl raw output, the parse task turns it into a finding. No tool runs
  * and nothing reaches a target. Needs Backend API, frontend, dispatcher and the background
- * process (`celery ... -Q parse,schedule`): frontend/CLAUDE.md, backend/CLAUDE.md.
+ * process (`celery ... -Q parse,schedule`); `make backend` runs them all.
  */
 
 const username = process.env.RECONOS_E2E_USERNAME ?? '';
@@ -205,12 +205,11 @@ test('triages a parsed nuclei finding on S20', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Dismiss' }).click();
   await expect(row.getByText('Confirmed', { exact: true })).toBeVisible();
 
-  // The row menu walks the lifecycle on: Reported, then Resolved.
+  // The row menu moves it on to Resolved. It offers no Reported: only submitting a report
+  // reports a finding (docs/architecture/business-flow.md).
   const menu = row.getByRole('button', { name: `Change status of ${FINDING}` });
   await menu.click();
-  await page.getByRole('menuitem', { name: 'Reported' }).click();
-  await expect(row.getByText('Reported', { exact: true })).toBeVisible();
-  await menu.click();
+  await expect(page.getByRole('menuitem', { name: 'Reported' })).toHaveCount(0);
   await page.getByRole('menuitem', { name: 'Resolved' }).click();
   await expect(row.getByText('Resolved', { exact: true })).toBeVisible();
 
@@ -242,5 +241,5 @@ test('triages a parsed nuclei finding on S20', async ({ page }) => {
       .filter((e) => e.resource_id === findingId)
       .map((e) => e.detail.to)
       .reverse(),
-  ).toEqual(['confirmed', 'reported', 'resolved', 'confirmed']);
+  ).toEqual(['confirmed', 'resolved', 'confirmed']);
 });
