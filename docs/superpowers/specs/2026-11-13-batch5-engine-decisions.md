@@ -15,3 +15,5 @@ Quyết định agent tự chọn khi dựng module `engine`, runner Osmedeus, S
 | E7 | S16, S17 không có ô bật engine trong mockup, engine tắt thì job engine luôn `failed` | Quy tắc M6: thêm ô Engine enabled vào phần kết nối chung của S16, S17 | Sổ này |
 | E8 | Ba tool module Osmedeus trong `external-services.md`, đợt 5 chỉ ghi một | Dựng cả ba bằng một lớp chung, thời hạn 240, 720, 1.200 phút, dưới `visibility_timeout` 24 giờ | `external-services.md` |
 | E9 | Workspace còn trên engine server sau khi tải | Chưa có REST xóa workspace: nợ 51 | `tech-debt.md` |
+
+Kiểm chứng trên Osmedeus v5.1.2 thật ngày 2026-11-13: E1, E2 đúng. E9 có thêm bước xóa bản zip snapshot. Chi tiết: [sổ kiểm chứng engine thật](2026-11-13-real-engines-decisions.md).

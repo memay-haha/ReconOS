@@ -1,6 +1,6 @@
 # Dịch vụ bên ngoài
 
-> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.13 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 13: Dịch vụ bên ngoài
 > Liên quan: [modules.md](../architecture/modules.md), [system.md](../architecture/system.md), [database.md](../data/database.md), [authentication.md](../security/authentication.md), [schema.md](../data/schema.md), [tech-debt.md](../tech-debt.md)
 
@@ -166,9 +166,9 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 | Xác thực | Header `x-osm-api-key` | `Authorization: Bearer` |
 | Phiên bản | `GET /server-info`, trường `version` | `GET /api/info`, trường `version` |
 | Tạo lượt chạy | `POST /osm/api/runs` với `flow`, `target`, `params`, `timeout`. Response `202` có `run_uuid` | `POST /api/scans/run` với `targets`, `strategy`, `concurrency`, `rate_limit`, `scope_origin`, `scanning_max_duration`. Response `202` có `scan_uuid`, `409` khi engine đang chạy lượt quét khác |
-| Theo dõi | `GET /osm/api/runs/{run_uuid}`, trường `data.status`: `pending`, `running`, `completed`, `failed`, `cancelled` | `GET /api/scans/{scan_uuid}`, trường `status` hoặc `data.status` |
+| Theo dõi | `GET /osm/api/runs/{run_uuid}`, trường `data.status`: `pending`, `running`, `completed`, `failed`, `cancelled` | `GET /api/scans/{scan_uuid}`, trường `status` ở gốc object lượt quét. Runner vẫn đọc `data.status` nếu có |
 | Dừng | `DELETE /osm/api/runs/{run_uuid}` | `POST /api/scans/{scan_uuid}/stop`, `409` là lượt quét đã dừng |
-| Lấy kết quả | `GET /osm/api/snapshot-download/{workspace}`: zip cả workspace | `GET /api/findings?scan_id=<scan_uuid>`, `limit` 500, `offset`, `sort=created_at`, `order=asc`, theo `has_more` |
+| Lấy kết quả | `GET /osm/api/snapshot-download/{workspace}`: zip cả workspace, `404` khi chưa có workspace. Sau đó `DELETE /osm/api/snapshots/{name}` | `GET /api/findings?scan_id=<scan_uuid>`, `limit` 500, `offset`, `sort=created_at`, `order=asc`, theo `has_more` |
 | Output thô | `osmedeus.zip` | `vigolium-findings.jsonl` |
 
 **Lượt chạy Osmedeus:**
@@ -181,20 +181,21 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 - Runner hỏi trạng thái lượt chạy và gửi heartbeat job mỗi `heartbeat_seconds`. Nhận `cancel` hoặc quá thời hạn: gọi `DELETE /osm/api/runs/{run_uuid}`, tải phần workspace đã có, không chạy mục tiêu còn lại.
 - Job `completed` khi mọi lượt chạy `completed`. Có lượt `failed`: job `failed`, vẫn upload output thô.
 - Phiên bản engine lấy từ `GET /server-info` khi bắt đầu job, gửi trong `tool_version` của finish.
-- Workspace và bản zip vẫn nằm trên engine server sau khi tải: REST của Osmedeus chưa có endpoint xóa workspace, nợ 51 trong [tech-debt.md](../tech-debt.md).
+- Mỗi lần tải, Osmedeus v5.1.2 giữ một bản zip `<workspace>_<unix>.zip` trong thư mục snapshot, tên nằm trong header `Content-Disposition`. Runner xóa bản zip này bằng `DELETE /osm/api/snapshots/{name}`, chỉ khi tên mở đầu bằng `<workspace>_`. Xóa lỗi chỉ ghi log `warning`, job giữ trạng thái.
+- Workspace vẫn nằm trên engine server sau khi tải: v5.1.2 không có endpoint xóa workspace, `DELETE /osm/api/workspaces/{name}` trong tài liệu REST không có trong mã nguồn. Cách dọn ở [deployment.md](../ops/deployment.md).
 
 **Lượt quét Vigolium:**
 
 - Mỗi job một lượt quét gồm mọi mục tiêu trong `job.target`. Vigolium chỉ chạy một lượt quét mỗi lúc, nên tool module `vigolium` có `max_concurrency` 1.
 - Body gồm tham số job: `strategy`, `threads` thành `concurrency`, `rate` thành `rate_limit`. Runner đặt thêm `scope_origin` là `strict` để lượt quét không chạm host khác mục tiêu (G5), `scanning_max_duration` bằng thời gian còn lại của job tính theo phút để engine tự dừng khi worker mất kết nối.
 - Biến engine không gửi cho Vigolium: REST của lượt quét không có chỗ nhận biến.
-- Engine trả `409` khi đang chạy lượt quét khác: job `failed` với lý do `engine refused the scan`, không thử lại.
+- Engine trả `409` khi đang chạy lượt quét khác, kể cả lượt quét mở từ CLI hay giao diện của Vigolium: runner chờ, mỗi `heartbeat_seconds` gửi heartbeat job rồi gửi lại `POST /api/scans/run`. Nhận `cancel` thì job `cancelled`. Hết thời hạn job thì `failed` với lý do `engine stayed busy with another scan`. Lỗi `4xx` khác: job `failed` với lý do `engine refused the scan`, không thử lại.
 - Runner hỏi trạng thái và gửi heartbeat job mỗi `heartbeat_seconds`. Trạng thái `pending`, `queued`, `starting`, `running`, `paused`, `cancelling` là chưa xong. Trạng thái khác kết thúc lượt hỏi, chỉ `completed` cho job `completed`.
 - Nhận `cancel` hoặc quá thời hạn: gọi `stop`, chờ 30 giây cho engine dừng, rồi vẫn lấy finding đã có.
 - Runner chép từng object trong `data` của `GET /api/findings` thành một dòng của `vigolium-findings.jsonl`, không đọc nội dung finding. Object có `scan_uuid` khác lượt quét của job bị bỏ, đếm vào log `engine_findings_foreign`: engine bỏ qua bộ lọc `scan_id` thì finding của program khác không lọt vào job.
 - Dừng chép khi đủ 100.000 finding hoặc file vượt 2 GiB, ghi log `engine_findings_truncated`.
 - Lấy finding lỗi: job `completed` chuyển `failed` với lý do `engine findings are unavailable`.
-- Cách lọc theo `scan_id` và dạng body của `GET /api/scans/{scan_uuid}` lấy từ tài liệu REST của Vigolium, chưa kiểm chứng trên engine thật: nợ 12 trong [tech-debt.md](../tech-debt.md).
+- Object finding của `GET /api/findings` không có `request`, `response`: hai trường này nằm ở bản ghi HTTP của Vigolium, parser để trống. Dạng object lấy từ job thật trên Vigolium v0.5.6, mẫu ở `backend/tests/fixtures/raw_output/vigolium/`.
 
 **Gói `osmedeus.zip`:**
 
@@ -202,24 +203,25 @@ Engine chạy server riêng trong vùng worker. Runner gọi REST API của engi
 |---|---|
 | `manifest.json` | `OsmedeusManifest` trong `contracts/tool_modules/osmedeus.py`: `tool_module`, `flow`, `engine_version`, `runs` |
 | `runs[]` | `index` từ 1, `target`, `workspace`, `run_uuid`, `status` của Osmedeus hoặc `missing` khi không tạo được lượt chạy, `has_output` |
-| `<index>/` | Nội dung workspace của lượt chạy thứ `index`, đường dẫn tương đối từ gốc workspace. Không có thư mục khi `has_output` là `false` |
+| `<index>/` | Nội dung workspace của lượt chạy thứ `index`, đường dẫn tương đối từ gốc workspace, trừ file nằm ngay ở gốc workspace. Không có thư mục khi `has_output` là `false` |
 
 - Tên file trong workspace chứa tên workspace của lượt chạy, không chứa mục tiêu. Parser đọc tên workspace trong `manifest.json`.
 - Runner chép lại từng mục từ zip của engine vào gói, bỏ mục có đường dẫn tuyệt đối hoặc `..`, dừng job `failed` khi tổng dung lượng giải nén vượt `PACKAGE_MAX_BYTES` 10 GiB.
+- Runner bỏ mọi file nằm ngay ở gốc workspace: `run-state.json`, `run-completed.json`, `run-execution.log`, `run-console.log`, `run-workflow.yaml` của Osmedeus v5.1.2. Các file này chép lại toàn bộ `params` của lượt chạy, gồm biến engine, và `run-execution.log` còn chép `global_vars` trong cấu hình engine server (G7). Output của công cụ luôn nằm trong thư mục con.
 
 | File trong `<index>/` | Module của flow | Nội dung |
 |---|---|---|
-| `subdomain/final-<workspace>.txt` | `enum-subdomain` | Subdomain, mỗi dòng một tên |
+| `subdomain/subdomain-<workspace>.txt` | `enum-subdomain` | Subdomain, mỗi dòng một tên. Không gồm chính mục tiêu |
 | `probing/dns-<workspace>.txt` | `probe-dns` | Kết quả dnsx đã lọc, mỗi dòng một bản ghi |
 | `probing/dns-json-<workspace>.txt` | `probe-dns` | JSONL của dnsx |
 | `probing/http-<workspace>.txt` | `probe-dns` | URL HTTP sống, mỗi dòng một URL |
 | `fingerprint/http-fingerprint-<workspace>.jsonl` | `recon-http-fp` | JSONL của httpx: URL, mã trạng thái, tiêu đề, công nghệ, IP |
-| `ipspace/ip-<workspace>.txt` | `enum-ipspace` | IP của subdomain. Không có ở `domain-lite` |
+| `ipspace/<workspace>-ip.txt` | `probe-dns` | IP lấy từ bản ghi A của `dns-json` |
 | `portscan/open-ports-<workspace>.txt` | `probe-port` | Cổng mở dạng `ip:port`. Không có ở `domain-lite` |
 | `portscan/http-port-fingerprint-<workspace>.jsonl` | `probe-port` | JSONL của httpx trên cổng mở. Không có ở `domain-lite` |
 | `vulnscan/nuclei-jsonl-<workspace>.txt` | `scan-vuln` | JSONL của nuclei. Không có ở `domain-lite` |
 
-- Đường dẫn trên lấy từ workflow mặc định của Osmedeus v5.1.2. Workflow trên engine server bị sửa thì parser chỉ đọc file có mặt, file thiếu bỏ qua.
+- Đường dẫn trên lấy từ workflow cài trên engine server Osmedeus v5.1.2, kiểm chứng bằng job `osmedeus-domain-lite` thật ngày 2026-11-13. Workflow trên engine server bị sửa thì parser chỉ đọc file có mặt, file thiếu bỏ qua.
 - Biến engine, API key không nằm trong gói: runner không ghi chúng ra file (G7).
 - ReconOS chỉ dùng REST API. ❌ Không đọc CSDL của engine server (G1).
 
@@ -231,13 +233,14 @@ Backend API, module `engine`, gọi REST của engine bằng `engine.base_url` v
 |---|---|---|
 | `POST /engines/{engine_id}/test` | Osmedeus | `GET /server-info` lấy `version`, rồi `GET /osm/api/workflows?limit=1` để kiểm tra API key vì `/server-info` không cần key |
 | `POST /engines/{engine_id}/test` | Vigolium | `GET /api/info` có API key, lấy `version` |
-| `GET /engines/{engine_id}/workflows`, `/workflows/{name}` | Osmedeus | `GET /osm/api/workflows`, `GET /osm/api/workflows/{name}?json=true`. Bỏ workflow `hidden`. `step_count` của flow là số module. `steps` của chi tiết gồm module rồi step |
-| `GET /engines/{engine_id}/modules` | Vigolium | `GET /api/modules` lấy module loại `active`, `passive`, `name` là `id`, `description` là `short_description`. `is_enabled` đọc từ `GET /api/config?filter=dynamic-assessment.enabled_modules`: giá trị `all` hoặc không có khóa là bật mọi module của loại đó |
+| `GET /engines/{engine_id}/workflows`, `/workflows/{name}` | Osmedeus | `GET /osm/api/workflows`, `GET /osm/api/workflows/{name}?json=true`. Bỏ workflow `hidden`. `step_count` của flow là số module. `steps` của chi tiết gồm module rồi step. Body chi tiết không có `tags`, `description` của module: hai trường này để trống |
+| `GET /engines/{engine_id}/modules` | Vigolium | `GET /api/modules` lấy module loại `active`, `passive`, `name` là `id`, `description` là `short_description`. `is_enabled` đọc từ `GET /api/config?filter=dynamic-assessment.enabled_modules`. Engine in danh sách theo dạng Go: `[all]`, `[a, b]`. `all` hoặc không có khóa là bật mọi module của loại đó |
 | `PATCH /engines/{engine_id}/modules` | Vigolium | `POST /api/config` ghi `dynamic-assessment.enabled_modules.active_modules`, `passive_modules`: `all` khi bật đủ, nếu không thì danh sách `id` cách nhau bằng dấu phẩy. Tắt hết module của một loại: `422`, mã `module_required`, vì danh sách rỗng có thể bị engine hiểu là mặc định. Body trả `errors`: `502` |
 | `POST /engines/{engine_id}/validate` | Vigolium | `GET /api/diagnostics`. Mỗi kiểm tra `error`, `warning` thành một dòng `issues`. `database` lỗi là `critical`, còn lại `advisory` vì lượt quét native không cần agent, trình duyệt. `ok` khi không có dòng `critical` |
-| `POST /engines/{engine_id}/verify-model` | Vigolium | `POST /api/config` ghi `agent.olium.provider`, `agent.olium.model` và `custom_provider.model_id`, `custom_provider.base_url`, `agent.olium.llm_api_key` và `custom_provider.api_key` từ `engine.settings` và API key LLM, rồi đọc kiểm tra `agent` của `GET /api/diagnostics`. Chưa có `llm_provider`: `ok` là `false`, không gọi engine. Engine giữ cấu hình đã ghi |
+| `POST /engines/{engine_id}/verify-model` | Vigolium | `POST /api/config` ghi `agent.olium.provider`, `agent.olium.model` và `custom_provider.model_id`, `custom_provider.base_url`, `agent.olium.llm_api_key` và `custom_provider.api_key` từ `engine.settings` và API key LLM, rồi đọc kiểm tra `agent` của `GET /api/diagnostics`. Chưa có `llm_provider`: `ok` là `false`, không gọi engine. Engine giữ cấu hình đã ghi. Kiểm tra `agent` chỉ đọc cấu hình, không gọi model: `ok` kèm dòng `advisory` báo model chưa được gọi thử |
 
-- Endpoint Osmedeus lấy từ mã nguồn v5.1.2. Endpoint Vigolium cho native module, kiểm tra cấu hình, model LLM lấy từ tài liệu REST của Vigolium, chưa kiểm chứng trên engine thật: nợ 8 trong [tech-debt.md](../tech-debt.md). Engine không có endpoint tương ứng thì ReconOS không dựng phần đó, endpoint ReconOS trả `404`.
+- Endpoint trên kiểm chứng ngày 2026-11-13 trên Osmedeus v5.1.2 và Vigolium v0.5.6. Engine không có endpoint tương ứng thì ReconOS không dựng phần đó, endpoint ReconOS trả `404`.
+- `POST /api/config` của Vigolium có hiệu lực ngay, không cần khởi động lại engine, kể cả mục `agent`. Engine ghi lại toàn bộ file `~/.vigolium/vigolium-configs.yaml` sau mỗi lần ghi, nên mọi comment trong file mất. Sao lưu file trước khi dùng PATCH module hoặc Verify Model lần đầu: [deployment.md](../ops/deployment.md).
 - ❌ Không dựng cấu hình Database và Redis, Scope Defaults, Ingest Proxy, MITM, CA, bridge Burp và Caido, Hardening flags của engine (G1, G5).
 - Backend gọi REST engine không thử lại, timeout 10 giây. Engine không trả lời, từ chối API key hoặc trả body sai dạng: `502 engine_unavailable`. Kiểm tra thất bại vẫn ghi `last_test_ok` là `false` qua session độc lập.
 

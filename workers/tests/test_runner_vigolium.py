@@ -62,6 +62,8 @@ class FakeEngine:
         self.stopped: list[str] = []
         self.findings: list[dict[str, object]] = [_finding(1), _finding(2)]
         self.start_status = 202
+        # 409 answers before the engine accepts a scan: another scan holds it.
+        self.busy_starts = 0
         self.page_status = 200
         self.wrap_state = False
 
@@ -73,6 +75,9 @@ class FakeEngine:
             return httpx.Response(200, json={"name": "vigolium", "version": "v0.5.3"})
         if path == "/api/scans/run":
             self.scan_bodies.append(json.loads(request.content))
+            if self.busy_starts:
+                self.busy_starts -= 1
+                return httpx.Response(409, json={"error": "scan already running"})
             if self.start_status != 202:
                 return httpx.Response(self.start_status, json={"error": "scan already running"})
             return httpx.Response(202, json={"scan_uuid": SCAN, "status": "running"})
@@ -213,9 +218,37 @@ def test_time_limit_stops_the_scan(tmp_path: Path) -> None:
     assert engine.stopped == [SCAN]
 
 
-def test_busy_engine_fails_without_retry(tmp_path: Path) -> None:
+def test_busy_engine_is_waited_for(tmp_path: Path) -> None:
     engine = FakeEngine()
-    engine.start_status = 409
+    engine.busy_starts = 2
+    result = _run(engine, tmp_path)
+    assert result.status is FinishStatus.COMPLETED
+    assert len(engine.scan_bodies) == 3
+    assert len(_lines(tmp_path)) == 2
+
+
+def test_cancel_while_the_engine_is_busy(tmp_path: Path) -> None:
+    engine = FakeEngine()
+    engine.busy_starts = 5
+    result = _run(engine, tmp_path, heartbeat=JobHeartbeatAction.CANCEL)
+    assert result.status is FinishStatus.CANCELLED
+    assert len(engine.scan_bodies) == 1
+    assert (tmp_path / RAW_OUTPUT_FILENAME).read_bytes() == b""
+
+
+def test_engine_busy_past_the_deadline_fails(tmp_path: Path) -> None:
+    engine = FakeEngine()
+    engine.busy_starts = 5
+    result = _run(engine, tmp_path, clock=[0.0, 0.0, 0.0, 3600.0])
+    assert result.status is FinishStatus.FAILED
+    assert result.reason == "engine stayed busy with another scan"
+    assert result.tool_version is not None
+    assert engine.scan_bodies
+
+
+def test_refused_scan_fails_without_retry(tmp_path: Path) -> None:
+    engine = FakeEngine()
+    engine.start_status = 400
     result = _run(engine, tmp_path)
     assert result.status is FinishStatus.FAILED
     assert result.reason == "engine refused the scan"

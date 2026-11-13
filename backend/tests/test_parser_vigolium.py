@@ -1,8 +1,9 @@
 """Vigolium parser: .claude/rules/testing.md, row Parser.
 
-The sample raw output in tests/fixtures/raw_output/vigolium/ follows the
-finding object of the Vigolium REST docs (`GET /api/findings`): no real engine
-run was available to copy, tech debt 12. Parsing twice adds no finding.
+The sample raw output in tests/fixtures/raw_output/vigolium/ is the file a real
+job wrote against Vigolium v0.5.6 (lab target, host replaced by 192.0.2.10).
+Lines the engine does not produce, kept to check how the parser treats odd
+input, live in EDGE_LINES below. Parsing twice adds no finding.
 """
 
 import json
@@ -28,6 +29,20 @@ from app.tool_module.models import ToolModule
 from tests.factories import make_job, make_program, make_raw_output, make_scope_rule
 
 SAMPLE = Path(__file__).parent / "fixtures" / "raw_output" / "vigolium" / "vigolium-findings.jsonl"
+# Not from the engine: one odd line per case the parser must survive.
+EDGE_LINES = (
+    '{"module_id":"log4shell-check","module_name":"Log4Shell","severity":"critical",'
+    '"tags":["rce","cve-2021-44228"],"matched_at":"https://b.example.com/",'
+    '"finding_hash":"1111222233334444"}',
+    '{"module_id":"header-audit","module_name":"Missing security headers","severity":"info",'
+    '"matched_at":["https://outside.example.org/"]}',
+    '{"module_id":"weird-severity","severity":"unknown","matched_at":["https://a.example.com/x"],'
+    '"finding_hash":"5555666677778888"}',
+    "not json",
+    '{"scan_uuid":"scan-0001","severity":"high"}',
+    '["array"]',
+    '{"module_id":"ftp","matched_at":["ftp://a.example.com/"],"finding_hash":"9999"}',
+)
 
 
 def _collect(path: Path = SAMPLE) -> tuple[list[FindingRecord], ParseStats]:
@@ -54,36 +69,46 @@ def test_vigolium_has_this_parser() -> None:
     assert raw_output_service.has_parser("vigolium")
 
 
-def test_sample_yields_findings_and_drops_bad_lines() -> None:
+def test_sample_yields_findings() -> None:
     found, stats = _collect()
     assert [f.template_id for f in found] == [
-        "xss-light",
-        "spring-actuator-misconfig",
-        "log4shell-check",
-        "header-audit",
-        "weird-severity",
+        "cors-headers-detect",
+        "express-debug-probe",
+        "aspnet-health-exposure",
+        "sensitive-file-discovery",
     ]
+    assert stats.dropped == 0
+    cors = found[0]
+    assert cors.name == "CORS Headers Detect"
+    assert cors.severity.value == "low"
+    assert cors.matched_at == "http://192.0.2.10/"
+    assert cors.asset == UrlRecord(url="http://192.0.2.10/")
+    assert cors.dedup_key == dedup_key("vigolium", "f173cc999874fa11fa5106fe8f6b59949f7d6b98")
+    assert cors.evidence is not None and cors.evidence.startswith("ACAO: *")
+    assert set(cors.detail) >= {"matcher", "description", "remediation", "request", "response"}
+    assert cors.detail["finding_source"] == "dynamic-assessment"
+    assert cors.detail["module_type"] == "passive"
+    # GET /api/findings carries no request or response: they stay empty.
+    assert cors.detail["request"] is None
+    assert found[2].severity.value == "medium"
+    assert found[2].matched_at == "http://192.0.2.10/metrics"
+
+
+def test_edge_lines_are_read_or_dropped(tmp_path: Path) -> None:
+    path = tmp_path / "vigolium-findings.jsonl"
+    path.write_text("\n".join(EDGE_LINES) + "\n", encoding="utf-8")
+    found, stats = _collect(path)
+    assert [f.template_id for f in found] == ["log4shell-check", "header-audit", "weird-severity"]
     assert stats.dropped == 4
-    xss = found[0]
-    assert xss.name == "XSS Light Scanner"
-    assert xss.severity.value == "high"
-    assert xss.matched_at == "https://a.example.com/search?q=test"
-    # The query carries the payload: the asset is the URL without it.
-    assert xss.asset == UrlRecord(url="https://a.example.com/search")
-    assert xss.dedup_key == dedup_key("vigolium", "e3b0c44298fc1c14")
-    assert xss.evidence == "<script>alert(1)</script>"
-    assert set(xss.detail) >= {"matcher", "description", "remediation", "request", "response"}
-    assert xss.detail["finding_source"] == "dynamic-assessment"
-    assert xss.detail["additional_evidence"][0].startswith("GET /search")
-    assert found[2].cve == ["CVE-2021-44228"]
+    assert found[0].cve == ["CVE-2021-44228"]
     # A string matched_at reads as a one-item list.
-    assert found[2].matched_at == "https://b.example.com/"
+    assert found[0].matched_at == "https://b.example.com/"
     # No finding_hash: the key falls back to the fields Vigolium merges on.
-    assert found[3].dedup_key == dedup_key(
+    assert found[1].dedup_key == dedup_key(
         "vigolium", "header-audit", "info", "https://outside.example.org/"
     )
-    assert found[4].severity.value == "info"
-    assert found[4].name == "weird-severity"
+    assert found[2].severity.value == "info"
+    assert found[2].name == "weird-severity"
 
 
 def test_untrusted_values_are_bounded() -> None:
@@ -121,7 +146,7 @@ def _opener(path: Path) -> Callable[[str], AsyncIterator[bytes]]:
 @pytest_asyncio.fixture
 async def scoped_program(db_session: AsyncSession) -> Program:
     program = await make_program(db_session)
-    await make_scope_rule(db_session, program, rule_type="wildcard", value="*.example.com")
+    await make_scope_rule(db_session, program, rule_type="cidr", value="192.0.2.0/24")
     return program
 
 
@@ -138,20 +163,20 @@ async def test_parse_writes_findings_and_is_idempotent(
     raw = await make_raw_output(db_session, vigolium_job, filename="vigolium-findings.jsonl")
     outcome = await parser_service.parse_raw_output(db_session, raw.id, open_stream=_opener(SAMPLE))
     assert outcome.status == "parsed"
-    assert (outcome.findings.created, outcome.findings.seen_again) == (5, 0)
+    assert (outcome.findings.created, outcome.findings.seen_again) == (4, 0)
 
     rows = list(
         await db_session.scalars(select(Finding).where(Finding.program_id == scoped_program.id))
     )
-    assert len(rows) == 5
+    assert len(rows) == 4
     assert all(row.dedup_key.startswith("vigolium:") for row in rows)
     assert all(row.job_id == vigolium_job.id for row in rows)
-    outside = await db_session.scalar(select(Url).where(Url.url == "https://outside.example.org/"))
-    assert outside is not None and outside.in_scope is False
+    metrics = await db_session.scalar(select(Url).where(Url.url == "http://192.0.2.10/metrics"))
+    assert metrics is not None and metrics.in_scope is True
 
     # The same findings read again, as from a second upload of the job.
     again = await make_raw_output(db_session, vigolium_job, filename="stdout.txt")
     second = await parser_service.parse_raw_output(
         db_session, again.id, open_stream=_opener(SAMPLE)
     )
-    assert (second.findings.created, second.findings.seen_again) == (0, 5)
+    assert (second.findings.created, second.findings.seen_again) == (0, 4)
