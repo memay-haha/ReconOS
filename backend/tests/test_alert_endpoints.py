@@ -68,6 +68,7 @@ async def test_operators_see_every_alert_including_system_wide(
         "program_id": str(program.id),
         "finding_id": None,
         "job_id": None,
+        "schedule_id": None,
         "created_at": body["items"][1]["created_at"],
         "is_read": False,
     }

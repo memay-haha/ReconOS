@@ -7,7 +7,12 @@ import { type Page, withQuery } from './page';
 
 /** `alert.alert_type` in docs/data/schema.md. */
 export type AlertType =
-  'finding_new' | 'job_pending_approval' | 'job_failed' | 'asset_new' | 'cert_expiring';
+  | 'finding_new'
+  | 'job_pending_approval'
+  | 'job_failed'
+  | 'asset_new'
+  | 'cert_expiring'
+  | 'schedule_run_failed';
 
 /** A row of `GET /alerts`: docs/api/architecture.md. `is_read` is the calling account's. */
 export interface Alert {
@@ -18,6 +23,7 @@ export interface Alert {
   readonly program_id: string | null;
   readonly finding_id: string | null;
   readonly job_id: string | null;
+  readonly schedule_id: string | null;
   readonly created_at: string;
   readonly is_read: boolean;
 }
@@ -65,10 +71,12 @@ export function useMarkAllAlertsRead() {
 }
 
 /** The screen an alert leads to: S10 opens one job from `?job=`; S20 opens no single
- * finding from the URL yet, so a finding alert opens the list; otherwise S09. */
+ * finding from the URL yet, so a finding alert opens the list; a schedule alert opens the
+ * Scope tab of S09, which lists the program's schedules; otherwise S09. */
 export function alertHref(alert: Alert): string | null {
   if (alert.finding_id !== null) return '/findings';
   if (alert.job_id !== null) return `/queue?job=${encodeURIComponent(alert.job_id)}`;
-  if (alert.program_id !== null) return `/programs/${encodeURIComponent(alert.program_id)}`;
-  return null;
+  if (alert.program_id === null) return null;
+  const program = `/programs/${encodeURIComponent(alert.program_id)}`;
+  return alert.schedule_id !== null ? `${program}?tab=scope` : program;
 }

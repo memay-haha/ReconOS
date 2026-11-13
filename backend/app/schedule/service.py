@@ -22,6 +22,7 @@ import structlog
 from sqlalchemy import Select, func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.alert import service as alert_service
 from app.core import audit
 from app.core.errors import AppError, NotFoundError, ValidationFailedError
 from app.core.identity import User
@@ -270,6 +271,8 @@ async def update_schedule(
         schedule.target = await scope_service.require_in_scope(
             session, schedule.program_id, fields["target"]
         )
+    # The operator changed the schedule: its next refusal opens a new streak and alerts.
+    schedule.failing_since = None
     restart = False
     if "interval_minutes" in fields and fields["interval_minutes"] != schedule.interval_minutes:
         schedule.interval_minutes = fields["interval_minutes"]
@@ -326,6 +329,7 @@ async def run_schedule(
         params=schedule.params,
     )
     schedule.last_run_at = _now()
+    schedule.failing_since = None
     await audit.record(
         session,
         action="schedule_run",
@@ -338,6 +342,24 @@ async def run_schedule(
     return await job_service.get_job_row(session, viewer=actor, job_id=job.id)
 
 
+def _target_summary(target: Sequence[str]) -> str:
+    return target[0] if len(target) == 1 else f"{target[0]} and {len(target) - 1} more"
+
+
+async def _alert_run_failed(session: AsyncSession, schedule: Schedule, codes: list[str]) -> None:
+    tool_module = await tool_module_service.get_tool_module(session, schedule.tool_module_id)
+    await alert_service.raise_alert(
+        session,
+        alert_type=alert_service.AlertType.SCHEDULE_RUN_FAILED,
+        program_id=schedule.program_id,
+        schedule_id=schedule.id,
+        message=(
+            f"Scheduled {tool_module.name} on {_target_summary(schedule.target)} "
+            f"did not run: {', '.join(codes)}"
+        ),
+    )
+
+
 async def run_due_schedules(
     session: AsyncSession, *, now: datetime | None = None, limit: int = DUE_BATCH
 ) -> int:
@@ -346,7 +368,8 @@ async def run_due_schedules(
     One schedule failing its checks (target left the scope, tool module off,
     params no longer valid) is recorded in the audit log and skipped; the
     others still run. Its `next_run_at` moves on all the same, so a broken
-    schedule does not retry every tick.
+    schedule does not retry every tick. The first refusal of a streak also
+    raises a `schedule_run_failed` alert.
     """
     now = now or _now()
     due = (
@@ -389,8 +412,12 @@ async def run_due_schedules(
                 resource_id=schedule.id,
                 detail={"codes": codes},
             )
+            if schedule.failing_since is None:
+                schedule.failing_since = now
+                await _alert_run_failed(session, schedule, codes)
             continue
         schedule.last_run_at = now
+        schedule.failing_since = None
         created += 1
         log.info("schedule_run", schedule_id=str(schedule.id), job_id=str(job.id))
     await session.flush()

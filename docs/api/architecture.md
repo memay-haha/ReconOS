@@ -1,6 +1,6 @@
 # Kiến trúc API
 
-> Phiên bản: 1.32 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.33 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 10: Kiến trúc API
 > Liên quan: [openapi.yaml](openapi.yaml), [schema.md](../data/schema.md), [authorization.md](../security/authorization.md), [authentication.md](../security/authentication.md), [external-services.md](../integrations/external-services.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md)
 
@@ -135,7 +135,7 @@ Trường tính không phải cột, API tính mỗi lần đọc và chỉ có 
 | `GET /screenshots/{screenshot_id}` | Như danh sách, thêm `worker_name`, `html_size`, `html_sha256`, `security_headers`: object 5 header, giá trị `true` khi có mặt, `security_headers_passed`, `security_headers_total` |
 | `GET /tool-modules` | `title`, `description`, `group`, `runs_on`, `tools`, `output_types`, `param_schema` lấy từ mã. `last_job_at`, `jobs_24h`, `finding_count`, `engine_status`, `disabled_reason`, `estimated_seconds` |
 | `GET /engines` | `version`, `last_tested_at`, `last_test_ok`, `api_key_updated_at`, `has_api_key`, `has_llm_api_key`, `uptime_seconds`, `slots_used`, `slots_total` |
-| `GET /alerts` | Lọc `is_read`, `alert_type` lặp lại. `is_read` của tài khoản gọi. Mỗi dòng `id`, `alert_type`, `message`, `program_id`, `finding_id`, `job_id`, `created_at`, `is_read`. `sort`: `-created_at` mặc định, `created_at`. `total` theo bộ lọc, chuông đọc số chưa đọc từ `total` của `is_read=false` |
+| `GET /alerts` | Lọc `is_read`, `alert_type` lặp lại. `is_read` của tài khoản gọi. Mỗi dòng `id`, `alert_type`, `message`, `program_id`, `finding_id`, `job_id`, `schedule_id`, `created_at`, `is_read`. `sort`: `-created_at` mặc định, `created_at`. `total` theo bộ lọc, chuông đọc số chưa đọc từ `total` của `is_read=false` |
 
 - `finding_counts` là object theo 5 mức severity, đếm finding có `triage_status` khác `false_positive`, `duplicate`, `resolved`. Gọi là finding mở.
 - Khung "today", "this week", "this month" trên UI là 24 giờ, 7 ngày, 30 ngày gần nhất, theo `window`.

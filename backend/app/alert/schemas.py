@@ -18,6 +18,7 @@ class AlertResponse(BaseModel):
     program_id: uuid.UUID | None
     finding_id: uuid.UUID | None
     job_id: uuid.UUID | None
+    schedule_id: uuid.UUID | None
     created_at: datetime
     # Read state of the calling account, not of the alert.
     is_read: bool

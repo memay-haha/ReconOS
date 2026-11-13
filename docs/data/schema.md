@@ -1,6 +1,6 @@
 # Schema CSDL
 
-> Phiên bản: 1.16 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.17 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 9: Cơ sở dữ liệu
 > Liên quan: [erd.mermaid](erd.mermaid), [database.md](database.md), [modules.md](../architecture/modules.md), [business-flow.md](../architecture/business-flow.md), [ADR xóa mềm](../decisions/adr-soft-delete.md), [external-services.md](../integrations/external-services.md)
 
@@ -66,7 +66,7 @@
 | `program_user` | Gán User vào program | Admin, Superadmin không cần dòng gán |
 | `scope_rule` | Scope rule In-Scope, Out-of-Scope | `reason`: bắt buộc khi `scope_type` là `out_of_scope` |
 | `proxy` | Proxy của program | `url_encrypted`: URL proxy, có thể chứa tên đăng nhập và mật khẩu |
-| `schedule` | Lịch quét định kỳ | `target`: mục tiêu dạng chuẩn đã qua kiểm tra scope khi lưu, kiểm lại mỗi lần chạy. `params`: tham số người dùng chọn, `default_params` của tool module điền lúc chạy. `interval_minutes`: từ 15 đến 525.600, ràng buộc CHECK. `next_run_at`: lần chạy kế tiếp, luôn có giá trị. `last_run_at`: lần gần nhất lịch tạo được job. Xóa program: xóa lịch theo |
+| `schedule` | Lịch quét định kỳ | `target`: mục tiêu dạng chuẩn đã qua kiểm tra scope khi lưu, kiểm lại mỗi lần chạy. `params`: tham số người dùng chọn, `default_params` của tool module điền lúc chạy. `interval_minutes`: từ 15 đến 525.600, ràng buộc CHECK. `next_run_at`: lần chạy kế tiếp, luôn có giá trị. `last_run_at`: lần gần nhất lịch tạo được job. `failing_since`: lần chạy bị từ chối đầu tiên của chuỗi hỏng hiện tại, `NULL` khi lần chạy gần nhất thành công hoặc lịch vừa được sửa. Xóa program: xóa lịch theo |
 
 ### Tool module và job
 
@@ -102,7 +102,7 @@
 | `finding_tag` | Tag gắn vào finding | |
 | `report` | Báo cáo của program | `body`: Markdown, mặc định chuỗi rỗng. `platform_report_ref`: mã báo cáo trên nền tảng bug bounty, nhập tay. `submitted_at`: có giá trị khi và chỉ khi `status` là `submitted`, ràng buộc CHECK. Xóa cứng program xóa báo cáo |
 | `report_finding` | Finding trong báo cáo | Khóa chính (`report_id`, `finding_id`). Một finding nằm được trong nhiều báo cáo. Xóa báo cáo hoặc finding xóa dòng |
-| `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id`. Mỗi job tối đa một dòng cho mỗi loại `job_pending_approval`, `job_failed`, `asset_new`: index duy nhất từng phần trên `alert_type`, `job_id`. `program_id` là `NULL`: cảnh báo toàn hệ thống, chỉ Superadmin, Admin thấy. `message`: câu tiếng Anh tối đa 500 ký tự, chứa dữ liệu mục tiêu nên giao diện hiển thị dạng văn bản |
+| `alert` | Cảnh báo theo program | `asset_new` gom tài sản mới theo job, liên kết `job_id`. Mỗi job tối đa một dòng cho mỗi loại `job_pending_approval`, `job_failed`, `asset_new`: index duy nhất từng phần trên `alert_type`, `job_id`. `schedule_id`: lịch sinh cảnh báo `schedule_run_failed`, xóa lịch thì xóa cảnh báo theo. `program_id` là `NULL`: cảnh báo toàn hệ thống, chỉ Superadmin, Admin thấy. `message`: câu tiếng Anh tối đa 500 ký tự, chứa dữ liệu mục tiêu nên giao diện hiển thị dạng văn bản |
 | `alert_read` | Tài khoản đã đọc cảnh báo | Không có dòng: chưa đọc |
 
 - Liên kết một tài sản: 4 cột `domain_id`, `ip_id`, `url_id`, `service_id`, đúng một cột có giá trị. Chi tiết: [database.md](database.md).
@@ -163,13 +163,14 @@ CSDL `reconos_log` riêng, không nằm trong [erd.mermaid](erd.mermaid). Một 
 | `finding.severity` | `critical`, `high`, `medium`, `low`, `info` |
 | `finding.triage_status` | `new`, `confirmed`, `false_positive`, `duplicate`, `reported`, `resolved` |
 | `report.status` | `draft`, `submitted` |
-| `alert.alert_type` | `finding_new`, `job_pending_approval`, `job_failed`, `asset_new`, `cert_expiring` |
+| `alert.alert_type` | `finding_new`, `job_pending_approval`, `job_failed`, `asset_new`, `cert_expiring`, `schedule_run_failed` |
 | `diagnostic_run.status` | `running`, `passed`, `failed` |
 
 - Ý nghĩa trạng thái job, trạng thái triage: [business-flow.md](../architecture/business-flow.md).
 - `alert` loại `finding_new` chỉ sinh với severity `critical`, `high`. Một dòng mỗi output thô có finding mới ở hai mức này: đúng một finding thì `finding_id` trỏ finding đó, nhiều finding thì `finding_id` là `NULL`.
 - `alert` loại `job_failed`, `job_pending_approval` sinh khi job chuyển sang `failed`, `pending_approval`, kể cả job mới tạo ở `pending_approval`.
 - `alert` loại `cert_expiring` sinh khi parser ghi `url.tls_not_after` còn dưới `cert_expiring_days` ngày, mỗi URL một lần cho mỗi giá trị `tls_not_after`.
+- `alert` loại `schedule_run_failed` sinh khi lịch đến hạn mà không tạo được job, một dòng cho mỗi chuỗi hỏng của lịch: chỉ lần bị từ chối có `schedule.failing_since` đang `NULL` mới sinh cảnh báo. Lần chạy thành công hoặc sửa lịch đặt lại `failing_since` về `NULL`.
 
 ### Ràng buộc duy nhất
 

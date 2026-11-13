@@ -1,6 +1,6 @@
 """Alerts by program and the read state of each account.
 
-Tier 2: `job`, `parser`, `dispatcher` raise alerts through `raise_alert`, and
+Tier 2: `job`, `parser`, `dispatcher`, `schedule` raise alerts through `raise_alert`, and
 this module calls no business module: docs/architecture/dependency-graph.md.
 An alert is written in the transaction of the change that caused it, and its
 `alert.created` event goes out only after that transaction commits.
@@ -42,6 +42,7 @@ async def raise_alert(
     message: str,
     finding_id: uuid.UUID | None = None,
     job_id: uuid.UUID | None = None,
+    schedule_id: uuid.UUID | None = None,
 ) -> uuid.UUID | None:
     """Write one alert and queue `alert.created`. None when the job already raised it.
 
@@ -53,6 +54,7 @@ async def raise_alert(
         message=_clip(message),
         finding_id=finding_id,
         job_id=job_id,
+        schedule_id=schedule_id,
     )
     if alert_type in ONCE_PER_JOB and job_id is not None:
         stmt = stmt.on_conflict_do_nothing(
@@ -128,6 +130,7 @@ async def list_alerts(
                 program_id=alert.program_id,
                 finding_id=alert.finding_id,
                 job_id=alert.job_id,
+                schedule_id=alert.schedule_id,
                 created_at=alert.created_at,
                 is_read=bool(seen),
             )

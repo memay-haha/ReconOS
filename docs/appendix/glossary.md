@@ -1,6 +1,6 @@
 # ReconOS: Thuật ngữ
 
-> Phiên bản: 1.13 · Ngày: 2026-11-12 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.14 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 27: Phụ lục
 > Liên quan: [overview.md](../architecture/overview.md), [documentation.md](../../.claude/rules/documentation.md)
 
@@ -84,7 +84,7 @@
 | Thông tin xác thực | Giá trị bí mật dùng để xác thực hoặc truy cập: API key, token, mật khẩu, proxy có tên đăng nhập và mật khẩu. Luôn che trên UI. Lưu dạng mã hóa. Riêng mật khẩu, session ID, token worker chỉ lưu giá trị băm (G7). | | `secret` |
 | Nhật ký thao tác | Bản ghi hành động của tài khoản trên hệ thống (G7). | Log ứng dụng. | `audit_log` |
 | Dashboard | Màn hình tổng quan S02. | | `dashboard` |
-| Cảnh báo | Thông báo trên biểu tượng chuông ở header khi có finding critical hoặc high mới, job chờ duyệt, job thất bại, tài sản mới, chứng chỉ TLS của URL sắp hết hạn. Hiển thị cho tài khoản xem được program. | Log ứng dụng, nhật ký thao tác. | `alert` |
+| Cảnh báo | Thông báo trên biểu tượng chuông ở header khi có finding critical hoặc high mới, job chờ duyệt, job thất bại, tài sản mới, chứng chỉ TLS của URL sắp hết hạn, lịch quét định kỳ đến hạn mà không tạo được job. Hiển thị cho tài khoản xem được program. | Log ứng dụng, nhật ký thao tác. | `alert` |
 | Xóa mềm | Đánh dấu dòng đã xóa bằng cột `deleted_at`, không xóa dòng khỏi CSDL. Dòng đã xóa mềm ẩn khỏi danh sách, đọc chi tiết trả `404`. Áp dụng cho tài khoản, domain, screenshot: [ADR xóa mềm](../decisions/adr-soft-delete.md). | Xóa cứng program. Lưu trữ program. Khóa tài khoản. | `deleted_at` |
 | Bộ lọc đã lưu | Bộ tham số lọc của một màn hình danh sách, tài khoản tự đặt tên và lưu để dùng lại. Chỉ chủ sở hữu thấy. Nút Filter Presets trên S04. | Tag. | `saved_filter` |
 | Lần chẩn đoán | Một lần chạy Run Diagnostics trên S15: tiến trình nền kiểm tra từng thành phần hệ thống và công cụ trên worker, ghi kết quả từng dòng. | Healthcheck định kỳ của `GET /system/health`. | `diagnostic_run` |
