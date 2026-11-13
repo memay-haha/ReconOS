@@ -102,7 +102,7 @@ def test_sample_package_yields_records_and_drops_bad_lines(sample_zip: Path) -> 
 def test_a_run_without_output_is_skipped(tmp_path: Path) -> None:
     target = zip_directory(SAMPLE, tmp_path / "osmedeus.zip")
     with zipfile.ZipFile(target, "a") as archive:
-        archive.writestr("2/subdomain/final-x.txt", "skipped.example.com\n")
+        archive.writestr("2/subdomain/subdomain-x.txt", "skipped.example.com\n")
     found, _ = _collect(target)
     assert "skipped.example.com" not in {record.name for record in found.domains}
 
@@ -127,7 +127,7 @@ def test_not_a_zip_is_a_data_error(tmp_path: Path) -> None:
 def test_missing_or_invalid_manifest_is_a_data_error(tmp_path: Path) -> None:
     empty = tmp_path / "empty.zip"
     with zipfile.ZipFile(empty, "w") as archive:
-        archive.writestr("1/subdomain/final-x.txt", "a.example.com\n")
+        archive.writestr("1/subdomain/subdomain-x.txt", "a.example.com\n")
     with pytest.raises(ParseDataError, match="no manifest"):
         _collect(empty)
     invalid = tmp_path / "invalid.zip"
@@ -159,7 +159,7 @@ def test_an_oversized_line_is_dropped(tmp_path: Path, monkeypatch: pytest.Monkey
         f'"target":"example.com","workspace":"{workspace}","status":"completed",'
         '"has_output":true}]}'
     )
-    (source / "1" / "subdomain" / f"final-{workspace}.txt").write_text(
+    (source / "1" / "subdomain" / f"subdomain-{workspace}.txt").write_text(
         "a" * 200 + ".example.com\nshort.example.com\n"
     )
     found, stats = _collect(zip_directory(source, tmp_path / "osmedeus.zip"))

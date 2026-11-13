@@ -8,6 +8,7 @@ Calls, package layout: docs/integrations/external-services.md.
 """
 
 import math
+import re
 import time
 import zipfile
 from collections.abc import Callable, Iterator
@@ -48,6 +49,8 @@ TERMINAL: Final = frozenset(
 )
 # Keys the runner owns in the run params; an engine variable cannot override them.
 RESERVED_PARAMS: Final = frozenset({"target", "space_name", "tactic", "threads_hold"})
+# File name the engine gives the zip it keeps in its snapshot folder.
+SNAPSHOT_NAME: Final = re.compile(r'filename="?([A-Za-z0-9._-]{1,255}\.zip)"?')
 
 log = structlog.get_logger(__name__)
 
@@ -106,8 +109,12 @@ class OsmedeusClient(EngineClient):
         if response.status_code > 400:
             raise EngineError("cancel_run", f"status {response.status_code}")
 
-    def download_workspace(self, workspace: str, path: Path) -> bool:
-        """Save the zip of a workspace. False when the engine has no such workspace."""
+    def download_workspace(self, workspace: str, path: Path) -> tuple[bool, str | None]:
+        """Save the zip of a workspace.
+
+        Returns whether the engine had the workspace, and the name of the zip the
+        engine kept in its snapshot folder when it gave one.
+        """
 
         def fetch() -> httpx.Response:
             request = self._http.build_request(
@@ -127,10 +134,21 @@ class OsmedeusClient(EngineClient):
 
         response = self._send(fetch, "download_workspace")
         if response.status_code == 404:
-            return False
+            return False, None
         if response.status_code != 200:
             raise EngineError("download_workspace", f"status {response.status_code}")
-        return True
+        match = SNAPSHOT_NAME.search(response.headers.get("content-disposition", ""))
+        name = match.group(1) if match else None
+        # Only a zip of this workspace is ever deleted.
+        return True, name if name and name.startswith(f"{workspace}_") else None
+
+    def delete_snapshot(self, name: str) -> None:
+        """Delete a zip the engine kept from a download: one per download."""
+        response = self._send(
+            lambda: self._http.delete(f"/osm/api/snapshots/{name}"), "delete_snapshot"
+        )
+        if response.status_code >= 400 and response.status_code != 404:
+            raise EngineError("delete_snapshot", f"status {response.status_code}")
 
 
 @dataclass(slots=True)
@@ -160,7 +178,7 @@ def _chunks(source: IO[bytes]) -> Iterator[bytes]:
 
 def build_package(output: Path, manifest: OsmedeusManifest, workspaces: dict[int, Path]) -> None:
     """Write `osmedeus.zip`: the manifest, then each workspace under `<index>/`."""
-    total = 0
+    total = dropped = 0
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as package:
         package.writestr(MANIFEST_FILENAME, manifest.model_dump_json(indent=2))
         for index, source_path in sorted(workspaces.items()):
@@ -172,6 +190,12 @@ def build_package(output: Path, manifest: OsmedeusManifest, workspaces: dict[int
                     if name is None:
                         log.warning("engine_zip_entry_skipped", engine=ENGINE, index=index)
                         continue
+                    if "/" not in name:
+                        # Workspace root: the engine's own run files (state, logs,
+                        # resolved workflow). They echo every run param, engine
+                        # variables included, so they never reach the package (G7).
+                        dropped += 1
+                        continue
                     with source.open(info) as reader, package.open(f"{index}/{name}", "w") as out:
                         # Count real bytes: the size in the entry header is engine data.
                         for chunk in _chunks(reader):
@@ -179,6 +203,8 @@ def build_package(output: Path, manifest: OsmedeusManifest, workspaces: dict[int
                             if total > PACKAGE_MAX_BYTES:
                                 raise PackageTooLargeError
                             out.write(chunk)
+    if dropped:
+        log.info("engine_run_files_dropped", engine=ENGINE, files=dropped)
 
 
 class OsmedeusRunner(Runner):
@@ -365,11 +391,18 @@ class OsmedeusRunner(Runner):
         self, api: OsmedeusClient, workspace: str, workdir: Path, index: int, into: dict[int, Path]
     ) -> bool:
         path = workdir / f"engine-{index}.zip"
+        snapshot: str | None = None
         try:
-            found = api.download_workspace(workspace, path)
+            found, snapshot = api.download_workspace(workspace, path)
         except EngineError as exc:
             log.warning("engine_workspace_unavailable", index=index, error=str(exc))
             found = False
+        if snapshot is not None:
+            try:
+                api.delete_snapshot(snapshot)
+            except EngineError as exc:
+                # A leftover zip only costs engine disk: docs/ops/deployment.md.
+                log.warning("engine_snapshot_not_deleted", index=index, error=str(exc))
         if found and not zipfile.is_zipfile(path):
             log.warning("engine_workspace_not_zip", index=index)
             found = False

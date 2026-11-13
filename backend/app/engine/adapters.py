@@ -284,14 +284,15 @@ ALL_MODULES: Final = "all"
 # A failed diagnostic on these stops a native scan; any other check is advice.
 CRITICAL_CHECKS: Final = frozenset({"database"})
 AGENT_CHECK: Final = "agent"
+AGENT_NOT_PROBED: Final = "agent: settings accepted, the engine does not call the model to check it"
 CHECK_MESSAGE_MAX: Final = 500
 
 
 def _module_list(value: str | None) -> set[str] | None:
     """Module ids a config value names; None when it names every module.
 
-    GET /api/config flattens a list to a string whose exact form the docs do not
-    show: a JSON array and a comma or space separated list are both read.
+    Vigolium v0.5.6 prints a list as Go does, `[all]` or `[a, b]`. A JSON array
+    and a comma or space separated list are read too.
     """
     text = (value or "").strip()
     items: list[str] = []
@@ -335,8 +336,8 @@ def _issue_text(name: str, check: _VigCheck) -> str:
 class VigoliumAdapter(EngineAdapter):
     """Vigolium REST: info, native modules, diagnostics, LLM settings.
 
-    Native module, configuration check and LLM endpoints come from the Vigolium
-    REST docs and are not checked on a real engine yet: tech debt 8.
+    Calls checked on Vigolium v0.5.6. POST /api/config takes effect at once and
+    rewrites the engine's YAML file: docs/integrations/external-services.md.
     """
 
     def auth_headers(self) -> dict[str, str]:
@@ -465,7 +466,12 @@ class VigoliumAdapter(EngineAdapter):
         if agent is None:
             raise EngineUnavailableError(detail="engine answered an unexpected body")
         if agent.status == "ok":
-            return EngineCheckResult(ok=True)
+            # Vigolium v0.5.6 checks the agent settings only: it never calls the
+            # model, so an unreachable base URL or a wrong model still reads ok.
+            return EngineCheckResult(
+                ok=True,
+                issues=[EngineCheckIssue(level="advisory", message=AGENT_NOT_PROBED)],
+            )
         return EngineCheckResult(
             ok=agent.status != "error",
             issues=[

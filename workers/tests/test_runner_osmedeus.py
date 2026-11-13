@@ -66,9 +66,17 @@ class FakeEngine:
         self.requests: list[httpx.Request] = []
         self.created: list[dict[str, object]] = []
         self.cancelled: list[str] = []
+        self.deleted_snapshots: list[str] = []
+        # Layout of a real v5.1.2 workspace: tool output in folders, the engine's
+        # run files at the root. run-state.json echoes the run params, as the
+        # engine writes it, engine variables included.
         self.workspace_files: dict[str, bytes] = {
-            "subdomain/final-WS.txt": b"a.example.com\n",
-            "probing/dns-WS.txt": b"a.example.com [A] [192.0.2.1]\n",
+            "subdomain/subdomain-WS.txt": b"a.example.com\n",
+            "probing/dns-WS.txt": b"a.example.com A 192.0.2.1\n",
+            "run-state.json": json.dumps(
+                {"run": {"params": {"slack_token": SECRET_VARIABLE, "space_name": "WS"}}}
+            ).encode(),
+            "run-execution.log": b'{"message":"Parameters initialized","cli_params":{}}\n',
         }
         self.missing_workspace = False
 
@@ -96,7 +104,14 @@ class FakeEngine:
                 name.replace("WS", workspace): content
                 for name, content in self.workspace_files.items()
             }
-            return httpx.Response(200, content=_zip(files))
+            # v5.1.2 keeps the zip it builds in its snapshot folder under this name.
+            disposition = f"attachment; filename={workspace}_1763000000.zip"
+            return httpx.Response(
+                200, content=_zip(files), headers={"content-disposition": disposition}
+            )
+        if path.startswith("/osm/api/snapshots/") and request.method == "DELETE":
+            self.deleted_snapshots.append(path.rsplit("/", 1)[1])
+            return httpx.Response(200, json={"message": "Snapshot deleted"})
         return httpx.Response(404)
 
 
@@ -153,8 +168,12 @@ def test_completed_run_packs_the_workspace(tmp_path: Path) -> None:
     assert [
         (run.index, run.workspace, run.status.value, run.has_output) for run in manifest.runs
     ] == [(1, workspace, "completed", True)]
-    assert f"1/subdomain/final-{workspace}.txt" in names
+    assert f"1/subdomain/subdomain-{workspace}.txt" in names
     assert f"1/probing/dns-{workspace}.txt" in names
+    # The engine's run files at the workspace root never reach the package.
+    assert not [name for name in names if name.startswith("1/run-")]
+    # The zip the engine kept from the download is deleted on the engine.
+    assert engine.deleted_snapshots == [f"{workspace}_1763000000.zip"]
     # Only the package stays in the job folder.
     assert sorted(path.name for path in tmp_path.iterdir()) == [RAW_OUTPUT_FILENAME]
 
@@ -170,6 +189,41 @@ def test_credentials_never_reach_the_package_or_the_log(
     out = capsys.readouterr()
     assert API_KEY not in out.out + out.err
     assert SECRET_VARIABLE not in out.out + out.err
+
+
+def test_snapshot_of_another_workspace_is_never_deleted(tmp_path: Path) -> None:
+    engine = FakeEngine()
+    original = engine.handler
+
+    def other_name(request: httpx.Request) -> httpx.Response:
+        response = original(request)
+        if request.url.path.startswith("/osm/api/snapshot-download/"):
+            response.headers["content-disposition"] = "attachment; filename=other_1.zip"
+        return response
+
+    runner = OsmedeusDomainLiteRunner(
+        transport=httpx.MockTransport(other_name), sleep=lambda _: None
+    )
+    result = runner.run(_job(), OsmedeusParams(), tmp_path, _continue)
+    assert result.status is FinishStatus.COMPLETED
+    assert engine.deleted_snapshots == []
+
+
+def test_snapshot_delete_failure_keeps_the_job(tmp_path: Path) -> None:
+    engine = FakeEngine()
+    original = engine.handler
+
+    def refuse_delete(request: httpx.Request) -> httpx.Response:
+        if request.method == "DELETE" and request.url.path.startswith("/osm/api/snapshots/"):
+            return httpx.Response(403, json={"error": True})
+        return original(request)
+
+    runner = OsmedeusDomainLiteRunner(
+        transport=httpx.MockTransport(refuse_delete), sleep=lambda _: None
+    )
+    result = runner.run(_job(), OsmedeusParams(), tmp_path, _continue)
+    assert result.status is FinishStatus.COMPLETED
+    assert (tmp_path / RAW_OUTPUT_FILENAME).exists()
 
 
 def test_each_target_runs_in_its_own_workspace(tmp_path: Path) -> None:
@@ -287,7 +341,15 @@ def test_client_error_is_not_retried(tmp_path: Path) -> None:
 def test_package_skips_entries_that_leave_their_folder(tmp_path: Path) -> None:
     source = tmp_path / "engine-1.zip"
     source.write_bytes(
-        _zip({"ok/a.txt": b"a", "../escape.txt": b"x", "/abs.txt": b"x", "a\\b.txt": b"x"})
+        _zip(
+            {
+                "ok/a.txt": b"a",
+                "../escape.txt": b"x",
+                "/abs.txt": b"x",
+                "a\\b.txt": b"x",
+                "run-console.log": b"x",
+            }
+        )
     )
     manifest = OsmedeusManifest(tool_module="osmedeus-domain-lite", flow="domain-lite", runs=[])
 

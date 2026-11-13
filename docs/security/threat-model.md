@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-> Phiên bản: 1.10 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 17: Bảo mật
 > Liên quan: [system.md](../architecture/system.md), [database.md](../data/database.md), [authorization.md](authorization.md), [authentication.md](authentication.md), [external-services.md](../integrations/external-services.md)
 
@@ -62,6 +62,7 @@
 | Information disclosure | User xem program không được gán | Lọc theo `program_user` ở backend, trả `404` |
 | Information disclosure | Lộ thông tin xác thực | Mã hóa khi lưu, che trên UI, không trả qua API, không ghi log. Chỉ gửi cho worker qua HTTPS khi worker claim job. API key LLM chỉ ghi, API chỉ trả `has_llm_api_key` |
 | Information disclosure | Cookie phiên của mục tiêu do gowitness thu về lộ trên UI | Parser không lưu giá trị cookie vào `screenshot.cookies`, UI chỉ hiện tên và cờ. Giá trị chỉ còn trong output thô, tải output thô ghi nhật ký thao tác (G7) |
+| Information disclosure | Biến engine, `global_vars` của engine server lọt vào output thô qua file chạy Osmedeus ghi ở gốc workspace, ai tải output thô cũng đọc được | Runner bỏ mọi file ở gốc workspace khỏi gói `osmedeus.zip`, chỉ chép thư mục con chứa output công cụ: [external-services.md](../integrations/external-services.md) |
 | Information disclosure | Người chưa đăng nhập dò trạng thái nội bộ qua `GET /health` | `GET /health` chỉ trả `204`. Phiên bản và tên node trên S01 gắn lúc build frontend, không đọc từ Backend API |
 | Information disclosure | Mật khẩu lọt vào URL khi form gửi trước lúc trang hydrate | Form đăng nhập khai báo `method="post"`, nên trình duyệt không bao giờ gửi thông tin xác thực bằng GET: [security.md](../../.claude/rules/security.md) |
 | Information disclosure | Mật khẩu nằm trong markup vì React sao giá trị ô có kiểm soát vào thuộc tính `value` | Ô mật khẩu để dạng không kiểm soát, đọc qua `ref`. Mutation đăng nhập đặt `gcTime: 0`: [security.md](../../.claude/rules/security.md) |

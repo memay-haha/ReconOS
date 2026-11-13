@@ -18,6 +18,7 @@ from app.core.audit import AuditLog
 from app.core.crypto import decrypt
 from app.core.identity import User, UserRole
 from app.engine import service
+from app.engine.adapters import AGENT_NOT_PROBED
 from app.engine.models import Engine, EngineVariable
 from app.tool_module.models import ToolModule
 from tests.factories import make_job, make_program, make_worker
@@ -414,12 +415,13 @@ LLM_KEY = "sk-test-llm-value"
 
 
 class FakeVigolium:
-    """Answers like the Vigolium REST docs for the calls the adapter makes."""
+    """Answers like Vigolium v0.5.6 for the calls the adapter makes."""
 
     def __init__(self) -> None:
         self.config: dict[str, str] = {
-            "dynamic-assessment.enabled_modules.active_modules": "all",
-            "dynamic-assessment.enabled_modules.passive_modules": "[header-audit tls-weak]",
+            # Lists as Vigolium v0.5.6 prints them.
+            "dynamic-assessment.enabled_modules.active_modules": "[all]",
+            "dynamic-assessment.enabled_modules.passive_modules": "[header-audit, tls-weak]",
         }
         self.posted: list[dict[str, str]] = []
         self.config_errors: list[str] = []
@@ -645,7 +647,10 @@ async def test_verify_model_hands_the_llm_settings_to_the_engine(
     )
     response = await client.post(f"{API}/engines/{vigolium.id}/verify-model", headers=HEADERS)
     assert response.status_code == 200
-    assert response.json() == {"ok": True, "issues": []}
+    assert response.json() == {
+        "ok": True,
+        "issues": [{"level": "advisory", "message": AGENT_NOT_PROBED}],
+    }
     assert LLM_KEY not in response.text
     assert vig_api.posted == [
         {

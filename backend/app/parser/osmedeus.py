@@ -261,11 +261,11 @@ def _plain(read: Callable[[str], list[Record]]) -> LineReader:
 # Files of a workspace and how to read them. `{workspace}` is the workspace
 # name of the run, read from the manifest. A missing file is skipped.
 WORKSPACE_FILES: Final[tuple[tuple[str, LineReader], ...]] = (
-    ("subdomain/final-{workspace}.txt", _plain(_domain_line)),
+    ("subdomain/subdomain-{workspace}.txt", _plain(_domain_line)),
     ("probing/dns-json-{workspace}.txt", _plain(_dnsx_line)),
     ("probing/http-{workspace}.txt", _plain(_url_line)),
     ("fingerprint/http-fingerprint-{workspace}.jsonl", _plain(_httpx_line)),
-    ("ipspace/ip-{workspace}.txt", _plain(_ip_line)),
+    ("ipspace/{workspace}-ip.txt", _plain(_ip_line)),
     ("portscan/open-ports-{workspace}.txt", _plain(_open_port_line)),
     ("portscan/http-port-fingerprint-{workspace}.jsonl", _plain(_httpx_line)),
     ("vulnscan/nuclei-jsonl-{workspace}.txt", _nuclei_line),

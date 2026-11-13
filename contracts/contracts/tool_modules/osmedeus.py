@@ -69,8 +69,9 @@ def flow_of(tool_module: str) -> str:
 #
 #   osmedeus.zip
 #   ├── manifest.json        OsmedeusManifest
-#   ├── 1/                   workspace of the first target, as the engine zips it
-#   │   ├── subdomain/final-<workspace>.txt
+#   ├── 1/                   workspace of the first target, as the engine zips it,
+#   │   │                    minus the engine's run files at the workspace root
+#   │   ├── subdomain/subdomain-<workspace>.txt
 #   │   ├── probing/dns-<workspace>.txt ...
 #   └── 2/ ...
 #

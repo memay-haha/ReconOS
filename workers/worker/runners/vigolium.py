@@ -45,6 +45,10 @@ SCOPE_ORIGIN: Final = "strict"
 log = structlog.get_logger(__name__)
 
 
+class EngineBusyError(EngineError):
+    """The engine runs another scan: Vigolium runs one scan at a time."""
+
+
 class _Info(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -64,8 +68,8 @@ class _ScanState(BaseModel):
 
 
 class _ScanDetail(_ScanState):
-    # The docs show no body for GET /api/scans/:uuid: the state is read at the
-    # top level, or inside `data` like the list endpoint. Tech debt 12.
+    # Vigolium v0.5.6 answers GET /api/scans/:uuid with the scan object, state
+    # at the top level. `data` is still read, as the list endpoint wraps scans.
     data: _ScanState | None = None
 
     def state(self) -> str:
@@ -95,7 +99,7 @@ class VigoliumClient(EngineClient):
     def start_scan(self, body: dict[str, Any]) -> str:
         response = self._send(lambda: self._http.post("/api/scans/run", json=body), "start_scan")
         if response.status_code == 409:
-            raise EngineError("start_scan", "is busy with another scan")
+            raise EngineBusyError("start_scan", "is busy with another scan")
         return self._json(response, _ScanStarted, "start_scan").scan_uuid
 
     def scan_state(self, scan_uuid: str) -> str:
@@ -243,12 +247,11 @@ class VigoliumRunner(Runner):
             except EngineError as exc:
                 log.warning("engine_unavailable", error=str(exc))
                 return RunResult(FinishStatus.FAILED, "engine is unreachable")
-            try:
-                scan_uuid = api.start_scan(self.scan_body(job, params, deadline - clock()))
-            except EngineError as exc:
-                log.warning("engine_scan_not_created", error=str(exc))
+            started = self._start(api, job, params, deadline, heartbeat, clock)
+            if isinstance(started, RunResult):
                 output.touch()
-                return RunResult(FinishStatus.FAILED, "engine refused the scan", version)
+                return RunResult(started.status, started.reason, version)
+            scan_uuid = started
             log.info("engine_scan_created", scan_uuid=scan_uuid)
             try:
                 state, stopped = self._wait(api, scan_uuid, job, deadline, heartbeat, clock)
@@ -272,6 +275,41 @@ class VigoliumRunner(Runner):
                 log.warning("engine_findings_foreign", scan_uuid=scan_uuid, foreign=foreign)
             log.info("engine_scan_finished", scan_uuid=scan_uuid, state=state, findings=written)
         return result
+
+    def _start(
+        self,
+        api: VigoliumClient,
+        job: JobSpec,
+        params: VigoliumParams,
+        deadline: float,
+        heartbeat: Callable[[], JobHeartbeatAction],
+        clock: Callable[[], float],
+    ) -> str | RunResult:
+        """Start the scan, waiting while the engine runs another one.
+
+        A scan started outside ReconOS (CLI, Vigolium UI) holds the engine: the
+        job waits for it, heartbeat by heartbeat, until the job's own deadline.
+        Returns the scan uuid, or the result that ends the job.
+        """
+        waited = False
+        while True:
+            try:
+                return api.start_scan(self.scan_body(job, params, deadline - clock()))
+            except EngineBusyError:
+                if not waited:
+                    log.warning("engine_busy")
+                    waited = True
+            except EngineError as exc:
+                log.warning("engine_scan_not_created", error=str(exc))
+                return RunResult(FinishStatus.FAILED, "engine refused the scan")
+            remaining = deadline - clock()
+            if remaining <= 0:
+                return RunResult(FinishStatus.FAILED, "engine stayed busy with another scan")
+            self._sleep(min(job.heartbeat_seconds, remaining))
+            if heartbeat() is JobHeartbeatAction.CANCEL:
+                return RunResult(FinishStatus.CANCELLED, "job cancelled")
+            if deadline - clock() <= 0:
+                return RunResult(FinishStatus.FAILED, "engine stayed busy with another scan")
 
     def _stop(self, api: VigoliumClient, scan_uuid: str) -> None:
         try:

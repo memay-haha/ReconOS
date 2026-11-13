@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -98,6 +98,14 @@ MinIO không còn phát hành image công khai và repo đã archived: nợ 19 t
 - Cập nhật công cụ: đổi phiên bản trong Dockerfile, build image mới, triển khai lại máy worker. Worker báo phiên bản công cụ qua heartbeat, S15 hiển thị. ❌ Không cập nhật công cụ từ UI.
 - Cài engine server Osmedeus, Vigolium trên máy riêng trong vùng worker theo hướng dẫn chính thức. Engine server chạy ở chế độ server có API key.
 - Dọn thư mục làm việc và dữ liệu lượt chạy cũ trên engine server bằng lịch chạy định kỳ trên máy engine. ReconOS đã giữ bản gốc trong output thô.
+- Osmedeus: runner đã xóa bản zip tải về, workspace `reconos-<job_id>-<n>` thì còn lại vì REST v5.1.2 không xóa được workspace. Xóa workspace của job đã xong quá 7 ngày bằng cron trên máy engine, đường dẫn lấy từ `environments.workspaces` trong `osm-settings.yaml`:
+
+  ```bash
+  find ~/workspaces-osmedeus -maxdepth 1 -type d -name 'reconos-*' -mtime +7 -exec rm -rf {} +
+  ```
+
+- Vigolium chạy một lượt quét mỗi lúc. Lượt quét mở từ CLI hay giao diện của Vigolium làm job ReconOS chờ tới khi engine rảnh hoặc hết thời hạn job: [external-services.md](../integrations/external-services.md).
+- Vigolium ghi lại toàn bộ `~/.vigolium/vigolium-configs.yaml` mỗi lần ReconOS đổi native module hoặc bấm Verify Model, comment trong file mất. Sao lưu file trước lần đầu dùng hai chức năng này.
 
 ### Triển khai bản mới
 

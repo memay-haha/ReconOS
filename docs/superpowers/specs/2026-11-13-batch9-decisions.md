@@ -21,3 +21,5 @@ Quyết định agent tự chọn khi dựng runner, parser `vigolium` và phầ
 | V13 | Runner Osmedeus và Vigolium lặp mã thử lại REST | Tách `workers/worker/runners/engine_client.py`, hai runner kế thừa | `directory-structure.md` |
 | V14 | Output thô mẫu không lấy được từ lần chạy thật | Dựng theo object finding trong tài liệu: nợ 77 | `tech-debt.md` |
 | V15 | Lỗi bật, tắt module trên S17 | Mã `module_required` hiện câu riêng, lỗi khác giữ câu thử lại | Sổ này |
+
+Kiểm chứng trên Vigolium v0.5.6 thật ngày 2026-11-13: V1, V2, V7, V10, V11 đúng. V5 đổi thành chờ engine rảnh, V12 thêm dòng `advisory` vì engine không gọi model, V14 thay bằng output thô của job thật. Chi tiết: [sổ kiểm chứng engine thật](2026-11-13-real-engines-decisions.md).
