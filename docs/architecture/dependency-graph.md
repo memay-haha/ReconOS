@@ -1,6 +1,6 @@
 # Đồ thị phụ thuộc
 
-> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.8 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 12: Đồ thị phụ thuộc
 > Liên quan: [modules.md](modules.md), [directory-structure.md](directory-structure.md), [system.md](system.md)
 
@@ -58,7 +58,7 @@ Module ở tầng trên được phép gọi `service.py` của module ở tần
 - Mọi module ghi nhật ký thao tác qua `core`, kiểm tra quyền qua `core`.
 - `audit_log` không gọi `user`. Cột `audit_log.user_id` là UUID không có khóa ngoại nên phần đọc join bằng cột đó, không qua ràng buộc: [schema.md](../data/schema.md).
 - `core` giữ bảng `user`, `user_session` và dependency xác thực, phân quyền, vì module ở mọi tầng đều cần. Nhờ vậy bảng tầng không có ngoại lệ nào.
-- `job`, `parser`, `dispatcher` tạo cảnh báo qua `alert`. `alert` không gọi module nghiệp vụ. Khóa ngoại của `alert` tới `finding`, `job` khai báo bằng tên bảng.
+- `job`, `parser`, `dispatcher`, `schedule` tạo cảnh báo qua `alert`. `alert` không gọi module nghiệp vụ. Khóa ngoại của `alert` tới `finding`, `job`, `schedule` khai báo bằng tên bảng.
 
 ```mermaid
 flowchart BT

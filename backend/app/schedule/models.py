@@ -52,6 +52,10 @@ class Schedule(Base):
     is_enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"))
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # First refused run of the current failure streak; NULL while runs succeed.
+    # Only the run that opens a streak raises `schedule_run_failed`, so a broken
+    # schedule rings the bell once, not every interval.
+    failing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
