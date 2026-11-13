@@ -1,6 +1,6 @@
 # Cấu hình
 
-> Phiên bản: 1.11 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.12 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 14: Cấu hình
 > Liên quan: [external-services.md](../integrations/external-services.md), [system.md](../architecture/system.md), [security.md](../../.claude/rules/security.md), [deployment.md](deployment.md)
 
@@ -79,6 +79,19 @@ Dùng cho Backend API, dispatcher, tiến trình nền, Celery Beat. ✅: biến
 - Trình duyệt chỉ gọi origin của Next.js, không gọi thẳng Backend API. Nhờ vậy `Origin` luôn khớp `RECONOS_PUBLIC_ORIGIN` và cookie `SameSite=Lax` gửi kèm.
 - Production định tuyến `/api/` của trình duyệt ở Nginx: [deployment.md](deployment.md). Server Next.js vẫn cần `RECONOS_API_URL`, vì server component kiểm tra phiên gọi thẳng Backend API ở mỗi request, không đi qua Nginx. Thiếu biến, Next gọi giá trị mặc định `http://127.0.0.1:8000`, tức chính container frontend. S01 vẫn dựng được form đăng nhập, nhưng mọi màn hình sau khi đăng nhập đều hỏng.
 
+### Biến của `make backend`
+
+Chỉ dùng trên máy phát triển. `Makefile` đọc từ dòng lệnh, môi trường hoặc `.env` ở gốc repo.
+
+| Biến | Thông tin xác thực | Ý nghĩa |
+|---|---|---|
+| `API_HOST`, `API_PORT` | | Địa chỉ Backend API, mặc định `127.0.0.1`, `8000` |
+| `WEB_HOST`, `WEB_PORT` | | Địa chỉ frontend, mặc định `127.0.0.1`, `3000` |
+
+- `make backend` đặt `RECONOS_API_URL` của frontend thành `http://API_HOST:API_PORT` khi biến chưa có, nên đổi `API_PORT` không cần sửa `frontend/.env`.
+- Đổi `WEB_HOST` hoặc `WEB_PORT` thì đổi `RECONOS_PUBLIC_ORIGIN` và `RECONOS_E2E_BASE_URL` theo, vì kiểm tra CSRF so `Origin` với `RECONOS_PUBLIC_ORIGIN`.
+- Celery Beat ghi file lịch `data/celerybeat-schedule`. Thư mục `data/` đã nằm trong `.gitignore`.
+
 ### Biến môi trường của bộ test E2E
 
 Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong môi trường production.
@@ -92,7 +105,7 @@ Chỉ dùng trên máy phát triển. ❌ Không đặt ba biến này trong mô
 - `frontend/playwright.config.ts` nạp `frontend/.env`, rồi đọc đúng hai biến `RECONOS_BOOTSTRAP_ADMIN_*` trong `.env` ở gốc repo để điền hai biến còn trống. Playwright là tiến trình riêng, không tự đọc file env nào, nên thiếu bước này thì `frontend/.env` điền đủ vẫn không tới được bộ test.
 - Config chỉ lấy hai khóa cần dùng, không nạp cả `.env` ở gốc repo, vì file đó còn chứa mật khẩu CSDL và khóa mã hóa mà server phát triển không cần (G7).
 - Biến đã có sẵn trong môi trường thắng giá trị trong file. Nhờ vậy chạy bộ test bằng tài khoản khác chỉ cần đặt biến ngay trên dòng lệnh.
-- Sau `make init`, bộ test chạy được ngay bằng lệnh trong [testing.md](../../.claude/rules/testing.md), không cần điền thêm biến nào.
+- Sau `make init` và `make backend`, bộ test chạy được ngay bằng lệnh trong [testing.md](../../.claude/rules/testing.md), không cần điền thêm biến nào.
 
 ### Biến môi trường của worker
 

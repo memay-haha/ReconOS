@@ -1,6 +1,6 @@
 # Triển khai
 
-> Phiên bản: 1.6 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
+> Phiên bản: 1.7 · Ngày: 2026-11-13 · Trạng thái: 🔵 Chờ duyệt
 > Mục 20: Triển khai
 > Liên quan: [system.md](../architecture/system.md), [configuration.md](configuration.md), [scalability.md](scalability.md), [security.md](../../.claude/rules/security.md)
 
@@ -28,7 +28,7 @@
 
 | Môi trường | Chạy ở | Khác biệt |
 |---|---|---|
-| Phát triển | Máy cá nhân, Docker Compose | Mã mount vào container, tự nạp lại khi sửa. Cấu hình từ `.env`. Có thêm CSDL test |
+| Phát triển | Máy cá nhân, Docker Compose | PostgreSQL, Redis, MinIO chạy trong Docker Compose. `make backend` chạy trên máy các tiến trình `api`, `dispatcher`, `background`, `beat`, `frontend` của bảng Container vùng lõi, tự nạp lại khi sửa mã. Cấu hình từ `.env`. Có thêm CSDL test |
 | Production | Máy chủ vùng lõi, máy worker, máy engine | Image đóng gói sẵn, thông tin xác thực qua Docker secrets |
 
 ### Thư mục `infras/`
